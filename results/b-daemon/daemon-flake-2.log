@@ -1,0 +1,77 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 12.21s
+     Running unittests src/lib.rs (target/debug/deps/agentnet_daemon-a62506140164aad5)
+
+running 17 tests
+test config::tests::engine_errors_are_surfaced ... ok
+test config::tests::mapping_to_node_and_transport_configs ... ok
+test config::tests::public_requires_the_flag_and_flags_are_checked ... ok
+test config::tests::defaults_are_private_and_need_peers ... ok
+test config::tests::private_mode_surfaces_transport_errors ... ok
+test config::tests::webhook_matrix ... ok
+test config::tests::mcp_http_bind_must_be_loopback ... ok
+test config::tests::unknown_keys_are_rejected ... ok
+test config::tests::samples_parse_and_validate ... ok
+test datadir::tests::dir_perms_and_tokens ... ok
+test datadir::tests::hex_round_trip ... ok
+test datadir::tests::lock_is_exclusive_and_released_on_drop ... ok
+test webhook::tests::blocklist ... ok
+test proto::tests::hello_debug_hides_the_token ... ok
+test proto::tests::bounded_line_reader ... ok
+test webhook::tests::signature_round_trip_and_failures ... ok
+test webhook::tests::localhost_resolves_to_a_pinned_loopback_address ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s
+
+     Running tests/harness.rs (target/debug/deps/harness-5769e152442c61a0)
+
+running 4 tests
+test documented_sample_configs_match_the_code ... ok
+test embed_example_runs ... ok
+test webhook_mode_verifies_signatures_and_dedupes ... ok
+test socket_mode_records_one_turn_per_event_and_resumes_from_its_cursor ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.85s
+
+     Running tests/socket_api.rs (target/debug/deps/socket_api-6601e4d24c8d4198)
+
+running 15 tests
+test lock_exclusivity_and_graceful_shutdown_cleanup ... ok
+test http_mcp_serves_with_its_token_and_only_on_loopback ... ok
+test remote_agent_reports_unavailable_when_down_and_recovers ... ok
+test remote_agent_with_a_wrong_token_is_denied_not_unavailable ... ok
+test every_method_round_trips_and_equals_the_direct_node ... ok
+test shutdown_request_through_the_socket ... ok
+test quarantine_list_and_release_through_the_socket ... ok
+test event_stream_survives_a_daemon_restart_by_resuming_from_the_cursor ... ok
+test socket_file_is_private ... ok
+test startup_refuses_bad_configuration_and_permissions ... ok
+test socket_auth_matrix ... ok
+test crash_recovery_reacquires_the_lock_and_keeps_state ... ok
+test changes_stream_resubscribes_after_a_daemon_restart ... ok
+test events_replay_live_ack_and_reconnect_without_loss ... ok
+test hello_timeout_closes_the_connection ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.39s
+
+     Running tests/webhook_triggers.rs (target/debug/deps/webhook_triggers-85132d24b634a2a0)
+
+running 10 tests
+test startup_rejects_unsafe_webhook_setups ... ok
+test triggers_are_off_by_default ... ok
+test message_received_can_be_enabled_and_disabled_per_config ... ok
+test redirects_are_not_followed ... ok
+test parks_after_max_attempts_and_continues_with_the_next_event ... ok
+test retries_on_500_then_succeeds_with_one_effect_per_event_id ... ok
+test signed_delivery_verifies_and_carries_no_plaintext ... ok
+test resumes_from_its_cursor_after_a_restart_without_loss_or_repeat ... ok
+test one_shot_trigger_yields_exactly_one_event_despite_duplicate_deliveries ... ok
+test unauthorized_senders_never_produce_trigger_events ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.76s
+
+   Doc-tests agentnet_daemon
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

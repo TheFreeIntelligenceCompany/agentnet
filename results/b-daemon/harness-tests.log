@@ -1,0 +1,12 @@
+   Compiling agentnet-daemon v0.1.0 (/Users/dennison/develop/FIC-elipsis/crates/daemon)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.80s
+     Running tests/harness.rs (target/debug/deps/harness-5769e152442c61a0)
+
+running 4 tests
+test documented_sample_configs_match_the_code ... ok
+test embed_example_runs ... ok
+test webhook_mode_verifies_signatures_and_dedupes ... ok
+test socket_mode_records_one_turn_per_event_and_resumes_from_its_cursor ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.50s
+

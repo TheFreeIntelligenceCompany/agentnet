@@ -1,0 +1,44 @@
+# agentnet.toml -- PRIVATE mode (the default). See docs/configuration.md.
+#
+# Private mode fails closed: the Logos Delivery node must be on a loopback or
+# private address, connected only to the peers listed here, and on a private
+# cluster id. Discovery and public fallback do not exist.
+
+[network]
+mode = "private"
+# REST endpoint of YOUR local Logos Delivery node (loopback / RFC1918 / 100.64.0.0/10 only).
+node_url = "http://127.0.0.1:8645"
+# Static peers: multiaddrs of your own relay/store node(s), ending in /p2p/<peerId>.
+peers = ["/ip4/172.28.66.10/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV"]
+# Cluster ids 1, 2, 3 and 16 select public presets and are rejected.
+cluster_id = 66
+public_discovery = false   # true is a config error in private mode
+public_fallback = false    # true is always a config error
+i_understand_public = false
+
+[storage]
+retention_hours = 168
+
+[policy]
+unknown_senders = "quarantine"   # quarantine | reject | accept
+auto_trigger = false             # triggers are off until the host enables them
+
+[triggers]
+allowed_sessions = []            # host-approved target_session values
+max_active = 32
+max_matches_per_minute = 60
+default_lifetime_s = 3600
+max_lifetime_hours = 24
+
+[mcp_http]
+enabled = false
+bind = "127.0.0.1:8650"          # loopback only; bearer token in <data dir>/mcp-http.token
+
+[webhook]
+enabled = false
+url = ""                         # the ONE destination; loopback/private unless allow_remote
+secret_file = ""                 # >= 32 bytes, mode 0600
+allow_remote = false
+timeout_ms = 5000
+max_attempts = 5
+events = ["trigger.matched"]

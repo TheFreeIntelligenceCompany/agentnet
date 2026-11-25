@@ -1,0 +1,35 @@
+[package]
+name = "agentnet-cli"
+description = "The `agentnet` command line: init, serve, mcp, contacts, messages, triggers, diagnostics, relay instructions"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "agentnet"
+path = "src/main.rs"
+
+[dependencies]
+agentnet-core.workspace = true
+agentnet-daemon.workspace = true
+agentnet-mcp.workspace = true
+agentnet-transport = { workspace = true, features = ["logos-rest"] }
+clap = { version = "4", features = ["derive", "wrap_help", "env"] }
+reqwest.workspace = true
+rpassword = "7"
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+tracing.workspace = true
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+
+[dev-dependencies]
+tempfile = "3"
+rmcp = { version = "=3.11.0", default-features = false, features = ["client", "server", "macros", "transport-child-process"] }
+anyhow = "1"
+
+[lints]
+workspace = true

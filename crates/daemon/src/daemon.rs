@@ -1,0 +1,348 @@
+//! Wiring: lock, identity, engine, control socket, webhook, HTTP MCP, shutdown.
+
+use std::net::SocketAddr;
+use std::os::unix::fs::{FileTypeExt, PermissionsExt};
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+
+use agentnet_core::api::AgentApi;
+use agentnet_core::identity::Identity;
+use agentnet_core::{Clock, Node, SystemClock};
+use agentnet_mcp::{bind_http, serve_http, HttpOptions};
+use agentnet_transport::logos_rest::LogosRestTransport;
+use agentnet_transport::Transport;
+use serde_json::{json, Value};
+use tokio::net::UnixListener;
+use tokio::task::JoinHandle;
+use tokio_util::sync::CancellationToken;
+
+use crate::config::DaemonConfig;
+use crate::datadir::{ensure_token, DataDir, DataDirLock, MAX_SOCKET_PATH};
+use crate::error::DaemonError;
+use crate::server::{self, ServerCtx, StatusFn, HELLO_TIMEOUT};
+use crate::webhook::{Webhook, WebhookStats};
+
+/// Upper bound of a graceful shutdown.
+pub const SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(10);
+
+/// Entry points to start the daemon.
+pub struct Daemon;
+
+impl Daemon {
+    /// Start the daemon of `data_dir`: lock, load `agentnet.toml` and the
+    /// identity, build the REST transport, open the engine and the sockets.
+    pub async fn start(data_dir: impl AsRef<Path>) -> Result<RunningDaemon, DaemonError> {
+        let dir = DataDir::new(data_dir.as_ref());
+        dir.check_dir_perms()?;
+        let lock = dir.acquire_lock()?;
+        let config = DaemonConfig::load(&dir.config())?;
+        let transport = LogosRestTransport::new(config.to_logos_config())
+            .map_err(|e| DaemonError::Transport(e.to_string()))?;
+        start_locked(
+            dir,
+            lock,
+            config,
+            Arc::new(transport),
+            Arc::new(SystemClock),
+        )
+        .await
+    }
+
+    /// Start with an injected transport and clock (tests, embedding). The
+    /// configuration is still validated in full.
+    pub async fn start_with_transport(
+        data_dir: impl AsRef<Path>,
+        config: DaemonConfig,
+        transport: Arc<dyn Transport>,
+        clock: Arc<dyn Clock>,
+    ) -> Result<RunningDaemon, DaemonError> {
+        let dir = DataDir::new(data_dir.as_ref());
+        dir.check_dir_perms()?;
+        let lock = dir.acquire_lock()?;
+        config.validate()?;
+        start_locked(dir, lock, config, transport, clock).await
+    }
+}
+
+/// Asks a running daemon to shut down (the owner of [`RunningDaemon`] performs it).
+#[derive(Clone, Debug)]
+pub struct ShutdownHandle(CancellationToken);
+
+impl ShutdownHandle {
+    /// Request shutdown. Idempotent.
+    pub fn shutdown(&self) {
+        self.0.cancel();
+    }
+}
+
+/// A started daemon. Dropping it without [`RunningDaemon::shutdown`] behaves
+/// like a crash: tasks are aborted, the lock is released, the socket file stays
+/// behind (the next start removes it while holding the lock).
+pub struct RunningDaemon {
+    dir: DataDir,
+    config: DaemonConfig,
+    node: Arc<Node>,
+    lock: Option<DataDirLock>,
+    stop: CancellationToken,
+    node_cancel: CancellationToken,
+    shutdown_request: CancellationToken,
+    node_task: Option<JoinHandle<()>>,
+    tasks: Vec<JoinHandle<()>>,
+    http_addr: Option<SocketAddr>,
+    webhook: Option<Arc<Webhook>>,
+    finished: bool,
+}
+
+fn restrict(path: &Path) {
+    let _ = std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o600));
+}
+
+fn prepare_socket(path: &Path) -> Result<UnixListener, DaemonError> {
+    if path.as_os_str().len() > MAX_SOCKET_PATH {
+        return Err(DaemonError::DataDir(format!(
+            "socket path {} is too long for a Unix socket ({} bytes max); use a shorter --data-dir",
+            path.display(),
+            MAX_SOCKET_PATH
+        )));
+    }
+    // We hold the data-dir lock, so any existing socket is stale.
+    match std::fs::symlink_metadata(path) {
+        Ok(md) => {
+            if !md.file_type().is_socket() {
+                return Err(DaemonError::DataDir(format!(
+                    "{} exists and is not a socket; refusing to remove it",
+                    path.display()
+                )));
+            }
+            std::fs::remove_file(path)
+                .map_err(|e| DaemonError::io(format!("removing stale {}", path.display()), e))?;
+        }
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+        Err(e) => return Err(DaemonError::io(format!("checking {}", path.display()), e)),
+    }
+    let listener = UnixListener::bind(path)
+        .map_err(|e| DaemonError::io(format!("binding {}", path.display()), e))?;
+    std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o600))
+        .map_err(|e| DaemonError::io(format!("chmod {}", path.display()), e))?;
+    Ok(listener)
+}
+
+async fn start_locked(
+    dir: DataDir,
+    lock: DataDirLock,
+    config: DaemonConfig,
+    transport: Arc<dyn Transport>,
+    clock: Arc<dyn Clock>,
+) -> Result<RunningDaemon, DaemonError> {
+    let identity =
+        Identity::load(&dir.identity()).map_err(|e| DaemonError::Identity(e.to_string()))?;
+    let node = Node::open(
+        identity,
+        &dir.db(),
+        transport,
+        config.to_node_config(),
+        clock.clone(),
+    )?;
+    for suffix in ["", "-wal", "-shm"] {
+        let mut p = dir.db().into_os_string();
+        p.push(suffix);
+        restrict(&PathBuf::from(p));
+    }
+    let token = ensure_token(&dir.control_token())?;
+
+    // Everything that can fail is set up before any task is spawned.
+    let webhook = if config.webhook.enabled {
+        let w = Webhook::prepare(&config.webhook, &dir, clock.clone())?;
+        w.init_cursor(&node).await?;
+        Some(Arc::new(w))
+    } else {
+        None
+    };
+    let listener = prepare_socket(&dir.socket())?;
+    let mut http = None;
+    if config.mcp_http.enabled {
+        let addr: SocketAddr = config
+            .mcp_http
+            .bind
+            .parse()
+            .map_err(|_| DaemonError::McpHttp("invalid bind address".into()))?;
+        let bearer = ensure_token(&dir.mcp_token())?;
+        let l = bind_http(addr, false)
+            .await
+            .map_err(|e| DaemonError::McpHttp(e.to_string()))?;
+        let local = l
+            .local_addr()
+            .map_err(|e| DaemonError::io("mcp_http local_addr", e))?;
+        http = Some((l, local, bearer));
+    }
+
+    let stop = CancellationToken::new();
+    let node_cancel = CancellationToken::new();
+    let shutdown_request = CancellationToken::new();
+    let started = Instant::now();
+    let http_addr = http.as_ref().map(|(_, a, _)| *a);
+
+    let status: StatusFn = {
+        let node = node.clone();
+        let webhook = webhook.clone();
+        let mode = config.network.mode.as_str();
+        Arc::new(move || -> Value {
+            let wh: WebhookStats = webhook.as_ref().map(|w| w.stats()).unwrap_or_default();
+            json!({
+                "version": env!("CARGO_PKG_VERSION"),
+                "protocol": crate::proto::PROTOCOL_VERSION,
+                "agent_id": node.address(),
+                "mode": mode,
+                "uptime_s": started.elapsed().as_secs(),
+                "mcp_http": {"enabled": http_addr.is_some(), "addr": http_addr.map(|a| a.to_string())},
+                "webhook": wh,
+            })
+        })
+    };
+
+    let mut tasks = Vec::new();
+    let n = node.clone();
+    let nc = node_cancel.clone();
+    let node_task = tokio::spawn(async move { n.run(nc).await });
+    let ctx = ServerCtx {
+        node: node.clone(),
+        token: Arc::new(token.trim().as_bytes().to_vec()),
+        stop: stop.clone(),
+        shutdown_request: shutdown_request.clone(),
+        status,
+        hello_timeout: HELLO_TIMEOUT,
+    };
+    tasks.push(tokio::spawn(server::serve(listener, ctx)));
+    if let Some(w) = &webhook {
+        tasks.push(tokio::spawn(
+            w.clone().run(node.clone(), stop.child_token()),
+        ));
+    }
+    if let Some((l, _, bearer)) = http {
+        let api: Arc<dyn AgentApi> = node.clone();
+        let sd = stop.child_token();
+        tasks.push(tokio::spawn(async move {
+            if let Err(e) = serve_http(l, api, HttpOptions::new(bearer), false, sd).await {
+                tracing::error!(error = %e, "http mcp server stopped");
+            }
+        }));
+    }
+    tracing::info!(agent = %node.address(), socket = %dir.socket().display(), "agentnet daemon started");
+    Ok(RunningDaemon {
+        dir,
+        config,
+        node,
+        lock: Some(lock),
+        stop,
+        node_cancel,
+        shutdown_request,
+        node_task: Some(node_task),
+        tasks,
+        http_addr,
+        webhook,
+        finished: false,
+    })
+}
+
+impl RunningDaemon {
+    /// The engine (also usable directly, in-process).
+    pub fn node(&self) -> &Arc<Node> {
+        &self.node
+    }
+    /// The engine as the API trait object.
+    pub fn api(&self) -> Arc<dyn AgentApi> {
+        self.node.clone()
+    }
+    /// The effective configuration.
+    pub fn config(&self) -> &DaemonConfig {
+        &self.config
+    }
+    /// The data directory.
+    pub fn data_dir(&self) -> &DataDir {
+        &self.dir
+    }
+    /// Path of the control socket.
+    pub fn socket_path(&self) -> PathBuf {
+        self.dir.socket()
+    }
+    /// Bound address of the HTTP MCP endpoint, if enabled.
+    pub fn http_addr(&self) -> Option<SocketAddr> {
+        self.http_addr
+    }
+    /// Webhook counters, if the webhook is enabled.
+    pub fn webhook_stats(&self) -> Option<WebhookStats> {
+        self.webhook.as_ref().map(|w| w.stats())
+    }
+    /// A handle that requests shutdown (also triggered by the `shutdown` method).
+    pub fn shutdown_handle(&self) -> ShutdownHandle {
+        ShutdownHandle(self.shutdown_request.clone())
+    }
+
+    /// Resolves when shutdown was requested through a handle or the socket.
+    pub async fn shutdown_requested(&self) {
+        self.shutdown_request.cancelled().await;
+    }
+
+    /// Wait for SIGINT, SIGTERM or a shutdown request, then shut down.
+    pub async fn run_until_signal(self) -> Result<(), DaemonError> {
+        use tokio::signal::unix::{signal, SignalKind};
+        let mut term = signal(SignalKind::terminate())
+            .map_err(|e| DaemonError::io("installing SIGTERM handler", e))?;
+        let mut int = signal(SignalKind::interrupt())
+            .map_err(|e| DaemonError::io("installing SIGINT handler", e))?;
+        tokio::select! {
+            _ = term.recv() => tracing::info!("SIGTERM received"),
+            _ = int.recv() => tracing::info!("SIGINT received"),
+            _ = self.shutdown_request.cancelled() => tracing::info!("shutdown requested"),
+        }
+        self.shutdown().await;
+        Ok(())
+    }
+
+    /// Graceful shutdown: stop accepting, end connections, stop the engine
+    /// (checkpoints and closes the store), remove the socket, release the lock.
+    /// Bounded by [`SHUTDOWN_TIMEOUT`]; stragglers are aborted.
+    pub async fn shutdown(mut self) {
+        self.stop.cancel();
+        let deadline = tokio::time::Instant::now() + SHUTDOWN_TIMEOUT;
+        for t in std::mem::take(&mut self.tasks) {
+            let abort = t.abort_handle();
+            if tokio::time::timeout_at(deadline, t).await.is_err() {
+                tracing::warn!("a daemon task did not stop in time; aborting it");
+                abort.abort();
+            }
+        }
+        self.node_cancel.cancel();
+        if let Some(t) = self.node_task.take() {
+            let abort = t.abort_handle();
+            if tokio::time::timeout_at(deadline, t).await.is_err() {
+                tracing::warn!("the engine did not stop in time; aborting it");
+                abort.abort();
+            }
+        }
+        self.node.close();
+        let _ = std::fs::remove_file(self.dir.socket());
+        self.lock.take();
+        self.finished = true;
+        tracing::info!("agentnet daemon stopped");
+    }
+}
+
+impl Drop for RunningDaemon {
+    fn drop(&mut self) {
+        if self.finished {
+            return;
+        }
+        self.stop.cancel();
+        self.node_cancel.cancel();
+        for t in &self.tasks {
+            t.abort();
+        }
+        if let Some(t) = &self.node_task {
+            t.abort();
+        }
+        // `lock` is released when the field drops; the socket file is left
+        // behind exactly as after a crash.
+    }
+}

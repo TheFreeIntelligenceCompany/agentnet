@@ -1,0 +1,33 @@
+# agentnet.toml -- PUBLIC mode. UNTESTED against any public network.
+#
+# Public mode must be chosen explicitly. It skips the peer allowlist audit, so
+# the node may be connected to anyone. Public and private traffic are never
+# bridged: one daemon talks to exactly one node in exactly one mode. The daemon
+# cannot configure the node: discovery, bootstrap nodes, RLN and rate limits are
+# flags of the Logos Delivery node you run yourself.
+#
+# Known limitation: the REST adapter supports only single-shard networks
+# (num_shards = 1, shard 0), which the shared public networks are not.
+
+[network]
+mode = "public"
+i_understand_public = true
+node_url = "http://127.0.0.1:8645"
+peers = []                       # optional in public mode
+cluster_id = 1                   # the node must be started with the matching preset
+public_discovery = false
+public_fallback = false          # always an error when true
+
+[storage]
+retention_hours = 168
+
+[policy]
+unknown_senders = "quarantine"
+auto_trigger = false
+
+[mcp_http]
+enabled = false
+bind = "127.0.0.1:8650"
+
+[webhook]
+enabled = false

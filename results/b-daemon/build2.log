@@ -1,0 +1,5 @@
+   Compiling agentnet-daemon v0.1.0 (/Users/dennison/develop/FIC-elipsis/crates/daemon)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 26.78s
+  Executable unittests src/lib.rs (target/debug/deps/agentnet_daemon-a62506140164aad5)
+  Executable tests/socket_api.rs (target/debug/deps/socket_api-6601e4d24c8d4198)
+  Executable tests/webhook_triggers.rs (target/debug/deps/webhook_triggers-85132d24b634a2a0)

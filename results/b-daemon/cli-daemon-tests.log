@@ -1,0 +1,111 @@
+   Compiling agentnet-daemon v0.1.0 (/Users/dennison/develop/FIC-elipsis/crates/daemon)
+   Compiling agentnet-cli v0.1.0 (/Users/dennison/develop/FIC-elipsis/crates/cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 18.14s
+     Running unittests src/main.rs (target/debug/deps/agentnet-cad881c944c662d2)
+
+running 2 tests
+test doctor::tests::peer_ids ... ok
+test doctor::tests::http_date ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/cli.rs (target/debug/deps/cli-dbc4161b44e93329)
+
+running 11 tests
+test init_creates_private_files_and_refuses_to_overwrite ... ok
+test init_without_peers_warns_and_serve_refuses_until_configured ... ok
+test relay_print_config_has_the_verified_flags_and_marks_tailscale_untested ... ok
+test doctor_reports_problems_with_actions_and_exit_code_7 ... ok
+test mcp_without_a_daemon_starts_and_every_tool_says_unavailable ... ok
+test mcp_embedded_runs_the_daemon_in_process_and_holds_the_lock ... ok
+test every_command_has_help_and_the_top_level_documents_exit_codes ... ok
+test rotate_kem_keeps_the_address_and_changes_the_record ... ok
+test serve_runs_rejects_a_second_instance_and_stops_cleanly_on_sigterm ... ok
+test mcp_stdio_is_a_thin_client_of_a_running_daemon ... ok
+test identity_export_import_round_trip_gives_the_same_address ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 17.60s
+
+     Running tests/relay_e2e.rs (target/debug/deps/relay_e2e-7d644b7ed79da0e9)
+
+running 1 test
+test two_agentnet_serve_processes_exchange_messages_over_the_private_relay ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/agentnet_daemon-b8bc01a0a7553b92)
+
+running 17 tests
+test config::tests::mapping_to_node_and_transport_configs ... ok
+test config::tests::engine_errors_are_surfaced ... ok
+test config::tests::public_requires_the_flag_and_flags_are_checked ... ok
+test config::tests::private_mode_surfaces_transport_errors ... ok
+test config::tests::webhook_matrix ... ok
+test config::tests::mcp_http_bind_must_be_loopback ... ok
+test config::tests::unknown_keys_are_rejected ... ok
+test config::tests::defaults_are_private_and_need_peers ... ok
+test datadir::tests::hex_round_trip ... ok
+test webhook::tests::blocklist ... ok
+test proto::tests::hello_debug_hides_the_token ... ok
+test config::tests::samples_parse_and_validate ... ok
+test datadir::tests::lock_is_exclusive_and_released_on_drop ... ok
+test proto::tests::bounded_line_reader ... ok
+test webhook::tests::signature_round_trip_and_failures ... ok
+test webhook::tests::localhost_resolves_to_a_pinned_loopback_address ... ok
+test datadir::tests::dir_perms_and_tokens ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/harness.rs (target/debug/deps/harness-9f01245476adbb03)
+
+running 4 tests
+test documented_sample_configs_match_the_code ... ok
+test embed_example_runs ... ok
+test webhook_mode_verifies_signatures_and_dedupes ... ok
+test socket_mode_records_one_turn_per_event_and_resumes_from_its_cursor ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.41s
+
+     Running tests/socket_api.rs (target/debug/deps/socket_api-b3c811617f6540c2)
+
+running 15 tests
+test http_mcp_serves_with_its_token_and_only_on_loopback ... ok
+test lock_exclusivity_and_graceful_shutdown_cleanup ... ok
+test every_method_round_trips_and_equals_the_direct_node ... ok
+test remote_agent_reports_unavailable_when_down_and_recovers ... ok
+test quarantine_list_and_release_through_the_socket ... ok
+test crash_recovery_reacquires_the_lock_and_keeps_state ... ok
+test shutdown_request_through_the_socket ... ok
+test remote_agent_with_a_wrong_token_is_denied_not_unavailable ... ok
+test startup_refuses_bad_configuration_and_permissions ... ok
+test event_stream_survives_a_daemon_restart_by_resuming_from_the_cursor ... ok
+test socket_file_is_private ... ok
+test socket_auth_matrix ... ok
+test changes_stream_resubscribes_after_a_daemon_restart ... ok
+test events_replay_live_ack_and_reconnect_without_loss ... ok
+test hello_timeout_closes_the_connection ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.53s
+
+     Running tests/webhook_triggers.rs (target/debug/deps/webhook_triggers-af9309bd88466940)
+
+running 10 tests
+test startup_rejects_unsafe_webhook_setups ... ok
+test triggers_are_off_by_default ... ok
+test message_received_can_be_enabled_and_disabled_per_config ... ok
+test redirects_are_not_followed ... ok
+test retries_on_500_then_succeeds_with_one_effect_per_event_id ... ok
+test parks_after_max_attempts_and_continues_with_the_next_event ... ok
+test signed_delivery_verifies_and_carries_no_plaintext ... ok
+test resumes_from_its_cursor_after_a_restart_without_loss_or_repeat ... ok
+test one_shot_trigger_yields_exactly_one_event_despite_duplicate_deliveries ... ok
+test unauthorized_senders_never_produce_trigger_events ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.12s
+
+   Doc-tests agentnet_daemon
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/transport", "crates/core", "crates/mcp"]
+members = ["crates/transport", "crates/core", "crates/mcp", "crates/daemon", "crates/cli"]
 exclude = ["spike", "upstream"]
 
 [workspace.package]

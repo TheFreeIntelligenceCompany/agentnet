@@ -1,0 +1,35 @@
+   Compiling agentnet-cli v0.1.0 (/Users/dennison/develop/FIC-elipsis/crates/cli)
+warning: unused import: `AgentApi`
+ --> crates/cli/tests/cli.rs:8:26
+  |
+8 | use agentnet_core::api::{AgentApi as _, ReadInboxRequest};
+  |                          ^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `agentnet-cli` (test "cli") generated 1 warning
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 7.85s
+     Running unittests src/main.rs (target/debug/deps/agentnet-cad881c944c662d2)
+
+running 2 tests
+test doctor::tests::peer_ids ... ok
+test doctor::tests::http_date ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/cli.rs (target/debug/deps/cli-dbc4161b44e93329)
+
+running 10 tests
+test relay_print_config_has_the_verified_flags_and_marks_tailscale_untested ... ok
+test init_without_peers_warns_and_serve_refuses_until_configured ... ok
+test init_creates_private_files_and_refuses_to_overwrite ... ok
+test doctor_reports_problems_with_actions_and_exit_code_7 ... ok
+test mcp_without_a_daemon_starts_and_every_tool_says_unavailable ... ok
+test rotate_kem_keeps_the_address_and_changes_the_record ... ok
+test every_command_has_help_and_the_top_level_documents_exit_codes ... ok
+test serve_runs_rejects_a_second_instance_and_stops_cleanly_on_sigterm ... ok
+test mcp_stdio_is_a_thin_client_of_a_running_daemon ... ok
+test identity_export_import_round_trip_gives_the_same_address ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.61s
+
