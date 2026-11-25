@@ -1,0 +1,164 @@
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon    697MB
+Step 1/28 : FROM rust:1.92-bookworm AS lib
+ ---> e90e846de412
+Step 2/28 : SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ ---> Using cache
+ ---> 24f556c983ac
+Step 3/28 : ARG LOGOS_DELIVERY_REV=0f2188c09779cc84116db344bbb43ccfe6a27c35
+ ---> Using cache
+ ---> ebb6ef553adc
+Step 4/28 : ARG MAKE_JOBS=6
+ ---> Using cache
+ ---> da71aa308c1c
+Step 5/28 : ARG DISABLE_RLN=false
+ ---> Using cache
+ ---> b0d263c9c310
+Step 6/28 : ARG LOG_LEVEL=ERROR
+ ---> Using cache
+ ---> 7f62aac7a408
+Step 7/28 : RUN date -u +%FT%TZ > /t_apt_start && apt-get update &&     apt-get install -y --no-install-recommends cmake patchelf pkg-config libssl-dev &&     rm -rf /var/lib/apt/lists/* && date -u +%FT%TZ > /t_apt_end
+ ---> Using cache
+ ---> 54f17ee41d4c
+Step 8/28 : WORKDIR /src
+ ---> Using cache
+ ---> 164d54f41ccd
+Step 9/28 : RUN git init logos-delivery && cd logos-delivery &&     git remote add origin https://github.com/logos-messaging/logos-delivery &&     git fetch --depth 1 origin ${LOGOS_DELIVERY_REV} && git checkout --detach FETCH_HEAD &&     git log -n1 --format='logos-delivery %H %cd'
+ ---> Using cache
+ ---> e7cba55c6d86
+Step 10/28 : WORKDIR /src/logos-delivery
+ ---> Using cache
+ ---> 0bd78eb48b48
+Step 11/28 : RUN date -u +%FT%TZ && git submodule update --init --depth 1 vendor/zerokit && date -u +%FT%TZ
+ ---> Using cache
+ ---> 4ff9636a5a02
+Step 12/28 : ARG NIM_PKG_DIR=nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085
+ ---> Using cache
+ ---> f8c853e1e384
+Step 13/28 : RUN if [ "$(uname -m)" = "aarch64" ]; then       date -u +%FT%TZ && git clone --depth 1 --branch v2.2.6 https://github.com/nim-lang/Nim /opt/nim &&       cd /opt/nim && time sh build_all.sh && date -u +%FT%TZ &&       mkdir -p /src/logos-delivery/nimbledeps/pkgs2/${NIM_PKG_DIR} &&       cp -a /opt/nim/. /src/logos-delivery/nimbledeps/pkgs2/${NIM_PKG_DIR}/ &&       printf '{"version":1,"metaData":{"url":"https://github.com/nim-lang/Nim.git","downloadMethod":"git","vcsRevision":"","files":[],"binaries":[],"specialVersions":["2.2.6"]}}'         > /src/logos-delivery/nimbledeps/pkgs2/${NIM_PKG_DIR}/nimblemeta.json ;     fi
+ ---> Using cache
+ ---> a17d97a967c0
+Step 14/28 : RUN date -u +%FT%TZ && time make -j${MAKE_JOBS} DISABLE_RLN=${DISABLE_RLN} LOG_LEVEL=${LOG_LEVEL} liblogosdelivery && date -u +%FT%TZ &&     ls -l build && (cd build && ls -l *.so* ) &&     cd /src/logos-delivery && (ls nimbledeps/pkgs2 | grep -i '^nim-' ; nimbledeps/pkgs2/nim-*/bin/nim --version; file nimbledeps/pkgs2/nim-*/bin/nim)
+ ---> Using cache
+ ---> b3c325d6b716
+Step 15/28 : FROM rust:1.92-bookworm AS app
+ ---> e90e846de412
+Step 16/28 : SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ ---> Using cache
+ ---> 24f556c983ac
+Step 17/28 : COPY --from=lib /src/logos-delivery/build/liblogosdelivery.so /libdir/liblogosdelivery.so
+ ---> Using cache
+ ---> e7c8bfdfae7e
+Step 18/28 : ENV LOGOS_DELIVERY_LIB_DIR=/libdir     LOGOS_DELIVERY_RELOCATABLE=1     CARGO_TERM_COLOR=never
+ ---> Using cache
+ ---> 4e063fe4a469
+Step 19/28 : WORKDIR /app
+ ---> Using cache
+ ---> d85226fbfb9b
+Step 20/28 : COPY Cargo.toml Cargo.lock* ./
+ ---> Using cache
+ ---> d35cbbc3888a
+Step 21/28 : COPY src ./src
+ ---> Using cache
+ ---> 4b9ee6e13cd4
+Step 22/28 : COPY .cargo ./.cargo
+ ---> Using cache
+ ---> c2801acd9596
+Step 23/28 : RUN date -u +%FT%TZ && time cargo build --release --locked && date -u +%FT%TZ &&     ls -l target/release/ffi-spike &&     mkdir -p /out && cp target/release/ffi-spike /libdir/liblogosdelivery.so /out/ &&     (cd /out && ldd ./ffi-spike && ldd ./liblogosdelivery.so && ls -l /out && strip -o /tmp/lib.stripped.so liblogosdelivery.so && ls -l /tmp/lib.stripped.so)
+ ---> Using cache
+ ---> bbbdcf025c60
+Step 24/28 : FROM debian:bookworm-slim AS run
+ ---> e67eeead736f
+Step 25/28 : RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates procps libgomp1 libstdc++6 && rm -rf /var/lib/apt/lists/*
+ ---> Running in f7d58cbf5e0f
+Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [34.8 kB]
+Get:4 http://deb.debian.org/debian bookworm/main arm64 Packages [8689 kB]
+Get:5 http://deb.debian.org/debian bookworm-updates/main arm64 Packages [6936 B]
+Get:6 http://deb.debian.org/debian-security bookworm-security/main arm64 Packages [379 kB]
+Fetched 9317 kB in 13s (744 kB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+libstdc++6 is already the newest version (12.2.0-14+deb12u1).
+libstdc++6 set to manually installed.
+The following additional packages will be installed:
+  libncursesw6 libproc2-0 libssl3 openssl
+Recommended packages:
+  libgpm2 psmisc
+The following NEW packages will be installed:
+  ca-certificates libgomp1 libncursesw6 libproc2-0 libssl3 openssl procps
+0 upgraded, 7 newly installed, 0 to remove and 0 not upgraded.
+Need to get 4384 kB of archives.
+After this operation, 12.9 MB of additional disk space will be used.
+Get:1 http://deb.debian.org/debian bookworm/main arm64 libncursesw6 arm64 6.4-4 [122 kB]
+Get:2 http://deb.debian.org/debian bookworm/main arm64 libproc2-0 arm64 2:4.0.2-3 [60.1 kB]
+Get:3 http://deb.debian.org/debian bookworm/main arm64 procps arm64 2:4.0.2-3 [698 kB]
+Get:4 http://deb.debian.org/debian-security bookworm-security/main arm64 libssl3 arm64 3.0.22-1~deb12u2 [1829 kB]
+Get:5 http://deb.debian.org/debian-security bookworm-security/main arm64 openssl arm64 3.0.22-1~deb12u2 [1410 kB]
+Get:6 http://deb.debian.org/debian-security bookworm-security/main arm64 ca-certificates all 20250419~deb12u2 [161 kB]
+Get:7 http://deb.debian.org/debian bookworm/main arm64 libgomp1 arm64 12.2.0-14+deb12u1 [104 kB]
+[91mdebconf: delaying package configuration, since apt-utils is not installed
+[0mFetched 4384 kB in 1s (3862 kB/s)
+Selecting previously unselected package libncursesw6:arm64.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 6090 files and directories currently installed.)
+Preparing to unpack .../0-libncursesw6_6.4-4_arm64.deb ...
+Unpacking libncursesw6:arm64 (6.4-4) ...
+Selecting previously unselected package libproc2-0:arm64.
+Preparing to unpack .../1-libproc2-0_2%3a4.0.2-3_arm64.deb ...
+Unpacking libproc2-0:arm64 (2:4.0.2-3) ...
+Selecting previously unselected package procps.
+Preparing to unpack .../2-procps_2%3a4.0.2-3_arm64.deb ...
+Unpacking procps (2:4.0.2-3) ...
+Selecting previously unselected package libssl3:arm64.
+Preparing to unpack .../3-libssl3_3.0.22-1~deb12u2_arm64.deb ...
+Unpacking libssl3:arm64 (3.0.22-1~deb12u2) ...
+Selecting previously unselected package openssl.
+Preparing to unpack .../4-openssl_3.0.22-1~deb12u2_arm64.deb ...
+Unpacking openssl (3.0.22-1~deb12u2) ...
+Selecting previously unselected package ca-certificates.
+Preparing to unpack .../5-ca-certificates_20250419~deb12u2_all.deb ...
+Unpacking ca-certificates (20250419~deb12u2) ...
+Selecting previously unselected package libgomp1:arm64.
+Preparing to unpack .../6-libgomp1_12.2.0-14+deb12u1_arm64.deb ...
+Unpacking libgomp1:arm64 (12.2.0-14+deb12u1) ...
+Setting up libssl3:arm64 (3.0.22-1~deb12u2) ...
+Setting up libgomp1:arm64 (12.2.0-14+deb12u1) ...
+Setting up libproc2-0:arm64 (2:4.0.2-3) ...
+Setting up libncursesw6:arm64 (6.4-4) ...
+Setting up procps (2:4.0.2-3) ...
+Setting up openssl (3.0.22-1~deb12u2) ...
+Setting up ca-certificates (20250419~deb12u2) ...
+debconf: unable to initialize frontend: Dialog
+debconf: (TERM is not set, so the dialog frontend is not usable.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC contains: /etc/perl /usr/local/lib/aarch64-linux-gnu/perl/5.36.0 /usr/local/share/perl/5.36.0 /usr/lib/aarch64-linux-gnu/perl5/5.36 /usr/share/perl5 /usr/lib/aarch64-linux-gnu/perl-base /usr/lib/aarch64-linux-gnu/perl/5.36 /usr/share/perl/5.36 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 7.)
+debconf: falling back to frontend: Teletype
+Updating certificates in /etc/ssl/certs...
+148 added, 0 removed; done.
+Processing triggers for libc-bin (2.36-9+deb12u14) ...
+Processing triggers for ca-certificates (20250419~deb12u2) ...
+Updating certificates in /etc/ssl/certs...
+0 added, 0 removed; done.
+Running hooks in /etc/ca-certificates/update.d...
+done.
+ ---> Removed intermediate container f7d58cbf5e0f
+ ---> cdc6f20decde
+Step 26/28 : COPY --from=app /out/ /opt/ffi/
+ ---> 4bd7c14078d4
+Step 27/28 : WORKDIR /opt/ffi
+ ---> Running in e23cf75e3b38
+ ---> Removed intermediate container e23cf75e3b38
+ ---> 2a6f6d1f096b
+Step 28/28 : ENTRYPOINT ["/opt/ffi/ffi-spike"]
+ ---> Running in 5893e14161e1
+ ---> Removed intermediate container 5893e14161e1
+ ---> 0976ccad773c
+Successfully built 0976ccad773c
+Successfully tagged ffi-spike:pinned

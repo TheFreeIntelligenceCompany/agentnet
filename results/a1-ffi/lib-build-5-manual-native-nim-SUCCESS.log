@@ -1,0 +1,925 @@
+=== attempt 1 2026-11-25T20:11:17Z
+scripts/install_nimble.sh 0.26.0 /root/.local/nimble-0.26.0/bin
+Nimble 0.26.0 already installed, skipping.
+/root/.local/nimble-0.26.0/bin/nimble setup --localdeps -y --nim:/src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/bin/nim
+      Info: using /src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/bin/nim for compilation
+   Building testutils/ntu using c backend
+ Nim Output /root/.nimble/buildtemp/testutils-0.8.1-96a11cf8b84fa9bd12d4a553afa1cc4b7f9df4e3/ntu.nim(61, 15) template/generic instantiation of `styledEcho` from here
+        ... /src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/lib/pure/terminal.nim(880, 9) template/generic instantiation of `styledWriteLine` from here
+        ... /root/.nimble/buildtemp/testutils-0.8.1-96a11cf8b84fa9bd12d4a553afa1cc4b7f9df4e3/ntu.nim(62, 33) Warning: binary is deprecated [Deprecated]
+        ... /root/.nimble/buildtemp/testutils-0.8.1-96a11cf8b84fa9bd12d4a553afa1cc4b7f9df4e3/ntu.nim(237, 16) Warning: binary is deprecated [Deprecated]
+    Prompt: Missing directory /root/.nimble/buildtemp/lsquic-0.9.0-6ca2849ff7c7a0d5271dc57ce869c72ba3111a2f/scripts. Continue? -> [forced yes]
+   Building dnsclient/dnsclient using c backend
+ Nim Output /root/.nimble/buildtemp/dnsclient-0.3.4-65262c7e533ff49d6aca5539da4bc6c6ce132f40/src/dnsclientpkg/utils.nim(42, 21) Warning: conversion to enum with holes is unsafe: LabelType(length and 0xC0'u8) [HoleEnumConv]
+        ... /root/.nimble/buildtemp/dnsclient-0.3.4-65262c7e533ff49d6aca5539da4bc6c6ce132f40/src/dnsclientpkg/utils.nim(51, 19) Warning: conversion to enum with holes is unsafe: LabelType(peekUint8(data) and 0xC0'u8) [HoleEnumConv]
+        ... /root/.nimble/buildtemp/dnsclient-0.3.4-65262c7e533ff49d6aca5539da4bc6c6ce132f40/src/dnsclientpkg/protocol.nim(120, 22) Warning: conversion to enum with holes is unsafe: QKind(tmp) [HoleEnumConv]
+        ... /root/.nimble/buildtemp/dnsclient-0.3.4-65262c7e533ff49d6aca5539da4bc6c6ce132f40/src/dnsclientpkg/protocol.nim(124, 24) Warning: conversion to enum with holes is unsafe: QClass(tmp) [HoleEnumConv]
+        ... /root/.nimble/buildtemp/dnsclient-0.3.4-65262c7e533ff49d6aca5539da4bc6c6ce132f40/src/dnsclientpkg/protocol.nim(134, 19) Warning: conversion to enum with holes is unsafe: QKind(tmp) [HoleEnumConv]
+        ... /root/.nimble/buildtemp/dnsclient-0.3.4-65262c7e533ff49d6aca5539da4bc6c6ce132f40/src/dnsclientpkg/protocol.nim(165, 24) Warning: conversion to enum with holes is unsafe: QClass(readShort(data)) [HoleEnumConv]
+        ... /root/.nimble/buildtemp/dnsclient-0.3.4-65262c7e533ff49d6aca5539da4bc6c6ce132f40/src/dnsclient.nim(67, 15) Warning: conversion to enum with holes is unsafe: QKind(k2) [HoleEnumConv]
+     Info:  "nimble.paths" is generated.
+     Info:  "config.nims" is already set up.
+make audit-deps
+make[1]: Entering directory '/src/logos-delivery'
+/root/.local/nimble-0.26.0/bin/nimble auditdeps --nim:/src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/bin/nim
+      Info: using /src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/bin/nim for compilation
+  Executing task auditdeps in /src/logos-delivery/logos_delivery.nimble
+[NimScript] exec: /src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/bin/nim e --hints:off scripts/audit_deps.nims
+audit: 49/49 installed packages match nimble.lock
+make[1]: Leaving directory '/src/logos-delivery'
+touch nimbledeps/.nimble-setup
+make rebuild-bearssl-nimbledeps rebuild-nat-libs-nimbledeps rebuild-leopard-nimbledeps
+make[1]: Entering directory '/src/logos-delivery'
+Rebuilding bearssl from /src/logos-delivery/nimbledeps/pkgs2/bearssl-0.2.13-e3a004381e8c2ec0d37bebc2e48b42c34353e9cf/bearssl/csources
+"make" -C "/src/logos-delivery/nimbledeps/pkgs2/bearssl-0.2.13-e3a004381e8c2ec0d37bebc2e48b42c34353e9cf/bearssl/csources" CFLAGS="-W -Wall -Os -fPIC" lib
+Rebuilding nat-libs from /src/logos-delivery/nimbledeps/pkgs2/nat_traversal-0.0.1-d36e7e9289896a9754933b2efcd57fe78c573009
+nat-libs were built with a different CC — cleaning for rebuild
+Restoring leopard cmake placeholder benchmark.cpp
+Restoring leopard cmake placeholder experiments.cpp
+make[2]: Entering directory '/src/logos-delivery/nimbledeps/pkgs2/bearssl-0.2.13-e3a004381e8c2ec0d37bebc2e48b42c34353e9cf/bearssl/csources'
+mkdir -p build/obj
+"make" -C "/src/logos-delivery/nimbledeps/pkgs2/nat_traversal-0.0.1-d36e7e9289896a9754933b2efcd57fe78c573009/vendor/miniupnp/miniupnpc" \
+	CC=cc CFLAGS="-Os -fPIC " build/libminiupnpc.a >/dev/null
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/settings.o src/settings.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ccm.o src/aead/ccm.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/eax.o src/aead/eax.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/gcm.o src/aead/gcm.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ccopy.o src/codec/ccopy.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/dec16be.o src/codec/dec16be.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/dec16le.o src/codec/dec16le.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/dec32be.o src/codec/dec32be.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/dec32le.o src/codec/dec32le.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/dec64be.o src/codec/dec64be.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/dec64le.o src/codec/dec64le.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/enc16be.o src/codec/enc16be.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/enc16le.o src/codec/enc16le.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/enc32be.o src/codec/enc32be.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/enc32le.o src/codec/enc32le.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/enc64be.o src/codec/enc64be.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/enc64le.o src/codec/enc64le.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/pemdec.o src/codec/pemdec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/pemenc.o src/codec/pemenc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_all_m15.o src/ec/ec_all_m15.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_all_m31.o src/ec/ec_all_m31.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_c25519_i15.o src/ec/ec_c25519_i15.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_c25519_i31.o src/ec/ec_c25519_i31.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_c25519_m15.o src/ec/ec_c25519_m15.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_c25519_m31.o src/ec/ec_c25519_m31.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_c25519_m62.o src/ec/ec_c25519_m62.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_c25519_m64.o src/ec/ec_c25519_m64.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_curve25519.o src/ec/ec_curve25519.c
+"make" CFLAGS="-Wall -Wno-cpp -Os -fPIC  -DENABLE_STRNATPMPERR -DNATPMP_MAX_RETRIES=4 " \
+	-C "/src/logos-delivery/nimbledeps/pkgs2/nat_traversal-0.0.1-d36e7e9289896a9754933b2efcd57fe78c573009/vendor/libnatpmp-upstream" \
+	CC=cc libnatpmp.a >/dev/null
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_default.o src/ec/ec_default.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_keygen.o src/ec/ec_keygen.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_p256_m15.o src/ec/ec_p256_m15.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_p256_m31.o src/ec/ec_p256_m31.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_p256_m62.o src/ec/ec_p256_m62.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_p256_m64.o src/ec/ec_p256_m64.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_prime_i15.o src/ec/ec_prime_i15.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_prime_i31.o src/ec/ec_prime_i31.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_pubkey.o src/ec/ec_pubkey.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_secp256r1.o src/ec/ec_secp256r1.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_secp384r1.o src/ec/ec_secp384r1.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_secp521r1.o src/ec/ec_secp521r1.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_atr.o src/ec/ecdsa_atr.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_default_sign_asn1.o src/ec/ecdsa_default_sign_asn1.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_default_sign_raw.o src/ec/ecdsa_default_sign_raw.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_default_vrfy_asn1.o src/ec/ecdsa_default_vrfy_asn1.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_default_vrfy_raw.o src/ec/ecdsa_default_vrfy_raw.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_i15_bits.o src/ec/ecdsa_i15_bits.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_i15_sign_asn1.o src/ec/ecdsa_i15_sign_asn1.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_i15_sign_raw.o src/ec/ecdsa_i15_sign_raw.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_i15_vrfy_asn1.o src/ec/ecdsa_i15_vrfy_asn1.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_i15_vrfy_raw.o src/ec/ecdsa_i15_vrfy_raw.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_i31_bits.o src/ec/ecdsa_i31_bits.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_i31_sign_asn1.o src/ec/ecdsa_i31_sign_asn1.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_i31_sign_raw.o src/ec/ecdsa_i31_sign_raw.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_i31_vrfy_asn1.o src/ec/ecdsa_i31_vrfy_asn1.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_i31_vrfy_raw.o src/ec/ecdsa_i31_vrfy_raw.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_rta.o src/ec/ecdsa_rta.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/dig_oid.o src/hash/dig_oid.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/dig_size.o src/hash/dig_size.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ghash_ctmul.o src/hash/ghash_ctmul.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ghash_ctmul32.o src/hash/ghash_ctmul32.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ghash_ctmul64.o src/hash/ghash_ctmul64.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ghash_pclmul.o src/hash/ghash_pclmul.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ghash_pwr8.o src/hash/ghash_pwr8.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/md5.o src/hash/md5.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/md5sha1.o src/hash/md5sha1.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/mgf1.o src/hash/mgf1.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/multihash.o src/hash/multihash.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/sha1.o src/hash/sha1.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/sha2big.o src/hash/sha2big.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/sha2small.o src/hash/sha2small.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_add.o src/int/i15_add.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_bitlen.o src/int/i15_bitlen.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_decmod.o src/int/i15_decmod.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_decode.o src/int/i15_decode.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_decred.o src/int/i15_decred.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_encode.o src/int/i15_encode.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_fmont.o src/int/i15_fmont.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_iszero.o src/int/i15_iszero.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_moddiv.o src/int/i15_moddiv.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_modpow.o src/int/i15_modpow.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_modpow2.o src/int/i15_modpow2.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_montmul.o src/int/i15_montmul.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_mulacc.o src/int/i15_mulacc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_muladd.o src/int/i15_muladd.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_ninv15.o src/int/i15_ninv15.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_reduce.o src/int/i15_reduce.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_rshift.o src/int/i15_rshift.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_sub.o src/int/i15_sub.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_tmont.o src/int/i15_tmont.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_add.o src/int/i31_add.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_bitlen.o src/int/i31_bitlen.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_decmod.o src/int/i31_decmod.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_decode.o src/int/i31_decode.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_decred.o src/int/i31_decred.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_encode.o src/int/i31_encode.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_fmont.o src/int/i31_fmont.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_iszero.o src/int/i31_iszero.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_moddiv.o src/int/i31_moddiv.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_modpow.o src/int/i31_modpow.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_modpow2.o src/int/i31_modpow2.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_montmul.o src/int/i31_montmul.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_mulacc.o src/int/i31_mulacc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_muladd.o src/int/i31_muladd.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_ninv31.o src/int/i31_ninv31.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_reduce.o src/int/i31_reduce.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_rshift.o src/int/i31_rshift.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_sub.o src/int/i31_sub.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_tmont.o src/int/i31_tmont.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_add.o src/int/i32_add.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_bitlen.o src/int/i32_bitlen.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_decmod.o src/int/i32_decmod.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_decode.o src/int/i32_decode.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_decred.o src/int/i32_decred.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_div32.o src/int/i32_div32.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_encode.o src/int/i32_encode.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_fmont.o src/int/i32_fmont.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_iszero.o src/int/i32_iszero.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_modpow.o src/int/i32_modpow.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_montmul.o src/int/i32_montmul.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_mulacc.o src/int/i32_mulacc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_muladd.o src/int/i32_muladd.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_ninv32.o src/int/i32_ninv32.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_reduce.o src/int/i32_reduce.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_sub.o src/int/i32_sub.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_tmont.o src/int/i32_tmont.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i62_modpow2.o src/int/i62_modpow2.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/hkdf.o src/kdf/hkdf.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/shake.o src/kdf/shake.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/hmac.o src/mac/hmac.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/hmac_ct.o src/mac/hmac_ct.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aesctr_drbg.o src/rand/aesctr_drbg.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/hmac_drbg.o src/rand/hmac_drbg.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/sysrng.o src/rand/sysrng.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_default_keygen.o src/rsa/rsa_default_keygen.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_default_modulus.o src/rsa/rsa_default_modulus.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_default_oaep_decrypt.o src/rsa/rsa_default_oaep_decrypt.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_default_oaep_encrypt.o src/rsa/rsa_default_oaep_encrypt.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_default_pkcs1_sign.o src/rsa/rsa_default_pkcs1_sign.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_default_pkcs1_vrfy.o src/rsa/rsa_default_pkcs1_vrfy.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_default_priv.o src/rsa/rsa_default_priv.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_default_privexp.o src/rsa/rsa_default_privexp.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_default_pss_sign.o src/rsa/rsa_default_pss_sign.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_default_pss_vrfy.o src/rsa/rsa_default_pss_vrfy.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_default_pub.o src/rsa/rsa_default_pub.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_default_pubexp.o src/rsa/rsa_default_pubexp.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i15_keygen.o src/rsa/rsa_i15_keygen.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i15_modulus.o src/rsa/rsa_i15_modulus.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i15_oaep_decrypt.o src/rsa/rsa_i15_oaep_decrypt.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i15_oaep_encrypt.o src/rsa/rsa_i15_oaep_encrypt.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i15_pkcs1_sign.o src/rsa/rsa_i15_pkcs1_sign.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i15_pkcs1_vrfy.o src/rsa/rsa_i15_pkcs1_vrfy.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i15_priv.o src/rsa/rsa_i15_priv.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i15_privexp.o src/rsa/rsa_i15_privexp.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i15_pss_sign.o src/rsa/rsa_i15_pss_sign.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i15_pss_vrfy.o src/rsa/rsa_i15_pss_vrfy.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i15_pub.o src/rsa/rsa_i15_pub.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i15_pubexp.o src/rsa/rsa_i15_pubexp.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i31_keygen.o src/rsa/rsa_i31_keygen.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i31_keygen_inner.o src/rsa/rsa_i31_keygen_inner.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i31_modulus.o src/rsa/rsa_i31_modulus.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i31_oaep_decrypt.o src/rsa/rsa_i31_oaep_decrypt.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i31_oaep_encrypt.o src/rsa/rsa_i31_oaep_encrypt.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i31_pkcs1_sign.o src/rsa/rsa_i31_pkcs1_sign.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i31_pkcs1_vrfy.o src/rsa/rsa_i31_pkcs1_vrfy.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i31_priv.o src/rsa/rsa_i31_priv.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i31_privexp.o src/rsa/rsa_i31_privexp.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i31_pss_sign.o src/rsa/rsa_i31_pss_sign.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i31_pss_vrfy.o src/rsa/rsa_i31_pss_vrfy.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i31_pub.o src/rsa/rsa_i31_pub.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i31_pubexp.o src/rsa/rsa_i31_pubexp.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i32_oaep_decrypt.o src/rsa/rsa_i32_oaep_decrypt.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i32_oaep_encrypt.o src/rsa/rsa_i32_oaep_encrypt.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i32_pkcs1_sign.o src/rsa/rsa_i32_pkcs1_sign.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i32_pkcs1_vrfy.o src/rsa/rsa_i32_pkcs1_vrfy.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i32_priv.o src/rsa/rsa_i32_priv.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i32_pss_sign.o src/rsa/rsa_i32_pss_sign.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i32_pss_vrfy.o src/rsa/rsa_i32_pss_vrfy.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i32_pub.o src/rsa/rsa_i32_pub.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i62_keygen.o src/rsa/rsa_i62_keygen.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i62_oaep_decrypt.o src/rsa/rsa_i62_oaep_decrypt.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i62_oaep_encrypt.o src/rsa/rsa_i62_oaep_encrypt.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i62_pkcs1_sign.o src/rsa/rsa_i62_pkcs1_sign.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i62_pkcs1_vrfy.o src/rsa/rsa_i62_pkcs1_vrfy.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i62_priv.o src/rsa/rsa_i62_priv.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i62_pss_sign.o src/rsa/rsa_i62_pss_sign.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i62_pss_vrfy.o src/rsa/rsa_i62_pss_vrfy.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i62_pub.o src/rsa/rsa_i62_pub.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_oaep_pad.o src/rsa/rsa_oaep_pad.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_oaep_unpad.o src/rsa/rsa_oaep_unpad.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_pkcs1_sig_pad.o src/rsa/rsa_pkcs1_sig_pad.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_pkcs1_sig_unpad.o src/rsa/rsa_pkcs1_sig_unpad.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_pss_sig_pad.o src/rsa/rsa_pss_sig_pad.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_pss_sig_unpad.o src/rsa/rsa_pss_sig_unpad.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_ssl_decrypt.o src/rsa/rsa_ssl_decrypt.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/prf.o src/ssl/prf.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/prf_md5sha1.o src/ssl/prf_md5sha1.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/prf_sha256.o src/ssl/prf_sha256.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/prf_sha384.o src/ssl/prf_sha384.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_ccert_single_ec.o src/ssl/ssl_ccert_single_ec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_ccert_single_rsa.o src/ssl/ssl_ccert_single_rsa.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_client.o src/ssl/ssl_client.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_client_default_rsapub.o src/ssl/ssl_client_default_rsapub.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_client_full.o src/ssl/ssl_client_full.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_engine.o src/ssl/ssl_engine.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_engine_default_aescbc.o src/ssl/ssl_engine_default_aescbc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_engine_default_aesccm.o src/ssl/ssl_engine_default_aesccm.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_engine_default_aesgcm.o src/ssl/ssl_engine_default_aesgcm.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_engine_default_chapol.o src/ssl/ssl_engine_default_chapol.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_engine_default_descbc.o src/ssl/ssl_engine_default_descbc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_engine_default_ec.o src/ssl/ssl_engine_default_ec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_engine_default_ecdsa.o src/ssl/ssl_engine_default_ecdsa.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_engine_default_rsavrfy.o src/ssl/ssl_engine_default_rsavrfy.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_hashes.o src/ssl/ssl_hashes.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_hs_client.o src/ssl/ssl_hs_client.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_hs_server.o src/ssl/ssl_hs_server.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_io.o src/ssl/ssl_io.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_keyexport.o src/ssl/ssl_keyexport.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_lru.o src/ssl/ssl_lru.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_rec_cbc.o src/ssl/ssl_rec_cbc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_rec_ccm.o src/ssl/ssl_rec_ccm.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_rec_chapol.o src/ssl/ssl_rec_chapol.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_rec_gcm.o src/ssl/ssl_rec_gcm.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_scert_single_ec.o src/ssl/ssl_scert_single_ec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_scert_single_rsa.o src/ssl/ssl_scert_single_rsa.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_server.o src/ssl/ssl_server.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_server_full_ec.o src/ssl/ssl_server_full_ec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_server_full_rsa.o src/ssl/ssl_server_full_rsa.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_server_mine2c.o src/ssl/ssl_server_mine2c.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_server_mine2g.o src/ssl/ssl_server_mine2g.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_server_minf2c.o src/ssl/ssl_server_minf2c.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_server_minf2g.o src/ssl/ssl_server_minf2g.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_server_minr2g.o src/ssl/ssl_server_minr2g.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_server_minu2g.o src/ssl/ssl_server_minu2g.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_server_minv2g.o src/ssl/ssl_server_minv2g.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_big_cbcdec.o src/symcipher/aes_big_cbcdec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_big_cbcenc.o src/symcipher/aes_big_cbcenc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_big_ctr.o src/symcipher/aes_big_ctr.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_big_ctrcbc.o src/symcipher/aes_big_ctrcbc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_big_dec.o src/symcipher/aes_big_dec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_big_enc.o src/symcipher/aes_big_enc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_common.o src/symcipher/aes_common.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct.o src/symcipher/aes_ct.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct64.o src/symcipher/aes_ct64.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct64_cbcdec.o src/symcipher/aes_ct64_cbcdec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct64_cbcenc.o src/symcipher/aes_ct64_cbcenc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct64_ctr.o src/symcipher/aes_ct64_ctr.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct64_ctrcbc.o src/symcipher/aes_ct64_ctrcbc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct64_dec.o src/symcipher/aes_ct64_dec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct64_enc.o src/symcipher/aes_ct64_enc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct_cbcdec.o src/symcipher/aes_ct_cbcdec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct_cbcenc.o src/symcipher/aes_ct_cbcenc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct_ctr.o src/symcipher/aes_ct_ctr.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct_ctrcbc.o src/symcipher/aes_ct_ctrcbc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct_dec.o src/symcipher/aes_ct_dec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct_enc.o src/symcipher/aes_ct_enc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_pwr8.o src/symcipher/aes_pwr8.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_pwr8_cbcdec.o src/symcipher/aes_pwr8_cbcdec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_pwr8_cbcenc.o src/symcipher/aes_pwr8_cbcenc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_pwr8_ctr.o src/symcipher/aes_pwr8_ctr.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_pwr8_ctrcbc.o src/symcipher/aes_pwr8_ctrcbc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_small_cbcdec.o src/symcipher/aes_small_cbcdec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_small_cbcenc.o src/symcipher/aes_small_cbcenc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_small_ctr.o src/symcipher/aes_small_ctr.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_small_ctrcbc.o src/symcipher/aes_small_ctrcbc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_small_dec.o src/symcipher/aes_small_dec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_small_enc.o src/symcipher/aes_small_enc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_x86ni.o src/symcipher/aes_x86ni.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_x86ni_cbcdec.o src/symcipher/aes_x86ni_cbcdec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_x86ni_cbcenc.o src/symcipher/aes_x86ni_cbcenc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_x86ni_ctr.o src/symcipher/aes_x86ni_ctr.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_x86ni_ctrcbc.o src/symcipher/aes_x86ni_ctrcbc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/chacha20_ct.o src/symcipher/chacha20_ct.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/chacha20_sse2.o src/symcipher/chacha20_sse2.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/des_ct.o src/symcipher/des_ct.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/des_ct_cbcdec.o src/symcipher/des_ct_cbcdec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/des_ct_cbcenc.o src/symcipher/des_ct_cbcenc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/des_support.o src/symcipher/des_support.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/des_tab.o src/symcipher/des_tab.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/des_tab_cbcdec.o src/symcipher/des_tab_cbcdec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/des_tab_cbcenc.o src/symcipher/des_tab_cbcenc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/poly1305_ctmul.o src/symcipher/poly1305_ctmul.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/poly1305_ctmul32.o src/symcipher/poly1305_ctmul32.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/poly1305_ctmulq.o src/symcipher/poly1305_ctmulq.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/poly1305_i15.o src/symcipher/poly1305_i15.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/asn1enc.o src/x509/asn1enc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/encode_ec_pk8der.o src/x509/encode_ec_pk8der.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/encode_ec_rawder.o src/x509/encode_ec_rawder.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/encode_rsa_pk8der.o src/x509/encode_rsa_pk8der.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/encode_rsa_rawder.o src/x509/encode_rsa_rawder.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/skey_decoder.o src/x509/skey_decoder.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/x509_decoder.o src/x509/x509_decoder.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/x509_knownkey.o src/x509/x509_knownkey.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/x509_minimal.o src/x509/x509_minimal.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/x509_minimal_full.o src/x509/x509_minimal_full.c
+ar -rcs build/libbearssl.a build/obj/settings.o  build/obj/ccm.o  build/obj/eax.o  build/obj/gcm.o  build/obj/ccopy.o  build/obj/dec16be.o  build/obj/dec16le.o  build/obj/dec32be.o  build/obj/dec32le.o  build/obj/dec64be.o  build/obj/dec64le.o  build/obj/enc16be.o  build/obj/enc16le.o  build/obj/enc32be.o  build/obj/enc32le.o  build/obj/enc64be.o  build/obj/enc64le.o  build/obj/pemdec.o  build/obj/pemenc.o  build/obj/ec_all_m15.o  build/obj/ec_all_m31.o  build/obj/ec_c25519_i15.o  build/obj/ec_c25519_i31.o  build/obj/ec_c25519_m15.o  build/obj/ec_c25519_m31.o  build/obj/ec_c25519_m62.o  build/obj/ec_c25519_m64.o  build/obj/ec_curve25519.o  build/obj/ec_default.o  build/obj/ec_keygen.o  build/obj/ec_p256_m15.o  build/obj/ec_p256_m31.o  build/obj/ec_p256_m62.o  build/obj/ec_p256_m64.o  build/obj/ec_prime_i15.o  build/obj/ec_prime_i31.o  build/obj/ec_pubkey.o  build/obj/ec_secp256r1.o  build/obj/ec_secp384r1.o  build/obj/ec_secp521r1.o  build/obj/ecdsa_atr.o  build/obj/ecdsa_default_sign_asn1.o  build/obj/ecdsa_default_sign_raw.o  build/obj/ecdsa_default_vrfy_asn1.o  build/obj/ecdsa_default_vrfy_raw.o  build/obj/ecdsa_i15_bits.o  build/obj/ecdsa_i15_sign_asn1.o  build/obj/ecdsa_i15_sign_raw.o  build/obj/ecdsa_i15_vrfy_asn1.o  build/obj/ecdsa_i15_vrfy_raw.o  build/obj/ecdsa_i31_bits.o  build/obj/ecdsa_i31_sign_asn1.o  build/obj/ecdsa_i31_sign_raw.o  build/obj/ecdsa_i31_vrfy_asn1.o  build/obj/ecdsa_i31_vrfy_raw.o  build/obj/ecdsa_rta.o  build/obj/dig_oid.o  build/obj/dig_size.o  build/obj/ghash_ctmul.o  build/obj/ghash_ctmul32.o  build/obj/ghash_ctmul64.o  build/obj/ghash_pclmul.o  build/obj/ghash_pwr8.o  build/obj/md5.o  build/obj/md5sha1.o  build/obj/mgf1.o  build/obj/multihash.o  build/obj/sha1.o  build/obj/sha2big.o  build/obj/sha2small.o  build/obj/i15_add.o  build/obj/i15_bitlen.o  build/obj/i15_decmod.o  build/obj/i15_decode.o  build/obj/i15_decred.o  build/obj/i15_encode.o  build/obj/i15_fmont.o  build/obj/i15_iszero.o  build/obj/i15_moddiv.o  build/obj/i15_modpow.o  build/obj/i15_modpow2.o  build/obj/i15_montmul.o  build/obj/i15_mulacc.o  build/obj/i15_muladd.o  build/obj/i15_ninv15.o  build/obj/i15_reduce.o  build/obj/i15_rshift.o  build/obj/i15_sub.o  build/obj/i15_tmont.o  build/obj/i31_add.o  build/obj/i31_bitlen.o  build/obj/i31_decmod.o  build/obj/i31_decode.o  build/obj/i31_decred.o  build/obj/i31_encode.o  build/obj/i31_fmont.o  build/obj/i31_iszero.o  build/obj/i31_moddiv.o  build/obj/i31_modpow.o  build/obj/i31_modpow2.o  build/obj/i31_montmul.o  build/obj/i31_mulacc.o  build/obj/i31_muladd.o  build/obj/i31_ninv31.o  build/obj/i31_reduce.o  build/obj/i31_rshift.o  build/obj/i31_sub.o  build/obj/i31_tmont.o  build/obj/i32_add.o  build/obj/i32_bitlen.o  build/obj/i32_decmod.o  build/obj/i32_decode.o  build/obj/i32_decred.o  build/obj/i32_div32.o  build/obj/i32_encode.o  build/obj/i32_fmont.o  build/obj/i32_iszero.o  build/obj/i32_modpow.o  build/obj/i32_montmul.o  build/obj/i32_mulacc.o  build/obj/i32_muladd.o  build/obj/i32_ninv32.o  build/obj/i32_reduce.o  build/obj/i32_sub.o  build/obj/i32_tmont.o  build/obj/i62_modpow2.o  build/obj/hkdf.o  build/obj/shake.o  build/obj/hmac.o  build/obj/hmac_ct.o  build/obj/aesctr_drbg.o  build/obj/hmac_drbg.o  build/obj/sysrng.o  build/obj/rsa_default_keygen.o  build/obj/rsa_default_modulus.o  build/obj/rsa_default_oaep_decrypt.o  build/obj/rsa_default_oaep_encrypt.o  build/obj/rsa_default_pkcs1_sign.o  build/obj/rsa_default_pkcs1_vrfy.o  build/obj/rsa_default_priv.o  build/obj/rsa_default_privexp.o  build/obj/rsa_default_pss_sign.o  build/obj/rsa_default_pss_vrfy.o  build/obj/rsa_default_pub.o  build/obj/rsa_default_pubexp.o  build/obj/rsa_i15_keygen.o  build/obj/rsa_i15_modulus.o  build/obj/rsa_i15_oaep_decrypt.o  build/obj/rsa_i15_oaep_encrypt.o  build/obj/rsa_i15_pkcs1_sign.o  build/obj/rsa_i15_pkcs1_vrfy.o  build/obj/rsa_i15_priv.o  build/obj/rsa_i15_privexp.o  build/obj/rsa_i15_pss_sign.o  build/obj/rsa_i15_pss_vrfy.o  build/obj/rsa_i15_pub.o  build/obj/rsa_i15_pubexp.o  build/obj/rsa_i31_keygen.o  build/obj/rsa_i31_keygen_inner.o  build/obj/rsa_i31_modulus.o  build/obj/rsa_i31_oaep_decrypt.o  build/obj/rsa_i31_oaep_encrypt.o  build/obj/rsa_i31_pkcs1_sign.o  build/obj/rsa_i31_pkcs1_vrfy.o  build/obj/rsa_i31_priv.o  build/obj/rsa_i31_privexp.o  build/obj/rsa_i31_pss_sign.o  build/obj/rsa_i31_pss_vrfy.o  build/obj/rsa_i31_pub.o  build/obj/rsa_i31_pubexp.o  build/obj/rsa_i32_oaep_decrypt.o  build/obj/rsa_i32_oaep_encrypt.o  build/obj/rsa_i32_pkcs1_sign.o  build/obj/rsa_i32_pkcs1_vrfy.o  build/obj/rsa_i32_priv.o  build/obj/rsa_i32_pss_sign.o  build/obj/rsa_i32_pss_vrfy.o  build/obj/rsa_i32_pub.o  build/obj/rsa_i62_keygen.o  build/obj/rsa_i62_oaep_decrypt.o  build/obj/rsa_i62_oaep_encrypt.o  build/obj/rsa_i62_pkcs1_sign.o  build/obj/rsa_i62_pkcs1_vrfy.o  build/obj/rsa_i62_priv.o  build/obj/rsa_i62_pss_sign.o  build/obj/rsa_i62_pss_vrfy.o  build/obj/rsa_i62_pub.o  build/obj/rsa_oaep_pad.o  build/obj/rsa_oaep_unpad.o  build/obj/rsa_pkcs1_sig_pad.o  build/obj/rsa_pkcs1_sig_unpad.o  build/obj/rsa_pss_sig_pad.o  build/obj/rsa_pss_sig_unpad.o  build/obj/rsa_ssl_decrypt.o  build/obj/prf.o  build/obj/prf_md5sha1.o  build/obj/prf_sha256.o  build/obj/prf_sha384.o  build/obj/ssl_ccert_single_ec.o  build/obj/ssl_ccert_single_rsa.o  build/obj/ssl_client.o  build/obj/ssl_client_default_rsapub.o  build/obj/ssl_client_full.o  build/obj/ssl_engine.o  build/obj/ssl_engine_default_aescbc.o  build/obj/ssl_engine_default_aesccm.o  build/obj/ssl_engine_default_aesgcm.o  build/obj/ssl_engine_default_chapol.o  build/obj/ssl_engine_default_descbc.o  build/obj/ssl_engine_default_ec.o  build/obj/ssl_engine_default_ecdsa.o  build/obj/ssl_engine_default_rsavrfy.o  build/obj/ssl_hashes.o  build/obj/ssl_hs_client.o  build/obj/ssl_hs_server.o  build/obj/ssl_io.o  build/obj/ssl_keyexport.o  build/obj/ssl_lru.o  build/obj/ssl_rec_cbc.o  build/obj/ssl_rec_ccm.o  build/obj/ssl_rec_chapol.o  build/obj/ssl_rec_gcm.o  build/obj/ssl_scert_single_ec.o  build/obj/ssl_scert_single_rsa.o  build/obj/ssl_server.o  build/obj/ssl_server_full_ec.o  build/obj/ssl_server_full_rsa.o  build/obj/ssl_server_mine2c.o  build/obj/ssl_server_mine2g.o  build/obj/ssl_server_minf2c.o  build/obj/ssl_server_minf2g.o  build/obj/ssl_server_minr2g.o  build/obj/ssl_server_minu2g.o  build/obj/ssl_server_minv2g.o  build/obj/aes_big_cbcdec.o  build/obj/aes_big_cbcenc.o  build/obj/aes_big_ctr.o  build/obj/aes_big_ctrcbc.o  build/obj/aes_big_dec.o  build/obj/aes_big_enc.o  build/obj/aes_common.o  build/obj/aes_ct.o  build/obj/aes_ct64.o  build/obj/aes_ct64_cbcdec.o  build/obj/aes_ct64_cbcenc.o  build/obj/aes_ct64_ctr.o  build/obj/aes_ct64_ctrcbc.o  build/obj/aes_ct64_dec.o  build/obj/aes_ct64_enc.o  build/obj/aes_ct_cbcdec.o  build/obj/aes_ct_cbcenc.o  build/obj/aes_ct_ctr.o  build/obj/aes_ct_ctrcbc.o  build/obj/aes_ct_dec.o  build/obj/aes_ct_enc.o  build/obj/aes_pwr8.o  build/obj/aes_pwr8_cbcdec.o  build/obj/aes_pwr8_cbcenc.o  build/obj/aes_pwr8_ctr.o  build/obj/aes_pwr8_ctrcbc.o  build/obj/aes_small_cbcdec.o  build/obj/aes_small_cbcenc.o  build/obj/aes_small_ctr.o  build/obj/aes_small_ctrcbc.o  build/obj/aes_small_dec.o  build/obj/aes_small_enc.o  build/obj/aes_x86ni.o  build/obj/aes_x86ni_cbcdec.o  build/obj/aes_x86ni_cbcenc.o  build/obj/aes_x86ni_ctr.o  build/obj/aes_x86ni_ctrcbc.o  build/obj/chacha20_ct.o  build/obj/chacha20_sse2.o  build/obj/des_ct.o  build/obj/des_ct_cbcdec.o  build/obj/des_ct_cbcenc.o  build/obj/des_support.o  build/obj/des_tab.o  build/obj/des_tab_cbcdec.o  build/obj/des_tab_cbcenc.o  build/obj/poly1305_ctmul.o  build/obj/poly1305_ctmul32.o  build/obj/poly1305_ctmulq.o  build/obj/poly1305_i15.o  build/obj/asn1enc.o  build/obj/encode_ec_pk8der.o  build/obj/encode_ec_rawder.o  build/obj/encode_rsa_pk8der.o  build/obj/encode_rsa_rawder.o  build/obj/skey_decoder.o  build/obj/x509_decoder.o  build/obj/x509_knownkey.o  build/obj/x509_minimal.o  build/obj/x509_minimal_full.o
+make[2]: Leaving directory '/src/logos-delivery/nimbledeps/pkgs2/bearssl-0.2.13-e3a004381e8c2ec0d37bebc2e48b42c34353e9cf/bearssl/csources'
+make[1]: Leaving directory '/src/logos-delivery'
+make audit-deps
+make[1]: Entering directory '/src/logos-delivery'
+/root/.local/nimble-0.26.0/bin/nimble auditdeps --nim:/src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/bin/nim
+      Info: using /src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/bin/nim for compilation
+  Executing task auditdeps in /src/logos-delivery/logos_delivery.nimble
+[NimScript] exec: /src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/bin/nim e --hints:off scripts/audit_deps.nims
+audit: 49/49 installed packages match nimble.lock
+make[1]: Leaving directory '/src/logos-delivery'
+/root/.local/nimble-0.26.0/bin/nimble --verbose liblogosdeliveryDynamicLinux logos_delivery.nimble --nim:/src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/bin/nim
+      Info: Package cache path /root/.nimble/pkgcache
+      Info: Package cache path /root/.nimble/pkgcache
+     Info:  Nimble data file "/src/logos-delivery/nimbledeps/nimbledata2.json" has been loaded.
+  Warning:  /src/logos-delivery/nimbledeps/pkgs2/metrics-0.2.2-d64e789ba2a3b848eb7c628d728623126182c3f1/metrics.nimble(47, 2) 'taskRequires' is not supported in declarative parser
+      Info: using /src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/bin/nim for compilation
+    Reading official package list
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on unicodedb@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+     Info:  Dependency on chronos@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on faststreams@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on testutils@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on faststreams@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on faststreams@any version already satisfied
+     Info:  Dependency on npeg@any version already satisfied
+     Info:  Dependency on serialization@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on faststreams@any version already satisfied
+     Info:  Dependency on serialization@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on serialization@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on serialization@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on faststreams@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+     Info:  Dependency on serialization@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on faststreams@any version already satisfied
+     Info:  Dependency on serialization@any version already satisfied
+     Info:  Dependency on json_serialization@any version already satisfied
+     Info:  Dependency on testutils@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on chronos@any version already satisfied
+     Info:  Dependency on chronicles@any version already satisfied
+     Info:  Dependency on metrics@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on intops@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on nimcrypto@any version already satisfied
+     Info:  Dependency on stint@any version already satisfied
+     Info:  Dependency on chronos@any version already satisfied
+     Info:  Dependency on httputils@any version already satisfied
+     Info:  Dependency on chronicles@any version already satisfied
+     Info:  Dependency on websock@any version already satisfied
+     Info:  Dependency on serialization@any version already satisfied
+     Info:  Dependency on json_serialization@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on nimcrypto@any version already satisfied
+     Info:  Dependency on bearssl@any version already satisfied
+     Info:  Dependency on boringssl@any version already satisfied
+     Info:  Dependency on chronicles@any version already satisfied
+     Info:  Dependency on chronos@any version already satisfied
+     Info:  Dependency on metrics@any version already satisfied
+     Info:  Dependency on secp256k1@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+     Info:  Dependency on serialization@any version already satisfied
+     Info:  Dependency on json_serialization@any version already satisfied
+     Info:  Dependency on lsquic@any version already satisfied
+     Info:  Dependency on protobuf_serialization@any version already satisfied
+     Info:  Dependency on websock@any version already satisfied
+     Info:  Dependency on libplum@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on nimcrypto@any version already satisfied
+     Info:  Dependency on stint@any version already satisfied
+     Info:  Dependency on secp256k1@any version already satisfied
+     Info:  Dependency on chronos@any version already satisfied
+     Info:  Dependency on chronicles@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on nat_traversal@any version already satisfied
+     Info:  Dependency on metrics@any version already satisfied
+     Info:  Dependency on sqlite3_abi@any version already satisfied
+     Info:  Dependency on confutils@any version already satisfied
+     Info:  Dependency on testutils@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+     Info:  Dependency on minilru@any version already satisfied
+     Info:  Dependency on snappy@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on bearssl@any version already satisfied
+     Info:  Dependency on chronicles@any version already satisfied
+     Info:  Dependency on chronos@any version already satisfied
+     Info:  Dependency on eth@any version already satisfied
+     Info:  Dependency on secp256k1@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on testutils@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nimcrypto@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+ Installing boringssl@0.0.13
+  Warning:  A package "boringssl@0.0.13" with checksum "706b29a12b4462400524c570b953752dfb285d4d" already exists in the cache.
+ Installing bearssl_pkey_decoder@0.1.0
+  Warning:  A package "bearssl_pkey_decoder@0.1.0" with checksum "8666edbcb77cb9f97c659114d57c4ba0e7ab74c3" already exists in the cache.
+ Installing jwt@0.2
+  Warning:  A package "jwt@0.2" with checksum "3cd368666fd2bc7f99f253452289e827abcac13c" already exists in the cache.
+ Installing chronos@4.4.0
+  Warning:  A package "chronos@4.4.0" with checksum "ca63adf451a12da1ac80419bd7f734eae6627c03" already exists in the cache.
+ Installing metrics@0.2.2
+  Warning:  A package "metrics@0.2.2" with checksum "d64e789ba2a3b848eb7c628d728623126182c3f1" already exists in the cache.
+ Installing ffi@0.3.0
+  Warning:  A package "ffi@0.3.0" with checksum "ed2abe9a655532b35885ab3cc785c504574bb819" already exists in the cache.
+ Installing lsquic@0.9.0
+  Warning:  A package "lsquic@0.9.0" with checksum "6ca2849ff7c7a0d5271dc57ce869c72ba3111a2f" already exists in the cache.
+ Installing brokers@3.4.0
+  Warning:  A package "brokers@3.4.0" with checksum "65f36b4f6d9a5db2139712ff948e5d075c390d49" already exists in the cache.
+ Installing leopard@0.1.1
+  Warning:  A package "leopard@0.1.1" with checksum "2fc77ade5d088afbb56c555a295f1cf286cebb7d" already exists in the cache.
+ Installing websock@0.4.1
+  Warning:  A package "websock@0.4.1" with checksum "7c240c080f618855411bb0ee3984f6062123bcd4" already exists in the cache.
+ Installing segmentation@0.1.0
+  Warning:  A package "segmentation@0.1.0" with checksum "44f5ffa727c58f581b356e8d1c6a3b167f32dee8" already exists in the cache.
+ Installing secp256k1@0.6.0.3.2
+  Warning:  A package "secp256k1@0.6.0.3.2" with checksum "6618ef9de17121846a8c1d0317026b0ce8584e10" already exists in the cache.
+ Installing sds@0.4.0
+  Warning:  A package "sds@0.4.0" with checksum "2071e9c444a36dd43edf1287c43f13ff1c8aea8a" already exists in the cache.
+ Installing libp2p_mix@0.1.0
+  Warning:  A package "libp2p_mix@0.1.0" with checksum "053909f0933b725018f7d87b27403a4b06d7f23a" already exists in the cache.
+ Installing web3@0.8.0
+  Warning:  A package "web3@0.8.0" with checksum "26a112af032ef1536f97da2ca7364af618a11b80" already exists in the cache.
+     Info:  "nimble.paths" is updated.
+     Info:  "config.nims" is already set up.
+  Executing task liblogosdeliveryDynamicLinux in /src/logos-delivery/logos_delivery.nimble
+[NimScript] mkDir: build
+[NimScript] mkDir: library/generated
+[NimScript] exec: /src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/bin/nim c --out:build/liblogosdelivery.so --threads:on --app:lib --opt:speed --noMain --mm:refc --header -d:metrics --nimMainPrefix:liblogosdelivery --skipParentCfg:off -d:discv5_protocol_id=d5waku  -d:libp2p_mix_experimental_exit_is_dest -d:libp2p_quic_support  -d:ffiGenBindings -d:targetLang=c -d:ffiOutputDir=generated -d:ffiSrcPath=../liblogosdelivery.nim  --cpu:arm64  -d:chronicles_line_numbers --warning:Deprecated:off --warning:UnusedImport:on -d:chronicles_log_level=TRACE   --verbosity:0 --hints:off -d:git_version=\"0f2188\" -d:debug -d:disable_libbacktrace  --passL:librln_v2.0.2.a --passL:-lm   library/liblogosdelivery.nim
+/src/logos-delivery/logos_delivery/waku/common/enr/builder.nim(10, 8) Warning: imported and not used: 'typed_record' [UnusedImport]
+/src/logos-delivery/nimbledeps/pkgs2/libp2p_mix-0.1.0-053909f0933b725018f7d87b27403a4b06d7f23a/libp2p_mix/mix_protocol.nim(25, 12) Warning: experimental support for mix exit == destination is enabled! [User]
+/src/logos-delivery/logos_delivery/waku/waku_enr/capabilities.nim(36, 5) Warning: lightpush, filter, store, relay, sync, mix all have default value 'false', this may be unintentional, either use ';' (semicolon) or explicitly write each default value [ImplicitDefaultValue]
+/src/logos-delivery/logos_delivery/api/types.nim(3, 48) Warning: imported and not used: 'times' [UnusedImport]
+/src/logos-delivery/logos_delivery/api/types.nim(3, 38) Warning: imported and not used: 'rand' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/waku_store/common.nim(3, 36) Warning: imported and not used: 'byteutils' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/waku_archive/archive.nim(5, 9) Warning: imported and not used: 'byteutils' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/waku_rendezvous/waku_peer_record.nim(11, 10) Warning: imported and not used: 'shortlog' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/node/peer_manager/peer_manager.nim(19, 21) Warning: imported and not used: 'sharding' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/waku_store/protocol.nim(11, 11) Warning: imported and not used: 'rand' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/waku_store/client.nim(10, 11) Warning: imported and not used: 'rand' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/waku_store/client.nim(5, 26) Warning: imported and not used: 'algorithm' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/waku_filter_v2/protocol.nim(8, 8) Warning: imported and not used: 'byteutils' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/events/filter_subscribe_events.nim(2, 63) Warning: imported and not used: 'digest' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/events/filter_subscribe_events.nim(2, 46) Warning: imported and not used: 'message' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/waku_filter_v2/client.nim(10, 11) Warning: imported and not used: 'rand' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/waku_rendezvous/protocol.nim(43, 5) template/generic instantiation of `async` from here
+/src/logos-delivery/logos_delivery/waku/waku_rendezvous/protocol.nim(41, 8) Warning: use {.base.} for base methods; baseless methods are deprecated [UseBase]
+/src/logos-delivery/logos_delivery/waku/waku_lightpush_legacy/client.nim(4, 55) Warning: imported and not used: 'rand' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/waku_lightpush_legacy/protocol.nim(4, 71) Warning: imported and not used: 'rand' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/waku_lightpush_legacy/protocol.nim(4, 22) Warning: imported and not used: 'byteutils' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/waku_lightpush_legacy/self_req_handler.nim(12, 52) Warning: imported and not used: 'byteutils' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/waku_lightpush/client.nim(4, 55) Warning: imported and not used: 'rand' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/waku_lightpush/protocol.nim(4, 36) Warning: imported and not used: 'byteutils' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/waku_lightpush/protocol.nim(4, 85) Warning: imported and not used: 'rand' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(61, 5) Warning: RequestBroker: broker name is `BackendInfo` (capitalized from proc `backendInfo`); call it as `BackendInfo.request(...)`. Write `proc BackendInfo(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(64, 5) Warning: RequestBroker: broker name is `StartDiscovery` (capitalized from proc `startDiscovery`); call it as `StartDiscovery.request(...)`. Write `proc StartDiscovery(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(67, 5) Warning: RequestBroker: broker name is `StopDiscovery` (capitalized from proc `stopDiscovery`); call it as `StopDiscovery.request(...)`. Write `proc StopDiscovery(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(72, 5) Warning: RequestBroker: broker name is `LookupServicePeers` (capitalized from proc `lookupServicePeers`); call it as `LookupServicePeers.request(...)`. Write `proc LookupServicePeers(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(79, 5) Warning: RequestBroker: broker name is `LookupRandom` (capitalized from proc `lookupRandom`); call it as `LookupRandom.request(...)`. Write `proc LookupRandom(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(88, 5) Warning: RequestBroker: broker name is `StartAdvertising` (capitalized from proc `startAdvertising`); call it as `StartAdvertising.request(...)`. Write `proc StartAdvertising(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(94, 5) Warning: RequestBroker: broker name is `StopAdvertising` (capitalized from proc `stopAdvertising`); call it as `StopAdvertising.request(...)`. Write `proc StopAdvertising(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(100, 5) Warning: RequestBroker: broker name is `RegisterInterest` (capitalized from proc `registerInterest`); call it as `RegisterInterest.request(...)`. Write `proc RegisterInterest(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(103, 5) Warning: RequestBroker: broker name is `UnregisterInterest` (capitalized from proc `unregisterInterest`); call it as `UnregisterInterest.request(...)`. Write `proc UnregisterInterest(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(108, 5) Warning: RequestBroker: broker name is `AddBootstrapEntries` (capitalized from proc `addBootstrapEntries`); call it as `AddBootstrapEntries.request(...)`. Write `proc AddBootstrapEntries(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(60, 3) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(61, 5) Warning: RequestBroker: broker name is `BackendInfo` (capitalized from proc `backendInfo`); call it as `BackendInfo.request(...)`. Write `proc BackendInfo(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(63, 3) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(64, 5) Warning: RequestBroker: broker name is `StartDiscovery` (capitalized from proc `startDiscovery`); call it as `StartDiscovery.request(...)`. Write `proc StartDiscovery(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(66, 3) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(67, 5) Warning: RequestBroker: broker name is `StopDiscovery` (capitalized from proc `stopDiscovery`); call it as `StopDiscovery.request(...)`. Write `proc StopDiscovery(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(69, 3) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(72, 5) Warning: RequestBroker: broker name is `LookupServicePeers` (capitalized from proc `lookupServicePeers`); call it as `LookupServicePeers.request(...)`. Write `proc LookupServicePeers(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(76, 3) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(79, 5) Warning: RequestBroker: broker name is `LookupRandom` (capitalized from proc `lookupRandom`); call it as `LookupRandom.request(...)`. Write `proc LookupRandom(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(81, 3) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(88, 5) Warning: RequestBroker: broker name is `StartAdvertising` (capitalized from proc `startAdvertising`); call it as `StartAdvertising.request(...)`. Write `proc StartAdvertising(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(92, 3) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(94, 5) Warning: RequestBroker: broker name is `StopAdvertising` (capitalized from proc `stopAdvertising`); call it as `StopAdvertising.request(...)`. Write `proc StopAdvertising(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(96, 3) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(100, 5) Warning: RequestBroker: broker name is `RegisterInterest` (capitalized from proc `registerInterest`); call it as `RegisterInterest.request(...)`. Write `proc RegisterInterest(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(102, 3) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(103, 5) Warning: RequestBroker: broker name is `UnregisterInterest` (capitalized from proc `unregisterInterest`); call it as `UnregisterInterest.request(...)`. Write `proc UnregisterInterest(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(105, 3) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(108, 5) Warning: RequestBroker: broker name is `AddBootstrapEntries` (capitalized from proc `addBootstrapEntries`); call it as `AddBootstrapEntries.request(...)`. Write `proc AddBootstrapEntries(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/rln/rln_evm/group_manager.nim(13, 3) Warning: imported and not used: 'json' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/rln/rln_evm/group_manager.nim(14, 18) Warning: imported and not used: 'tables' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/rln/rln_evm/group_manager.nim(14, 8) Warning: imported and not used: 'strutils' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/rln/rln_evm/group_manager.nim(14, 37) Warning: imported and not used: 'strformat' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/persistency/backend_comm.nim(138, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/nimbledeps/pkgs2/brokers-3.4.0-65f36b4f6d9a5db2139712ff948e5d075c390d49/brokers/internal/mt_request_broker.nim(219, 16) Warning: [brokers] RequestBroker(KvGet) could not auto-size request payload (unclassifiable:Key); falling back to 8192 B. Override with `maxPayloadBytes = N`. [User]
+/src/logos-delivery/logos_delivery/waku/persistency/backend_comm.nim(144, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/nimbledeps/pkgs2/brokers-3.4.0-65f36b4f6d9a5db2139712ff948e5d075c390d49/brokers/internal/mt_request_broker.nim(219, 16) Warning: [brokers] RequestBroker(KvExists) could not auto-size request payload (unclassifiable:Key); falling back to 8192 B. Override with `maxPayloadBytes = N`. [User]
+/src/logos-delivery/logos_delivery/waku/persistency/backend_comm.nim(152, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/nimbledeps/pkgs2/brokers-3.4.0-65f36b4f6d9a5db2139712ff948e5d075c390d49/brokers/internal/mt_request_broker.nim(219, 16) Warning: [brokers] RequestBroker(KvScan) could not auto-size request payload (unclassifiable:KeyRange); falling back to 8192 B. Override with `maxPayloadBytes = N`. [User]
+/src/logos-delivery/logos_delivery/waku/persistency/backend_comm.nim(160, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/nimbledeps/pkgs2/brokers-3.4.0-65f36b4f6d9a5db2139712ff948e5d075c390d49/brokers/internal/mt_request_broker.nim(219, 16) Warning: [brokers] RequestBroker(KvCount) could not auto-size request payload (unclassifiable:KeyRange); falling back to 8192 B. Override with `maxPayloadBytes = N`. [User]
+/src/logos-delivery/logos_delivery/waku/persistency/backend_comm.nim(168, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/nimbledeps/pkgs2/brokers-3.4.0-65f36b4f6d9a5db2139712ff948e5d075c390d49/brokers/internal/mt_request_broker.nim(219, 16) Warning: [brokers] RequestBroker(KvDelete) could not auto-size request payload (unclassifiable:Key); falling back to 8192 B. Override with `maxPayloadBytes = N`. [User]
+/src/logos-delivery/logos_delivery/waku/persistency/persistency.nim(92, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/persistency/persistency.nim(93, 3) Warning: RequestBroker: broker name is `GetPersistency` (capitalized from proc `getPersistency`); call it as `GetPersistency.request(...)`. Write `proc GetPersistency(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/node/waku_node/lightpush.nim(4, 8) Warning: imported and not used: 'hashes' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/node/waku_node/relay.nim(61, 3) Warning: unreachable else, all cases are already covered [UnreachableElse]
+/src/logos-delivery/logos_delivery/waku/node/waku_node/relay.nim(27, 5) Warning: imported and not used: 'waku_filter_v2' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/node/waku_node/relay.nim(29, 5) Warning: imported and not used: 'waku_store_sync' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/node/waku_node/relay.nim(28, 5) Warning: imported and not used: 'waku_archive' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/common/logging.nim(90, 14) Warning: the present module should be compiled with '-d:chronicles_default_output_device=dynamic' and '-d:chronicles_sinks="textlines,json"' options [User]
+/src/logos-delivery/logos_delivery/waku/node/health_monitor/node_health_monitor.nim(376, 3) Warning: unreachable else, all cases are already covered [UnreachableElse]
+/src/logos-delivery/logos_delivery/waku/node/waku_metrics.nim(9, 3) Warning: imported and not used: 'waku_node' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/rest_api/endpoint/serdes.nim(4, 20) Warning: imported and not used: 'parseutils' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/rest_api/endpoint/health/types.nim(6, 29) Warning: imported and not used: 'waku_node' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/rest_api/endpoint/health/handlers.nim(5, 3) Warning: imported and not used: 'waku_node' [UnusedImport]
+/src/logos-delivery/nimbledeps/pkgs2/dnsdisc-0.1.1-6451cab35990f334a46927f49f9176579460934d/dnsdisc/client.nim(68, 1) Warning: The raises pragma doesn't work on async procedures - use `async: (raises: [...]) instead. [User]
+/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(26, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(27, 3) Warning: RequestBroker: broker name is `GetNodeSwitch` (capitalized from proc `getNodeSwitch`); call it as `GetNodeSwitch.request(...)`. Write `proc GetNodeSwitch(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(29, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(30, 3) Warning: RequestBroker: broker name is `GetNodePeerManager` (capitalized from proc `getNodePeerManager`); call it as `GetNodePeerManager.request(...)`. Write `proc GetNodePeerManager(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(32, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(35, 3) Warning: RequestBroker: broker name is `GetNodePeerInfo` (capitalized from proc `getNodePeerInfo`); call it as `GetNodePeerInfo.request(...)`. Write `proc GetNodePeerInfo(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(37, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(39, 3) Warning: RequestBroker: broker name is `GetNodeEnr` (capitalized from proc `getNodeEnr`); call it as `GetNodeEnr.request(...)`. Write `proc GetNodeEnr(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(41, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(43, 3) Warning: RequestBroker: broker name is `GetNodeKey` (capitalized from proc `getNodeKey`); call it as `GetNodeKey.request(...)`. Write `proc GetNodeKey(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(52, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(53, 3) Warning: RequestBroker: broker name is `GetDiscoveryRequirements` (capitalized from proc `getDiscoveryRequirements`); call it as `GetDiscoveryRequirements.request(...)`. Write `proc GetDiscoveryRequirements(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(55, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(58, 3) Warning: RequestBroker: broker name is `GetDynamicBootstrapNodes` (capitalized from proc `getDynamicBootstrapNodes`); call it as `GetDynamicBootstrapNodes.request(...)`. Write `proc GetDynamicBootstrapNodes(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(110, 1) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(111, 3) Warning: RequestBroker: broker name is `SetServiceDiscoveryPlugin` (capitalized from proc `setServiceDiscoveryPlugin`); call it as `SetServiceDiscoveryPlugin.request(...)`. Write `proc SetServiceDiscoveryPlugin(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(115, 1) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(116, 3) Warning: RequestBroker: broker name is `ClearServiceDiscoveryPlugin` (capitalized from proc `clearServiceDiscoveryPlugin`); call it as `ClearServiceDiscoveryPlugin.request(...)`. Write `proc ClearServiceDiscoveryPlugin(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(124, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(125, 3) Warning: RequestBroker: broker name is `PluginStart` (capitalized from proc `pluginStart`); call it as `PluginStart.request(...)`. Write `proc PluginStart(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(127, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(128, 3) Warning: RequestBroker: broker name is `PluginStop` (capitalized from proc `pluginStop`); call it as `PluginStop.request(...)`. Write `proc PluginStop(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(130, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(131, 3) Warning: RequestBroker: broker name is `PluginLookup` (capitalized from proc `pluginLookup`); call it as `PluginLookup.request(...)`. Write `proc PluginLookup(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(135, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(136, 3) Warning: RequestBroker: broker name is `PluginRandomLookup` (capitalized from proc `pluginRandomLookup`); call it as `PluginRandomLookup.request(...)`. Write `proc PluginRandomLookup(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(138, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(139, 3) Warning: RequestBroker: broker name is `PluginStartAdvertising` (capitalized from proc `pluginStartAdvertising`); call it as `PluginStartAdvertising.request(...)`. Write `proc PluginStartAdvertising(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(143, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(144, 3) Warning: RequestBroker: broker name is `PluginStopAdvertising` (capitalized from proc `pluginStopAdvertising`); call it as `PluginStopAdvertising.request(...)`. Write `proc PluginStopAdvertising(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(146, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(147, 3) Warning: RequestBroker: broker name is `PluginRegisterInterest` (capitalized from proc `pluginRegisterInterest`); call it as `PluginRegisterInterest.request(...)`. Write `proc PluginRegisterInterest(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(149, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(150, 3) Warning: RequestBroker: broker name is `PluginUnregisterInterest` (capitalized from proc `pluginUnregisterInterest`); call it as `PluginUnregisterInterest.request(...)`. Write `proc PluginUnregisterInterest(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/factory/waku_conf.nim(29, 18) Warning: imported and not used: 'kademlia_discovery_conf_builder' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/discovery/autonat_service.nim(5, 11) Warning: imported and not used: 'rand' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/factory/node_factory.nim(13, 14) Warning: imported and not used: 'mix_protocol' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/factory/waku_state_info.nim(65, 3) Warning: unreachable else, all cases are already covered [UnreachableElse]
+/src/logos-delivery/logos_delivery/waku/factory/waku_state_info.nim(7, 13) Warning: imported and not used: 'tables' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/factory/waku_state_info.nim(7, 21) Warning: imported and not used: 'sequtils' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/waku.nim(35, 13) Warning: imported and not used: 'multiaddr' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/waku.nim(58, 12) Warning: imported and not used: 'validator_signed' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/relay.nim(5, 26) Warning: imported and not used: 'chronicles' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/relay.nim(13, 9) Warning: imported and not used: 'subscription_manager' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/relay.nim(5, 54) Warning: imported and not used: 'byteutils' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/filter.nim(4, 26) Warning: imported and not used: 'chronicles' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/lightpush.nim(4, 26) Warning: imported and not used: 'chronicles' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/store.nim(4, 26) Warning: imported and not used: 'chronicles' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/peer_manager.nim(6, 24) Warning: imported and not used: 'peerstore' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/peer_manager.nim(5, 26) Warning: imported and not used: 'chronicles' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/discovery.nim(5, 26) Warning: imported and not used: 'chronicles' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/discovery.nim(4, 18) Warning: imported and not used: 'sequtils' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/discovery.nim(11, 9) Warning: imported and not used: 'waku_node' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/debug.nim(9, 29) Warning: imported and not used: 'waku_core' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/debug.nim(4, 26) Warning: imported and not used: 'chronicles' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/health.nim(4, 26) Warning: imported and not used: 'chronicles' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/ping.nim(4, 26) Warning: imported and not used: 'chronicles' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/ping.nim(9, 70) Warning: imported and not used: 'ping' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/factory/conf_builder/rln_relay_conf_builder.nim(1, 42) Warning: imported and not used: 'byteutils' [UnusedImport]
+/src/logos-delivery/tools/confutils/cli_args.nim(990, 28) template/generic instantiation of `load` from here
+/src/logos-delivery/nimbledeps/pkgs2/confutils-0.1.1-ed737378087132f9bd1e861e35d8b0dfaa02fd1d/confutils.nim(1583, 13) template/generic instantiation of `loadImpl` from here
+/src/logos-delivery/nimbledeps/pkgs2/confutils-0.1.1-ed737378087132f9bd1e861e35d8b0dfaa02fd1d/confutils.nim(1283, 50) template/generic instantiation of `configurationRtti` from here
+/src/logos-delivery/nimbledeps/pkgs2/confutils-0.1.1-ed737378087132f9bd1e861e35d8b0dfaa02fd1d/confutils.nim(1003, 19) template/generic instantiation of `setField` from here
+/src/logos-delivery/nimbledeps/pkgs2/confutils-0.1.1-ed737378087132f9bd1e861e35d8b0dfaa02fd1d/confutils.nim(980, 16) template/generic instantiation of `newSeq` from here
+/src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/lib/system.nim(651, 10) Warning: Cannot prove that 'result' is initialized. This will become a compile time error in the future. [ProveInit]
+/src/logos-delivery/logos_delivery/waku/api/publish.nim(26, 19) Warning: imported and not used: 'client' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/publish.nim(22, 15) Warning: imported and not used: 'protocol' [UnusedImport]
+/src/logos-delivery/logos_delivery/messaging/rest_api/event_cache.nim(15, 29) Warning: imported and not used: 'options' [UnusedImport]
+
+Building Leopard-RS: cd /src/logos-delivery/nimcache/debug/liblogosdelivery/vendor_leopard && cmake /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCOMPILER_SUPPORTS_MARCH_NATIVE=FALSE && make libleopard
+-- The C compiler identification is GNU 12.2.0
+-- The CXX compiler identification is GNU 12.2.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Performing Test CXX_FLAG_g
+-- Performing Test CXX_FLAG_g - Failed
+-- Performing Test CXX_FLAG_O0
+-- Performing Test CXX_FLAG_O0 - Success
+-- Performing Test CXX_FLAG_O3
+-- Performing Test CXX_FLAG_O3 - Success
+-- Performing Test CXX_FLAG_Wall
+-- Performing Test CXX_FLAG_Wall - Success
+-- Performing Test CXX_FLAG_Wextra
+-- Performing Test CXX_FLAG_Wextra - Success
+-- Found OpenMP_C: -fopenmp (found version "4.5") 
+-- Found OpenMP_CXX: -fopenmp (found version "4.5") 
+-- Found OpenMP: TRUE (found version "4.5")  
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /src/logos-delivery/nimcache/debug/liblogosdelivery/vendor_leopard
+make[1]: warning: jobserver unavailable: using -j1.  Add '+' to parent make rule.
+make[1]: Entering directory '/src/logos-delivery/nimcache/debug/liblogosdelivery/vendor_leopard'
+make[2]: Entering directory '/src/logos-delivery/nimcache/debug/liblogosdelivery/vendor_leopard'
+make[3]: Entering directory '/src/logos-delivery/nimcache/debug/liblogosdelivery/vendor_leopard'
+make[4]: Entering directory '/src/logos-delivery/nimcache/debug/liblogosdelivery/vendor_leopard'
+make[4]: Leaving directory '/src/logos-delivery/nimcache/debug/liblogosdelivery/vendor_leopard'
+make[4]: Entering directory '/src/logos-delivery/nimcache/debug/liblogosdelivery/vendor_leopard'
+[ 20%] Building CXX object CMakeFiles/libleopard.dir/leopard.cpp.o
+[ 40%] Building CXX object CMakeFiles/libleopard.dir/LeopardCommon.cpp.o
+[ 60%] Building CXX object CMakeFiles/libleopard.dir/LeopardFF16.cpp.o
+In function 'void leopard::ff16::FFT_DIT(uint64_t, void**, unsigned int, unsigned int, const ffe_t*)',
+    inlined from 'void leopard::ff16::ReedSolomonEncode(uint64_t, unsigned int, unsigned int, unsigned int, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:1461:12:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:1374:9: warning: array subscript -1 is outside array bounds of 'leopard::ff16::ffe_t [65535]' {aka 'short unsigned int [65535]'} [-Warray-bounds]
+ 1374 | #pragma omp parallel for
+      |         ^~~
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp: In function 'void leopard::ff16::ReedSolomonEncode(uint64_t, unsigned int, unsigned int, unsigned int, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:524:14: note: at offset -2 into object 'leopard::ff16::FFTSkew' of size 131070
+  524 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff16::FFT_DIT(uint64_t, void**, unsigned int, unsigned int, const ffe_t*)',
+    inlined from 'void leopard::ff16::ReedSolomonEncode(uint64_t, unsigned int, unsigned int, unsigned int, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:1461:12:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:1349:9: warning: array subscript -1 is outside array bounds of 'leopard::ff16::ffe_t [65535]' {aka 'short unsigned int [65535]'} [-Warray-bounds]
+ 1349 | #pragma omp parallel for
+      |         ^~~
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp: In function 'void leopard::ff16::ReedSolomonEncode(uint64_t, unsigned int, unsigned int, unsigned int, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:524:14: note: at offset -2 into object 'leopard::ff16::FFTSkew' of size 131070
+  524 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff16::IFFT_DIT_Decoder(uint64_t, unsigned int, void**, unsigned int, const ffe_t*)',
+    inlined from 'void leopard::ff16::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:1729:21:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:1009:41: warning: array subscript -1 is outside array bounds of 'leopard::ff16::ffe_t [65535]' {aka 'short unsigned int [65535]'} [-Warray-bounds]
+ 1009 |         const ffe_t log_m = skewLUT[dist];
+      |                                         ^
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp: In function 'void leopard::ff16::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:524:14: note: at offset -2 into object 'leopard::ff16::FFTSkew' of size 131070
+  524 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff16::FFT_DIT_ErrorBits(uint64_t, void**, unsigned int, unsigned int, const ffe_t*, const ErrorBitfield&)',
+    inlined from 'void leopard::ff16::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:1765:22:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:1624:9: warning: array subscript -1 is outside array bounds of 'leopard::ff16::ffe_t [65535]' {aka 'short unsigned int [65535]'} [-Warray-bounds]
+ 1624 | #pragma omp parallel for
+      |         ^~~
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp: In function 'void leopard::ff16::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:524:14: note: at offset -2 into object 'leopard::ff16::FFTSkew' of size 131070
+  524 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff16::FFT_DIT_ErrorBits(uint64_t, void**, unsigned int, unsigned int, const ffe_t*, const ErrorBitfield&)',
+    inlined from 'void leopard::ff16::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:1765:22:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:1595:9: warning: array subscript -1 is outside array bounds of 'leopard::ff16::ffe_t [65535]' {aka 'short unsigned int [65535]'} [-Warray-bounds]
+ 1595 | #pragma omp parallel for
+      |         ^~~
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp: In function 'void leopard::ff16::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:524:14: note: at offset -2 into object 'leopard::ff16::FFTSkew' of size 131070
+  524 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff16::IFFT_DIT_Decoder(uint64_t, unsigned int, void**, unsigned int, const ffe_t*)',
+    inlined from 'void leopard::ff16::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:1729:21:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:981:9: warning: array subscript -1 is outside array bounds of 'leopard::ff16::ffe_t [65535]' {aka 'short unsigned int [65535]'} [-Warray-bounds]
+  981 | #pragma omp parallel for
+      |         ^~~
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp: In function 'void leopard::ff16::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:524:14: note: at offset -2 into object 'leopard::ff16::FFTSkew' of size 131070
+  524 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+[ 80%] Building CXX object CMakeFiles/libleopard.dir/LeopardFF8.cpp.o
+In function 'void leopard::ff8::FFT_DIT(uint64_t, void**, unsigned int, unsigned int, const ffe_t*)',
+    inlined from 'void leopard::ff8::ReedSolomonEncode(uint64_t, unsigned int, unsigned int, unsigned int, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1666:12:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1582:46: warning: array subscript -1 is outside array bounds of 'leopard::ff8::ffe_t [255]' {aka 'unsigned char [255]'} [-Warray-bounds]
+ 1582 |             const ffe_t log_m = skewLUT[r + 1];
+      |                                              ^
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp: In function 'void leopard::ff8::ReedSolomonEncode(uint64_t, unsigned int, unsigned int, unsigned int, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:490:14: note: at offset -1 into object 'leopard::ff8::FFTSkew' of size 255
+  490 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff8::FFT_DIT(uint64_t, void**, unsigned int, unsigned int, const ffe_t*)',
+    inlined from 'void leopard::ff8::ReedSolomonEncode(uint64_t, unsigned int, unsigned int, unsigned int, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1666:12:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1559:48: warning: array subscript -1 is outside array bounds of 'leopard::ff8::ffe_t [255]' {aka 'unsigned char [255]'} [-Warray-bounds]
+ 1559 |             const ffe_t log_m01 = skewLUT[i_end];
+      |                                                ^
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp: In function 'void leopard::ff8::ReedSolomonEncode(uint64_t, unsigned int, unsigned int, unsigned int, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:490:14: note: at offset -1 into object 'leopard::ff8::FFTSkew' of size 255
+  490 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff8::FFT_DIT(uint64_t, void**, unsigned int, unsigned int, const ffe_t*)',
+    inlined from 'void leopard::ff8::ReedSolomonEncode(uint64_t, unsigned int, unsigned int, unsigned int, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1666:12:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1560:55: warning: array subscript -1 is outside array bounds of 'leopard::ff8::ffe_t [255]' {aka 'unsigned char [255]'} [-Warray-bounds]
+ 1560 |             const ffe_t log_m02 = skewLUT[i_end + dist];
+      |                                                       ^
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp: In function 'void leopard::ff8::ReedSolomonEncode(uint64_t, unsigned int, unsigned int, unsigned int, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:490:14: note: at offset -1 into object 'leopard::ff8::FFTSkew' of size 255
+  490 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff8::FFT_DIT(uint64_t, void**, unsigned int, unsigned int, const ffe_t*)',
+    inlined from 'void leopard::ff8::ReedSolomonEncode(uint64_t, unsigned int, unsigned int, unsigned int, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1666:12:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1561:59: warning: array subscript -1 is outside array bounds of 'leopard::ff8::ffe_t [255]' {aka 'unsigned char [255]'} [-Warray-bounds]
+ 1561 |             const ffe_t log_m23 = skewLUT[i_end + dist * 2];
+      |                                                           ^
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp: In function 'void leopard::ff8::ReedSolomonEncode(uint64_t, unsigned int, unsigned int, unsigned int, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:490:14: note: at offset -1 into object 'leopard::ff8::FFTSkew' of size 255
+  490 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff8::IFFT_DIT_Decoder(uint64_t, unsigned int, void**, unsigned int, const ffe_t*)',
+    inlined from 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1881:21:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1246:41: warning: array subscript -1 is outside array bounds of 'leopard::ff8::ffe_t [255]' {aka 'unsigned char [255]'} [-Warray-bounds]
+ 1246 |         const ffe_t log_m = skewLUT[dist];
+      |                                         ^
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp: In function 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:490:14: note: at offset -1 into object 'leopard::ff8::FFTSkew' of size 255
+  490 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff8::FFT_DIT_ErrorBits(uint64_t, void**, unsigned int, unsigned int, const ffe_t*, const ErrorBitfield&)',
+    inlined from 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1906:22:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1787:46: warning: array subscript -1 is outside array bounds of 'leopard::ff8::ffe_t [255]' {aka 'unsigned char [255]'} [-Warray-bounds]
+ 1787 |             const ffe_t log_m = skewLUT[r + 1];
+      |                                              ^
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp: In function 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:490:14: note: at offset -1 into object 'leopard::ff8::FFTSkew' of size 255
+  490 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff8::FFT_DIT_ErrorBits(uint64_t, void**, unsigned int, unsigned int, const ffe_t*, const ErrorBitfield&)',
+    inlined from 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1906:22:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1761:51: warning: array subscript -1 is outside array bounds of 'leopard::ff8::ffe_t [255]' {aka 'unsigned char [255]'} [-Warray-bounds]
+ 1761 |             const ffe_t log_m01 = skewLUT[r + dist];
+      |                                                   ^
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp: In function 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:490:14: note: at offset -1 into object 'leopard::ff8::FFTSkew' of size 255
+  490 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff8::FFT_DIT_ErrorBits(uint64_t, void**, unsigned int, unsigned int, const ffe_t*, const ErrorBitfield&)',
+    inlined from 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1906:22:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1762:55: warning: array subscript -1 is outside array bounds of 'leopard::ff8::ffe_t [255]' {aka 'unsigned char [255]'} [-Warray-bounds]
+ 1762 |             const ffe_t log_m23 = skewLUT[r + dist * 3];
+      |                                                       ^
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp: In function 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:490:14: note: at offset -1 into object 'leopard::ff8::FFTSkew' of size 255
+  490 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff8::FFT_DIT_ErrorBits(uint64_t, void**, unsigned int, unsigned int, const ffe_t*, const ErrorBitfield&)',
+    inlined from 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1906:22:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1763:55: warning: array subscript -1 is outside array bounds of 'leopard::ff8::ffe_t [255]' {aka 'unsigned char [255]'} [-Warray-bounds]
+ 1763 |             const ffe_t log_m02 = skewLUT[r + dist * 2];
+      |                                                       ^
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp: In function 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:490:14: note: at offset -1 into object 'leopard::ff8::FFTSkew' of size 255
+  490 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff8::IFFT_DIT_Decoder(uint64_t, unsigned int, void**, unsigned int, const ffe_t*)',
+    inlined from 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1881:21:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1222:48: warning: array subscript -1 is outside array bounds of 'leopard::ff8::ffe_t [255]' {aka 'unsigned char [255]'} [-Warray-bounds]
+ 1222 |             const ffe_t log_m01 = skewLUT[i_end];
+      |                                                ^
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp: In function 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:490:14: note: at offset -1 into object 'leopard::ff8::FFTSkew' of size 255
+  490 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff8::IFFT_DIT_Decoder(uint64_t, unsigned int, void**, unsigned int, const ffe_t*)',
+    inlined from 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1881:21:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1223:55: warning: array subscript -1 is outside array bounds of 'leopard::ff8::ffe_t [255]' {aka 'unsigned char [255]'} [-Warray-bounds]
+ 1223 |             const ffe_t log_m02 = skewLUT[i_end + dist];
+      |                                                       ^
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp: In function 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:490:14: note: at offset -1 into object 'leopard::ff8::FFTSkew' of size 255
+  490 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff8::IFFT_DIT_Decoder(uint64_t, unsigned int, void**, unsigned int, const ffe_t*)',
+    inlined from 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1881:21:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1224:59: warning: array subscript -1 is outside array bounds of 'leopard::ff8::ffe_t [255]' {aka 'unsigned char [255]'} [-Warray-bounds]
+ 1224 |             const ffe_t log_m23 = skewLUT[i_end + dist * 2];
+      |                                                           ^
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp: In function 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:490:14: note: at offset -1 into object 'leopard::ff8::FFTSkew' of size 255
+  490 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+[100%] Linking CXX static library liblibleopard.a
+make[4]: Leaving directory '/src/logos-delivery/nimcache/debug/liblogosdelivery/vendor_leopard'
+[100%] Built target libleopard
+make[3]: Leaving directory '/src/logos-delivery/nimcache/debug/liblogosdelivery/vendor_leopard'
+make[2]: Leaving directory '/src/logos-delivery/nimcache/debug/liblogosdelivery/vendor_leopard'
+make[1]: Leaving directory '/src/logos-delivery/nimcache/debug/liblogosdelivery/vendor_leopard'
+/src/logos-delivery/logos_delivery/channels/reliable_channel_manager.nim(16, 27) Warning: imported and not used: 'types' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/persistency/sds_persistency.nim(129, 44) template/generic instantiation of `async` from here
+/src/logos-delivery/logos_delivery/waku/persistency/sds_persistency.nim(158, 17) template/generic instantiation of `setResult` from here
+/src/logos-delivery/logos_delivery/waku/persistency/sds_persistency.nim(144, 38) template/generic instantiation of `newSeq` from here
+/src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/lib/system.nim(651, 10) Warning: Cannot prove that 'result' is initialized. This will become a compile time error in the future. [ProveInit]
+/src/logos-delivery/library/events/json_message_event.nim(1, 39) Warning: imported and not used: 'strutils' [UnusedImport]
+/src/logos-delivery/library/liblogosdelivery.nim(10, 43) Warning: imported and not used: 'health_status' [UnusedImport]
+     Info:  Nimble data file "/src/logos-delivery/nimbledeps/nimbledata2.json" has been saved.
+EXIT=0
+DONE 2026-11-25T20:26:12Z

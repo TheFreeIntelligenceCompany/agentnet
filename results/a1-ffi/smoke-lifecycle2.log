@@ -1,0 +1,386 @@
+total 298984
+-rwxr-xr-x 1 root root   1904744 Nov 25 20:28 ffi-spike
+-rwxr-xr-x 1 root root 304304536 Nov 25 20:28 liblogosdelivery.so
+	linux-vdso.so.1 (0x0000f0bc5803c000)
+	liblogosdelivery.so => /out/./liblogosdelivery.so (0x0000f0bc540c0000)
+	libgcc_s.so.1 => /lib/aarch64-linux-gnu/libgcc_s.so.1 (0x0000f0bc54080000)
+	libm.so.6 => /lib/aarch64-linux-gnu/libm.so.6 (0x0000f0bc53fd0000)
+	libc.so.6 => /lib/aarch64-linux-gnu/libc.so.6 (0x0000f0bc53e20000)
+	libstdc++.so.6 => /lib/aarch64-linux-gnu/libstdc++.so.6 (0x0000f0bc53c00000)
+	libgomp.so.1 => /lib/aarch64-linux-gnu/libgomp.so.1 (0x0000f0bc53b90000)
+	/lib/ld-linux-aarch64.so.1 (0x0000f0bc57ff0000)
+ffi-spike: ELF 64-bit LSB pie executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-aarch64.so.1, BuildID[sha1]=d10
+{"event":"begin","fds":10,"iters":2,"mode":"shutdown","port":20110,"rss_kb":5880,"threads":7}
+DBG 2026-11-25 20:28:42.397+00:00 Whether to mount storeSync is not specified, defaulting to not mounting topics="waku conf builder" tid=19055 file=waku_conf_builder.nim:657
+NTC 2026-11-25 20:28:42.397+00:00 No node key provided, generated a new one; identity will not persist across restarts topics="waku conf builder" tid=19055 file=waku_conf_builder.nim:352
+INF 2026-11-25 20:28:42.397+00:00 Sharding configuration:                    topics="waku conf builder" tid=19055 file=waku_conf_builder.nim:691 shardingConf="(kind: AutoSharding, numShardsInCluster: 8)" subscribeShards="@[0, 1, 2, 3, 4, 5, 6, 7]"
+WRN 2026-11-25 20:28:42.398+00:00 configuration flag ignored                 topics="waku cli args" tid=19055 file=cli_args.nim:1225 detail="--discv5-udp-port is ignored: --discv5-discovery is not enabled"
+INF 2026-11-25 20:28:42.398+00:00 Configuration: Enabled protocols           topics="waku conf" tid=19055 file=waku_conf.nim:201 relay=true rlnRelay=false store=false filter=true lightPush=true peerExchange=false rendezvous=true
+INF 2026-11-25 20:28:42.398+00:00 Configuration. Network                     topics="waku conf" tid=19055 file=waku_conf.nim:210 cluster=7777
+DBG 2026-11-25 20:28:42.398+00:00 Configuration. Active Relay Shards         topics="waku conf" tid=19055 file=waku_conf.nim:213 shard=0
+DBG 2026-11-25 20:28:42.398+00:00 Configuration. Active Relay Shards         topics="waku conf" tid=19055 file=waku_conf.nim:213 shard=1
+DBG 2026-11-25 20:28:42.398+00:00 Configuration. Active Relay Shards         topics="waku conf" tid=19055 file=waku_conf.nim:213 shard=2
+DBG 2026-11-25 20:28:42.398+00:00 Configuration. Active Relay Shards         topics="waku conf" tid=19055 file=waku_conf.nim:213 shard=3
+DBG 2026-11-25 20:28:42.398+00:00 Configuration. Active Relay Shards         topics="waku conf" tid=19055 file=waku_conf.nim:213 shard=4
+DBG 2026-11-25 20:28:42.398+00:00 Configuration. Active Relay Shards         topics="waku conf" tid=19055 file=waku_conf.nim:213 shard=5
+DBG 2026-11-25 20:28:42.398+00:00 Configuration. Active Relay Shards         topics="waku conf" tid=19055 file=waku_conf.nim:213 shard=6
+DBG 2026-11-25 20:28:42.398+00:00 Configuration. Active Relay Shards         topics="waku conf" tid=19055 file=waku_conf.nim:213 shard=7
+INF 2026-11-25 20:28:42.398+00:00 Setting up storage                         tid=19055 file=node_factory.nim:491
+INF 2026-11-25 20:28:42.398+00:00 Initializing node                          tid=19055 file=node_factory.nim:500
+INF 2026-11-25 20:28:42.399+00:00 Setting up NATService                      topics="libp2p natservice" tid=19055 file=natservice.nim:470 portMapping=true reachability=false holePunching=false
+TRC 2026-11-25 20:28:42.399+00:00 Protocol handlers registered               topics="libp2p multistream" tid=19055 file=multistream.nim:226 protocols="[/ipfs/id/1.0.0]"
+TRC 2026-11-25 20:28:42.399+00:00 Protocol handlers registered               topics="libp2p multistream" tid=19055 file=multistream.nim:226 protocols="[/libp2p/autonat/1.0.0]"
+TRC 2026-11-25 20:28:42.399+00:00 Protocol handlers registered               topics="libp2p multistream" tid=19055 file=multistream.nim:226 protocols="[/libp2p/circuit/relay/0.2.0/hop]"
+TRC 2026-11-25 20:28:42.400+00:00 no peer storage found                      tid=19055 file=peer_manager.nim:1363
+INF 2026-11-25 20:28:42.400+00:00 Initializing networking                    tid=19055 file=waku_node.nim:360 addrs="@[/ip4/0.0.0.0/tcp/20110, /ip4/0.0.0.0/udp/20110/quic-v1]"
+INF 2026-11-25 20:28:42.400+00:00 Mounting protocols                         tid=19055 file=node_factory.nim:506
+INF 2026-11-25 20:28:42.400+00:00 Created WakuMetadata protocol              topics="waku node" tid=19055 file=protocol.nim:107 clusterId=7777 shards="[0, 1, 2, 3, 4, 5, 6, 7]"
+TRC 2026-11-25 20:28:42.400+00:00 Protocol handlers registered               topics="libp2p multistream" tid=19055 file=multistream.nim:226 protocols="[/vac/waku/metadata/1.0.0]"
+INF 2026-11-25 20:28:42.400+00:00 mounting store client                      topics="waku node store api" tid=19055 file=store.nim:117
+INF 2026-11-25 20:28:42.400+00:00 Mounting auto sharding                     topics="waku node" tid=19055 file=waku_node.nim:462 clusterId=7777 shardCount=8
+DBG 2026-11-25 20:28:42.400+00:00 Setting max message size                   tid=19055 file=node_factory.nim:284 num_bytes=153600
+INF 2026-11-25 20:28:42.400+00:00 mounting relay protocol                    topics="waku node relay api" tid=19055 file=relay.nim:166
+TRC 2026-11-25 20:28:42.401+00:00 Protocol handlers registered               topics="libp2p multistream" tid=19055 file=multistream.nim:226 protocols="[/vac/waku/relay/2.0.0, /meshsub/1.3.0, /meshsub/1.2.0, /meshsub/1.1.0, /meshsub/1.0.0, /meshsub/1.3.0, /meshsub/1.2.0, /meshsub/1.1.0, /meshsub/1.0.0]"
+DBG 2026-11-25 20:28:42.401+00:00 relay mounted successfully                 topics="waku node relay api" tid=19055 file=relay.nim:184
+DBG 2026-11-25 20:28:42.401+00:00 Adding validator to signed shards          tid=19055 file=validator_signed.nim:56 protectedShards=[] clusterId=7777
+INF 2026-11-25 20:28:42.401+00:00 Mounting rendezvous discovery protocol     topics="waku node" tid=19055 file=waku_node.nim:727
+INF 2026-11-25 20:28:42.401+00:00 Waku rendezvous initialized                topics="waku node" tid=19055 file=protocol.nim:205 clusterId=7777 shards="[0, 1, 2, 3, 4, 5, 6, 7]" capabilities="[Relay, Filter, Lightpush]" wakuPeerRecord="(peerId: 16Uiu2...djZfzD, seqNo: 1795638522, addresses: [/ip4/0.0.0.0/tcp/20110, /ip4/0.0.0.0/udp/20110/quic-v1], mixKey: )"
+TRC 2026-11-25 20:28:42.401+00:00 Protocol handlers registered               topics="libp2p multistream" tid=19055 file=multistream.nim:226 protocols="[/vac/waku/rendezvous/1.0.0]"
+INF 2026-11-25 20:28:42.401+00:00 Mounting rendezvous client                 topics="waku node" tid=19055 file=waku_node.nim:713
+INF 2026-11-25 20:28:42.402+00:00 Waku rendezvous client initialized         topics="waku node" tid=19055 file=client.nim:146 clusterId=7777
+INF 2026-11-25 20:28:42.402+00:00 mounting libp2p ping protocol              topics="waku node ping api" tid=19055 file=ping.nim:18
+TRC 2026-11-25 20:28:42.402+00:00 Protocol handlers registered               topics="libp2p multistream" tid=19055 file=multistream.nim:226 protocols="[/ipfs/ping/1.0.0]"
+INF 2026-11-25 20:28:42.402+00:00 No RLN backend configured; RLN is off      tid=19055 file=node_factory.nim:329
+INF 2026-11-25 20:28:42.402+00:00 mounting light push                        topics="waku node lightpush api" tid=19055 file=lightpush.nim:214
+INF 2026-11-25 20:28:42.402+00:00 mounting lightpush with relay              topics="waku node lightpush api" tid=19055 file=lightpush.nim:219
+TRC 2026-11-25 20:28:42.402+00:00 Protocol handlers registered               topics="libp2p multistream" tid=19055 file=multistream.nim:226 protocols="[/vac/waku/lightpush/3.0.0]"
+DBG 2026-11-25 20:28:42.402+00:00 lightpush mounted successfully             topics="waku node lightpush api" tid=19055 file=lightpush.nim:237
+INF 2026-11-25 20:28:42.402+00:00 mounting legacy light push                 topics="waku node lightpush api" tid=19055 file=lightpush.nim:75
+INF 2026-11-25 20:28:42.402+00:00 mounting legacy lightpush with relay       topics="waku node lightpush api" tid=19055 file=lightpush.nim:80
+TRC 2026-11-25 20:28:42.402+00:00 Protocol handlers registered               topics="libp2p multistream" tid=19055 file=multistream.nim:226 protocols="[/vac/waku/lightpush/2.0.0-beta1]"
+DBG 2026-11-25 20:28:42.402+00:00 legacy lightpush mounted successfully      topics="waku node lightpush api" tid=19055 file=lightpush.nim:97
+INF 2026-11-25 20:28:42.402+00:00 mounting light push client                 topics="waku node lightpush api" tid=19055 file=lightpush.nim:241
+INF 2026-11-25 20:28:42.402+00:00 mounting legacy light push client          topics="waku node lightpush api" tid=19055 file=lightpush.nim:101
+INF 2026-11-25 20:28:42.402+00:00 mounting filter protocol                   topics="waku node filter api" tid=19055 file=filter.nim:49
+INF 2026-11-25 20:28:42.403+00:00 Starting filter protocol                   topics="waku filter" tid=19055 file=protocol.nim:415
+DBG 2026-11-25 20:28:42.403+00:00 Starting to maintain subscriptions         topics="waku filter" tid=19055 file=protocol.nim:409
+DBG 2026-11-25 20:28:42.403+00:00 Maintaining subscriptions                  topics="waku filter" tid=19055 file=protocol.nim:239
+DBG 2026-11-25 20:28:42.403+00:00 Cleanup                                    topics="waku filter subscriptions" tid=19055 file=subscriptions.nim:119 currentPeerIds=[]
+DBG 2026-11-25 20:28:42.403+00:00 After cleanup                              topics="waku filter subscriptions" tid=19055 file=subscriptions.nim:131 currentPeerIds=[]
+TRC 2026-11-25 20:28:42.403+00:00 Protocol handlers registered               topics="libp2p multistream" tid=19055 file=multistream.nim:226 protocols="[/vac/waku/filter-subscribe/2.0.0-beta1]"
+INF 2026-11-25 20:28:42.403+00:00 mounting filter client                     topics="waku node filter api" tid=19055 file=filter.nim:82
+TRC 2026-11-25 20:28:42.403+00:00 Protocol handlers registered               topics="libp2p multistream" tid=19055 file=multistream.nim:226 protocols="[/vac/waku/filter-push/2.0.0-beta1]"
+INF 2026-11-25 20:28:42.403+00:00 mounting waku peer exchange client         topics="waku node peerexchange api" tid=19055 file=peer_exchange.nim:54
+INF 2026-11-25 20:28:42.403+00:00 No external callbacks to be set            topics="wakunode waku" tid=19055 file=waku.nim:158
+INF 2026-11-25 20:28:42.403+00:00 Setting up AutonatService                  topics="libp2p autonatservice" tid=19055 file=service.nim:208
+TRC 2026-11-25 20:28:42.404+00:00 Send processor chain                       topics="send service" tid=19055 file=send_service.nim:146 index=1 processor=BaseSendProcessor
+INF 2026-11-25 20:28:42.404+00:00 Messaging API settings                     topics="logosdelivery" tid=19055 file=messaging_client.nim:84 reliability=true anonymityLevel=None rateLimitEnabled=false rateLimitEpochPeriodSec=600 rateLimitMessagesPerEpoch=1 maxParkedAgeSec=1800 sendQueueCapacity=1000 backfillEnabled=true backfillRequestTimeout=10s
+INF 2026-11-25 20:28:42.405+00:00 Retrieve dynamic bootstrap nodes           topics="wakunode waku" tid=19055 file=waku.nim:477
+INF 2026-11-25 20:28:42.406+00:00 Running nwaku node                         tid=19055 file=node_factory.nim:414 version="\"0f2188\""
+INF 2026-11-25 20:28:42.406+00:00 Starting Waku node                         topics="waku node" tid=19055 file=waku_node.nim:834 version="\"0f2188\""
+DBG 2026-11-25 20:28:42.406+00:00 Waku rendezvous periodic requests started  topics="waku rendezvous client" tid=19055 file=client.nim:94 interval=10s
+INF 2026-11-25 20:28:42.406+00:00 Waku rendezvous client started             topics="waku rendezvous client" tid=19055 file=client.nim:152
+INF 2026-11-25 20:28:42.406+00:00 Starting switch for peer                   topics="libp2p switch" tid=19055 file=switch.nim:403 peerInfo="(peerId: 16Uiu2HAmFvsfc3Pcvt6EyjXKFkTpDa4iSijgrCDVfNiofJdjZfzD, listenAddrs: [/ip4/0.0.0.0/tcp/20110, /ip4/0.0.0.0/udp/20110/quic-v1], addrs: [], protocols: [/ipfs/id/1.0.0, /libp2p/autonat/1.0.0, /libp2p/circuit/relay/0.2.0/hop, /vac/waku/metadata/1.0.0, /vac/waku/relay/2.0.0, /vac/waku/rendezvous/1.0.0, /ipfs/ping/1.0.0, /vac/waku/lightpush/3.0.0, /vac/waku/lightpush/2.0.0-beta1, /vac/waku/filter-subscribe/2.0.0-beta1, /vac/waku/filter-push/2.0.0-beta1], protoVersion: ipfs/0.1.0, agentVersion: logos-delivery-\"0f2188\")"
+INF 2026-11-25 20:28:42.406+00:00 Starting NATService                        topics="libp2p natservice" tid=19055 file=natservice.nim:539
+INF 2026-11-25 20:28:42.406+00:00 Running AutonatService                     topics="libp2p autonatservice" tid=19055 file=service.nim:224
+INF 2026-11-25 20:28:42.408+00:00 Starting TCP transport                     topics="libp2p tcptransport" tid=19055 file=tcptransport.nim:119
+TRC 2026-11-25 20:28:42.409+00:00 Listening on                               topics="libp2p tcptransport" tid=19055 file=tcptransport.nim:140 address=/ip4/0.0.0.0/tcp/20110
+INF 2026-11-25 20:28:42.409+00:00 Transport starting                         topics="libp2p transport" tid=19055 file=transport.nim:50 addresses=[/ip4/0.0.0.0/tcp/20110]
+WRN 2026-11-25 20:28:42.411+00:00 QUIC UDP receive buffer capped below requested size tid=19055 file=endpoint.nim:72 requestedBytes=8388608 effectiveBytes=425984 hint="raise net.core.rmem_max if Linux caps SO_RCVBUF"
+INF 2026-11-25 20:28:42.412+00:00 Transport starting                         topics="libp2p transport" tid=19055 file=transport.nim:50 addresses=[/ip4/0.0.0.0/udp/20110/quic-v1]
+WRN 2026-11-25 20:28:44.421+00:00 NAT port mapping failed                    topics="libp2p natservice" tid=19055 file=natservice.nim:318 port=20110 protocol=mpTcp err="plum: mapping 0 failed"
+WRN 2026-11-25 20:28:46.427+00:00 NAT port mapping failed                    topics="libp2p natservice" tid=19055 file=natservice.nim:318 port=20110 protocol=mpUdp err="plum: mapping 0 failed"
+DBG 2026-11-25 20:28:46.430+00:00 ENR addresses updated                      topics="waku enr" tid=19055 file=enr_addresses.nim:121 retained=0 total=0
+TRC 2026-11-25 20:28:46.430+00:00 Asking peers for reachability              topics="libp2p autonatservice" tid=19055 file=service.nim:168
+DBG 2026-11-25 20:28:46.430+00:00 Transport connection acceptance started    topics="libp2p switch" tid=19055 file=switch.nim:296
+DBG 2026-11-25 20:28:46.430+00:00 Transport connection acceptance started    topics="libp2p switch" tid=19055 file=switch.nim:296
+WRN 2026-11-25 20:28:47.414+00:00 ffi request still in flight; caller notified via RET_STALE_WARN tid=19055 file=ffi_thread.nim:100 reqId=LogosdeliveryStartNodeReq elapsedMs=5000
+WRN 2026-11-25 20:28:48.433+00:00 NAT port mapping failed                    topics="libp2p natservice" tid=19055 file=natservice.nim:318 port=20110 protocol=mpTcp err="plum: mapping 0 failed"
+WRN 2026-11-25 20:28:50.439+00:00 NAT port mapping failed                    topics="libp2p natservice" tid=19055 file=natservice.nim:318 port=20110 protocol=mpUdp err="plum: mapping 0 failed"
+INF 2026-11-25 20:28:50.441+00:00 start                                      topics="waku relay" tid=19055 file=protocol.nim:530
+INF 2026-11-25 20:28:50.441+00:00 gossipsub start                            topics="libp2p gossipsub" tid=19055 file=gossipsub.nim:1175
+TRC 2026-11-25 20:28:50.441+00:00 getting gossip peers (iHave)               topics="libp2p gossipsub" tid=19055 file=behavior.nim:647 ntopics=0
+TRC 2026-11-25 20:28:50.443+00:00 updating scores                            topics="libp2p gossipsub" tid=19055 file=scoring.nim:150 peers=0
+TRC 2026-11-25 20:28:50.443+00:00 updated scores                             topics="libp2p gossipsub" tid=19055 file=scoring.nim:334 peers=0
+DBG 2026-11-25 20:28:50.444+00:00 Waku rendezvous periodic registration started topics="waku rendezvous" tid=19055 file=protocol.nim:124 interval=10s
+INF 2026-11-25 20:28:50.444+00:00 Waku rendezvous discovery started          topics="waku rendezvous" tid=19055 file=protocol.nim:222
+INF 2026-11-25 20:28:50.444+00:00 Started libp2p node                        topics="libp2p switch" tid=19055 file=switch.nim:446 peerId="(peerId: 16Uiu2HAmFvsfc3Pcvt6EyjXKFkTpDa4iSijgrCDVfNiofJdjZfzD, listenAddrs: [/ip4/0.0.0.0/tcp/20110, /ip4/0.0.0.0/udp/20110/quic-v1], addrs: [/ip4/172.17.0.2/tcp/20110, /ip4/172.17.0.2/udp/20110/quic-v1], protocols: [/ipfs/id/1.0.0, /libp2p/autonat/1.0.0, /libp2p/circuit/relay/0.2.0/hop, /vac/waku/metadata/1.0.0, /vac/waku/relay/2.0.0, /vac/waku/rendezvous/1.0.0, /ipfs/ping/1.0.0, /vac/waku/lightpush/3.0.0, /vac/waku/lightpush/2.0.0-beta1, /vac/waku/filter-subscribe/2.0.0-beta1, /vac/waku/filter-push/2.0.0-beta1], protoVersion: ipfs/0.1.0, agentVersion: logos-delivery-\"0f2188\")"
+DBG 2026-11-25 20:28:50.444+00:00 ENR addresses updated                      topics="waku enr" tid=19055 file=enr_addresses.nim:121 retained=0 total=0
+INF 2026-11-25 20:28:50.444+00:00 Announced addresses resolved               topics="waku node" tid=19055 file=waku_node.nim:852 addrs="@[/ip4/172.17.0.2/tcp/20110, /ip4/172.17.0.2/udp/20110/quic-v1]"
+INF 2026-11-25 20:28:50.444+00:00 Node started successfully                  topics="waku node" tid=19055 file=waku_node.nim:879
+DBG 2026-11-25 20:28:50.444+00:00 Starting peer exchange loop                topics="waku node peerexchange api" tid=19055 file=peer_exchange.nim:105
+DBG 2026-11-25 20:28:50.446+00:00 Retrieving peer info via peer exchange protocol topics="waku node peerexchange api" tid=19055 file=peer_exchange.nim:70 amount=5
+TRC 2026-11-25 20:28:50.446+00:00 Selecting peers from peerstore             topics="waku node peer_manager" tid=19055 file=peer_manager.nim:262 protocol=/vac/waku/peer-exchange/2.0.0-alpha1 num_peers=0 address=256506339722192
+TRC 2026-11-25 20:28:50.446+00:00 No peer found for protocol                 topics="waku node peer_manager" tid=19055 file=peer_manager.nim:293 protocol=/vac/waku/peer-exchange/2.0.0-alpha1
+DBG 2026-11-25 20:28:50.446+00:00 Peer exchange request could not be made as no peer exchange peers found topics="waku peer_exchange client" tid=19055 file=client.nim:104
+DBG 2026-11-25 20:28:50.446+00:00 Failed to retrieve peer info via peer exchange protocol topics="waku node peerexchange api" tid=19055 file=peer_exchange.nim:88 error="(status_code: SERVICE_UNAVAILABLE, status_desc: ok(peer_not_found_failure))"
+DBG 2026-11-25 20:28:50.446+00:00 Cannot fetch peers from peer exchange      topics="waku node peerexchange api" tid=19055 file=peer_exchange.nim:98 cause="(status_code: SERVICE_UNAVAILABLE, status_desc: ok(peer_not_found_failure))"
+TRC 2026-11-25 20:28:50.446+00:00 Starting relay connectivity loop           topics="waku node peer_manager" tid=19055 file=peer_manager.nim:1206
+TRC 2026-11-25 20:28:50.446+00:00 Starting prune peerstore loop              topics="waku node peer_manager" tid=19055 file=peer_manager.nim:1196
+INF 2026-11-25 20:28:50.446+00:00 Relay peer connections                     topics="waku node peer_manager" tid=19055 file=peer_manager.nim:975 inRelayConns=0/50 outRelayConns=0/25 totalConnections=0/150 notConnectedPeers=0 outsideBackoffPeers=0
+DBG 2026-11-25 20:28:50.446+00:00 ENR addresses updated                      topics="waku enr" tid=19055 file=enr_addresses.nim:121 retained=0 total=0
+DBG 2026-11-25 20:28:50.447+00:00 Subscribing to pubsub topic                topics="waku relay" tid=19055 file=protocol.nim:604 pubsubTopic=/waku/2/rs/7777/0
+TRC 2026-11-25 20:28:50.447+00:00 adding validator for topic                 topics="libp2p pubsub" tid=19055 file=pubsub.nim:710 topic=/waku/2/rs/7777/0
+TRC 2026-11-25 20:28:50.447+00:00 subscribing to topic                       topics="libp2p pubsub" tid=19055 file=pubsub.nim:665 topic=/waku/2/rs/7777/0
+TRC 2026-11-25 20:28:50.447+00:00 replenishing mesh                          topics="libp2p gossipsub" tid=19055 file=behavior.nim:390 peers=0 topic=/waku/2/rs/7777/0 meshSize=0 gossipsubSize=0
+TRC 2026-11-25 20:28:50.447+00:00 grafting                                   topics="libp2p gossipsub" tid=19055 file=behavior.nim:418 grafting=0 topic=/waku/2/rs/7777/0 meshSize=0 gossipsubSize=0
+DBG 2026-11-25 20:28:50.447+00:00 Subscribing to pubsub topic                topics="waku relay" tid=19055 file=protocol.nim:604 pubsubTopic=/waku/2/rs/7777/1
+TRC 2026-11-25 20:28:50.447+00:00 adding validator for topic                 topics="libp2p pubsub" tid=19055 file=pubsub.nim:710 topic=/waku/2/rs/7777/1
+TRC 2026-11-25 20:28:50.447+00:00 subscribing to topic                       topics="libp2p pubsub" tid=19055 file=pubsub.nim:665 topic=/waku/2/rs/7777/1
+TRC 2026-11-25 20:28:50.447+00:00 replenishing mesh                          topics="libp2p gossipsub" tid=19055 file=behavior.nim:390 peers=0 topic=/waku/2/rs/7777/1 meshSize=0 gossipsubSize=0
+TRC 2026-11-25 20:28:50.447+00:00 grafting                                   topics="libp2p gossipsub" tid=19055 file=behavior.nim:418 grafting=0 topic=/waku/2/rs/7777/1 meshSize=0 gossipsubSize=0
+DBG 2026-11-25 20:28:50.447+00:00 Subscribing to pubsub topic                topics="waku relay" tid=19055 file=protocol.nim:604 pubsubTopic=/waku/2/rs/7777/2
+TRC 2026-11-25 20:28:50.447+00:00 adding validator for topic                 topics="libp2p pubsub" tid=19055 file=pubsub.nim:710 topic=/waku/2/rs/7777/2
+TRC 2026-11-25 20:28:50.447+00:00 subscribing to topic                       topics="libp2p pubsub" tid=19055 file=pubsub.nim:665 topic=/waku/2/rs/7777/2
+TRC 2026-11-25 20:28:50.447+00:00 replenishing mesh                          topics="libp2p gossipsub" tid=19055 file=behavior.nim:390 peers=0 topic=/waku/2/rs/7777/2 meshSize=0 gossipsubSize=0
+TRC 2026-11-25 20:28:50.447+00:00 grafting                                   topics="libp2p gossipsub" tid=19055 file=behavior.nim:418 grafting=0 topic=/waku/2/rs/7777/2 meshSize=0 gossipsubSize=0
+DBG 2026-11-25 20:28:50.447+00:00 Subscribing to pubsub topic                topics="waku relay" tid=19055 file=protocol.nim:604 pubsubTopic=/waku/2/rs/7777/3
+TRC 2026-11-25 20:28:50.447+00:00 adding validator for topic                 topics="libp2p pubsub" tid=19055 file=pubsub.nim:710 topic=/waku/2/rs/7777/3
+TRC 2026-11-25 20:28:50.447+00:00 subscribing to topic                       topics="libp2p pubsub" tid=19055 file=pubsub.nim:665 topic=/waku/2/rs/7777/3
+TRC 2026-11-25 20:28:50.447+00:00 replenishing mesh                          topics="libp2p gossipsub" tid=19055 file=behavior.nim:390 peers=0 topic=/waku/2/rs/7777/3 meshSize=0 gossipsubSize=0
+TRC 2026-11-25 20:28:50.447+00:00 grafting                                   topics="libp2p gossipsub" tid=19055 file=behavior.nim:418 grafting=0 topic=/waku/2/rs/7777/3 meshSize=0 gossipsubSize=0
+DBG 2026-11-25 20:28:50.447+00:00 Subscribing to pubsub topic                topics="waku relay" tid=19055 file=protocol.nim:604 pubsubTopic=/waku/2/rs/7777/4
+TRC 2026-11-25 20:28:50.447+00:00 adding validator for topic                 topics="libp2p pubsub" tid=19055 file=pubsub.nim:710 topic=/waku/2/rs/7777/4
+TRC 2026-11-25 20:28:50.447+00:00 subscribing to topic                       topics="libp2p pubsub" tid=19055 file=pubsub.nim:665 topic=/waku/2/rs/7777/4
+TRC 2026-11-25 20:28:50.447+00:00 replenishing mesh                          topics="libp2p gossipsub" tid=19055 file=behavior.nim:390 peers=0 topic=/waku/2/rs/7777/4 meshSize=0 gossipsubSize=0
+TRC 2026-11-25 20:28:50.447+00:00 grafting                                   topics="libp2p gossipsub" tid=19055 file=behavior.nim:418 grafting=0 topic=/waku/2/rs/7777/4 meshSize=0 gossipsubSize=0
+DBG 2026-11-25 20:28:50.447+00:00 Subscribing to pubsub topic                topics="waku relay" tid=19055 file=protocol.nim:604 pubsubTopic=/waku/2/rs/7777/5
+TRC 2026-11-25 20:28:50.447+00:00 adding validator for topic                 topics="libp2p pubsub" tid=19055 file=pubsub.nim:710 topic=/waku/2/rs/7777/5
+TRC 2026-11-25 20:28:50.447+00:00 subscribing to topic                       topics="libp2p pubsub" tid=19055 file=pubsub.nim:665 topic=/waku/2/rs/7777/5
+TRC 2026-11-25 20:28:50.447+00:00 replenishing mesh                          topics="libp2p gossipsub" tid=19055 file=behavior.nim:390 peers=0 topic=/waku/2/rs/7777/5 meshSize=0 gossipsubSize=0
+TRC 2026-11-25 20:28:50.447+00:00 grafting                                   topics="libp2p gossipsub" tid=19055 file=behavior.nim:418 grafting=0 topic=/waku/2/rs/7777/5 meshSize=0 gossipsubSize=0
+DBG 2026-11-25 20:28:50.447+00:00 Subscribing to pubsub topic                topics="waku relay" tid=19055 file=protocol.nim:604 pubsubTopic=/waku/2/rs/7777/6
+TRC 2026-11-25 20:28:50.447+00:00 adding validator for topic                 topics="libp2p pubsub" tid=19055 file=pubsub.nim:710 topic=/waku/2/rs/7777/6
+TRC 2026-11-25 20:28:50.447+00:00 subscribing to topic                       topics="libp2p pubsub" tid=19055 file=pubsub.nim:665 topic=/waku/2/rs/7777/6
+TRC 2026-11-25 20:28:50.447+00:00 replenishing mesh                          topics="libp2p gossipsub" tid=19055 file=behavior.nim:390 peers=0 topic=/waku/2/rs/7777/6 meshSize=0 gossipsubSize=0
+TRC 2026-11-25 20:28:50.447+00:00 grafting                                   topics="libp2p gossipsub" tid=19055 file=behavior.nim:418 grafting=0 topic=/waku/2/rs/7777/6 meshSize=0 gossipsubSize=0
+DBG 2026-11-25 20:28:50.447+00:00 Subscribing to pubsub topic                topics="waku relay" tid=19055 file=protocol.nim:604 pubsubTopic=/waku/2/rs/7777/7
+TRC 2026-11-25 20:28:50.447+00:00 adding validator for topic                 topics="libp2p pubsub" tid=19055 file=pubsub.nim:710 topic=/waku/2/rs/7777/7
+TRC 2026-11-25 20:28:50.448+00:00 subscribing to topic                       topics="libp2p pubsub" tid=19055 file=pubsub.nim:665 topic=/waku/2/rs/7777/7
+TRC 2026-11-25 20:28:50.448+00:00 replenishing mesh                          topics="libp2p gossipsub" tid=19055 file=behavior.nim:390 peers=0 topic=/waku/2/rs/7777/7 meshSize=0 gossipsubSize=0
+TRC 2026-11-25 20:28:50.448+00:00 grafting                                   topics="libp2p gossipsub" tid=19055 file=behavior.nim:418 grafting=0 topic=/waku/2/rs/7777/7 meshSize=0 gossipsubSize=0
+NTC 2026-11-25 20:28:50.448+00:00 ENR carries no reachable host, so peers cannot dial this node. Set --nat, --ext-ip, --dns4-domain-name or --ext-multiaddr to advertise one topics="wakunode waku" tid=19055 file=waku.nim:401
+TRC 2026-11-25 20:28:50.448+00:00 Resolving IP using DNS                     topics="libp2p dnsresolver" tid=19055 file=dnsresolver.nim:62 address=one.one.one.one servers="[1.1.1.1:53, 1.0.0.1:53]" domain=AF_UNSPEC
+INF 2026-11-25 20:28:50.448+00:00 Health monitor loop start                  tid=19055 file=node_health_monitor.nim:569
+DBG 2026-11-25 20:28:50.451+00:00 calculateConnectionState                   tid=19055 file=node_health_monitor.nim:456 relayCount=0 storeClientCount=0 lightpushCount=0 filterCount=0
+INF 2026-11-25 20:28:50.452+00:00 starting keepalive                         tid=19055 file=node_health_monitor.nim:738 randomPeersKeepalive=10s allPeersKeepalive=2m
+TRC 2026-11-25 20:28:50.452+00:00 Running keepalive loop                     tid=19055 file=node_health_monitor.nim:653
+DBG 2026-11-25 20:28:50.452+00:00 No mesh peer for the given pubsub topic    topics="waku relay" tid=19055 file=protocol.nim:431 pubsubTopic=/waku/2/rs/7777/3
+DBG 2026-11-25 20:28:50.452+00:00 No mesh peer for the given pubsub topic    topics="waku relay" tid=19055 file=protocol.nim:431 pubsubTopic=/waku/2/rs/7777/4
+DBG 2026-11-25 20:28:50.452+00:00 No mesh peer for the given pubsub topic    topics="waku relay" tid=19055 file=protocol.nim:431 pubsubTopic=/waku/2/rs/7777/2
+DBG 2026-11-25 20:28:50.452+00:00 No mesh peer for the given pubsub topic    topics="waku relay" tid=19055 file=protocol.nim:431 pubsubTopic=/waku/2/rs/7777/5
+DBG 2026-11-25 20:28:50.452+00:00 No mesh peer for the given pubsub topic    topics="waku relay" tid=19055 file=protocol.nim:431 pubsubTopic=/waku/2/rs/7777/7
+DBG 2026-11-25 20:28:50.452+00:00 No mesh peer for the given pubsub topic    topics="waku relay" tid=19055 file=protocol.nim:431 pubsubTopic=/waku/2/rs/7777/0
+DBG 2026-11-25 20:28:50.452+00:00 No mesh peer for the given pubsub topic    topics="waku relay" tid=19055 file=protocol.nim:431 pubsubTopic=/waku/2/rs/7777/6
+DBG 2026-11-25 20:28:50.452+00:00 No mesh peer for the given pubsub topic    topics="waku relay" tid=19055 file=protocol.nim:431 pubsubTopic=/waku/2/rs/7777/1
+TRC 2026-11-25 20:28:50.516+00:00 Selecting peers from peerstore             topics="waku node peer_manager" tid=19055 file=peer_manager.nim:262 protocol=/vac/waku/store-query/3.0.0 num_peers=0 address=256506339722192
+TRC 2026-11-25 20:28:50.516+00:00 No peer found for protocol                 topics="waku node peer_manager" tid=19055 file=peer_manager.nim:293 protocol=/vac/waku/store-query/3.0.0
+INF 2026-11-25 20:28:50.517+00:00 node info                                  topics="waku node" tid=19055 file=waku_node.nim:427 wakuInfo="(listenAddresses: [/ip4/172.17.0.2/tcp/20110/p2p/16Uiu2HAmFvsfc3Pcvt6EyjXKFkTpDa4iSijgrCDVfNiofJdjZfzD, /ip4/172.17.0.2/udp/20110/quic-v1/p2p/16Uiu2HAmFvsfc3Pcvt6EyjXKFkTpDa4iSijgrCDVfNiofJdjZfzD], enrUri: enr:-Ka4QCAN9ncJ2F_CIYrZiXgH2AcGIyBubSwFcTEx58mFB-hSFKRcfb9lqikL4hPm9FklVyz9Lht4MB4v5vQHDHyhXSQFgmlkgnY0im11bHRpYWRkcnOAgnJzkx5hCAAAAAEAAgADAAQABQAGAAeJc2VjcDI1NmsxoQMwpMu80Qm05aqPUCmheJCV1kEPdC4B2FFCui0D439proN0Y3CCTo6Fd2FrdTIN, mixPubKey: none())"
+INF 2026-11-25 20:28:50.526+00:00 Stopping switch                            topics="libp2p switch" tid=19055 file=switch.nim:350
+INF 2026-11-25 20:28:50.526+00:00 Stopping NATService                        topics="libp2p natservice" tid=19055 file=natservice.nim:571
+INF 2026-11-25 20:28:51.446+00:00 Stopping AutonatService                    topics="libp2p autonatservice" tid=19055 file=service.nim:241
+INF 2026-11-25 20:28:51.446+00:00 stop                                       topics="waku relay" tid=19055 file=protocol.nim:535
+INF 2026-11-25 20:28:51.446+00:00 gossipsub stop                             topics="libp2p gossipsub" tid=19055 file=gossipsub.nim:1190
+INF 2026-11-25 20:28:51.446+00:00 Waku rendezvous discovery stopped          topics="waku rendezvous" tid=19055 file=protocol.nim:231
+TRC 2026-11-25 20:28:51.447+00:00 DNS address query completed                topics="libp2p dnsresolver" tid=19055 file=dnsresolver.nim:112 resolvedAddresses={"1.1.1.1", "1.0.0.1", "2606:4700:4700::1111", "2606:4700:4700::1001"} server=1.1.1.1:53
+INF 2026-11-25 20:28:51.447+00:00 Node is online                             topics="waku online monitor" tid=19055 file=online_monitor.nim:53
+TRC 2026-11-25 20:28:51.447+00:00 Stopping ConnManager                       topics="libp2p connmanager" tid=19055 file=connmanager.nim:813
+TRC 2026-11-25 20:28:51.447+00:00 Stopped ConnManager                        topics="libp2p connmanager" tid=19055 file=connmanager.nim:847
+INF 2026-11-25 20:28:51.447+00:00 Stopping TCP transport                     topics="libp2p tcptransport" tid=19055 file=tcptransport.nim:164
+INF 2026-11-25 20:28:51.447+00:00 Transport stopping                         topics="libp2p transport" tid=19055 file=transport.nim:60 addresses=[/ip4/0.0.0.0/tcp/20110]
+INF 2026-11-25 20:28:51.448+00:00 Transport stopped                          topics="libp2p tcptransport" tid=19055 file=tcptransport.nim:192
+INF 2026-11-25 20:28:51.448+00:00 Transport stopping                         topics="libp2p transport" tid=19055 file=transport.nim:60 addresses=[/ip4/0.0.0.0/udp/20110/quic-v1]
+INF 2026-11-25 20:28:51.753+00:00 Switch stopped                             topics="libp2p switch" tid=19055 file=switch.nim:395
+INF 2026-11-25 20:28:51.754+00:00 Waku rendezvous client stopped             topics="waku rendezvous client" tid=19055 file=client.nim:158
+INF 2026-11-25 20:28:51.754+00:00 Health monitor loop end                    tid=19055 file=node_health_monitor.nim:603
+DBG 2026-11-25 20:28:51.755+00:00 no library teardown to run for this context tid=19055 file=ffi_thread.nim:189
+{"drop_ms":0.18292,"event":"iter","fds":21,"i":0,"listen_addrs":2,"op_ms":2743.267863,"rss_kb":79340,"shutdown_ms":1235.874109,"start_ms":8190.047784,"sub_err":null,"sub_ok":true,"threads":7}
+DBG 2026-11-25 20:28:53.263+00:00 Whether to mount storeSync is not specified, defaulting to not mounting topics="waku conf builder" tid=19060 file=waku_conf_builder.nim:657
+NTC 2026-11-25 20:28:53.263+00:00 No node key provided, generated a new one; identity will not persist across restarts topics="waku conf builder" tid=19060 file=waku_conf_builder.nim:352
+INF 2026-11-25 20:28:53.263+00:00 Sharding configuration:                    topics="waku conf builder" tid=19060 file=waku_conf_builder.nim:691 shardingConf="(kind: AutoSharding, numShardsInCluster: 8)" subscribeShards="@[0, 1, 2, 3, 4, 5, 6, 7]"
+WRN 2026-11-25 20:28:53.264+00:00 configuration flag ignored                 topics="waku cli args" tid=19060 file=cli_args.nim:1225 detail="--discv5-udp-port is ignored: --discv5-discovery is not enabled"
+INF 2026-11-25 20:28:53.264+00:00 Configuration: Enabled protocols           topics="waku conf" tid=19060 file=waku_conf.nim:201 relay=true rlnRelay=false store=false filter=true lightPush=true peerExchange=false rendezvous=true
+INF 2026-11-25 20:28:53.264+00:00 Configuration. Network                     topics="waku conf" tid=19060 file=waku_conf.nim:210 cluster=7777
+DBG 2026-11-25 20:28:53.264+00:00 Configuration. Active Relay Shards         topics="waku conf" tid=19060 file=waku_conf.nim:213 shard=0
+DBG 2026-11-25 20:28:53.264+00:00 Configuration. Active Relay Shards         topics="waku conf" tid=19060 file=waku_conf.nim:213 shard=1
+DBG 2026-11-25 20:28:53.264+00:00 Configuration. Active Relay Shards         topics="waku conf" tid=19060 file=waku_conf.nim:213 shard=2
+DBG 2026-11-25 20:28:53.264+00:00 Configuration. Active Relay Shards         topics="waku conf" tid=19060 file=waku_conf.nim:213 shard=3
+DBG 2026-11-25 20:28:53.264+00:00 Configuration. Active Relay Shards         topics="waku conf" tid=19060 file=waku_conf.nim:213 shard=4
+DBG 2026-11-25 20:28:53.264+00:00 Configuration. Active Relay Shards         topics="waku conf" tid=19060 file=waku_conf.nim:213 shard=5
+DBG 2026-11-25 20:28:53.264+00:00 Configuration. Active Relay Shards         topics="waku conf" tid=19060 file=waku_conf.nim:213 shard=6
+DBG 2026-11-25 20:28:53.264+00:00 Configuration. Active Relay Shards         topics="waku conf" tid=19060 file=waku_conf.nim:213 shard=7
+INF 2026-11-25 20:28:53.265+00:00 Setting up storage                         tid=19060 file=node_factory.nim:491
+INF 2026-11-25 20:28:53.265+00:00 Initializing node                          tid=19060 file=node_factory.nim:500
+INF 2026-11-25 20:28:53.265+00:00 Setting up NATService                      topics="libp2p natservice" tid=19060 file=natservice.nim:470 portMapping=true reachability=false holePunching=false
+TRC 2026-11-25 20:28:53.265+00:00 Protocol handlers registered               topics="libp2p multistream" tid=19060 file=multistream.nim:226 protocols="[/ipfs/id/1.0.0]"
+TRC 2026-11-25 20:28:53.265+00:00 Protocol handlers registered               topics="libp2p multistream" tid=19060 file=multistream.nim:226 protocols="[/libp2p/autonat/1.0.0]"
+TRC 2026-11-25 20:28:53.266+00:00 Protocol handlers registered               topics="libp2p multistream" tid=19060 file=multistream.nim:226 protocols="[/libp2p/circuit/relay/0.2.0/hop]"
+TRC 2026-11-25 20:28:53.267+00:00 no peer storage found                      tid=19060 file=peer_manager.nim:1363
+INF 2026-11-25 20:28:53.267+00:00 Initializing networking                    tid=19060 file=waku_node.nim:360 addrs="@[/ip4/0.0.0.0/tcp/20110, /ip4/0.0.0.0/udp/20110/quic-v1]"
+INF 2026-11-25 20:28:53.267+00:00 Mounting protocols                         tid=19060 file=node_factory.nim:506
+INF 2026-11-25 20:28:53.267+00:00 Created WakuMetadata protocol              topics="waku node" tid=19060 file=protocol.nim:107 clusterId=7777 shards="[0, 1, 2, 3, 4, 5, 6, 7]"
+TRC 2026-11-25 20:28:53.267+00:00 Protocol handlers registered               topics="libp2p multistream" tid=19060 file=multistream.nim:226 protocols="[/vac/waku/metadata/1.0.0]"
+INF 2026-11-25 20:28:53.267+00:00 mounting store client                      topics="waku node store api" tid=19060 file=store.nim:117
+INF 2026-11-25 20:28:53.268+00:00 Mounting auto sharding                     topics="waku node" tid=19060 file=waku_node.nim:462 clusterId=7777 shardCount=8
+DBG 2026-11-25 20:28:53.268+00:00 Setting max message size                   tid=19060 file=node_factory.nim:284 num_bytes=153600
+INF 2026-11-25 20:28:53.268+00:00 mounting relay protocol                    topics="waku node relay api" tid=19060 file=relay.nim:166
+TRC 2026-11-25 20:28:53.268+00:00 Protocol handlers registered               topics="libp2p multistream" tid=19060 file=multistream.nim:226 protocols="[/vac/waku/relay/2.0.0, /meshsub/1.3.0, /meshsub/1.2.0, /meshsub/1.1.0, /meshsub/1.0.0, /meshsub/1.3.0, /meshsub/1.2.0, /meshsub/1.1.0, /meshsub/1.0.0]"
+DBG 2026-11-25 20:28:53.268+00:00 relay mounted successfully                 topics="waku node relay api" tid=19060 file=relay.nim:184
+DBG 2026-11-25 20:28:53.268+00:00 Adding validator to signed shards          tid=19060 file=validator_signed.nim:56 protectedShards=[] clusterId=7777
+INF 2026-11-25 20:28:53.268+00:00 Mounting rendezvous discovery protocol     topics="waku node" tid=19060 file=waku_node.nim:727
+INF 2026-11-25 20:28:53.268+00:00 Waku rendezvous initialized                topics="waku node" tid=19060 file=protocol.nim:205 clusterId=7777 shards="[0, 1, 2, 3, 4, 5, 6, 7]" capabilities="[Relay, Filter, Lightpush]" wakuPeerRecord="(peerId: 16Uiu2...r4Xn5V, seqNo: 1795638533, addresses: [/ip4/0.0.0.0/tcp/20110, /ip4/0.0.0.0/udp/20110/quic-v1], mixKey: )"
+TRC 2026-11-25 20:28:53.268+00:00 Protocol handlers registered               topics="libp2p multistream" tid=19060 file=multistream.nim:226 protocols="[/vac/waku/rendezvous/1.0.0]"
+INF 2026-11-25 20:28:53.268+00:00 Mounting rendezvous client                 topics="waku node" tid=19060 file=waku_node.nim:713
+INF 2026-11-25 20:28:53.268+00:00 Waku rendezvous client initialized         topics="waku node" tid=19060 file=client.nim:146 clusterId=7777
+INF 2026-11-25 20:28:53.268+00:00 mounting libp2p ping protocol              topics="waku node ping api" tid=19060 file=ping.nim:18
+TRC 2026-11-25 20:28:53.268+00:00 Protocol handlers registered               topics="libp2p multistream" tid=19060 file=multistream.nim:226 protocols="[/ipfs/ping/1.0.0]"
+INF 2026-11-25 20:28:53.268+00:00 No RLN backend configured; RLN is off      tid=19060 file=node_factory.nim:329
+INF 2026-11-25 20:28:53.268+00:00 mounting light push                        topics="waku node lightpush api" tid=19060 file=lightpush.nim:214
+INF 2026-11-25 20:28:53.268+00:00 mounting lightpush with relay              topics="waku node lightpush api" tid=19060 file=lightpush.nim:219
+TRC 2026-11-25 20:28:53.268+00:00 Protocol handlers registered               topics="libp2p multistream" tid=19060 file=multistream.nim:226 protocols="[/vac/waku/lightpush/3.0.0]"
+DBG 2026-11-25 20:28:53.268+00:00 lightpush mounted successfully             topics="waku node lightpush api" tid=19060 file=lightpush.nim:237
+INF 2026-11-25 20:28:53.269+00:00 mounting legacy light push                 topics="waku node lightpush api" tid=19060 file=lightpush.nim:75
+INF 2026-11-25 20:28:53.269+00:00 mounting legacy lightpush with relay       topics="waku node lightpush api" tid=19060 file=lightpush.nim:80
+TRC 2026-11-25 20:28:53.269+00:00 Protocol handlers registered               topics="libp2p multistream" tid=19060 file=multistream.nim:226 protocols="[/vac/waku/lightpush/2.0.0-beta1]"
+DBG 2026-11-25 20:28:53.269+00:00 legacy lightpush mounted successfully      topics="waku node lightpush api" tid=19060 file=lightpush.nim:97
+INF 2026-11-25 20:28:53.269+00:00 mounting light push client                 topics="waku node lightpush api" tid=19060 file=lightpush.nim:241
+INF 2026-11-25 20:28:53.269+00:00 mounting legacy light push client          topics="waku node lightpush api" tid=19060 file=lightpush.nim:101
+INF 2026-11-25 20:28:53.269+00:00 mounting filter protocol                   topics="waku node filter api" tid=19060 file=filter.nim:49
+INF 2026-11-25 20:28:53.269+00:00 Starting filter protocol                   topics="waku filter" tid=19060 file=protocol.nim:415
+DBG 2026-11-25 20:28:53.269+00:00 Starting to maintain subscriptions         topics="waku filter" tid=19060 file=protocol.nim:409
+DBG 2026-11-25 20:28:53.269+00:00 Maintaining subscriptions                  topics="waku filter" tid=19060 file=protocol.nim:239
+DBG 2026-11-25 20:28:53.269+00:00 Cleanup                                    topics="waku filter subscriptions" tid=19060 file=subscriptions.nim:119 currentPeerIds=[]
+DBG 2026-11-25 20:28:53.269+00:00 After cleanup                              topics="waku filter subscriptions" tid=19060 file=subscriptions.nim:131 currentPeerIds=[]
+TRC 2026-11-25 20:28:53.269+00:00 Protocol handlers registered               topics="libp2p multistream" tid=19060 file=multistream.nim:226 protocols="[/vac/waku/filter-subscribe/2.0.0-beta1]"
+INF 2026-11-25 20:28:53.269+00:00 mounting filter client                     topics="waku node filter api" tid=19060 file=filter.nim:82
+TRC 2026-11-25 20:28:53.269+00:00 Protocol handlers registered               topics="libp2p multistream" tid=19060 file=multistream.nim:226 protocols="[/vac/waku/filter-push/2.0.0-beta1]"
+INF 2026-11-25 20:28:53.269+00:00 mounting waku peer exchange client         topics="waku node peerexchange api" tid=19060 file=peer_exchange.nim:54
+INF 2026-11-25 20:28:53.269+00:00 No external callbacks to be set            topics="wakunode waku" tid=19060 file=waku.nim:158
+INF 2026-11-25 20:28:53.269+00:00 Setting up AutonatService                  topics="libp2p autonatservice" tid=19060 file=service.nim:208
+TRC 2026-11-25 20:28:53.269+00:00 Send processor chain                       topics="send service" tid=19060 file=send_service.nim:146 index=1 processor=BaseSendProcessor
+INF 2026-11-25 20:28:53.269+00:00 Messaging API settings                     topics="logosdelivery" tid=19060 file=messaging_client.nim:84 reliability=true anonymityLevel=None rateLimitEnabled=false rateLimitEpochPeriodSec=600 rateLimitMessagesPerEpoch=1 maxParkedAgeSec=1800 sendQueueCapacity=1000 backfillEnabled=true backfillRequestTimeout=10s
+INF 2026-11-25 20:28:53.270+00:00 Retrieve dynamic bootstrap nodes           topics="wakunode waku" tid=19060 file=waku.nim:477
+INF 2026-11-25 20:28:53.270+00:00 Running nwaku node                         tid=19060 file=node_factory.nim:414 version="\"0f2188\""
+INF 2026-11-25 20:28:53.270+00:00 Starting Waku node                         topics="waku node" tid=19060 file=waku_node.nim:834 version="\"0f2188\""
+DBG 2026-11-25 20:28:53.270+00:00 Waku rendezvous periodic requests started  topics="waku rendezvous client" tid=19060 file=client.nim:94 interval=10s
+INF 2026-11-25 20:28:53.270+00:00 Waku rendezvous client started             topics="waku rendezvous client" tid=19060 file=client.nim:152
+INF 2026-11-25 20:28:53.270+00:00 Starting switch for peer                   topics="libp2p switch" tid=19060 file=switch.nim:403 peerInfo="(peerId: 16Uiu2HAmNpk3h4qX3A4gzkEPN8wbcZHt68LggeRLteYt4Xr4Xn5V, listenAddrs: [/ip4/0.0.0.0/tcp/20110, /ip4/0.0.0.0/udp/20110/quic-v1], addrs: [], protocols: [/ipfs/id/1.0.0, /libp2p/autonat/1.0.0, /libp2p/circuit/relay/0.2.0/hop, /vac/waku/metadata/1.0.0, /vac/waku/relay/2.0.0, /vac/waku/rendezvous/1.0.0, /ipfs/ping/1.0.0, /vac/waku/lightpush/3.0.0, /vac/waku/lightpush/2.0.0-beta1, /vac/waku/filter-subscribe/2.0.0-beta1, /vac/waku/filter-push/2.0.0-beta1], protoVersion: ipfs/0.1.0, agentVersion: logos-delivery-\"0f2188\")"
+INF 2026-11-25 20:28:53.270+00:00 Starting NATService                        topics="libp2p natservice" tid=19060 file=natservice.nim:539
+INF 2026-11-25 20:28:53.270+00:00 Running AutonatService                     topics="libp2p autonatservice" tid=19060 file=service.nim:224
+INF 2026-11-25 20:28:53.272+00:00 Starting TCP transport                     topics="libp2p tcptransport" tid=19060 file=tcptransport.nim:119
+TRC 2026-11-25 20:28:53.272+00:00 Listening on                               topics="libp2p tcptransport" tid=19060 file=tcptransport.nim:140 address=/ip4/0.0.0.0/tcp/20110
+INF 2026-11-25 20:28:53.272+00:00 Transport starting                         topics="libp2p transport" tid=19060 file=transport.nim:50 addresses=[/ip4/0.0.0.0/tcp/20110]
+WRN 2026-11-25 20:28:53.273+00:00 QUIC UDP receive buffer capped below requested size tid=19060 file=endpoint.nim:72 requestedBytes=8388608 effectiveBytes=425984 hint="raise net.core.rmem_max if Linux caps SO_RCVBUF"
+INF 2026-11-25 20:28:53.273+00:00 Transport starting                         topics="libp2p transport" tid=19060 file=transport.nim:50 addresses=[/ip4/0.0.0.0/udp/20110/quic-v1]
+WRN 2026-11-25 20:28:55.273+00:00 NAT port mapping failed                    topics="libp2p natservice" tid=19060 file=natservice.nim:318 port=20110 protocol=mpTcp err="plum: mapping 0 failed"
+WRN 2026-11-25 20:28:57.277+00:00 NAT port mapping failed                    topics="libp2p natservice" tid=19060 file=natservice.nim:318 port=20110 protocol=mpUdp err="plum: mapping 0 failed"
+DBG 2026-11-25 20:28:57.279+00:00 ENR addresses updated                      topics="waku enr" tid=19060 file=enr_addresses.nim:121 retained=0 total=0
+TRC 2026-11-25 20:28:57.279+00:00 Asking peers for reachability              topics="libp2p autonatservice" tid=19060 file=service.nim:168
+DBG 2026-11-25 20:28:57.279+00:00 Transport connection acceptance started    topics="libp2p switch" tid=19060 file=switch.nim:296
+DBG 2026-11-25 20:28:57.280+00:00 Transport connection acceptance started    topics="libp2p switch" tid=19060 file=switch.nim:296
+WRN 2026-11-25 20:28:58.275+00:00 ffi request still in flight; caller notified via RET_STALE_WARN tid=19060 file=ffi_thread.nim:100 reqId=LogosdeliveryStartNodeReq elapsedMs=5000
+WRN 2026-11-25 20:28:59.280+00:00 NAT port mapping failed                    topics="libp2p natservice" tid=19060 file=natservice.nim:318 port=20110 protocol=mpTcp err="plum: mapping 0 failed"
+WRN 2026-11-25 20:29:01.282+00:00 NAT port mapping failed                    topics="libp2p natservice" tid=19060 file=natservice.nim:318 port=20110 protocol=mpUdp err="plum: mapping 0 failed"
+INF 2026-11-25 20:29:01.285+00:00 start                                      topics="waku relay" tid=19060 file=protocol.nim:530
+INF 2026-11-25 20:29:01.285+00:00 gossipsub start                            topics="libp2p gossipsub" tid=19060 file=gossipsub.nim:1175
+TRC 2026-11-25 20:29:01.286+00:00 getting gossip peers (iHave)               topics="libp2p gossipsub" tid=19060 file=behavior.nim:647 ntopics=0
+TRC 2026-11-25 20:29:01.286+00:00 updating scores                            topics="libp2p gossipsub" tid=19060 file=scoring.nim:150 peers=0
+TRC 2026-11-25 20:29:01.286+00:00 updated scores                             topics="libp2p gossipsub" tid=19060 file=scoring.nim:334 peers=0
+DBG 2026-11-25 20:29:01.286+00:00 Waku rendezvous periodic registration started topics="waku rendezvous" tid=19060 file=protocol.nim:124 interval=10s
+INF 2026-11-25 20:29:01.286+00:00 Waku rendezvous discovery started          topics="waku rendezvous" tid=19060 file=protocol.nim:222
+INF 2026-11-25 20:29:01.287+00:00 Started libp2p node                        topics="libp2p switch" tid=19060 file=switch.nim:446 peerId="(peerId: 16Uiu2HAmNpk3h4qX3A4gzkEPN8wbcZHt68LggeRLteYt4Xr4Xn5V, listenAddrs: [/ip4/0.0.0.0/tcp/20110, /ip4/0.0.0.0/udp/20110/quic-v1], addrs: [/ip4/172.17.0.2/tcp/20110, /ip4/172.17.0.2/udp/20110/quic-v1], protocols: [/ipfs/id/1.0.0, /libp2p/autonat/1.0.0, /libp2p/circuit/relay/0.2.0/hop, /vac/waku/metadata/1.0.0, /vac/waku/relay/2.0.0, /vac/waku/rendezvous/1.0.0, /ipfs/ping/1.0.0, /vac/waku/lightpush/3.0.0, /vac/waku/lightpush/2.0.0-beta1, /vac/waku/filter-subscribe/2.0.0-beta1, /vac/waku/filter-push/2.0.0-beta1], protoVersion: ipfs/0.1.0, agentVersion: logos-delivery-\"0f2188\")"
+DBG 2026-11-25 20:29:01.287+00:00 ENR addresses updated                      topics="waku enr" tid=19060 file=enr_addresses.nim:121 retained=0 total=0
+INF 2026-11-25 20:29:01.287+00:00 Announced addresses resolved               topics="waku node" tid=19060 file=waku_node.nim:852 addrs="@[/ip4/172.17.0.2/tcp/20110, /ip4/172.17.0.2/udp/20110/quic-v1]"
+INF 2026-11-25 20:29:01.288+00:00 Node started successfully                  topics="waku node" tid=19060 file=waku_node.nim:879
+DBG 2026-11-25 20:29:01.288+00:00 Starting peer exchange loop                topics="waku node peerexchange api" tid=19060 file=peer_exchange.nim:105
+DBG 2026-11-25 20:29:01.288+00:00 Retrieving peer info via peer exchange protocol topics="waku node peerexchange api" tid=19060 file=peer_exchange.nim:70 amount=5
+TRC 2026-11-25 20:29:01.288+00:00 Selecting peers from peerstore             topics="waku node peer_manager" tid=19060 file=peer_manager.nim:262 protocol=/vac/waku/peer-exchange/2.0.0-alpha1 num_peers=0 address=256506339722192
+TRC 2026-11-25 20:29:01.288+00:00 No peer found for protocol                 topics="waku node peer_manager" tid=19060 file=peer_manager.nim:293 protocol=/vac/waku/peer-exchange/2.0.0-alpha1
+DBG 2026-11-25 20:29:01.289+00:00 Peer exchange request could not be made as no peer exchange peers found topics="waku peer_exchange client" tid=19060 file=client.nim:104
+DBG 2026-11-25 20:29:01.289+00:00 Failed to retrieve peer info via peer exchange protocol topics="waku node peerexchange api" tid=19060 file=peer_exchange.nim:88 error="(status_code: SERVICE_UNAVAILABLE, status_desc: ok(peer_not_found_failure))"
+DBG 2026-11-25 20:29:01.289+00:00 Cannot fetch peers from peer exchange      topics="waku node peerexchange api" tid=19060 file=peer_exchange.nim:98 cause="(status_code: SERVICE_UNAVAILABLE, status_desc: ok(peer_not_found_failure))"
+TRC 2026-11-25 20:29:01.289+00:00 Starting relay connectivity loop           topics="waku node peer_manager" tid=19060 file=peer_manager.nim:1206
+TRC 2026-11-25 20:29:01.289+00:00 Starting prune peerstore loop              topics="waku node peer_manager" tid=19060 file=peer_manager.nim:1196
+INF 2026-11-25 20:29:01.289+00:00 Relay peer connections                     topics="waku node peer_manager" tid=19060 file=peer_manager.nim:975 inRelayConns=0/50 outRelayConns=0/25 totalConnections=0/150 notConnectedPeers=0 outsideBackoffPeers=0
+DBG 2026-11-25 20:29:01.291+00:00 ENR addresses updated                      topics="waku enr" tid=19060 file=enr_addresses.nim:121 retained=0 total=0
+DBG 2026-11-25 20:29:01.291+00:00 Subscribing to pubsub topic                topics="waku relay" tid=19060 file=protocol.nim:604 pubsubTopic=/waku/2/rs/7777/0
+TRC 2026-11-25 20:29:01.291+00:00 adding validator for topic                 topics="libp2p pubsub" tid=19060 file=pubsub.nim:710 topic=/waku/2/rs/7777/0
+TRC 2026-11-25 20:29:01.291+00:00 subscribing to topic                       topics="libp2p pubsub" tid=19060 file=pubsub.nim:665 topic=/waku/2/rs/7777/0
+TRC 2026-11-25 20:29:01.292+00:00 replenishing mesh                          topics="libp2p gossipsub" tid=19060 file=behavior.nim:390 peers=0 topic=/waku/2/rs/7777/0 meshSize=0 gossipsubSize=0
+TRC 2026-11-25 20:29:01.292+00:00 grafting                                   topics="libp2p gossipsub" tid=19060 file=behavior.nim:418 grafting=0 topic=/waku/2/rs/7777/0 meshSize=0 gossipsubSize=0
+DBG 2026-11-25 20:29:01.292+00:00 Subscribing to pubsub topic                topics="waku relay" tid=19060 file=protocol.nim:604 pubsubTopic=/waku/2/rs/7777/1
+TRC 2026-11-25 20:29:01.292+00:00 adding validator for topic                 topics="libp2p pubsub" tid=19060 file=pubsub.nim:710 topic=/waku/2/rs/7777/1
+TRC 2026-11-25 20:29:01.292+00:00 subscribing to topic                       topics="libp2p pubsub" tid=19060 file=pubsub.nim:665 topic=/waku/2/rs/7777/1
+TRC 2026-11-25 20:29:01.292+00:00 replenishing mesh                          topics="libp2p gossipsub" tid=19060 file=behavior.nim:390 peers=0 topic=/waku/2/rs/7777/1 meshSize=0 gossipsubSize=0
+TRC 2026-11-25 20:29:01.292+00:00 grafting                                   topics="libp2p gossipsub" tid=19060 file=behavior.nim:418 grafting=0 topic=/waku/2/rs/7777/1 meshSize=0 gossipsubSize=0
+DBG 2026-11-25 20:29:01.292+00:00 Subscribing to pubsub topic                topics="waku relay" tid=19060 file=protocol.nim:604 pubsubTopic=/waku/2/rs/7777/2
+TRC 2026-11-25 20:29:01.292+00:00 adding validator for topic                 topics="libp2p pubsub" tid=19060 file=pubsub.nim:710 topic=/waku/2/rs/7777/2
+TRC 2026-11-25 20:29:01.292+00:00 subscribing to topic                       topics="libp2p pubsub" tid=19060 file=pubsub.nim:665 topic=/waku/2/rs/7777/2
+TRC 2026-11-25 20:29:01.292+00:00 replenishing mesh                          topics="libp2p gossipsub" tid=19060 file=behavior.nim:390 peers=0 topic=/waku/2/rs/7777/2 meshSize=0 gossipsubSize=0
+TRC 2026-11-25 20:29:01.292+00:00 grafting                                   topics="libp2p gossipsub" tid=19060 file=behavior.nim:418 grafting=0 topic=/waku/2/rs/7777/2 meshSize=0 gossipsubSize=0
+DBG 2026-11-25 20:29:01.292+00:00 Subscribing to pubsub topic                topics="waku relay" tid=19060 file=protocol.nim:604 pubsubTopic=/waku/2/rs/7777/3
+TRC 2026-11-25 20:29:01.292+00:00 adding validator for topic                 topics="libp2p pubsub" tid=19060 file=pubsub.nim:710 topic=/waku/2/rs/7777/3
+TRC 2026-11-25 20:29:01.292+00:00 subscribing to topic                       topics="libp2p pubsub" tid=19060 file=pubsub.nim:665 topic=/waku/2/rs/7777/3
+TRC 2026-11-25 20:29:01.292+00:00 replenishing mesh                          topics="libp2p gossipsub" tid=19060 file=behavior.nim:390 peers=0 topic=/waku/2/rs/7777/3 meshSize=0 gossipsubSize=0
+TRC 2026-11-25 20:29:01.292+00:00 grafting                                   topics="libp2p gossipsub" tid=19060 file=behavior.nim:418 grafting=0 topic=/waku/2/rs/7777/3 meshSize=0 gossipsubSize=0
+DBG 2026-11-25 20:29:01.292+00:00 Subscribing to pubsub topic                topics="waku relay" tid=19060 file=protocol.nim:604 pubsubTopic=/waku/2/rs/7777/4
+TRC 2026-11-25 20:29:01.292+00:00 adding validator for topic                 topics="libp2p pubsub" tid=19060 file=pubsub.nim:710 topic=/waku/2/rs/7777/4
+TRC 2026-11-25 20:29:01.292+00:00 subscribing to topic                       topics="libp2p pubsub" tid=19060 file=pubsub.nim:665 topic=/waku/2/rs/7777/4
+TRC 2026-11-25 20:29:01.292+00:00 replenishing mesh                          topics="libp2p gossipsub" tid=19060 file=behavior.nim:390 peers=0 topic=/waku/2/rs/7777/4 meshSize=0 gossipsubSize=0
+TRC 2026-11-25 20:29:01.292+00:00 grafting                                   topics="libp2p gossipsub" tid=19060 file=behavior.nim:418 grafting=0 topic=/waku/2/rs/7777/4 meshSize=0 gossipsubSize=0
+DBG 2026-11-25 20:29:01.292+00:00 Subscribing to pubsub topic                topics="waku relay" tid=19060 file=protocol.nim:604 pubsubTopic=/waku/2/rs/7777/5
+TRC 2026-11-25 20:29:01.292+00:00 adding validator for topic                 topics="libp2p pubsub" tid=19060 file=pubsub.nim:710 topic=/waku/2/rs/7777/5
+TRC 2026-11-25 20:29:01.292+00:00 subscribing to topic                       topics="libp2p pubsub" tid=19060 file=pubsub.nim:665 topic=/waku/2/rs/7777/5
+TRC 2026-11-25 20:29:01.292+00:00 replenishing mesh                          topics="libp2p gossipsub" tid=19060 file=behavior.nim:390 peers=0 topic=/waku/2/rs/7777/5 meshSize=0 gossipsubSize=0
+TRC 2026-11-25 20:29:01.292+00:00 grafting                                   topics="libp2p gossipsub" tid=19060 file=behavior.nim:418 grafting=0 topic=/waku/2/rs/7777/5 meshSize=0 gossipsubSize=0
+DBG 2026-11-25 20:29:01.292+00:00 Subscribing to pubsub topic                topics="waku relay" tid=19060 file=protocol.nim:604 pubsubTopic=/waku/2/rs/7777/6
+TRC 2026-11-25 20:29:01.292+00:00 adding validator for topic                 topics="libp2p pubsub" tid=19060 file=pubsub.nim:710 topic=/waku/2/rs/7777/6
+TRC 2026-11-25 20:29:01.292+00:00 subscribing to topic                       topics="libp2p pubsub" tid=19060 file=pubsub.nim:665 topic=/waku/2/rs/7777/6
+TRC 2026-11-25 20:29:01.292+00:00 replenishing mesh                          topics="libp2p gossipsub" tid=19060 file=behavior.nim:390 peers=0 topic=/waku/2/rs/7777/6 meshSize=0 gossipsubSize=0
+TRC 2026-11-25 20:29:01.292+00:00 grafting                                   topics="libp2p gossipsub" tid=19060 file=behavior.nim:418 grafting=0 topic=/waku/2/rs/7777/6 meshSize=0 gossipsubSize=0
+DBG 2026-11-25 20:29:01.292+00:00 Subscribing to pubsub topic                topics="waku relay" tid=19060 file=protocol.nim:604 pubsubTopic=/waku/2/rs/7777/7
+TRC 2026-11-25 20:29:01.292+00:00 adding validator for topic                 topics="libp2p pubsub" tid=19060 file=pubsub.nim:710 topic=/waku/2/rs/7777/7
+TRC 2026-11-25 20:29:01.292+00:00 subscribing to topic                       topics="libp2p pubsub" tid=19060 file=pubsub.nim:665 topic=/waku/2/rs/7777/7
+TRC 2026-11-25 20:29:01.292+00:00 replenishing mesh                          topics="libp2p gossipsub" tid=19060 file=behavior.nim:390 peers=0 topic=/waku/2/rs/7777/7 meshSize=0 gossipsubSize=0
+TRC 2026-11-25 20:29:01.292+00:00 grafting                                   topics="libp2p gossipsub" tid=19060 file=behavior.nim:418 grafting=0 topic=/waku/2/rs/7777/7 meshSize=0 gossipsubSize=0
+NTC 2026-11-25 20:29:01.292+00:00 ENR carries no reachable host, so peers cannot dial this node. Set --nat, --ext-ip, --dns4-domain-name or --ext-multiaddr to advertise one topics="wakunode waku" tid=19060 file=waku.nim:401
+TRC 2026-11-25 20:29:01.293+00:00 Resolving IP using DNS                     topics="libp2p dnsresolver" tid=19060 file=dnsresolver.nim:62 address=one.one.one.one servers="[1.1.1.1:53, 1.0.0.1:53]" domain=AF_UNSPEC
+INF 2026-11-25 20:29:01.293+00:00 Health monitor loop start                  tid=19060 file=node_health_monitor.nim:569
+DBG 2026-11-25 20:29:01.294+00:00 calculateConnectionState                   tid=19060 file=node_health_monitor.nim:456 relayCount=0 storeClientCount=0 lightpushCount=0 filterCount=0
+INF 2026-11-25 20:29:01.294+00:00 starting keepalive                         tid=19060 file=node_health_monitor.nim:738 randomPeersKeepalive=10s allPeersKeepalive=2m
+TRC 2026-11-25 20:29:01.294+00:00 Running keepalive loop                     tid=19060 file=node_health_monitor.nim:653
+DBG 2026-11-25 20:29:01.294+00:00 No mesh peer for the given pubsub topic    topics="waku relay" tid=19060 file=protocol.nim:431 pubsubTopic=/waku/2/rs/7777/3
+DBG 2026-11-25 20:29:01.294+00:00 No mesh peer for the given pubsub topic    topics="waku relay" tid=19060 file=protocol.nim:431 pubsubTopic=/waku/2/rs/7777/4
+DBG 2026-11-25 20:29:01.294+00:00 No mesh peer for the given pubsub topic    topics="waku relay" tid=19060 file=protocol.nim:431 pubsubTopic=/waku/2/rs/7777/2
+DBG 2026-11-25 20:29:01.294+00:00 No mesh peer for the given pubsub topic    topics="waku relay" tid=19060 file=protocol.nim:431 pubsubTopic=/waku/2/rs/7777/5
+DBG 2026-11-25 20:29:01.294+00:00 No mesh peer for the given pubsub topic    topics="waku relay" tid=19060 file=protocol.nim:431 pubsubTopic=/waku/2/rs/7777/7
+DBG 2026-11-25 20:29:01.294+00:00 No mesh peer for the given pubsub topic    topics="waku relay" tid=19060 file=protocol.nim:431 pubsubTopic=/waku/2/rs/7777/0
+DBG 2026-11-25 20:29:01.294+00:00 No mesh peer for the given pubsub topic    topics="waku relay" tid=19060 file=protocol.nim:431 pubsubTopic=/waku/2/rs/7777/6
+DBG 2026-11-25 20:29:01.294+00:00 No mesh peer for the given pubsub topic    topics="waku relay" tid=19060 file=protocol.nim:431 pubsubTopic=/waku/2/rs/7777/1
+TRC 2026-11-25 20:29:01.367+00:00 Selecting peers from peerstore             topics="waku node peer_manager" tid=19060 file=peer_manager.nim:262 protocol=/vac/waku/store-query/3.0.0 num_peers=0 address=256506339722192
+TRC 2026-11-25 20:29:01.367+00:00 No peer found for protocol                 topics="waku node peer_manager" tid=19060 file=peer_manager.nim:293 protocol=/vac/waku/store-query/3.0.0
+INF 2026-11-25 20:29:01.367+00:00 node info                                  topics="waku node" tid=19060 file=waku_node.nim:427 wakuInfo="(listenAddresses: [/ip4/172.17.0.2/tcp/20110/p2p/16Uiu2HAmNpk3h4qX3A4gzkEPN8wbcZHt68LggeRLteYt4Xr4Xn5V, /ip4/172.17.0.2/udp/20110/quic-v1/p2p/16Uiu2HAmNpk3h4qX3A4gzkEPN8wbcZHt68LggeRLteYt4Xr4Xn5V], enrUri: enr:-Ka4QC1ED9VEQROOIOSkgYWLbVR6e96IvrmrNkpuWy1mZsobOnswhzC5w6l0V0mYCEibPkpbia_4sE1NOwcIUUddGL4FgmlkgnY0im11bHRpYWRkcnOAgnJzkx5hCAAAAAEAAgADAAQABQAGAAeJc2VjcDI1NmsxoQOXFIEiKqhLSkB-VtSGmQ2qM4lBoMRbul_NPa4-Fwjb2IN0Y3CCTo6Fd2FrdTIN, mixPubKey: none())"
+INF 2026-11-25 20:29:01.375+00:00 Stopping switch                            topics="libp2p switch" tid=19060 file=switch.nim:350
+INF 2026-11-25 20:29:01.375+00:00 Stopping NATService                        topics="libp2p natservice" tid=19060 file=natservice.nim:571
+INF 2026-11-25 20:29:02.282+00:00 Stopping AutonatService                    topics="libp2p autonatservice" tid=19060 file=service.nim:241
+INF 2026-11-25 20:29:02.283+00:00 stop                                       topics="waku relay" tid=19060 file=protocol.nim:535
+INF 2026-11-25 20:29:02.283+00:00 gossipsub stop                             topics="libp2p gossipsub" tid=19060 file=gossipsub.nim:1190
+TRC 2026-11-25 20:29:02.284+00:00 DNS address query completed                topics="libp2p dnsresolver" tid=19060 file=dnsresolver.nim:112 resolvedAddresses={"1.0.0.1", "1.1.1.1", "2606:4700:4700::1111", "2606:4700:4700::1001"} server=1.1.1.1:53
+INF 2026-11-25 20:29:02.284+00:00 Waku rendezvous discovery stopped          topics="waku rendezvous" tid=19060 file=protocol.nim:231
+INF 2026-11-25 20:29:02.284+00:00 Node is online                             topics="waku online monitor" tid=19060 file=online_monitor.nim:53
+TRC 2026-11-25 20:29:02.284+00:00 Stopping ConnManager                       topics="libp2p connmanager" tid=19060 file=connmanager.nim:813
+TRC 2026-11-25 20:29:02.284+00:00 Stopped ConnManager                        topics="libp2p connmanager" tid=19060 file=connmanager.nim:847
+INF 2026-11-25 20:29:02.284+00:00 Stopping TCP transport                     topics="libp2p tcptransport" tid=19060 file=tcptransport.nim:164
+INF 2026-11-25 20:29:02.285+00:00 Transport stopping                         topics="libp2p transport" tid=19060 file=transport.nim:60 addresses=[/ip4/0.0.0.0/tcp/20110]
+INF 2026-11-25 20:29:02.285+00:00 Transport stopped                          topics="libp2p tcptransport" tid=19060 file=tcptransport.nim:192
+INF 2026-11-25 20:29:02.285+00:00 Transport stopping                         topics="libp2p transport" tid=19060 file=transport.nim:60 addresses=[/ip4/0.0.0.0/udp/20110/quic-v1]
+INF 2026-11-25 20:29:02.589+00:00 Switch stopped                             topics="libp2p switch" tid=19060 file=switch.nim:395
+INF 2026-11-25 20:29:02.589+00:00 Waku rendezvous client stopped             topics="waku rendezvous client" tid=19060 file=client.nim:158
+INF 2026-11-25 20:29:02.589+00:00 Health monitor loop end                    tid=19060 file=node_health_monitor.nim:603
+DBG 2026-11-25 20:29:02.591+00:00 no library teardown to run for this context tid=19060 file=ffi_thread.nim:189
+{"drop_ms":0.300688,"event":"iter","fds":25,"i":1,"listen_addrs":2,"op_ms":2725.360818,"rss_kb":104304,"shutdown_ms":1221.782674,"start_ms":8104.876489,"sub_err":null,"sub_ok":true,"threads":7}
+{"event":"end","fds":25,"rss_kb":104304,"threads":7}
+
+real	0m21.830s
+user	0m0.097s
+sys	0m0.315s

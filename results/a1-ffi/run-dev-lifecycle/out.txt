@@ -1,0 +1,24 @@
+rc=0
+{"event":"begin","fds":10,"iters":20,"mode":"shutdown","port":20110,"rss_kb":5672,"threads":7}
+{"drop_ms":0.51946,"event":"iter","fds":21,"i":0,"listen_addrs":2,"op_ms":1846.395401,"rss_kb":77064,"shutdown_ms":315.88192,"start_ms":3403.2576369999997,"sub_err":null,"sub_ok":true,"threads":7}
+{"drop_ms":0.263707,"event":"iter","fds":25,"i":1,"listen_addrs":2,"op_ms":1845.826559,"rss_kb":101780,"shutdown_ms":337.930247,"start_ms":625.627925,"sub_err":null,"sub_ok":true,"threads":7}
+{"drop_ms":4.3160680000000005,"event":"iter","fds":29,"i":2,"listen_addrs":2,"op_ms":1845.711943,"rss_kb":126504,"shutdown_ms":324.854424,"start_ms":361.33918900000003,"sub_err":null,"sub_ok":true,"threads":7}
+{"drop_ms":0.172185,"event":"iter","fds":33,"i":3,"listen_addrs":2,"op_ms":1875.178872,"rss_kb":151000,"shutdown_ms":350.133395,"start_ms":478.10301799999996,"sub_err":null,"sub_ok":true,"threads":7}
+{"drop_ms":0.7037840000000001,"event":"iter","fds":37,"i":4,"listen_addrs":2,"op_ms":1879.706389,"rss_kb":175296,"shutdown_ms":317.048852,"start_ms":719.9223609999999,"sub_err":null,"sub_ok":true,"threads":7}
+{"drop_ms":1.941308,"event":"iter","fds":41,"i":5,"listen_addrs":2,"op_ms":1859.6440300000002,"rss_kb":199920,"shutdown_ms":334.395366,"start_ms":549.176238,"sub_err":null,"sub_ok":true,"threads":7}
+{"drop_ms":0.461758,"event":"iter","fds":45,"i":6,"listen_addrs":2,"op_ms":1843.93835,"rss_kb":224568,"shutdown_ms":337.776132,"start_ms":441.127799,"sub_err":null,"sub_ok":true,"threads":7}
+{"drop_ms":0.233128,"event":"iter","fds":49,"i":7,"listen_addrs":2,"op_ms":1817.349518,"rss_kb":249060,"shutdown_ms":314.43593,"start_ms":524.97119,"sub_err":null,"sub_ok":true,"threads":7}
+{"drop_ms":0.332472,"event":"iter","fds":53,"i":8,"listen_addrs":2,"op_ms":1867.3929,"rss_kb":273420,"shutdown_ms":326.927114,"start_ms":297.649165,"sub_err":null,"sub_ok":true,"threads":7}
+{"drop_ms":8.327348,"event":"iter","fds":57,"i":9,"listen_addrs":2,"op_ms":1852.786218,"rss_kb":297984,"shutdown_ms":325.68734900000004,"start_ms":447.272155,"sub_err":null,"sub_ok":true,"threads":7}
+{"drop_ms":0.151039,"event":"iter","fds":61,"i":10,"listen_addrs":2,"op_ms":1846.407547,"rss_kb":322484,"shutdown_ms":325.27849,"start_ms":225.01521599999998,"sub_err":null,"sub_ok":true,"threads":7}
+{"drop_ms":0.343598,"event":"iter","fds":65,"i":11,"listen_addrs":2,"op_ms":1893.268797,"rss_kb":347024,"shutdown_ms":351.381787,"start_ms":299.56193599999995,"sub_err":null,"sub_ok":true,"threads":7}
+{"drop_ms":0.08366900000000001,"event":"iter","fds":69,"i":12,"listen_addrs":2,"op_ms":1834.396875,"rss_kb":371548,"shutdown_ms":322.69545300000004,"start_ms":233.73469699999998,"sub_err":null,"sub_ok":true,"threads":7}
+{"drop_ms":1.495195,"event":"iter","fds":73,"i":13,"listen_addrs":2,"op_ms":1844.143039,"rss_kb":396056,"shutdown_ms":326.516864,"start_ms":404.122263,"sub_err":null,"sub_ok":true,"threads":7}
+{"drop_ms":0.1931,"event":"iter","fds":77,"i":14,"listen_addrs":2,"op_ms":1832.213257,"rss_kb":420580,"shutdown_ms":318.081389,"start_ms":534.842294,"sub_err":null,"sub_ok":true,"threads":7}
+{"drop_ms":0.161333,"event":"iter","fds":81,"i":15,"listen_addrs":2,"op_ms":1824.3374919999999,"rss_kb":445088,"shutdown_ms":314.46998399999995,"start_ms":205.72884399999998,"sub_err":null,"sub_ok":true,"threads":7}
+{"drop_ms":0.238957,"event":"iter","fds":85,"i":16,"listen_addrs":2,"op_ms":1839.576528,"rss_kb":469616,"shutdown_ms":321.749152,"start_ms":393.050464,"sub_err":null,"sub_ok":true,"threads":7}
+{"drop_ms":0.24862700000000001,"event":"iter","fds":89,"i":17,"listen_addrs":2,"op_ms":1824.16678,"rss_kb":494136,"shutdown_ms":316.75800100000004,"start_ms":279.51158999999996,"sub_err":null,"sub_ok":true,"threads":7}
+{"drop_ms":0.483831,"event":"iter","fds":93,"i":18,"listen_addrs":2,"op_ms":1937.6528990000002,"rss_kb":518656,"shutdown_ms":419.21989199999996,"start_ms":425.9234,"sub_err":null,"sub_ok":true,"threads":7}
+{"drop_ms":0.268094,"event":"iter","fds":97,"i":19,"listen_addrs":2,"op_ms":1824.482024,"rss_kb":543164,"shutdown_ms":315.898891,"start_ms":227.653101,"sub_err":null,"sub_ok":true,"threads":7}
+{"event":"end","fds":97,"rss_kb":543164,"threads":7}
+3500 /tmp/lib.log

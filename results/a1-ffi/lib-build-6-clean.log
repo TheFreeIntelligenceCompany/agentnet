@@ -1,0 +1,1546 @@
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  40.45kB
+Step 1/14 : FROM rust:1.92-bookworm AS lib
+ ---> e90e846de412
+Step 2/14 : SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ ---> Using cache
+ ---> 24f556c983ac
+Step 3/14 : ARG LOGOS_DELIVERY_REV=0f2188c09779cc84116db344bbb43ccfe6a27c35
+ ---> Using cache
+ ---> ebb6ef553adc
+Step 4/14 : ARG MAKE_JOBS=6
+ ---> Using cache
+ ---> da71aa308c1c
+Step 5/14 : ARG DISABLE_RLN=false
+ ---> Using cache
+ ---> b0d263c9c310
+Step 6/14 : ARG LOG_LEVEL=ERROR
+ ---> Running in 8a513db11ce7
+ ---> Removed intermediate container 8a513db11ce7
+ ---> 7f62aac7a408
+Step 7/14 : RUN date -u +%FT%TZ > /t_apt_start && apt-get update &&     apt-get install -y --no-install-recommends cmake patchelf pkg-config libssl-dev &&     rm -rf /var/lib/apt/lists/* && date -u +%FT%TZ > /t_apt_end
+ ---> Running in 29a46b735339
+Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [34.8 kB]
+Get:4 http://deb.debian.org/debian bookworm/main arm64 Packages [8689 kB]
+Get:5 http://deb.debian.org/debian bookworm-updates/main arm64 Packages [6936 B]
+Get:6 http://deb.debian.org/debian-security bookworm-security/main arm64 Packages [379 kB]
+Fetched 9317 kB in 1s (6577 kB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+pkg-config is already the newest version (1.8.1-1).
+pkg-config set to manually installed.
+The following additional packages will be installed:
+  cmake-data libarchive13 libjsoncpp25 librhash0 libssl3 libuv1 openssl
+Suggested packages:
+  cmake-doc cmake-format elpa-cmake-mode ninja-build lrzip libssl-doc
+The following NEW packages will be installed:
+  cmake cmake-data libarchive13 libjsoncpp25 librhash0 libuv1 patchelf
+The following packages will be upgraded:
+  libssl-dev libssl3 openssl
+3 upgraded, 7 newly installed, 0 to remove and 118 not upgraded.
+Need to get 15.1 MB of archives.
+After this operation, 38.2 MB of additional disk space will be used.
+Get:1 http://deb.debian.org/debian-security bookworm-security/main arm64 libarchive13 arm64 3.6.2-1+deb12u5 [318 kB]
+Get:2 http://deb.debian.org/debian bookworm/main arm64 libjsoncpp25 arm64 1.9.5-4 [72.3 kB]
+Get:3 http://deb.debian.org/debian bookworm/main arm64 librhash0 arm64 1.4.3-3 [131 kB]
+Get:4 http://deb.debian.org/debian bookworm/main arm64 libuv1 arm64 1.44.2-1+deb12u1 [130 kB]
+Get:5 http://deb.debian.org/debian bookworm/main arm64 cmake-data all 3.25.1-1 [2026 kB]
+Get:6 http://deb.debian.org/debian bookworm/main arm64 cmake arm64 3.25.1-1 [6806 kB]
+Get:7 http://deb.debian.org/debian-security bookworm-security/main arm64 libssl-dev arm64 3.0.22-1~deb12u2 [2322 kB]
+Get:8 http://deb.debian.org/debian-security bookworm-security/main arm64 libssl3 arm64 3.0.22-1~deb12u2 [1829 kB]
+Get:9 http://deb.debian.org/debian-security bookworm-security/main arm64 openssl arm64 3.0.22-1~deb12u2 [1410 kB]
+Get:10 http://deb.debian.org/debian bookworm/main arm64 patchelf arm64 0.14.3-1+b1 [59.0 kB]
+[91mdebconf: delaying package configuration, since apt-utils is not installed
+[0mFetched 15.1 MB in 0s (37.3 MB/s)
+Selecting previously unselected package libarchive13:arm64.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 23281 files and directories currently installed.)
+Preparing to unpack .../0-libarchive13_3.6.2-1+deb12u5_arm64.deb ...
+Unpacking libarchive13:arm64 (3.6.2-1+deb12u5) ...
+Selecting previously unselected package libjsoncpp25:arm64.
+Preparing to unpack .../1-libjsoncpp25_1.9.5-4_arm64.deb ...
+Unpacking libjsoncpp25:arm64 (1.9.5-4) ...
+Selecting previously unselected package librhash0:arm64.
+Preparing to unpack .../2-librhash0_1.4.3-3_arm64.deb ...
+Unpacking librhash0:arm64 (1.4.3-3) ...
+Selecting previously unselected package libuv1:arm64.
+Preparing to unpack .../3-libuv1_1.44.2-1+deb12u1_arm64.deb ...
+Unpacking libuv1:arm64 (1.44.2-1+deb12u1) ...
+Selecting previously unselected package cmake-data.
+Preparing to unpack .../4-cmake-data_3.25.1-1_all.deb ...
+Unpacking cmake-data (3.25.1-1) ...
+Selecting previously unselected package cmake.
+Preparing to unpack .../5-cmake_3.25.1-1_arm64.deb ...
+Unpacking cmake (3.25.1-1) ...
+Preparing to unpack .../6-libssl-dev_3.0.22-1~deb12u2_arm64.deb ...
+Unpacking libssl-dev:arm64 (3.0.22-1~deb12u2) over (3.0.18-1~deb12u1) ...
+Preparing to unpack .../7-libssl3_3.0.22-1~deb12u2_arm64.deb ...
+Unpacking libssl3:arm64 (3.0.22-1~deb12u2) over (3.0.18-1~deb12u1) ...
+Preparing to unpack .../8-openssl_3.0.22-1~deb12u2_arm64.deb ...
+Unpacking openssl (3.0.22-1~deb12u2) over (3.0.18-1~deb12u1) ...
+Selecting previously unselected package patchelf.
+Preparing to unpack .../9-patchelf_0.14.3-1+b1_arm64.deb ...
+Unpacking patchelf (0.14.3-1+b1) ...
+Setting up libarchive13:arm64 (3.6.2-1+deb12u5) ...
+Setting up libssl3:arm64 (3.0.22-1~deb12u2) ...
+Setting up libuv1:arm64 (1.44.2-1+deb12u1) ...
+Setting up libssl-dev:arm64 (3.0.22-1~deb12u2) ...
+Setting up libjsoncpp25:arm64 (1.9.5-4) ...
+Setting up librhash0:arm64 (1.4.3-3) ...
+Setting up cmake-data (3.25.1-1) ...
+Setting up patchelf (0.14.3-1+b1) ...
+Setting up openssl (3.0.22-1~deb12u2) ...
+Setting up cmake (3.25.1-1) ...
+Processing triggers for libc-bin (2.36-9+deb12u13) ...
+ ---> Removed intermediate container 29a46b735339
+ ---> 54f17ee41d4c
+Step 8/14 : WORKDIR /src
+ ---> Running in 9d7679d694a0
+ ---> Removed intermediate container 9d7679d694a0
+ ---> 164d54f41ccd
+Step 9/14 : RUN git init logos-delivery && cd logos-delivery &&     git remote add origin https://github.com/logos-messaging/logos-delivery &&     git fetch --depth 1 origin ${LOGOS_DELIVERY_REV} && git checkout --detach FETCH_HEAD &&     git log -n1 --format='logos-delivery %H %cd'
+ ---> Running in 67eb7b1b0aad
+[91mhint: Using 'master' as the name for the initial branch. This default branch name
+hint: is subject to change. To configure the initial branch name to use in all
+hint: of your new repositories, which will suppress this warning, call:
+hint: 
+hint: 	git config --global init.defaultBranch <name>
+hint: 
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint: 
+hint: 	git branch -m <name>
+[0mInitialized empty Git repository in /src/logos-delivery/.git/
+[91mFrom https://github.com/logos-messaging/logos-delivery
+ * branch            0f2188c09779cc84116db344bbb43ccfe6a27c35 -> FETCH_HEAD
+[0m[91mHEAD is now at 0f2188c docs: changelog for v0.39.1 (#4427)
+[0mlogos-delivery 0f2188c09779cc84116db344bbb43ccfe6a27c35 Tue Oct 6 20:01:37 2026 +0200
+ ---> Removed intermediate container 67eb7b1b0aad
+ ---> e7cba55c6d86
+Step 10/14 : WORKDIR /src/logos-delivery
+ ---> Running in b8095161ed2b
+ ---> Removed intermediate container b8095161ed2b
+ ---> 0bd78eb48b48
+Step 11/14 : RUN date -u +%FT%TZ && git submodule update --init --depth 1 vendor/zerokit && date -u +%FT%TZ
+ ---> Running in 4e7c2b5feca9
+2026-11-25T20:30:38Z
+[91mSubmodule 'vendor/zerokit' (https://github.com/vacp2p/zerokit.git) registered for path 'vendor/zerokit'
+[0m[91mCloning into '/src/logos-delivery/vendor/zerokit'...
+[0m[91mFrom https://github.com/vacp2p/zerokit
+ * branch            ea80f39be3e7944e4537b5f4726a7c4aabfe0ab5 -> FETCH_HEAD
+[0mSubmodule path 'vendor/zerokit': checked out 'ea80f39be3e7944e4537b5f4726a7c4aabfe0ab5'
+2026-11-25T20:30:41Z
+ ---> Removed intermediate container 4e7c2b5feca9
+ ---> 4ff9636a5a02
+Step 12/14 : ARG NIM_PKG_DIR=nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085
+ ---> Running in 0b0c3c1484ed
+ ---> Removed intermediate container 0b0c3c1484ed
+ ---> f8c853e1e384
+Step 13/14 : RUN if [ "$(uname -m)" = "aarch64" ]; then       date -u +%FT%TZ && git clone --depth 1 --branch v2.2.6 https://github.com/nim-lang/Nim /opt/nim &&       cd /opt/nim && time sh build_all.sh && date -u +%FT%TZ &&       mkdir -p /src/logos-delivery/nimbledeps/pkgs2/${NIM_PKG_DIR} &&       cp -a /opt/nim/. /src/logos-delivery/nimbledeps/pkgs2/${NIM_PKG_DIR}/ &&       printf '{"version":1,"metaData":{"url":"https://github.com/nim-lang/Nim.git","downloadMethod":"git","vcsRevision":"","files":[],"binaries":[],"specialVersions":["2.2.6"]}}'         > /src/logos-delivery/nimbledeps/pkgs2/${NIM_PKG_DIR}/nimblemeta.json ;     fi
+ ---> Running in da1ca7800969
+2026-11-25T20:30:49Z
+[91mCloning into '/opt/nim'...
+[0m[91mNote: switching to 'ab00c56904e3126ad826bb520d243513a139436a'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+[0m
+cmd: git clone -q --depth 1 -b master https://github.com/nim-lang/csources_v2.git csources_v2
+
+cmd: cd csources_v2
+
+cmd: git checkout 86742fb02c6606ab01a532a0085784effb2e753e
+[91mNote: switching to '86742fb02c6606ab01a532a0085784effb2e753e'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+HEAD is now at 86742fb build with 7f6681b4c4ccc0dc43fd256280be4c3ad3c773e5
+[0m
+cmd: cd /opt/nim
+
+cmd: which make
+/usr/bin/make
+
+cmd: make -C csources_v2 -j 8 -l 6
+make: Entering directory '/opt/nim/csources_v2'
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@ssystem@sexceptions.nim.o c_code/2_17/@m..@slib@ssystem@sexceptions.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@sstd@sprivate@sdigitsutils.nim.o c_code/2_17/@m..@slib@sstd@sprivate@sdigitsutils.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@sstd@sassertions.nim.o c_code/2_17/@m..@slib@sstd@sassertions.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@ssystem@sdollars.nim.o c_code/2_17/@m..@slib@ssystem@sdollars.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@sstd@sprivate@sdragonbox.nim.o c_code/2_17/@m..@slib@sstd@sprivate@sdragonbox.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@sstd@sprivate@sschubfach.nim.o c_code/2_17/@m..@slib@sstd@sprivate@sschubfach.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@sstd@sformatfloat.nim.o c_code/2_17/@m..@slib@sstd@sformatfloat.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@ssystem.nim.o c_code/2_17/@m..@slib@ssystem.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@sparseutils.nim.o c_code/2_17/@m..@slib@spure@sparseutils.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@smath.nim.o c_code/2_17/@m..@slib@spure@smath.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@salgorithm.nim.o c_code/2_17/@m..@slib@spure@salgorithm.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@sstd@senumutils.nim.o c_code/2_17/@m..@slib@sstd@senumutils.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@sunicode.nim.o c_code/2_17/@m..@slib@spure@sunicode.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@sstrutils.nim.o c_code/2_17/@m..@slib@spure@sstrutils.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@spathnorm.nim.o c_code/2_17/@m..@slib@spure@spathnorm.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@sstd@soserrors.nim.o c_code/2_17/@m..@slib@sstd@soserrors.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@sstd@ssyncio.nim.o c_code/2_17/@m..@slib@sstd@ssyncio.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@sstd@sprivate@soscommon.nim.o c_code/2_17/@m..@slib@sstd@sprivate@soscommon.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@sstd@sprivate@sospaths2.nim.o c_code/2_17/@m..@slib@sstd@sprivate@sospaths2.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@sstd@sprivate@sossymlinks.nim.o c_code/2_17/@m..@slib@sstd@sprivate@sossymlinks.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@stimes.nim.o c_code/2_17/@m..@slib@spure@stimes.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@sstd@sprivate@sosfiles.nim.o c_code/2_17/@m..@slib@sstd@sprivate@sosfiles.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@sstd@sprivate@sosdirs.nim.o c_code/2_17/@m..@slib@sstd@sprivate@sosdirs.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@sstd@senvvars.nim.o c_code/2_17/@m..@slib@sstd@senvvars.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@sstd@sprivate@sosappdirs.nim.o c_code/2_17/@m..@slib@sstd@sprivate@sosappdirs.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@sstd@scmdline.nim.o c_code/2_17/@m..@slib@sstd@scmdline.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@sos.nim.o c_code/2_17/@m..@slib@spure@sos.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@sparseopt.nim.o c_code/2_17/@m..@slib@spure@sparseopt.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@shashes.nim.o c_code/2_17/@m..@slib@spure@shashes.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@sstrtabs.nim.o c_code/2_17/@m..@slib@spure@sstrtabs.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@scollections@stables.nim.o c_code/2_17/@m..@slib@spure@scollections@stables.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@sstrformat.nim.o c_code/2_17/@m..@slib@spure@sstrformat.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@sterminal.nim.o c_code/2_17/@m..@slib@spure@sterminal.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@scollections@ssets.nim.o c_code/2_17/@m..@slib@spure@scollections@ssets.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mpathutils.nim.o c_code/2_17/@mpathutils.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mropes.nim.o c_code/2_17/@mropes.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mlineinfos.nim.o c_code/2_17/@mlineinfos.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mplatform.nim.o c_code/2_17/@mplatform.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mprefixmatches.nim.o c_code/2_17/@mprefixmatches.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mnimpaths.nim.o c_code/2_17/@mnimpaths.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@sstd@sobjectdollar.nim.o c_code/2_17/@m..@slib@sstd@sobjectdollar.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@sstd@sprivate@sglobs.nim.o c_code/2_17/@m..@slib@sstd@sprivate@sglobs.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@moptions.nim.o c_code/2_17/@moptions.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mmsgs.nim.o c_code/2_17/@mmsgs.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mcondsyms.nim.o c_code/2_17/@mcondsyms.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mwordrecg.nim.o c_code/2_17/@mwordrecg.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@midents.nim.o c_code/2_17/@midents.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mint128.nim.o c_code/2_17/@mint128.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mast.nim.o c_code/2_17/@mast.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mllstream.nim.o c_code/2_17/@mllstream.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mnimlexbase.nim.o c_code/2_17/@mnimlexbase.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mlexer.nim.o c_code/2_17/@mlexer.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mrenderer.nim.o c_code/2_17/@mrenderer.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mmodulepaths.nim.o c_code/2_17/@mmodulepaths.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@sstreams.nim.o c_code/2_17/@m..@slib@spure@sstreams.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@sconcurrency@scpuinfo.nim.o c_code/2_17/@m..@slib@spure@sconcurrency@scpuinfo.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@scollections@sdeques.nim.o c_code/2_17/@m..@slib@spure@scollections@sdeques.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@sosproc.nim.o c_code/2_17/@m..@slib@spure@sosproc.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@sstd@ssha1.nim.o c_code/2_17/@m..@slib@sstd@ssha1.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@slexbase.nim.o c_code/2_17/@m..@slib@spure@slexbase.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@sparsejson.nim.o c_code/2_17/@m..@slib@spure@sparsejson.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@sjson.nim.o c_code/2_17/@m..@slib@spure@sjson.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@sstd@sjsonutils.nim.o c_code/2_17/@m..@slib@sstd@sjsonutils.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mextccomp.nim.o c_code/2_17/@mextccomp.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mnimblecmd.nim.o c_code/2_17/@mnimblecmd.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mcommands.nim.o c_code/2_17/@mcommands.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mparser.nim.o c_code/2_17/@mparser.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mfilters.nim.o c_code/2_17/@mfilters.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mfilter_tmpl.nim.o c_code/2_17/@mfilter_tmpl.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@msyntaxes.nim.o c_code/2_17/@msyntaxes.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@sstd@spackedsets.nim.o c_code/2_17/@m..@slib@sstd@spackedsets.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mrodutils.nim.o c_code/2_17/@mrodutils.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mastalgo.nim.o c_code/2_17/@mastalgo.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mtrees.nim.o c_code/2_17/@mtrees.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mmd5_old.nim.o c_code/2_17/@mmd5_old.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mbtrees.nim.o c_code/2_17/@mbtrees.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mpackages.nim.o c_code/2_17/@mpackages.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mic@srodfiles.nim.o c_code/2_17/@mic@srodfiles.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mic@sbitabs.nim.o c_code/2_17/@mic@sbitabs.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mic@spacked_ast.nim.o c_code/2_17/@mic@spacked_ast.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mic@sic.nim.o c_code/2_17/@mic@sic.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mmodulegraphs.nim.o c_code/2_17/@mmodulegraphs.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mastmsgs.nim.o c_code/2_17/@mastmsgs.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mtypes.nim.o c_code/2_17/@mtypes.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mmagicsys.nim.o c_code/2_17/@mmagicsys.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mbitsets.nim.o c_code/2_17/@mbitsets.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mnimsets.nim.o c_code/2_17/@mnimsets.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@msemfold.nim.o c_code/2_17/@msemfold.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mvmdef.nim.o c_code/2_17/@mvmdef.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@msemdata.nim.o c_code/2_17/@msemdata.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mlinter.nim.o c_code/2_17/@mlinter.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mnimfix@sprettybase.nim.o c_code/2_17/@mnimfix@sprettybase.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@sstd@seditdistance.nim.o c_code/2_17/@m..@slib@sstd@seditdistance.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@scollections@sheapqueue.nim.o c_code/2_17/@m..@slib@spure@scollections@sheapqueue.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mlookups.nim.o c_code/2_17/@mlookups.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mconcepts.nim.o c_code/2_17/@mconcepts.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@msemtypinst.nim.o c_code/2_17/@msemtypinst.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mparampatterns.nim.o c_code/2_17/@mparampatterns.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mlowerings.nim.o c_code/2_17/@mlowerings.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@msigmatch.nim.o c_code/2_17/@msigmatch.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mimporter.nim.o c_code/2_17/@mimporter.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mprocfind.nim.o c_code/2_17/@mprocfind.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mpragmas.nim.o c_code/2_17/@mpragmas.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mreorder.nim.o c_code/2_17/@mreorder.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mpasses.nim.o c_code/2_17/@mpasses.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@msaturate.nim.o c_code/2_17/@msaturate.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mguards.nim.o c_code/2_17/@mguards.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mtypeallowed.nim.o c_code/2_17/@mtypeallowed.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@misolation_check.nim.o c_code/2_17/@misolation_check.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mvarpartitions.nim.o c_code/2_17/@mvarpartitions.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mtreetab.nim.o c_code/2_17/@mtreetab.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mnilcheck.nim.o c_code/2_17/@mnilcheck.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@merrorhandling.nim.o c_code/2_17/@merrorhandling.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@maliasanalysis.nim.o c_code/2_17/@maliasanalysis.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@msemstrictfuncs.nim.o c_code/2_17/@msemstrictfuncs.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@msighashes.nim.o c_code/2_17/@msighashes.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mndi.nim.o c_code/2_17/@mndi.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mcgendata.nim.o c_code/2_17/@mcgendata.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mccgutils.nim.o c_code/2_17/@mccgutils.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mliftdestructors.nim.o c_code/2_17/@mliftdestructors.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@msempass2.nim.o c_code/2_17/@msempass2.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mcgmeth.nim.o c_code/2_17/@mcgmeth.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mliftlocals.nim.o c_code/2_17/@mliftlocals.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mlambdalifting.nim.o c_code/2_17/@mlambdalifting.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mclosureiters.nim.o c_code/2_17/@mclosureiters.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mtransf.nim.o c_code/2_17/@mtransf.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mvmgen.nim.o c_code/2_17/@mvmgen.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mvmdeps.nim.o c_code/2_17/@mvmdeps.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mgorgeimpl.nim.o c_code/2_17/@mgorgeimpl.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mmacrocacheimpl.nim.o c_code/2_17/@mmacrocacheimpl.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mvmprofiler.nim.o c_code/2_17/@mvmprofiler.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mevaltempl.nim.o c_code/2_17/@mevaltempl.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mvmconv.nim.o c_code/2_17/@mvmconv.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mvmmarshal.nim.o c_code/2_17/@mvmmarshal.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mvm.nim.o c_code/2_17/@mvm.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@maliases.nim.o c_code/2_17/@maliases.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mpatterns.nim.o c_code/2_17/@mpatterns.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@msemmacrosanity.nim.o c_code/2_17/@msemmacrosanity.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mpluginsupport.nim.o c_code/2_17/@mpluginsupport.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mplugins@slocals.nim.o c_code/2_17/@mplugins@slocals.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mplugins@sitersgen.nim.o c_code/2_17/@mplugins@sitersgen.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mplugins@sactive.nim.o c_code/2_17/@mplugins@sactive.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@menumtostr.nim.o c_code/2_17/@menumtostr.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mspawn.nim.o c_code/2_17/@mspawn.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@msem.nim.o c_code/2_17/@msem.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@moptimizer.nim.o c_code/2_17/@moptimizer.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mdfa.nim.o c_code/2_17/@mdfa.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@minjectdestructors.nim.o c_code/2_17/@minjectdestructors.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@msemparallel.nim.o c_code/2_17/@msemparallel.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@sdynlib.nim.o c_code/2_17/@m..@slib@spure@sdynlib.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mcgen.nim.o c_code/2_17/@mcgen.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mic@sreplayer.nim.o c_code/2_17/@mic@sreplayer.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mmodules.nim.o c_code/2_17/@mmodules.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mscriptconfig.nim.o c_code/2_17/@mscriptconfig.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mnimconf.nim.o c_code/2_17/@mnimconf.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mpassaux.nim.o c_code/2_17/@mpassaux.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mdepends.nim.o c_code/2_17/@mdepends.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mic@sdce.nim.o c_code/2_17/@mic@sdce.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mic@scbackend.nim.o c_code/2_17/@mic@scbackend.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mic@sintegrity.nim.o c_code/2_17/@mic@sintegrity.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mic@snavigator.nim.o c_code/2_17/@mic@snavigator.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@msourcemap.nim.o c_code/2_17/@msourcemap.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mjsgen.nim.o c_code/2_17/@mjsgen.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spackages@sdocutils@srstast.nim.o c_code/2_17/@m..@slib@spackages@sdocutils@srstast.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spackages@sdocutils@sdochelpers.nim.o c_code/2_17/@m..@slib@spackages@sdocutils@sdochelpers.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@scollections@slists.nim.o c_code/2_17/@m..@slib@spure@scollections@slists.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spackages@sdocutils@shighlite.nim.o c_code/2_17/@m..@slib@spackages@sdocutils@shighlite.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spackages@sdocutils@srst.nim.o c_code/2_17/@m..@slib@spackages@sdocutils@srst.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spackages@sdocutils@srstgen.nim.o c_code/2_17/@m..@slib@spackages@sdocutils@srstgen.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@sxmltree.nim.o c_code/2_17/@m..@slib@spure@sxmltree.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mtypesrenderer.nim.o c_code/2_17/@mtypesrenderer.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mrenderverbatim.nim.o c_code/2_17/@mrenderverbatim.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@sbase64.nim.o c_code/2_17/@m..@slib@spure@sbase64.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@suri.nim.o c_code/2_17/@m..@slib@spure@suri.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mdocgen.nim.o c_code/2_17/@mdocgen.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mdocgen2.nim.o c_code/2_17/@mdocgen2.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mmain.nim.o c_code/2_17/@mmain.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mcmdlinehelper.nim.o c_code/2_17/@mcmdlinehelper.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@mnim.nim.o c_code/2_17/@mnim.nim.c
+cc -Ic_code -w -fmax-errors=3 -O3 -fno-strict-aliasing -fno-ident -fno-math-errno    -c -o c_code/2_17/@m..@slib@spure@sbrowsers.nim.o c_code/2_17/@m..@slib@spure@sbrowsers.nim.c
+cc -o ../bin/nim c_code/2_17/@m..@slib@ssystem@sexceptions.nim.o c_code/2_17/@m..@slib@sstd@sprivate@sdigitsutils.nim.o c_code/2_17/@m..@slib@sstd@sassertions.nim.o c_code/2_17/@m..@slib@ssystem@sdollars.nim.o c_code/2_17/@m..@slib@sstd@sprivate@sdragonbox.nim.o c_code/2_17/@m..@slib@sstd@sprivate@sschubfach.nim.o c_code/2_17/@m..@slib@sstd@sformatfloat.nim.o c_code/2_17/@m..@slib@ssystem.nim.o c_code/2_17/@m..@slib@spure@sparseutils.nim.o c_code/2_17/@m..@slib@spure@smath.nim.o c_code/2_17/@m..@slib@spure@salgorithm.nim.o c_code/2_17/@m..@slib@sstd@senumutils.nim.o c_code/2_17/@m..@slib@spure@sunicode.nim.o c_code/2_17/@m..@slib@spure@sstrutils.nim.o c_code/2_17/@m..@slib@spure@spathnorm.nim.o c_code/2_17/@m..@slib@sstd@soserrors.nim.o c_code/2_17/@m..@slib@sstd@ssyncio.nim.o c_code/2_17/@m..@slib@sstd@sprivate@soscommon.nim.o c_code/2_17/@m..@slib@sstd@sprivate@sospaths2.nim.o c_code/2_17/@m..@slib@sstd@sprivate@sossymlinks.nim.o c_code/2_17/@m..@slib@spure@stimes.nim.o c_code/2_17/@m..@slib@sstd@sprivate@sosfiles.nim.o c_code/2_17/@m..@slib@sstd@sprivate@sosdirs.nim.o c_code/2_17/@m..@slib@sstd@senvvars.nim.o c_code/2_17/@m..@slib@sstd@sprivate@sosappdirs.nim.o c_code/2_17/@m..@slib@sstd@scmdline.nim.o c_code/2_17/@m..@slib@spure@sos.nim.o c_code/2_17/@m..@slib@spure@sparseopt.nim.o c_code/2_17/@m..@slib@spure@shashes.nim.o c_code/2_17/@m..@slib@spure@sstrtabs.nim.o c_code/2_17/@m..@slib@spure@scollections@stables.nim.o c_code/2_17/@m..@slib@spure@sstrformat.nim.o c_code/2_17/@m..@slib@spure@sterminal.nim.o c_code/2_17/@m..@slib@spure@scollections@ssets.nim.o c_code/2_17/@mpathutils.nim.o c_code/2_17/@mropes.nim.o c_code/2_17/@mlineinfos.nim.o c_code/2_17/@mplatform.nim.o c_code/2_17/@mprefixmatches.nim.o c_code/2_17/@mnimpaths.nim.o c_code/2_17/@m..@slib@sstd@sobjectdollar.nim.o c_code/2_17/@m..@slib@sstd@sprivate@sglobs.nim.o c_code/2_17/@moptions.nim.o c_code/2_17/@mmsgs.nim.o c_code/2_17/@mcondsyms.nim.o c_code/2_17/@mwordrecg.nim.o c_code/2_17/@midents.nim.o c_code/2_17/@mint128.nim.o c_code/2_17/@mast.nim.o c_code/2_17/@mllstream.nim.o c_code/2_17/@mnimlexbase.nim.o c_code/2_17/@mlexer.nim.o c_code/2_17/@mrenderer.nim.o c_code/2_17/@mmodulepaths.nim.o c_code/2_17/@m..@slib@spure@sstreams.nim.o c_code/2_17/@m..@slib@spure@sconcurrency@scpuinfo.nim.o c_code/2_17/@m..@slib@spure@scollections@sdeques.nim.o c_code/2_17/@m..@slib@spure@sosproc.nim.o c_code/2_17/@m..@slib@sstd@ssha1.nim.o c_code/2_17/@m..@slib@spure@slexbase.nim.o c_code/2_17/@m..@slib@spure@sparsejson.nim.o c_code/2_17/@m..@slib@spure@sjson.nim.o c_code/2_17/@m..@slib@sstd@sjsonutils.nim.o c_code/2_17/@mextccomp.nim.o c_code/2_17/@mnimblecmd.nim.o c_code/2_17/@mcommands.nim.o c_code/2_17/@mparser.nim.o c_code/2_17/@mfilters.nim.o c_code/2_17/@mfilter_tmpl.nim.o c_code/2_17/@msyntaxes.nim.o c_code/2_17/@m..@slib@sstd@spackedsets.nim.o c_code/2_17/@mrodutils.nim.o c_code/2_17/@mastalgo.nim.o c_code/2_17/@mtrees.nim.o c_code/2_17/@mmd5_old.nim.o c_code/2_17/@mbtrees.nim.o c_code/2_17/@mpackages.nim.o c_code/2_17/@mic@srodfiles.nim.o c_code/2_17/@mic@sbitabs.nim.o c_code/2_17/@mic@spacked_ast.nim.o c_code/2_17/@mic@sic.nim.o c_code/2_17/@mmodulegraphs.nim.o c_code/2_17/@mastmsgs.nim.o c_code/2_17/@mtypes.nim.o c_code/2_17/@mmagicsys.nim.o c_code/2_17/@mbitsets.nim.o c_code/2_17/@mnimsets.nim.o c_code/2_17/@msemfold.nim.o c_code/2_17/@mvmdef.nim.o c_code/2_17/@msemdata.nim.o c_code/2_17/@mlinter.nim.o c_code/2_17/@mnimfix@sprettybase.nim.o c_code/2_17/@m..@slib@sstd@seditdistance.nim.o c_code/2_17/@m..@slib@spure@scollections@sheapqueue.nim.o c_code/2_17/@mlookups.nim.o c_code/2_17/@mconcepts.nim.o c_code/2_17/@msemtypinst.nim.o c_code/2_17/@mparampatterns.nim.o c_code/2_17/@mlowerings.nim.o c_code/2_17/@msigmatch.nim.o c_code/2_17/@mimporter.nim.o c_code/2_17/@mprocfind.nim.o c_code/2_17/@mpragmas.nim.o c_code/2_17/@mreorder.nim.o c_code/2_17/@mpasses.nim.o c_code/2_17/@msaturate.nim.o c_code/2_17/@mguards.nim.o c_code/2_17/@mtypeallowed.nim.o c_code/2_17/@misolation_check.nim.o c_code/2_17/@mvarpartitions.nim.o c_code/2_17/@mtreetab.nim.o c_code/2_17/@mnilcheck.nim.o c_code/2_17/@merrorhandling.nim.o c_code/2_17/@maliasanalysis.nim.o c_code/2_17/@msemstrictfuncs.nim.o c_code/2_17/@msighashes.nim.o c_code/2_17/@mndi.nim.o c_code/2_17/@mcgendata.nim.o c_code/2_17/@mccgutils.nim.o c_code/2_17/@mliftdestructors.nim.o c_code/2_17/@msempass2.nim.o c_code/2_17/@mcgmeth.nim.o c_code/2_17/@mliftlocals.nim.o c_code/2_17/@mlambdalifting.nim.o c_code/2_17/@mclosureiters.nim.o c_code/2_17/@mtransf.nim.o c_code/2_17/@mvmgen.nim.o c_code/2_17/@mvmdeps.nim.o c_code/2_17/@mgorgeimpl.nim.o c_code/2_17/@mmacrocacheimpl.nim.o c_code/2_17/@mvmprofiler.nim.o c_code/2_17/@mevaltempl.nim.o c_code/2_17/@mvmconv.nim.o c_code/2_17/@mvmmarshal.nim.o c_code/2_17/@mvm.nim.o c_code/2_17/@maliases.nim.o c_code/2_17/@mpatterns.nim.o c_code/2_17/@msemmacrosanity.nim.o c_code/2_17/@mpluginsupport.nim.o c_code/2_17/@mplugins@slocals.nim.o c_code/2_17/@mplugins@sitersgen.nim.o c_code/2_17/@mplugins@sactive.nim.o c_code/2_17/@menumtostr.nim.o c_code/2_17/@mspawn.nim.o c_code/2_17/@msem.nim.o c_code/2_17/@moptimizer.nim.o c_code/2_17/@mdfa.nim.o c_code/2_17/@minjectdestructors.nim.o c_code/2_17/@msemparallel.nim.o c_code/2_17/@m..@slib@spure@sdynlib.nim.o c_code/2_17/@mcgen.nim.o c_code/2_17/@mic@sreplayer.nim.o c_code/2_17/@mmodules.nim.o c_code/2_17/@mscriptconfig.nim.o c_code/2_17/@mnimconf.nim.o c_code/2_17/@mpassaux.nim.o c_code/2_17/@mdepends.nim.o c_code/2_17/@mic@sdce.nim.o c_code/2_17/@mic@scbackend.nim.o c_code/2_17/@mic@sintegrity.nim.o c_code/2_17/@mic@snavigator.nim.o c_code/2_17/@msourcemap.nim.o c_code/2_17/@mjsgen.nim.o c_code/2_17/@m..@slib@spackages@sdocutils@srstast.nim.o c_code/2_17/@m..@slib@spackages@sdocutils@sdochelpers.nim.o c_code/2_17/@m..@slib@spure@scollections@slists.nim.o c_code/2_17/@m..@slib@spackages@sdocutils@shighlite.nim.o c_code/2_17/@m..@slib@spackages@sdocutils@srst.nim.o c_code/2_17/@m..@slib@spackages@sdocutils@srstgen.nim.o c_code/2_17/@m..@slib@spure@sxmltree.nim.o c_code/2_17/@mtypesrenderer.nim.o c_code/2_17/@mrenderverbatim.nim.o c_code/2_17/@m..@slib@spure@sbase64.nim.o c_code/2_17/@m..@slib@spure@suri.nim.o c_code/2_17/@mdocgen.nim.o c_code/2_17/@mdocgen2.nim.o c_code/2_17/@mmain.nim.o c_code/2_17/@mcmdlinehelper.nim.o c_code/2_17/@m..@slib@spure@sbrowsers.nim.o c_code/2_17/@mnim.nim.o -ldl -lm -lrt
+SUCCESS
+make: Leaving directory '/opt/nim/csources_v2'
+
+cmd: cp bin/nim bin/nim_csources_86742fb02c6606ab01a532a0085784effb2e753e
+
+cmd: rm -f bin/nim
+
+cmd: cp bin/nim_csources_86742fb02c6606ab01a532a0085784effb2e753e bin/nim
+
+cmd: bin/nim_csources_86742fb02c6606ab01a532a0085784effb2e753e -v
+Nim Compiler Version 1.9.1 [Linux: arm64]
+Compiled at 2023-01-02
+Copyright (c) 2006-2022 by Andreas Rumpf
+
+git hash: 7f6681b4c4ccc0dc43fd256280be4c3ad3c773e5
+active boot switches: -d:release -d:danger
+
+cmd: bin/nim c --noNimblePath --skipUserCfg --skipParentCfg --hints:off koch
+[91m/opt/nim/tools/deps.nim(1, 11) Warning: imported and not used: 'strutils' [UnusedImport]
+[0m
+cmd: ./koch boot -d:release --skipUserCfg --skipParentCfg --hints:off
+deps.cmd: git checkout -q 0b8e46379c5bc1bf73d8b3011908389c60fb9b98
+iteration: 1
+bin/nim c  --skipUserCfg --skipParentCfg -d:nimKochBootstrap --nimcache:nimcache/r_linux_arm64 -d:release --skipUserCfg --skipParentCfg --hints:off --noNimblePath --compileOnly compiler/nim.nim
+[91m/opt/nim/compiler/modulegraphs.nim(14, 11) Warning: imported and not used: 'algorithm' [UnusedImport]
+[0m[91m/opt/nim/compiler/layeredtable.nim(1, 11) Warning: imported and not used: 'tables' [UnusedImport]
+[0m[91m/opt/nim/compiler/concepts.nim(14, 13) Warning: imported and not used: 'astalgo' [UnusedImport]
+[0m[91m/opt/nim/compiler/sempass2.nim(14, 49) Warning: imported and not used: 'lowerings' [UnusedImport]
+[0m[91m/opt/nim/compiler/closureiters.nim(143, 3) Warning: imported and not used: 'options' [UnusedImport]
+[0mbin/nim jsonscript --noNimblePath --nimcache:nimcache/r_linux_arm64 -d:release --skipUserCfg --skipParentCfg --hints:off compiler/nim.nim
+iteration: 2
+compiler/nim1 c  --nimcache:nimcache/r_linux_arm64 -d:release --skipUserCfg --skipParentCfg --hints:off --noNimblePath --compileOnly compiler/nim.nim
+[91m/opt/nim/compiler/modulegraphs.nim(14, 47) Warning: imported and not used: 'algorithm' [UnusedImport]
+[0m[91m/opt/nim/compiler/layeredtable.nim(1, 13) Warning: imported and not used: 'tables' [UnusedImport]
+[0m[91m/opt/nim/compiler/concepts.nim(14, 13) Warning: imported and not used: 'astalgo' [UnusedImport]
+[0m[91m/opt/nim/compiler/sempass2.nim(14, 49) Warning: imported and not used: 'lowerings' [UnusedImport]
+[0m[91m/opt/nim/compiler/closureiters.nim(143, 3) Warning: imported and not used: 'options' [UnusedImport]
+[0mcompiler/nim1 jsonscript --noNimblePath --nimcache:nimcache/r_linux_arm64 -d:release --skipUserCfg --skipParentCfg --hints:off compiler/nim.nim
+iteration: 3
+compiler/nim2 c  --nimcache:nimcache/r_linux_arm64 -d:release --skipUserCfg --skipParentCfg --hints:off --noNimblePath --compileOnly compiler/nim.nim
+[91m/opt/nim/compiler/modulegraphs.nim(14, 47) Warning: imported and not used: 'algorithm' [UnusedImport]
+[0m[91m/opt/nim/compiler/layeredtable.nim(1, 13) Warning: imported and not used: 'tables' [UnusedImport]
+[0m[91m/opt/nim/compiler/concepts.nim(14, 13) Warning: imported and not used: 'astalgo' [UnusedImport]
+[0m[91m/opt/nim/compiler/sempass2.nim(14, 49) Warning: imported and not used: 'lowerings' [UnusedImport]
+[0m[91m/opt/nim/compiler/closureiters.nim(143, 3) Warning: imported and not used: 'options' [UnusedImport]
+[0mcompiler/nim2 jsonscript --noNimblePath --nimcache:nimcache/r_linux_arm64 -d:release --skipUserCfg --skipParentCfg --hints:off compiler/nim.nim
+executables are equal: SUCCESS!
+
+cmd: ./koch tools --skipUserCfg --skipParentCfg --hints:off
+deps.cmd: git checkout -q 0b8e46379c5bc1bf73d8b3011908389c60fb9b98
+bin/nim c -o:bin/nimsuggest -d:danger --skipUserCfg --skipParentCfg --hints:off nimsuggest/nimsuggest.nim
+[91mnimsuggest.nim(14, 17) Warning: imported and not used: 'sempass2' [UnusedImport]
+nimsuggest.nim(13, 17) Warning: imported and not used: 'wordrecg' [UnusedImport]
+nimsuggest.nim(12, 17) Warning: imported and not used: 'trees' [UnusedImport]
+[0mbin/nim c -o:bin/nimgrep -d:release --skipUserCfg --skipParentCfg --hints:off tools/nimgrep.nim
+bin/nim c -o:bin/nimpretty -d:release --skipUserCfg --skipParentCfg --hints:off nimpretty/nimpretty.nim
+bin/nim c -o:bin/testament -d:release --skipUserCfg --skipParentCfg --hints:off testament/testament.nim
+bin/nim c -o:bin/nim_dbg --opt:speed --stacktrace -d:debug --stacktraceMsgs -d:nimCompilerStacktraceHints --skipUserCfg --skipParentCfg --hints:off compiler/nim.nim
+[91m/opt/nim/compiler/modulegraphs.nim(14, 47) Warning: imported and not used: 'algorithm' [UnusedImport]
+[0m[91m/opt/nim/compiler/layeredtable.nim(1, 13) Warning: imported and not used: 'tables' [UnusedImport]
+[0m[91m/opt/nim/compiler/concepts.nim(14, 13) Warning: imported and not used: 'astalgo' [UnusedImport]
+[0m[91m/opt/nim/compiler/sempass2.nim(14, 49) Warning: imported and not used: 'lowerings' [UnusedImport]
+[0m[91m/opt/nim/compiler/closureiters.nim(143, 3) Warning: imported and not used: 'options' [UnusedImport]
+[0mdeps.cmd: git checkout -q 9207e8b2bbdf66b5a4d1020214cff44d2d30df92
+deps.cmd: git submodule update --init
+[91mSubmodule 'vendor/checksums' (https://github.com/nim-lang/checksums.git) registered for path 'vendor/checksums'
+[0m[91mSubmodule 'vendor/sat' (https://github.com/nim-lang/sat.git) registered for path 'vendor/sat'
+[0m[91mSubmodule 'vendor/zippy' (https://github.com/guzba/zippy.git) registered for path 'vendor/zippy'
+[0m[91mCloning into '/opt/nim/dist/nimble/vendor/checksums'...
+[0m[91mCloning into '/opt/nim/dist/nimble/vendor/sat'...
+[0m[91mCloning into '/opt/nim/dist/nimble/vendor/zippy'...
+[0mSubmodule path 'vendor/checksums': checked out 'f8f6bd34bfa3fe12c64b919059ad856a96efcba0'
+Submodule path 'vendor/sat': checked out 'faf1617f44d7632ee9601ebc13887644925dcc01'
+Submodule path 'vendor/zippy': checked out 'a99f6a7d8a8e3e0213b3cad0daf0ea974bf58e3f'
+bin/nim c -o:bin/nimble -d:release --noNimblePath --skipUserCfg --skipParentCfg --hints:off dist/nimble/src/nimble.nim
+[91m/opt/nim/dist/nimble/src/nimblepkg/options.nim(900, 12) Warning: Provide auth in url instead; newProxy is deprecated [Deprecated]
+[0m[91m/opt/nim/dist/nimble/src/nimblepkg/downloadnim.nim(51, 12) Warning: Provide auth in url instead; newProxy is deprecated [Deprecated]
+[0mdeps.cmd: git checkout -q 2aa62121b40d580aa2fb27920a37b938d36c5f57
+deps.cmd: git checkout -q faf1617f44d7632ee9601ebc13887644925dcc01
+bin/nim c -o:bin/atlas -d:release --noNimblePath -d:nimAtlasBootstrap --skipUserCfg --skipParentCfg --hints:off dist/atlas/src/atlas.nim
+[91m/opt/nim/dist/atlas/src/basic/versions.nim(9, 53) Warning: imported and not used: 'jsonutils' [UnusedImport]
+[0m[91m/opt/nim/dist/atlas/src/basic/pkgurls.nim(9, 77) Warning: imported and not used: 'jsonutils' [UnusedImport]
+/opt/nim/dist/atlas/src/basic/pkgurls.nim(9, 71) Warning: imported and not used: 'json' [UnusedImport]
+[0m[91m/opt/nim/dist/atlas/src/basic/deptypes.nim(1, 28) Warning: imported and not used: 'json' [UnusedImport]
+/opt/nim/dist/atlas/src/basic/deptypes.nim(1, 34) Warning: imported and not used: 'jsonutils' [UnusedImport]
+[0m[91m/opt/nim/dist/atlas/src/basic/depgraphtypes.nim(3, 8) Warning: imported and not used: 'sattypes' [UnusedImport]
+/opt/nim/dist/atlas/src/basic/depgraphtypes.nim(3, 48) Warning: imported and not used: 'nimblecontext' [UnusedImport]
+/opt/nim/dist/atlas/src/basic/depgraphtypes.nim(1, 30) Warning: imported and not used: 'streams' [UnusedImport]
+/opt/nim/dist/atlas/src/basic/depgraphtypes.nim(1, 39) Warning: imported and not used: 'json' [UnusedImport]
+/opt/nim/dist/atlas/src/basic/depgraphtypes.nim(1, 45) Warning: imported and not used: 'jsonutils' [UnusedImport]
+/opt/nim/dist/atlas/src/basic/depgraphtypes.nim(1, 56) Warning: imported and not used: 'sequtils' [UnusedImport]
+[0m[91m/opt/nim/dist/atlas/src/basic/deptypesjson.nim(1, 55) Warning: imported and not used: 'sequtils' [UnusedImport]
+/opt/nim/dist/atlas/src/basic/deptypesjson.nim(2, 28) Warning: imported and not used: 'depgraphtypes' [UnusedImport]
+[0m[91m/opt/nim/dist/atlas/src/basic/nimblechecksums.nim(9, 12) Warning: use command `nimble install checksums` and import `checksums/sha1` instead; sha1 is deprecated [Deprecated]
+[0m[91m/opt/nim/dist/atlas/src/confighandler.nim(12, 25) Warning: imported and not used: 'depgraphtypes' [UnusedImport]
+[0m[91m
+real	14m15.738s
+user	37m0.620s
+sys	6m58.389s
+[0m2026-11-25T20:45:07Z
+ ---> Removed intermediate container da1ca7800969
+ ---> a17d97a967c0
+Step 14/14 : RUN date -u +%FT%TZ && time make -j${MAKE_JOBS} DISABLE_RLN=${DISABLE_RLN} LOG_LEVEL=${LOG_LEVEL} liblogosdelivery && date -u +%FT%TZ &&     ls -l build && (cd build && ls -l *.so* ) &&     cd /src/logos-delivery && (ls nimbledeps/pkgs2 | grep -i '^nim-' ; nimbledeps/pkgs2/nim-*/bin/nim --version; file nimbledeps/pkgs2/nim-*/bin/nim)
+ ---> Running in 13c9a423a896
+2026-11-25T20:57:04Z
+scripts/install_nimble.sh 0.26.0 /root/.local/nimble-0.26.0/bin
+ln -s logos_delivery.nimble logos_delivery.nims
+git submodule update --init vendor/zerokit
+Downloading Nimble 0.26.0 from https://github.com/nim-lang/nimble/releases/download/v0.26.0/nimble-linux_aarch64.tar.gz...
+echo -e "Building:" "librln_v2.0.2.a" && \
+	bash scripts/build_rln.sh /src/logos-delivery/vendor/zerokit v2.0.2 librln_v2.0.2.a
+-e Building: librln_v2.0.2.a
+Nimble 0.26.0 installed to /root/.local/nimble-0.26.0/bin/nimble
+/root/.local/nimble-0.26.0/bin/nimble setup --localdeps -y --nim:/src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/bin/nim
+Looking for prebuilt RLN: https://github.com/vacp2p/zerokit/releases/download/v2.0.2/aarch64-unknown-linux-gnu-stateless-rln.tar.gz
+      Info: using /src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/bin/nim for compilation
+Downloaded prebuilt aarch64-unknown-linux-gnu-stateless-rln.tar.gz
+    Prompt: No local packages.json found, download it from internet? -> [forced yes]
+Downloading Official package list
+Using prebuilt librln_v2.0.2.a
+    Success Package list downloaded.
+Downloading https://github.com/zevv/npeg (1.3.0) using git
+Downloading https://github.com/arnetheduck/nim-results (0.5.1) using git
+Downloading https://github.com/status-im/nim-nat-traversal (0.0.1) using git
+Downloading https://github.com/nitely/nim-unicodedb (0.14.1) using git
+Downloading https://github.com/nitely/nim-regex (0.26.3) using git
+Downloading https://github.com/vacp2p/nim-boringssl (#v0.0.13) using git
+Downloading https://github.com/status-im/nim-unittest2.git (0.2.5) using git
+Downloading https://github.com/status-im/nim-testutils (0.8.1) using git
+Downloading https://github.com/iftech/nim-intops (1.0.8) using git
+Downloading https://github.com/status-im/nim-bearssl (0.2.13) using git
+Downloading https://github.com/vacp2p/bearssl_pkey_decoder (#d34aa46bf9d0a3ffff810fbd3c4d2fa024eb9368) using git
+Downloading https://github.com/vacp2p/nim-jwt.git (#057ec95eb5af0eea9c49bfe9025b3312c95dc5f2) using git
+Downloading https://github.com/status-im/nim-stew (0.5.2) using git
+Downloading https://github.com/status-im/nim-zlib (0.2.0) using git
+Downloading https://github.com/status-im/nim-http-utils (0.5.1) using git
+Downloading https://github.com/status-im/nim-chronos (#0de7b335d0ad5557ad5ba71a4b7662f7b201750e) using git
+Downloading https://github.com/logos-storage/nim-libplum (0.6.3) using git
+Downloading https://github.com/status-im/nim-metrics (#9f2e1d4a4164deb37603b16cedd1707408ee5955) using git
+Downloading https://github.com/status-im/nim-faststreams (0.5.2) using git
+Downloading https://github.com/status-im/nim-snappy (0.1.0) using git
+Downloading https://github.com/status-im/nim-serialization (0.5.4) using git
+Downloading https://github.com/status-im/nim-protobuf-serialization (0.6.2) using git
+Downloading https://github.com/status-im/nim-toml-serialization (0.2.18) using git
+Downloading https://github.com/status-im/nim-confutils (0.1.1) using git
+Downloading https://github.com/iftech/nim-cbor-serialization (0.3.0) using git
+Downloading https://github.com/status-im/nim-json-serialization (0.4.5) using git
+Downloading https://github.com/status-im/nim-chronicles (0.12.4) using git
+Downloading https://github.com/logos-messaging/nim-ffi (#4c1218626bbbf89e19836845b690937cd255c3f0) using git
+Downloading https://github.com/vacp2p/nim-lsquic (#fb293834a3f90368e1f6c57aec2360cf8d840c5a) using git
+Downloading https://github.com/status-im/nim-presto (0.1.3) using git
+Downloading https://github.com/NagyZoltanPeter/nim-brokers.git (#fd97eb355eee5d14594e0b4599964eff00648ec7) using git
+Downloading https://github.com/status-im/nim-stint (0.9.0) using git
+Downloading https://github.com/status-im/nim-leopard (#2e8de41205ea44b6f33b5cad676bab215b36c987) using git
+Downloading https://github.com/status-im/nim-taskpools (0.2.1) using git
+Downloading https://github.com/status-im/nim-minilru (0.1.1) using git
+Downloading https://github.com/nim-lang/db_connector (0.1.0) using git
+Downloading https://github.com/arnetheduck/nim-sqlite3-abi (3.53.4.0) using git
+Downloading https://github.com/ba0f3/dnsclient.nim (0.3.4) using git
+Downloading https://github.com/cheatfate/nimcrypto (0.6.4) using git
+Downloading https://github.com/status-im/nim-websock (#0432dc445c500b20963ef4b76e585c1a3943c254) using git
+Downloading https://github.com/status-im/nim-json-rpc (0.6.1) using git
+Downloading https://github.com/logos-messaging/nim-segmentation (#0593ef7c9267b0204093fe202bec477b2dbf824c) using git
+Downloading https://github.com/status-im/nim-secp256k1 (#d8f1288b7c72f00be5fc2c5ea72bf5cae1eafb15) using git
+Downloading https://github.com/vacp2p/nim-libp2p (2.4.1) using git
+Downloading https://github.com/logos-messaging/nim-sds.git (#4b08d508dbfa69c0e2e3883db67adf1fe5a0c994) using git
+Downloading https://github.com/logos-co/nim-libp2p-mix (#39d2ac78da7b7f33562eb7cd95d6280ca9fa0e94) using git
+Downloading https://github.com/status-im/nim-eth (0.9.0) using git
+Downloading https://github.com/status-im/nim-web3 (#cdfe5601d2812a58e54faf53ee634452d01e5918) using git
+Downloading https://github.com/status-im/nim-dnsdisc (0.1.1) using git
+[NimScript] exec: make CFLAGS="-Os -fPIC" build/libminiupnpc.a
+[91mmake[1]: warning: jobserver unavailable: using -j1.  Add '+' to parent make rule.
+[0mmake[1]: Entering directory '/root/.nimble/buildtemp/nat_traversal-0.0.1-d36e7e9289896a9754933b2efcd57fe78c573009/vendor/miniupnp/miniupnpc'
+/bin/sh updateminiupnpcstrings.sh build/miniupnpcstrings.h miniupnpcstrings.h.in
+Detected OS [Debian] version [12.13]
+MiniUPnPc version [2.3.3]
+setting OS_STRING macro value to Debian/12.13 in build/miniupnpcstrings.h.
+setting MINIUPNPC_VERSION_STRING macro value to 2.3.3 in build/miniupnpcstrings.h.
+/tmp/miniupnpcstringshIbBUu deleted
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -MM -MG -MT build/upnpreplyparse.d -o build/upnpreplyparse.d src/upnpreplyparse.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -MM -MG -MT build/upnperrors.d -o build/upnperrors.d src/upnperrors.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -MM -MG -MT build/upnpdev.d -o build/upnpdev.d src/upnpdev.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -MM -MG -MT build/upnpcommands.d -o build/upnpcommands.d src/upnpcommands.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -MM -MG -MT build/upnpc.d -o build/upnpc.d src/upnpc.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -MM -MG -MT build/testupnpreplyparse.d -o build/testupnpreplyparse.d src/testupnpreplyparse.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -MM -MG -MT build/testportlistingparse.d -o build/testportlistingparse.d src/testportlistingparse.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -MM -MG -MT build/testminixml.d -o build/testminixml.d src/testminixml.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -MM -MG -MT build/testminiwget.d -o build/testminiwget.d src/testminiwget.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -MM -MG -MT build/testigddescparse.d -o build/testigddescparse.d src/testigddescparse.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -MM -MG -MT build/testaddr_is_reserved.d -o build/testaddr_is_reserved.d src/testaddr_is_reserved.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -MM -MG -MT build/receivedata.d -o build/receivedata.d src/receivedata.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -MM -MG -MT build/portlistingparse.d -o build/portlistingparse.d src/portlistingparse.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -MM -MG -MT build/minixmlvalid.d -o build/minixmlvalid.d src/minixmlvalid.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -MM -MG -MT build/minixml.d -o build/minixml.d src/minixml.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -MM -MG -MT build/miniwget.d -o build/miniwget.d src/miniwget.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -MM -MG -MT build/miniupnpcmodule.d -o build/miniupnpcmodule.d src/miniupnpcmodule.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -MM -MG -MT build/miniupnpc.d -o build/miniupnpc.d src/miniupnpc.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -MM -MG -MT build/minissdpc.d -o build/minissdpc.d src/minissdpc.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -MM -MG -MT build/minisoap.d -o build/minisoap.d src/minisoap.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -MM -MG -MT build/minihttptestserver.d -o build/minihttptestserver.d src/minihttptestserver.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -MM -MG -MT build/listdevices.d -o build/listdevices.d src/listdevices.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -MM -MG -MT build/igd_desc_parse.d -o build/igd_desc_parse.d src/igd_desc_parse.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -MM -MG -MT build/connecthostport.d -o build/connecthostport.d src/connecthostport.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -MM -MG -MT build/addr_is_reserved.d -o build/addr_is_reserved.d src/addr_is_reserved.c
+[91mmake[1]: warning: jobserver unavailable: using -j1.  Add '+' to parent make rule.
+[0mgcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -Os -fPIC -c -o build/miniwget.o src/miniwget.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -Os -fPIC -c -o build/minixml.o src/minixml.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -Os -fPIC -c -o build/igd_desc_parse.o src/igd_desc_parse.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -Os -fPIC -c -o build/minisoap.o src/minisoap.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -Os -fPIC -c -o build/miniupnpc.o src/miniupnpc.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -Os -fPIC -c -o build/upnpreplyparse.o src/upnpreplyparse.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -Os -fPIC -c -o build/upnpcommands.o src/upnpcommands.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -Os -fPIC -c -o build/upnperrors.o src/upnperrors.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -Os -fPIC -c -o build/connecthostport.o src/connecthostport.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -Os -fPIC -c -o build/portlistingparse.o src/portlistingparse.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -Os -fPIC -c -o build/receivedata.o src/receivedata.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -Os -fPIC -c -o build/upnpdev.o src/upnpdev.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -Os -fPIC -c -o build/addr_is_reserved.o src/addr_is_reserved.c
+gcc -Ibuild -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -Iinclude -Os -fPIC -c -o build/minissdpc.o src/minissdpc.c
+ar crs build/libminiupnpc.a build/miniwget.o build/minixml.o build/igd_desc_parse.o build/minisoap.o build/miniupnpc.o build/upnpreplyparse.o build/upnpcommands.o build/upnperrors.o build/connecthostport.o build/portlistingparse.o build/receivedata.o build/upnpdev.o build/addr_is_reserved.o build/minissdpc.o
+make[1]: Leaving directory '/root/.nimble/buildtemp/nat_traversal-0.0.1-d36e7e9289896a9754933b2efcd57fe78c573009/vendor/miniupnp/miniupnpc'
+[NimScript] exec: make CFLAGS="-Wall -Os -fPIC -DENABLE_STRNATPMPERR -DNATPMP_MAX_RETRIES=4" libnatpmp.a
+[91mmake[1]: warning: jobserver unavailable: using -j1.  Add '+' to parent make rule.
+[0mmake[1]: Entering directory '/root/.nimble/buildtemp/nat_traversal-0.0.1-d36e7e9289896a9754933b2efcd57fe78c573009/vendor/libnatpmp-upstream'
+gcc -Wall -Os -fPIC -DENABLE_STRNATPMPERR -DNATPMP_MAX_RETRIES=4   -c -o natpmp.o natpmp.c
+gcc -Wall -Os -fPIC -DENABLE_STRNATPMPERR -DNATPMP_MAX_RETRIES=4   -c -o getgateway.o getgateway.c
+ar crs libnatpmp.a natpmp.o getgateway.o
+make[1]: Leaving directory '/root/.nimble/buildtemp/nat_traversal-0.0.1-d36e7e9289896a9754933b2efcd57fe78c573009/vendor/libnatpmp-upstream'
+   Building testutils/ntu using c backend
+ Nim Output /root/.nimble/buildtemp/testutils-0.8.1-96a11cf8b84fa9bd12d4a553afa1cc4b7f9df4e3/ntu.nim(61, 15) template/generic instantiation of `styledEcho` from here
+        ... /src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/lib/pure/terminal.nim(880, 9) template/generic instantiation of `styledWriteLine` from here
+        ... /root/.nimble/buildtemp/testutils-0.8.1-96a11cf8b84fa9bd12d4a553afa1cc4b7f9df4e3/ntu.nim(62, 33) Warning: binary is deprecated [Deprecated]
+        ... /root/.nimble/buildtemp/testutils-0.8.1-96a11cf8b84fa9bd12d4a553afa1cc4b7f9df4e3/ntu.nim(237, 16) Warning: binary is deprecated [Deprecated]
+    Prompt: Missing directory /root/.nimble/buildtemp/lsquic-0.9.0-6ca2849ff7c7a0d5271dc57ce869c72ba3111a2f/scripts. Continue? -> [forced yes]
+   Building dnsclient/dnsclient using c backend
+ Nim Output /root/.nimble/buildtemp/dnsclient-0.3.4-65262c7e533ff49d6aca5539da4bc6c6ce132f40/src/dnsclientpkg/utils.nim(42, 21) Warning: conversion to enum with holes is unsafe: LabelType(length and 0xC0'u8) [HoleEnumConv]
+        ... /root/.nimble/buildtemp/dnsclient-0.3.4-65262c7e533ff49d6aca5539da4bc6c6ce132f40/src/dnsclientpkg/utils.nim(51, 19) Warning: conversion to enum with holes is unsafe: LabelType(peekUint8(data) and 0xC0'u8) [HoleEnumConv]
+        ... /root/.nimble/buildtemp/dnsclient-0.3.4-65262c7e533ff49d6aca5539da4bc6c6ce132f40/src/dnsclientpkg/protocol.nim(120, 22) Warning: conversion to enum with holes is unsafe: QKind(tmp) [HoleEnumConv]
+        ... /root/.nimble/buildtemp/dnsclient-0.3.4-65262c7e533ff49d6aca5539da4bc6c6ce132f40/src/dnsclientpkg/protocol.nim(124, 24) Warning: conversion to enum with holes is unsafe: QClass(tmp) [HoleEnumConv]
+        ... /root/.nimble/buildtemp/dnsclient-0.3.4-65262c7e533ff49d6aca5539da4bc6c6ce132f40/src/dnsclientpkg/protocol.nim(134, 19) Warning: conversion to enum with holes is unsafe: QKind(tmp) [HoleEnumConv]
+        ... /root/.nimble/buildtemp/dnsclient-0.3.4-65262c7e533ff49d6aca5539da4bc6c6ce132f40/src/dnsclientpkg/protocol.nim(165, 24) Warning: conversion to enum with holes is unsafe: QClass(readShort(data)) [HoleEnumConv]
+        ... /root/.nimble/buildtemp/dnsclient-0.3.4-65262c7e533ff49d6aca5539da4bc6c6ce132f40/src/dnsclient.nim(67, 15) Warning: conversion to enum with holes is unsafe: QKind(k2) [HoleEnumConv]
+     Info:  "nimble.paths" is generated.
+     Info:  "config.nims" is already set up.
+make audit-deps
+make[1]: Entering directory '/src/logos-delivery'
+/root/.local/nimble-0.26.0/bin/nimble auditdeps --nim:/src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/bin/nim
+      Info: using /src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/bin/nim for compilation
+  Executing task auditdeps in /src/logos-delivery/logos_delivery.nimble
+[NimScript] exec: /src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/bin/nim e --hints:off scripts/audit_deps.nims
+audit: 49/49 installed packages match nimble.lock
+make[1]: Leaving directory '/src/logos-delivery'
+touch nimbledeps/.nimble-setup
+make rebuild-bearssl-nimbledeps rebuild-nat-libs-nimbledeps rebuild-leopard-nimbledeps
+make[1]: Entering directory '/src/logos-delivery'
+Rebuilding bearssl from /src/logos-delivery/nimbledeps/pkgs2/bearssl-0.2.13-e3a004381e8c2ec0d37bebc2e48b42c34353e9cf/bearssl/csources
+Rebuilding nat-libs from /src/logos-delivery/nimbledeps/pkgs2/nat_traversal-0.0.1-d36e7e9289896a9754933b2efcd57fe78c573009
+"make" -C "/src/logos-delivery/nimbledeps/pkgs2/bearssl-0.2.13-e3a004381e8c2ec0d37bebc2e48b42c34353e9cf/bearssl/csources" CFLAGS="-W -Wall -Os -fPIC" lib
+nat-libs were built with a different CC — cleaning for rebuild
+Restoring leopard cmake placeholder benchmark.cpp
+Restoring leopard cmake placeholder experiments.cpp
+make[2]: Entering directory '/src/logos-delivery/nimbledeps/pkgs2/bearssl-0.2.13-e3a004381e8c2ec0d37bebc2e48b42c34353e9cf/bearssl/csources'
+mkdir -p build/obj
+"make" -C "/src/logos-delivery/nimbledeps/pkgs2/nat_traversal-0.0.1-d36e7e9289896a9754933b2efcd57fe78c573009/vendor/miniupnp/miniupnpc" \
+	CC=cc CFLAGS="-Os -fPIC " build/libminiupnpc.a >/dev/null
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/settings.o src/settings.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ccm.o src/aead/ccm.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/eax.o src/aead/eax.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/gcm.o src/aead/gcm.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ccopy.o src/codec/ccopy.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/dec16be.o src/codec/dec16be.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/dec16le.o src/codec/dec16le.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/dec32be.o src/codec/dec32be.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/dec32le.o src/codec/dec32le.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/dec64be.o src/codec/dec64be.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/dec64le.o src/codec/dec64le.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/enc16be.o src/codec/enc16be.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/enc16le.o src/codec/enc16le.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/enc32be.o src/codec/enc32be.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/enc32le.o src/codec/enc32le.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/enc64be.o src/codec/enc64be.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/enc64le.o src/codec/enc64le.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/pemdec.o src/codec/pemdec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/pemenc.o src/codec/pemenc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_all_m15.o src/ec/ec_all_m15.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_all_m31.o src/ec/ec_all_m31.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_c25519_i15.o src/ec/ec_c25519_i15.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_c25519_i31.o src/ec/ec_c25519_i31.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_c25519_m15.o src/ec/ec_c25519_m15.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_c25519_m31.o src/ec/ec_c25519_m31.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_c25519_m62.o src/ec/ec_c25519_m62.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_c25519_m64.o src/ec/ec_c25519_m64.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_curve25519.o src/ec/ec_curve25519.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_default.o src/ec/ec_default.c
+"make" CFLAGS="-Wall -Wno-cpp -Os -fPIC  -DENABLE_STRNATPMPERR -DNATPMP_MAX_RETRIES=4 " \
+	-C "/src/logos-delivery/nimbledeps/pkgs2/nat_traversal-0.0.1-d36e7e9289896a9754933b2efcd57fe78c573009/vendor/libnatpmp-upstream" \
+	CC=cc libnatpmp.a >/dev/null
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_keygen.o src/ec/ec_keygen.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_p256_m15.o src/ec/ec_p256_m15.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_p256_m31.o src/ec/ec_p256_m31.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_p256_m62.o src/ec/ec_p256_m62.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_p256_m64.o src/ec/ec_p256_m64.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_prime_i15.o src/ec/ec_prime_i15.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_prime_i31.o src/ec/ec_prime_i31.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_pubkey.o src/ec/ec_pubkey.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_secp256r1.o src/ec/ec_secp256r1.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_secp384r1.o src/ec/ec_secp384r1.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ec_secp521r1.o src/ec/ec_secp521r1.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_atr.o src/ec/ecdsa_atr.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_default_sign_asn1.o src/ec/ecdsa_default_sign_asn1.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_default_sign_raw.o src/ec/ecdsa_default_sign_raw.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_default_vrfy_asn1.o src/ec/ecdsa_default_vrfy_asn1.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_default_vrfy_raw.o src/ec/ecdsa_default_vrfy_raw.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_i15_bits.o src/ec/ecdsa_i15_bits.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_i15_sign_asn1.o src/ec/ecdsa_i15_sign_asn1.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_i15_sign_raw.o src/ec/ecdsa_i15_sign_raw.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_i15_vrfy_asn1.o src/ec/ecdsa_i15_vrfy_asn1.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_i15_vrfy_raw.o src/ec/ecdsa_i15_vrfy_raw.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_i31_bits.o src/ec/ecdsa_i31_bits.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_i31_sign_asn1.o src/ec/ecdsa_i31_sign_asn1.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_i31_sign_raw.o src/ec/ecdsa_i31_sign_raw.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_i31_vrfy_asn1.o src/ec/ecdsa_i31_vrfy_asn1.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_i31_vrfy_raw.o src/ec/ecdsa_i31_vrfy_raw.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ecdsa_rta.o src/ec/ecdsa_rta.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/dig_oid.o src/hash/dig_oid.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/dig_size.o src/hash/dig_size.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ghash_ctmul.o src/hash/ghash_ctmul.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ghash_ctmul32.o src/hash/ghash_ctmul32.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ghash_ctmul64.o src/hash/ghash_ctmul64.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ghash_pclmul.o src/hash/ghash_pclmul.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ghash_pwr8.o src/hash/ghash_pwr8.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/md5.o src/hash/md5.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/md5sha1.o src/hash/md5sha1.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/mgf1.o src/hash/mgf1.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/multihash.o src/hash/multihash.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/sha1.o src/hash/sha1.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/sha2big.o src/hash/sha2big.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/sha2small.o src/hash/sha2small.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_add.o src/int/i15_add.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_bitlen.o src/int/i15_bitlen.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_decmod.o src/int/i15_decmod.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_decode.o src/int/i15_decode.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_decred.o src/int/i15_decred.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_encode.o src/int/i15_encode.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_fmont.o src/int/i15_fmont.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_iszero.o src/int/i15_iszero.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_moddiv.o src/int/i15_moddiv.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_modpow.o src/int/i15_modpow.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_modpow2.o src/int/i15_modpow2.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_montmul.o src/int/i15_montmul.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_mulacc.o src/int/i15_mulacc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_muladd.o src/int/i15_muladd.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_ninv15.o src/int/i15_ninv15.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_reduce.o src/int/i15_reduce.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_rshift.o src/int/i15_rshift.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_sub.o src/int/i15_sub.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i15_tmont.o src/int/i15_tmont.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_add.o src/int/i31_add.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_bitlen.o src/int/i31_bitlen.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_decmod.o src/int/i31_decmod.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_decode.o src/int/i31_decode.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_decred.o src/int/i31_decred.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_encode.o src/int/i31_encode.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_fmont.o src/int/i31_fmont.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_iszero.o src/int/i31_iszero.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_moddiv.o src/int/i31_moddiv.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_modpow.o src/int/i31_modpow.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_modpow2.o src/int/i31_modpow2.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_montmul.o src/int/i31_montmul.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_mulacc.o src/int/i31_mulacc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_muladd.o src/int/i31_muladd.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_ninv31.o src/int/i31_ninv31.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_reduce.o src/int/i31_reduce.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_rshift.o src/int/i31_rshift.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_sub.o src/int/i31_sub.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i31_tmont.o src/int/i31_tmont.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_add.o src/int/i32_add.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_bitlen.o src/int/i32_bitlen.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_decmod.o src/int/i32_decmod.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_decode.o src/int/i32_decode.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_decred.o src/int/i32_decred.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_div32.o src/int/i32_div32.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_encode.o src/int/i32_encode.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_fmont.o src/int/i32_fmont.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_iszero.o src/int/i32_iszero.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_modpow.o src/int/i32_modpow.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_montmul.o src/int/i32_montmul.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_mulacc.o src/int/i32_mulacc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_muladd.o src/int/i32_muladd.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_ninv32.o src/int/i32_ninv32.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_reduce.o src/int/i32_reduce.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_sub.o src/int/i32_sub.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i32_tmont.o src/int/i32_tmont.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/i62_modpow2.o src/int/i62_modpow2.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/hkdf.o src/kdf/hkdf.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/shake.o src/kdf/shake.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/hmac.o src/mac/hmac.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/hmac_ct.o src/mac/hmac_ct.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aesctr_drbg.o src/rand/aesctr_drbg.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/hmac_drbg.o src/rand/hmac_drbg.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/sysrng.o src/rand/sysrng.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_default_keygen.o src/rsa/rsa_default_keygen.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_default_modulus.o src/rsa/rsa_default_modulus.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_default_oaep_decrypt.o src/rsa/rsa_default_oaep_decrypt.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_default_oaep_encrypt.o src/rsa/rsa_default_oaep_encrypt.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_default_pkcs1_sign.o src/rsa/rsa_default_pkcs1_sign.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_default_pkcs1_vrfy.o src/rsa/rsa_default_pkcs1_vrfy.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_default_priv.o src/rsa/rsa_default_priv.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_default_privexp.o src/rsa/rsa_default_privexp.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_default_pss_sign.o src/rsa/rsa_default_pss_sign.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_default_pss_vrfy.o src/rsa/rsa_default_pss_vrfy.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_default_pub.o src/rsa/rsa_default_pub.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_default_pubexp.o src/rsa/rsa_default_pubexp.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i15_keygen.o src/rsa/rsa_i15_keygen.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i15_modulus.o src/rsa/rsa_i15_modulus.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i15_oaep_decrypt.o src/rsa/rsa_i15_oaep_decrypt.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i15_oaep_encrypt.o src/rsa/rsa_i15_oaep_encrypt.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i15_pkcs1_sign.o src/rsa/rsa_i15_pkcs1_sign.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i15_pkcs1_vrfy.o src/rsa/rsa_i15_pkcs1_vrfy.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i15_priv.o src/rsa/rsa_i15_priv.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i15_privexp.o src/rsa/rsa_i15_privexp.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i15_pss_sign.o src/rsa/rsa_i15_pss_sign.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i15_pss_vrfy.o src/rsa/rsa_i15_pss_vrfy.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i15_pub.o src/rsa/rsa_i15_pub.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i15_pubexp.o src/rsa/rsa_i15_pubexp.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i31_keygen.o src/rsa/rsa_i31_keygen.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i31_keygen_inner.o src/rsa/rsa_i31_keygen_inner.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i31_modulus.o src/rsa/rsa_i31_modulus.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i31_oaep_decrypt.o src/rsa/rsa_i31_oaep_decrypt.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i31_oaep_encrypt.o src/rsa/rsa_i31_oaep_encrypt.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i31_pkcs1_sign.o src/rsa/rsa_i31_pkcs1_sign.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i31_pkcs1_vrfy.o src/rsa/rsa_i31_pkcs1_vrfy.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i31_priv.o src/rsa/rsa_i31_priv.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i31_privexp.o src/rsa/rsa_i31_privexp.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i31_pss_sign.o src/rsa/rsa_i31_pss_sign.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i31_pss_vrfy.o src/rsa/rsa_i31_pss_vrfy.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i31_pub.o src/rsa/rsa_i31_pub.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i31_pubexp.o src/rsa/rsa_i31_pubexp.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i32_oaep_decrypt.o src/rsa/rsa_i32_oaep_decrypt.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i32_oaep_encrypt.o src/rsa/rsa_i32_oaep_encrypt.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i32_pkcs1_sign.o src/rsa/rsa_i32_pkcs1_sign.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i32_pkcs1_vrfy.o src/rsa/rsa_i32_pkcs1_vrfy.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i32_priv.o src/rsa/rsa_i32_priv.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i32_pss_sign.o src/rsa/rsa_i32_pss_sign.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i32_pss_vrfy.o src/rsa/rsa_i32_pss_vrfy.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i32_pub.o src/rsa/rsa_i32_pub.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i62_keygen.o src/rsa/rsa_i62_keygen.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i62_oaep_decrypt.o src/rsa/rsa_i62_oaep_decrypt.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i62_oaep_encrypt.o src/rsa/rsa_i62_oaep_encrypt.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i62_pkcs1_sign.o src/rsa/rsa_i62_pkcs1_sign.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i62_pkcs1_vrfy.o src/rsa/rsa_i62_pkcs1_vrfy.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i62_priv.o src/rsa/rsa_i62_priv.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i62_pss_sign.o src/rsa/rsa_i62_pss_sign.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i62_pss_vrfy.o src/rsa/rsa_i62_pss_vrfy.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_i62_pub.o src/rsa/rsa_i62_pub.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_oaep_pad.o src/rsa/rsa_oaep_pad.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_oaep_unpad.o src/rsa/rsa_oaep_unpad.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_pkcs1_sig_pad.o src/rsa/rsa_pkcs1_sig_pad.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_pkcs1_sig_unpad.o src/rsa/rsa_pkcs1_sig_unpad.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_pss_sig_pad.o src/rsa/rsa_pss_sig_pad.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_pss_sig_unpad.o src/rsa/rsa_pss_sig_unpad.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/rsa_ssl_decrypt.o src/rsa/rsa_ssl_decrypt.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/prf.o src/ssl/prf.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/prf_md5sha1.o src/ssl/prf_md5sha1.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/prf_sha256.o src/ssl/prf_sha256.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/prf_sha384.o src/ssl/prf_sha384.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_ccert_single_ec.o src/ssl/ssl_ccert_single_ec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_ccert_single_rsa.o src/ssl/ssl_ccert_single_rsa.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_client.o src/ssl/ssl_client.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_client_default_rsapub.o src/ssl/ssl_client_default_rsapub.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_client_full.o src/ssl/ssl_client_full.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_engine.o src/ssl/ssl_engine.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_engine_default_aescbc.o src/ssl/ssl_engine_default_aescbc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_engine_default_aesccm.o src/ssl/ssl_engine_default_aesccm.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_engine_default_aesgcm.o src/ssl/ssl_engine_default_aesgcm.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_engine_default_chapol.o src/ssl/ssl_engine_default_chapol.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_engine_default_descbc.o src/ssl/ssl_engine_default_descbc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_engine_default_ec.o src/ssl/ssl_engine_default_ec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_engine_default_ecdsa.o src/ssl/ssl_engine_default_ecdsa.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_engine_default_rsavrfy.o src/ssl/ssl_engine_default_rsavrfy.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_hashes.o src/ssl/ssl_hashes.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_hs_client.o src/ssl/ssl_hs_client.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_hs_server.o src/ssl/ssl_hs_server.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_io.o src/ssl/ssl_io.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_keyexport.o src/ssl/ssl_keyexport.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_lru.o src/ssl/ssl_lru.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_rec_cbc.o src/ssl/ssl_rec_cbc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_rec_ccm.o src/ssl/ssl_rec_ccm.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_rec_chapol.o src/ssl/ssl_rec_chapol.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_rec_gcm.o src/ssl/ssl_rec_gcm.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_scert_single_ec.o src/ssl/ssl_scert_single_ec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_scert_single_rsa.o src/ssl/ssl_scert_single_rsa.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_server.o src/ssl/ssl_server.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_server_full_ec.o src/ssl/ssl_server_full_ec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_server_full_rsa.o src/ssl/ssl_server_full_rsa.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_server_mine2c.o src/ssl/ssl_server_mine2c.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_server_mine2g.o src/ssl/ssl_server_mine2g.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_server_minf2c.o src/ssl/ssl_server_minf2c.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_server_minf2g.o src/ssl/ssl_server_minf2g.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_server_minr2g.o src/ssl/ssl_server_minr2g.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_server_minu2g.o src/ssl/ssl_server_minu2g.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/ssl_server_minv2g.o src/ssl/ssl_server_minv2g.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_big_cbcdec.o src/symcipher/aes_big_cbcdec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_big_cbcenc.o src/symcipher/aes_big_cbcenc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_big_ctr.o src/symcipher/aes_big_ctr.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_big_ctrcbc.o src/symcipher/aes_big_ctrcbc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_big_dec.o src/symcipher/aes_big_dec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_big_enc.o src/symcipher/aes_big_enc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_common.o src/symcipher/aes_common.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct.o src/symcipher/aes_ct.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct64.o src/symcipher/aes_ct64.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct64_cbcdec.o src/symcipher/aes_ct64_cbcdec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct64_cbcenc.o src/symcipher/aes_ct64_cbcenc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct64_ctr.o src/symcipher/aes_ct64_ctr.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct64_ctrcbc.o src/symcipher/aes_ct64_ctrcbc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct64_dec.o src/symcipher/aes_ct64_dec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct64_enc.o src/symcipher/aes_ct64_enc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct_cbcdec.o src/symcipher/aes_ct_cbcdec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct_cbcenc.o src/symcipher/aes_ct_cbcenc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct_ctr.o src/symcipher/aes_ct_ctr.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct_ctrcbc.o src/symcipher/aes_ct_ctrcbc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct_dec.o src/symcipher/aes_ct_dec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_ct_enc.o src/symcipher/aes_ct_enc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_pwr8.o src/symcipher/aes_pwr8.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_pwr8_cbcdec.o src/symcipher/aes_pwr8_cbcdec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_pwr8_cbcenc.o src/symcipher/aes_pwr8_cbcenc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_pwr8_ctr.o src/symcipher/aes_pwr8_ctr.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_pwr8_ctrcbc.o src/symcipher/aes_pwr8_ctrcbc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_small_cbcdec.o src/symcipher/aes_small_cbcdec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_small_cbcenc.o src/symcipher/aes_small_cbcenc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_small_ctr.o src/symcipher/aes_small_ctr.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_small_ctrcbc.o src/symcipher/aes_small_ctrcbc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_small_dec.o src/symcipher/aes_small_dec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_small_enc.o src/symcipher/aes_small_enc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_x86ni.o src/symcipher/aes_x86ni.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_x86ni_cbcdec.o src/symcipher/aes_x86ni_cbcdec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_x86ni_cbcenc.o src/symcipher/aes_x86ni_cbcenc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_x86ni_ctr.o src/symcipher/aes_x86ni_ctr.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/aes_x86ni_ctrcbc.o src/symcipher/aes_x86ni_ctrcbc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/chacha20_ct.o src/symcipher/chacha20_ct.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/chacha20_sse2.o src/symcipher/chacha20_sse2.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/des_ct.o src/symcipher/des_ct.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/des_ct_cbcdec.o src/symcipher/des_ct_cbcdec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/des_ct_cbcenc.o src/symcipher/des_ct_cbcenc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/des_support.o src/symcipher/des_support.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/des_tab.o src/symcipher/des_tab.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/des_tab_cbcdec.o src/symcipher/des_tab_cbcdec.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/des_tab_cbcenc.o src/symcipher/des_tab_cbcenc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/poly1305_ctmul.o src/symcipher/poly1305_ctmul.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/poly1305_ctmul32.o src/symcipher/poly1305_ctmul32.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/poly1305_ctmulq.o src/symcipher/poly1305_ctmulq.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/poly1305_i15.o src/symcipher/poly1305_i15.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/asn1enc.o src/x509/asn1enc.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/encode_ec_pk8der.o src/x509/encode_ec_pk8der.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/encode_ec_rawder.o src/x509/encode_ec_rawder.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/encode_rsa_pk8der.o src/x509/encode_rsa_pk8der.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/encode_rsa_rawder.o src/x509/encode_rsa_rawder.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/skey_decoder.o src/x509/skey_decoder.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/x509_decoder.o src/x509/x509_decoder.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/x509_knownkey.o src/x509/x509_knownkey.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/x509_minimal.o src/x509/x509_minimal.c
+cc -W -Wall -Os -fPIC -Isrc -Iinc -c -o build/obj/x509_minimal_full.o src/x509/x509_minimal_full.c
+ar -rcs build/libbearssl.a build/obj/settings.o  build/obj/ccm.o  build/obj/eax.o  build/obj/gcm.o  build/obj/ccopy.o  build/obj/dec16be.o  build/obj/dec16le.o  build/obj/dec32be.o  build/obj/dec32le.o  build/obj/dec64be.o  build/obj/dec64le.o  build/obj/enc16be.o  build/obj/enc16le.o  build/obj/enc32be.o  build/obj/enc32le.o  build/obj/enc64be.o  build/obj/enc64le.o  build/obj/pemdec.o  build/obj/pemenc.o  build/obj/ec_all_m15.o  build/obj/ec_all_m31.o  build/obj/ec_c25519_i15.o  build/obj/ec_c25519_i31.o  build/obj/ec_c25519_m15.o  build/obj/ec_c25519_m31.o  build/obj/ec_c25519_m62.o  build/obj/ec_c25519_m64.o  build/obj/ec_curve25519.o  build/obj/ec_default.o  build/obj/ec_keygen.o  build/obj/ec_p256_m15.o  build/obj/ec_p256_m31.o  build/obj/ec_p256_m62.o  build/obj/ec_p256_m64.o  build/obj/ec_prime_i15.o  build/obj/ec_prime_i31.o  build/obj/ec_pubkey.o  build/obj/ec_secp256r1.o  build/obj/ec_secp384r1.o  build/obj/ec_secp521r1.o  build/obj/ecdsa_atr.o  build/obj/ecdsa_default_sign_asn1.o  build/obj/ecdsa_default_sign_raw.o  build/obj/ecdsa_default_vrfy_asn1.o  build/obj/ecdsa_default_vrfy_raw.o  build/obj/ecdsa_i15_bits.o  build/obj/ecdsa_i15_sign_asn1.o  build/obj/ecdsa_i15_sign_raw.o  build/obj/ecdsa_i15_vrfy_asn1.o  build/obj/ecdsa_i15_vrfy_raw.o  build/obj/ecdsa_i31_bits.o  build/obj/ecdsa_i31_sign_asn1.o  build/obj/ecdsa_i31_sign_raw.o  build/obj/ecdsa_i31_vrfy_asn1.o  build/obj/ecdsa_i31_vrfy_raw.o  build/obj/ecdsa_rta.o  build/obj/dig_oid.o  build/obj/dig_size.o  build/obj/ghash_ctmul.o  build/obj/ghash_ctmul32.o  build/obj/ghash_ctmul64.o  build/obj/ghash_pclmul.o  build/obj/ghash_pwr8.o  build/obj/md5.o  build/obj/md5sha1.o  build/obj/mgf1.o  build/obj/multihash.o  build/obj/sha1.o  build/obj/sha2big.o  build/obj/sha2small.o  build/obj/i15_add.o  build/obj/i15_bitlen.o  build/obj/i15_decmod.o  build/obj/i15_decode.o  build/obj/i15_decred.o  build/obj/i15_encode.o  build/obj/i15_fmont.o  build/obj/i15_iszero.o  build/obj/i15_moddiv.o  build/obj/i15_modpow.o  build/obj/i15_modpow2.o  build/obj/i15_montmul.o  build/obj/i15_mulacc.o  build/obj/i15_muladd.o  build/obj/i15_ninv15.o  build/obj/i15_reduce.o  build/obj/i15_rshift.o  build/obj/i15_sub.o  build/obj/i15_tmont.o  build/obj/i31_add.o  build/obj/i31_bitlen.o  build/obj/i31_decmod.o  build/obj/i31_decode.o  build/obj/i31_decred.o  build/obj/i31_encode.o  build/obj/i31_fmont.o  build/obj/i31_iszero.o  build/obj/i31_moddiv.o  build/obj/i31_modpow.o  build/obj/i31_modpow2.o  build/obj/i31_montmul.o  build/obj/i31_mulacc.o  build/obj/i31_muladd.o  build/obj/i31_ninv31.o  build/obj/i31_reduce.o  build/obj/i31_rshift.o  build/obj/i31_sub.o  build/obj/i31_tmont.o  build/obj/i32_add.o  build/obj/i32_bitlen.o  build/obj/i32_decmod.o  build/obj/i32_decode.o  build/obj/i32_decred.o  build/obj/i32_div32.o  build/obj/i32_encode.o  build/obj/i32_fmont.o  build/obj/i32_iszero.o  build/obj/i32_modpow.o  build/obj/i32_montmul.o  build/obj/i32_mulacc.o  build/obj/i32_muladd.o  build/obj/i32_ninv32.o  build/obj/i32_reduce.o  build/obj/i32_sub.o  build/obj/i32_tmont.o  build/obj/i62_modpow2.o  build/obj/hkdf.o  build/obj/shake.o  build/obj/hmac.o  build/obj/hmac_ct.o  build/obj/aesctr_drbg.o  build/obj/hmac_drbg.o  build/obj/sysrng.o  build/obj/rsa_default_keygen.o  build/obj/rsa_default_modulus.o  build/obj/rsa_default_oaep_decrypt.o  build/obj/rsa_default_oaep_encrypt.o  build/obj/rsa_default_pkcs1_sign.o  build/obj/rsa_default_pkcs1_vrfy.o  build/obj/rsa_default_priv.o  build/obj/rsa_default_privexp.o  build/obj/rsa_default_pss_sign.o  build/obj/rsa_default_pss_vrfy.o  build/obj/rsa_default_pub.o  build/obj/rsa_default_pubexp.o  build/obj/rsa_i15_keygen.o  build/obj/rsa_i15_modulus.o  build/obj/rsa_i15_oaep_decrypt.o  build/obj/rsa_i15_oaep_encrypt.o  build/obj/rsa_i15_pkcs1_sign.o  build/obj/rsa_i15_pkcs1_vrfy.o  build/obj/rsa_i15_priv.o  build/obj/rsa_i15_privexp.o  build/obj/rsa_i15_pss_sign.o  build/obj/rsa_i15_pss_vrfy.o  build/obj/rsa_i15_pub.o  build/obj/rsa_i15_pubexp.o  build/obj/rsa_i31_keygen.o  build/obj/rsa_i31_keygen_inner.o  build/obj/rsa_i31_modulus.o  build/obj/rsa_i31_oaep_decrypt.o  build/obj/rsa_i31_oaep_encrypt.o  build/obj/rsa_i31_pkcs1_sign.o  build/obj/rsa_i31_pkcs1_vrfy.o  build/obj/rsa_i31_priv.o  build/obj/rsa_i31_privexp.o  build/obj/rsa_i31_pss_sign.o  build/obj/rsa_i31_pss_vrfy.o  build/obj/rsa_i31_pub.o  build/obj/rsa_i31_pubexp.o  build/obj/rsa_i32_oaep_decrypt.o  build/obj/rsa_i32_oaep_encrypt.o  build/obj/rsa_i32_pkcs1_sign.o  build/obj/rsa_i32_pkcs1_vrfy.o  build/obj/rsa_i32_priv.o  build/obj/rsa_i32_pss_sign.o  build/obj/rsa_i32_pss_vrfy.o  build/obj/rsa_i32_pub.o  build/obj/rsa_i62_keygen.o  build/obj/rsa_i62_oaep_decrypt.o  build/obj/rsa_i62_oaep_encrypt.o  build/obj/rsa_i62_pkcs1_sign.o  build/obj/rsa_i62_pkcs1_vrfy.o  build/obj/rsa_i62_priv.o  build/obj/rsa_i62_pss_sign.o  build/obj/rsa_i62_pss_vrfy.o  build/obj/rsa_i62_pub.o  build/obj/rsa_oaep_pad.o  build/obj/rsa_oaep_unpad.o  build/obj/rsa_pkcs1_sig_pad.o  build/obj/rsa_pkcs1_sig_unpad.o  build/obj/rsa_pss_sig_pad.o  build/obj/rsa_pss_sig_unpad.o  build/obj/rsa_ssl_decrypt.o  build/obj/prf.o  build/obj/prf_md5sha1.o  build/obj/prf_sha256.o  build/obj/prf_sha384.o  build/obj/ssl_ccert_single_ec.o  build/obj/ssl_ccert_single_rsa.o  build/obj/ssl_client.o  build/obj/ssl_client_default_rsapub.o  build/obj/ssl_client_full.o  build/obj/ssl_engine.o  build/obj/ssl_engine_default_aescbc.o  build/obj/ssl_engine_default_aesccm.o  build/obj/ssl_engine_default_aesgcm.o  build/obj/ssl_engine_default_chapol.o  build/obj/ssl_engine_default_descbc.o  build/obj/ssl_engine_default_ec.o  build/obj/ssl_engine_default_ecdsa.o  build/obj/ssl_engine_default_rsavrfy.o  build/obj/ssl_hashes.o  build/obj/ssl_hs_client.o  build/obj/ssl_hs_server.o  build/obj/ssl_io.o  build/obj/ssl_keyexport.o  build/obj/ssl_lru.o  build/obj/ssl_rec_cbc.o  build/obj/ssl_rec_ccm.o  build/obj/ssl_rec_chapol.o  build/obj/ssl_rec_gcm.o  build/obj/ssl_scert_single_ec.o  build/obj/ssl_scert_single_rsa.o  build/obj/ssl_server.o  build/obj/ssl_server_full_ec.o  build/obj/ssl_server_full_rsa.o  build/obj/ssl_server_mine2c.o  build/obj/ssl_server_mine2g.o  build/obj/ssl_server_minf2c.o  build/obj/ssl_server_minf2g.o  build/obj/ssl_server_minr2g.o  build/obj/ssl_server_minu2g.o  build/obj/ssl_server_minv2g.o  build/obj/aes_big_cbcdec.o  build/obj/aes_big_cbcenc.o  build/obj/aes_big_ctr.o  build/obj/aes_big_ctrcbc.o  build/obj/aes_big_dec.o  build/obj/aes_big_enc.o  build/obj/aes_common.o  build/obj/aes_ct.o  build/obj/aes_ct64.o  build/obj/aes_ct64_cbcdec.o  build/obj/aes_ct64_cbcenc.o  build/obj/aes_ct64_ctr.o  build/obj/aes_ct64_ctrcbc.o  build/obj/aes_ct64_dec.o  build/obj/aes_ct64_enc.o  build/obj/aes_ct_cbcdec.o  build/obj/aes_ct_cbcenc.o  build/obj/aes_ct_ctr.o  build/obj/aes_ct_ctrcbc.o  build/obj/aes_ct_dec.o  build/obj/aes_ct_enc.o  build/obj/aes_pwr8.o  build/obj/aes_pwr8_cbcdec.o  build/obj/aes_pwr8_cbcenc.o  build/obj/aes_pwr8_ctr.o  build/obj/aes_pwr8_ctrcbc.o  build/obj/aes_small_cbcdec.o  build/obj/aes_small_cbcenc.o  build/obj/aes_small_ctr.o  build/obj/aes_small_ctrcbc.o  build/obj/aes_small_dec.o  build/obj/aes_small_enc.o  build/obj/aes_x86ni.o  build/obj/aes_x86ni_cbcdec.o  build/obj/aes_x86ni_cbcenc.o  build/obj/aes_x86ni_ctr.o  build/obj/aes_x86ni_ctrcbc.o  build/obj/chacha20_ct.o  build/obj/chacha20_sse2.o  build/obj/des_ct.o  build/obj/des_ct_cbcdec.o  build/obj/des_ct_cbcenc.o  build/obj/des_support.o  build/obj/des_tab.o  build/obj/des_tab_cbcdec.o  build/obj/des_tab_cbcenc.o  build/obj/poly1305_ctmul.o  build/obj/poly1305_ctmul32.o  build/obj/poly1305_ctmulq.o  build/obj/poly1305_i15.o  build/obj/asn1enc.o  build/obj/encode_ec_pk8der.o  build/obj/encode_ec_rawder.o  build/obj/encode_rsa_pk8der.o  build/obj/encode_rsa_rawder.o  build/obj/skey_decoder.o  build/obj/x509_decoder.o  build/obj/x509_knownkey.o  build/obj/x509_minimal.o  build/obj/x509_minimal_full.o
+make[2]: Leaving directory '/src/logos-delivery/nimbledeps/pkgs2/bearssl-0.2.13-e3a004381e8c2ec0d37bebc2e48b42c34353e9cf/bearssl/csources'
+make[1]: Leaving directory '/src/logos-delivery'
+make audit-deps
+make[1]: Entering directory '/src/logos-delivery'
+/root/.local/nimble-0.26.0/bin/nimble auditdeps --nim:/src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/bin/nim
+      Info: using /src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/bin/nim for compilation
+  Executing task auditdeps in /src/logos-delivery/logos_delivery.nimble
+[NimScript] exec: /src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/bin/nim e --hints:off scripts/audit_deps.nims
+audit: 49/49 installed packages match nimble.lock
+make[1]: Leaving directory '/src/logos-delivery'
+/root/.local/nimble-0.26.0/bin/nimble --verbose liblogosdeliveryDynamicLinux logos_delivery.nimble --nim:/src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/bin/nim
+      Info: Package cache path /root/.nimble/pkgcache
+      Info: Package cache path /root/.nimble/pkgcache
+     Info:  Nimble data file "/src/logos-delivery/nimbledeps/nimbledata2.json" has been loaded.
+  Warning:  /src/logos-delivery/nimbledeps/pkgs2/metrics-0.2.2-d64e789ba2a3b848eb7c628d728623126182c3f1/metrics.nimble(47, 2) 'taskRequires' is not supported in declarative parser
+      Info: using /src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/bin/nim for compilation
+    Reading official package list
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on unicodedb@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+     Info:  Dependency on chronos@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on faststreams@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on testutils@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on faststreams@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on faststreams@any version already satisfied
+     Info:  Dependency on npeg@any version already satisfied
+     Info:  Dependency on serialization@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on faststreams@any version already satisfied
+     Info:  Dependency on serialization@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on serialization@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on serialization@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on faststreams@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+     Info:  Dependency on serialization@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on faststreams@any version already satisfied
+     Info:  Dependency on serialization@any version already satisfied
+     Info:  Dependency on json_serialization@any version already satisfied
+     Info:  Dependency on testutils@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on chronos@any version already satisfied
+     Info:  Dependency on chronicles@any version already satisfied
+     Info:  Dependency on metrics@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on intops@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on nimcrypto@any version already satisfied
+     Info:  Dependency on stint@any version already satisfied
+     Info:  Dependency on chronos@any version already satisfied
+     Info:  Dependency on httputils@any version already satisfied
+     Info:  Dependency on chronicles@any version already satisfied
+     Info:  Dependency on websock@any version already satisfied
+     Info:  Dependency on serialization@any version already satisfied
+     Info:  Dependency on json_serialization@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on nimcrypto@any version already satisfied
+     Info:  Dependency on bearssl@any version already satisfied
+     Info:  Dependency on boringssl@any version already satisfied
+     Info:  Dependency on chronicles@any version already satisfied
+     Info:  Dependency on chronos@any version already satisfied
+     Info:  Dependency on metrics@any version already satisfied
+     Info:  Dependency on secp256k1@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+     Info:  Dependency on serialization@any version already satisfied
+     Info:  Dependency on json_serialization@any version already satisfied
+     Info:  Dependency on lsquic@any version already satisfied
+     Info:  Dependency on protobuf_serialization@any version already satisfied
+     Info:  Dependency on websock@any version already satisfied
+     Info:  Dependency on libplum@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on nimcrypto@any version already satisfied
+     Info:  Dependency on stint@any version already satisfied
+     Info:  Dependency on secp256k1@any version already satisfied
+     Info:  Dependency on chronos@any version already satisfied
+     Info:  Dependency on chronicles@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on nat_traversal@any version already satisfied
+     Info:  Dependency on metrics@any version already satisfied
+     Info:  Dependency on sqlite3_abi@any version already satisfied
+     Info:  Dependency on confutils@any version already satisfied
+     Info:  Dependency on testutils@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+     Info:  Dependency on minilru@any version already satisfied
+     Info:  Dependency on snappy@any version already satisfied
+     Info:  Dependency on nim@any version already satisfied
+     Info:  Dependency on bearssl@any version already satisfied
+     Info:  Dependency on chronicles@any version already satisfied
+     Info:  Dependency on chronos@any version already satisfied
+     Info:  Dependency on eth@any version already satisfied
+     Info:  Dependency on secp256k1@any version already satisfied
+     Info:  Dependency on stew@any version already satisfied
+     Info:  Dependency on testutils@any version already satisfied
+     Info:  Dependency on unittest2@any version already satisfied
+     Info:  Dependency on nimcrypto@any version already satisfied
+     Info:  Dependency on results@any version already satisfied
+ Installing boringssl@0.0.13
+  Warning:  A package "boringssl@0.0.13" with checksum "706b29a12b4462400524c570b953752dfb285d4d" already exists in the cache.
+ Installing bearssl_pkey_decoder@0.1.0
+  Warning:  A package "bearssl_pkey_decoder@0.1.0" with checksum "8666edbcb77cb9f97c659114d57c4ba0e7ab74c3" already exists in the cache.
+ Installing jwt@0.2
+  Warning:  A package "jwt@0.2" with checksum "3cd368666fd2bc7f99f253452289e827abcac13c" already exists in the cache.
+ Installing chronos@4.4.0
+  Warning:  A package "chronos@4.4.0" with checksum "ca63adf451a12da1ac80419bd7f734eae6627c03" already exists in the cache.
+ Installing metrics@0.2.2
+  Warning:  A package "metrics@0.2.2" with checksum "d64e789ba2a3b848eb7c628d728623126182c3f1" already exists in the cache.
+ Installing ffi@0.3.0
+  Warning:  A package "ffi@0.3.0" with checksum "ed2abe9a655532b35885ab3cc785c504574bb819" already exists in the cache.
+ Installing lsquic@0.9.0
+  Warning:  A package "lsquic@0.9.0" with checksum "6ca2849ff7c7a0d5271dc57ce869c72ba3111a2f" already exists in the cache.
+ Installing brokers@3.4.0
+  Warning:  A package "brokers@3.4.0" with checksum "65f36b4f6d9a5db2139712ff948e5d075c390d49" already exists in the cache.
+ Installing leopard@0.1.1
+  Warning:  A package "leopard@0.1.1" with checksum "2fc77ade5d088afbb56c555a295f1cf286cebb7d" already exists in the cache.
+ Installing websock@0.4.1
+  Warning:  A package "websock@0.4.1" with checksum "7c240c080f618855411bb0ee3984f6062123bcd4" already exists in the cache.
+ Installing segmentation@0.1.0
+  Warning:  A package "segmentation@0.1.0" with checksum "44f5ffa727c58f581b356e8d1c6a3b167f32dee8" already exists in the cache.
+ Installing secp256k1@0.6.0.3.2
+  Warning:  A package "secp256k1@0.6.0.3.2" with checksum "6618ef9de17121846a8c1d0317026b0ce8584e10" already exists in the cache.
+ Installing sds@0.4.0
+  Warning:  A package "sds@0.4.0" with checksum "2071e9c444a36dd43edf1287c43f13ff1c8aea8a" already exists in the cache.
+ Installing libp2p_mix@0.1.0
+  Warning:  A package "libp2p_mix@0.1.0" with checksum "053909f0933b725018f7d87b27403a4b06d7f23a" already exists in the cache.
+ Installing web3@0.8.0
+  Warning:  A package "web3@0.8.0" with checksum "26a112af032ef1536f97da2ca7364af618a11b80" already exists in the cache.
+     Info:  "nimble.paths" is updated.
+     Info:  "config.nims" is already set up.
+  Executing task liblogosdeliveryDynamicLinux in /src/logos-delivery/logos_delivery.nimble
+[NimScript] mkDir: build
+[NimScript] mkDir: library/generated
+[NimScript] exec: /src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/bin/nim c --out:build/liblogosdelivery.so --threads:on --app:lib --opt:speed --noMain --mm:refc --header -d:metrics --nimMainPrefix:liblogosdelivery --skipParentCfg:off -d:discv5_protocol_id=d5waku  -d:libp2p_mix_experimental_exit_is_dest -d:libp2p_quic_support  -d:ffiGenBindings -d:targetLang=c -d:ffiOutputDir=generated -d:ffiSrcPath=../liblogosdelivery.nim  --cpu:arm64  -d:chronicles_line_numbers --warning:Deprecated:off --warning:UnusedImport:on -d:chronicles_log_level=TRACE   --verbosity:0 --hints:off -d:chronicles_log_level="ERROR" -d:git_version=\"0f2188\" -d:debug -d:disable_libbacktrace  --passL:librln_v2.0.2.a --passL:-lm   library/liblogosdelivery.nim
+[91m/src/logos-delivery/logos_delivery/waku/common/enr/builder.nim(10, 8) Warning: imported and not used: 'typed_record' [UnusedImport]
+[0m[91m/src/logos-delivery/nimbledeps/pkgs2/libp2p_mix-0.1.0-053909f0933b725018f7d87b27403a4b06d7f23a/libp2p_mix/mix_protocol.nim(25, 12) Warning: experimental support for mix exit == destination is enabled! [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/waku_enr/capabilities.nim(36, 5) Warning: lightpush, filter, store, relay, sync, mix all have default value 'false', this may be unintentional, either use ';' (semicolon) or explicitly write each default value [ImplicitDefaultValue]
+[0m[91m/src/logos-delivery/logos_delivery/api/types.nim(3, 48) Warning: imported and not used: 'times' [UnusedImport]
+/src/logos-delivery/logos_delivery/api/types.nim(3, 38) Warning: imported and not used: 'rand' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/waku_store/common.nim(3, 36) Warning: imported and not used: 'byteutils' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/waku_archive/archive.nim(5, 9) Warning: imported and not used: 'byteutils' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/waku_rendezvous/waku_peer_record.nim(11, 10) Warning: imported and not used: 'shortlog' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/node/peer_manager/peer_manager.nim(19, 21) Warning: imported and not used: 'sharding' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/waku_store/protocol.nim(11, 11) Warning: imported and not used: 'rand' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/waku_store/client.nim(10, 11) Warning: imported and not used: 'rand' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/waku_store/client.nim(5, 26) Warning: imported and not used: 'algorithm' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/waku_filter_v2/protocol.nim(8, 8) Warning: imported and not used: 'byteutils' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/api/events/filter_subscribe_events.nim(2, 63) Warning: imported and not used: 'digest' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/events/filter_subscribe_events.nim(2, 46) Warning: imported and not used: 'message' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/waku_filter_v2/client.nim(10, 11) Warning: imported and not used: 'rand' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/waku_rendezvous/protocol.nim(43, 5) template/generic instantiation of `async` from here
+/src/logos-delivery/logos_delivery/waku/waku_rendezvous/protocol.nim(41, 8) Warning: use {.base.} for base methods; baseless methods are deprecated [UseBase]
+[0m[91m/src/logos-delivery/logos_delivery/waku/waku_lightpush_legacy/client.nim(4, 55) Warning: imported and not used: 'rand' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/waku_lightpush_legacy/protocol.nim(4, 71) Warning: imported and not used: 'rand' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/waku_lightpush_legacy/protocol.nim(4, 22) Warning: imported and not used: 'byteutils' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/waku_lightpush_legacy/self_req_handler.nim(12, 52) Warning: imported and not used: 'byteutils' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/waku_lightpush/client.nim(4, 55) Warning: imported and not used: 'rand' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/waku_lightpush/protocol.nim(4, 36) Warning: imported and not used: 'byteutils' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/waku_lightpush/protocol.nim(4, 85) Warning: imported and not used: 'rand' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(61, 5) Warning: RequestBroker: broker name is `BackendInfo` (capitalized from proc `backendInfo`); call it as `BackendInfo.request(...)`. Write `proc BackendInfo(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(64, 5) Warning: RequestBroker: broker name is `StartDiscovery` (capitalized from proc `startDiscovery`); call it as `StartDiscovery.request(...)`. Write `proc StartDiscovery(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(67, 5) Warning: RequestBroker: broker name is `StopDiscovery` (capitalized from proc `stopDiscovery`); call it as `StopDiscovery.request(...)`. Write `proc StopDiscovery(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(72, 5) Warning: RequestBroker: broker name is `LookupServicePeers` (capitalized from proc `lookupServicePeers`); call it as `LookupServicePeers.request(...)`. Write `proc LookupServicePeers(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(79, 5) Warning: RequestBroker: broker name is `LookupRandom` (capitalized from proc `lookupRandom`); call it as `LookupRandom.request(...)`. Write `proc LookupRandom(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(88, 5) Warning: RequestBroker: broker name is `StartAdvertising` (capitalized from proc `startAdvertising`); call it as `StartAdvertising.request(...)`. Write `proc StartAdvertising(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(94, 5) Warning: RequestBroker: broker name is `StopAdvertising` (capitalized from proc `stopAdvertising`); call it as `StopAdvertising.request(...)`. Write `proc StopAdvertising(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(100, 5) Warning: RequestBroker: broker name is `RegisterInterest` (capitalized from proc `registerInterest`); call it as `RegisterInterest.request(...)`. Write `proc RegisterInterest(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(103, 5) Warning: RequestBroker: broker name is `UnregisterInterest` (capitalized from proc `unregisterInterest`); call it as `UnregisterInterest.request(...)`. Write `proc UnregisterInterest(...)` to name it explicitly and silence this warning. [User]
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(108, 5) Warning: RequestBroker: broker name is `AddBootstrapEntries` (capitalized from proc `addBootstrapEntries`); call it as `AddBootstrapEntries.request(...)`. Write `proc AddBootstrapEntries(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(60, 3) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(61, 5) Warning: RequestBroker: broker name is `BackendInfo` (capitalized from proc `backendInfo`); call it as `BackendInfo.request(...)`. Write `proc BackendInfo(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(63, 3) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(64, 5) Warning: RequestBroker: broker name is `StartDiscovery` (capitalized from proc `startDiscovery`); call it as `StartDiscovery.request(...)`. Write `proc StartDiscovery(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(66, 3) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(67, 5) Warning: RequestBroker: broker name is `StopDiscovery` (capitalized from proc `stopDiscovery`); call it as `StopDiscovery.request(...)`. Write `proc StopDiscovery(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(69, 3) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(72, 5) Warning: RequestBroker: broker name is `LookupServicePeers` (capitalized from proc `lookupServicePeers`); call it as `LookupServicePeers.request(...)`. Write `proc LookupServicePeers(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(76, 3) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(79, 5) Warning: RequestBroker: broker name is `LookupRandom` (capitalized from proc `lookupRandom`); call it as `LookupRandom.request(...)`. Write `proc LookupRandom(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(81, 3) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(88, 5) Warning: RequestBroker: broker name is `StartAdvertising` (capitalized from proc `startAdvertising`); call it as `StartAdvertising.request(...)`. Write `proc StartAdvertising(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(92, 3) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(94, 5) Warning: RequestBroker: broker name is `StopAdvertising` (capitalized from proc `stopAdvertising`); call it as `StopAdvertising.request(...)`. Write `proc StopAdvertising(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(96, 3) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(100, 5) Warning: RequestBroker: broker name is `RegisterInterest` (capitalized from proc `registerInterest`); call it as `RegisterInterest.request(...)`. Write `proc RegisterInterest(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(102, 3) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(103, 5) Warning: RequestBroker: broker name is `UnregisterInterest` (capitalized from proc `unregisterInterest`); call it as `UnregisterInterest.request(...)`. Write `proc UnregisterInterest(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(52, 16) template/generic instantiation of `BrokerInterface` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(105, 3) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/peer_discovery_interface.nim(108, 5) Warning: RequestBroker: broker name is `AddBootstrapEntries` (capitalized from proc `addBootstrapEntries`); call it as `AddBootstrapEntries.request(...)`. Write `proc AddBootstrapEntries(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/rln/rln_evm/group_manager.nim(13, 3) Warning: imported and not used: 'json' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/rln/rln_evm/group_manager.nim(14, 37) Warning: imported and not used: 'strformat' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/rln/rln_evm/group_manager.nim(14, 18) Warning: imported and not used: 'tables' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/rln/rln_evm/group_manager.nim(14, 8) Warning: imported and not used: 'strutils' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/rln/rln_evm/group_manager.nim(15, 8) Warning: imported and not used: 'byteutils' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/persistency/backend_comm.nim(138, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/nimbledeps/pkgs2/brokers-3.4.0-65f36b4f6d9a5db2139712ff948e5d075c390d49/brokers/internal/mt_request_broker.nim(219, 16) Warning: [brokers] RequestBroker(KvGet) could not auto-size request payload (unclassifiable:Key); falling back to 8192 B. Override with `maxPayloadBytes = N`. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/persistency/backend_comm.nim(144, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/nimbledeps/pkgs2/brokers-3.4.0-65f36b4f6d9a5db2139712ff948e5d075c390d49/brokers/internal/mt_request_broker.nim(219, 16) Warning: [brokers] RequestBroker(KvExists) could not auto-size request payload (unclassifiable:Key); falling back to 8192 B. Override with `maxPayloadBytes = N`. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/persistency/backend_comm.nim(152, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/nimbledeps/pkgs2/brokers-3.4.0-65f36b4f6d9a5db2139712ff948e5d075c390d49/brokers/internal/mt_request_broker.nim(219, 16) Warning: [brokers] RequestBroker(KvScan) could not auto-size request payload (unclassifiable:KeyRange); falling back to 8192 B. Override with `maxPayloadBytes = N`. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/persistency/backend_comm.nim(160, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/nimbledeps/pkgs2/brokers-3.4.0-65f36b4f6d9a5db2139712ff948e5d075c390d49/brokers/internal/mt_request_broker.nim(219, 16) Warning: [brokers] RequestBroker(KvCount) could not auto-size request payload (unclassifiable:KeyRange); falling back to 8192 B. Override with `maxPayloadBytes = N`. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/persistency/backend_comm.nim(168, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/nimbledeps/pkgs2/brokers-3.4.0-65f36b4f6d9a5db2139712ff948e5d075c390d49/brokers/internal/mt_request_broker.nim(219, 16) Warning: [brokers] RequestBroker(KvDelete) could not auto-size request payload (unclassifiable:Key); falling back to 8192 B. Override with `maxPayloadBytes = N`. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/persistency/persistency.nim(92, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/persistency/persistency.nim(93, 3) Warning: RequestBroker: broker name is `GetPersistency` (capitalized from proc `getPersistency`); call it as `GetPersistency.request(...)`. Write `proc GetPersistency(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/node/waku_node/lightpush.nim(4, 8) Warning: imported and not used: 'hashes' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/node/waku_node/relay.nim(61, 3) Warning: unreachable else, all cases are already covered [UnreachableElse]
+[0m[91m/src/logos-delivery/logos_delivery/waku/node/waku_node/relay.nim(27, 5) Warning: imported and not used: 'waku_filter_v2' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/node/waku_node/relay.nim(29, 5) Warning: imported and not used: 'waku_store_sync' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/node/waku_node/relay.nim(28, 5) Warning: imported and not used: 'waku_archive' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/common/logging.nim(90, 14) Warning: the present module should be compiled with '-d:chronicles_default_output_device=dynamic' and '-d:chronicles_sinks="textlines,json"' options [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/node/health_monitor/node_health_monitor.nim(376, 3) Warning: unreachable else, all cases are already covered [UnreachableElse]
+[0m[91m/src/logos-delivery/logos_delivery/waku/node/waku_metrics.nim(9, 3) Warning: imported and not used: 'waku_node' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/rest_api/endpoint/serdes.nim(4, 20) Warning: imported and not used: 'parseutils' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/rest_api/endpoint/health/types.nim(6, 29) Warning: imported and not used: 'waku_node' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/rest_api/endpoint/health/handlers.nim(5, 3) Warning: imported and not used: 'waku_node' [UnusedImport]
+[0m[91m/src/logos-delivery/nimbledeps/pkgs2/dnsdisc-0.1.1-6451cab35990f334a46927f49f9176579460934d/dnsdisc/client.nim(68, 1) Warning: The raises pragma doesn't work on async procedures - use `async: (raises: [...]) instead. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(26, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(27, 3) Warning: RequestBroker: broker name is `GetNodeSwitch` (capitalized from proc `getNodeSwitch`); call it as `GetNodeSwitch.request(...)`. Write `proc GetNodeSwitch(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(29, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(30, 3) Warning: RequestBroker: broker name is `GetNodePeerManager` (capitalized from proc `getNodePeerManager`); call it as `GetNodePeerManager.request(...)`. Write `proc GetNodePeerManager(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(32, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(35, 3) Warning: RequestBroker: broker name is `GetNodePeerInfo` (capitalized from proc `getNodePeerInfo`); call it as `GetNodePeerInfo.request(...)`. Write `proc GetNodePeerInfo(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(37, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(39, 3) Warning: RequestBroker: broker name is `GetNodeEnr` (capitalized from proc `getNodeEnr`); call it as `GetNodeEnr.request(...)`. Write `proc GetNodeEnr(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(41, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(43, 3) Warning: RequestBroker: broker name is `GetNodeKey` (capitalized from proc `getNodeKey`); call it as `GetNodeKey.request(...)`. Write `proc GetNodeKey(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(52, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(53, 3) Warning: RequestBroker: broker name is `GetDiscoveryRequirements` (capitalized from proc `getDiscoveryRequirements`); call it as `GetDiscoveryRequirements.request(...)`. Write `proc GetDiscoveryRequirements(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(55, 14)[0m[91m [0m[91mtemplate/generic instantiation of `RequestBroker` from here[0m[91m
+[0m[91m/src/logos-delivery/logos_delivery/waku/requests/node_state_requests.nim(58, 3) [0m[91mWarning: [0m[91mRequestBroker: broker name is `GetDynamicBootstrapNodes` (capitalized from proc `getDynamicBootstrapNodes`); call it as `GetDynamicBootstrapNodes.request(...)`. Write `proc GetDynamicBootstrapNodes(...)` to name it explicitly and silence this warning.[0m[91m [User][0m[91m
+[0m[91m/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(110, 1) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(111, 3) Warning: RequestBroker: broker name is `SetServiceDiscoveryPlugin` (capitalized from proc `setServiceDiscoveryPlugin`); call it as `SetServiceDiscoveryPlugin.request(...)`. Write `proc SetServiceDiscoveryPlugin(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(115, 1) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(116, 3) Warning: RequestBroker: broker name is `ClearServiceDiscoveryPlugin` (capitalized from proc `clearServiceDiscoveryPlugin`); call it as `ClearServiceDiscoveryPlugin.request(...)`. Write `proc ClearServiceDiscoveryPlugin(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(124, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(125, 3) Warning: RequestBroker: broker name is `PluginStart` (capitalized from proc `pluginStart`); call it as `PluginStart.request(...)`. Write `proc PluginStart(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(127, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(128, 3) Warning: RequestBroker: broker name is `PluginStop` (capitalized from proc `pluginStop`); call it as `PluginStop.request(...)`. Write `proc PluginStop(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(130, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(131, 3) Warning: RequestBroker: broker name is `PluginLookup` (capitalized from proc `pluginLookup`); call it as `PluginLookup.request(...)`. Write `proc PluginLookup(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(135, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(136, 3) Warning: RequestBroker: broker name is `PluginRandomLookup` (capitalized from proc `pluginRandomLookup`); call it as `PluginRandomLookup.request(...)`. Write `proc PluginRandomLookup(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(138, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(139, 3) Warning: RequestBroker: broker name is `PluginStartAdvertising` (capitalized from proc `pluginStartAdvertising`); call it as `PluginStartAdvertising.request(...)`. Write `proc PluginStartAdvertising(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(143, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(144, 3) Warning: RequestBroker: broker name is `PluginStopAdvertising` (capitalized from proc `pluginStopAdvertising`); call it as `PluginStopAdvertising.request(...)`. Write `proc PluginStopAdvertising(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(146, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(147, 3) Warning: RequestBroker: broker name is `PluginRegisterInterest` (capitalized from proc `pluginRegisterInterest`); call it as `PluginRegisterInterest.request(...)`. Write `proc PluginRegisterInterest(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(149, 14) template/generic instantiation of `RequestBroker` from here
+/src/logos-delivery/logos_delivery/waku/discovery/plugin/service_discovery_accessor.nim(150, 3) Warning: RequestBroker: broker name is `PluginUnregisterInterest` (capitalized from proc `pluginUnregisterInterest`); call it as `PluginUnregisterInterest.request(...)`. Write `proc PluginUnregisterInterest(...)` to name it explicitly and silence this warning. [User]
+[0m[91m/src/logos-delivery/logos_delivery/waku/factory/waku_conf.nim(29, 18) Warning: imported and not used: 'kademlia_discovery_conf_builder' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/discovery/autonat_service.nim(5, 11) Warning: imported and not used: 'rand' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/factory/node_factory.nim(13, 14) Warning: imported and not used: 'mix_protocol' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/factory/waku_state_info.nim(65, 3) Warning: unreachable else, all cases are already covered [UnreachableElse]
+/src/logos-delivery/logos_delivery/waku/factory/waku_state_info.nim(7, 13) Warning: imported and not used: 'tables' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/factory/waku_state_info.nim(7, 21) Warning: imported and not used: 'sequtils' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/waku.nim(35, 13) Warning: imported and not used: 'multiaddr' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/waku.nim(58, 12) Warning: imported and not used: 'validator_signed' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/api/relay.nim(5, 26) Warning: imported and not used: 'chronicles' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/relay.nim(13, 9) Warning: imported and not used: 'subscription_manager' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/relay.nim(5, 54) Warning: imported and not used: 'byteutils' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/api/filter.nim(4, 26) Warning: imported and not used: 'chronicles' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/api/lightpush.nim(4, 26) Warning: imported and not used: 'chronicles' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/api/store.nim(4, 26) Warning: imported and not used: 'chronicles' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/api/peer_manager.nim(6, 24) Warning: imported and not used: 'peerstore' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/peer_manager.nim(5, 26) Warning: imported and not used: 'chronicles' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/api/discovery.nim(5, 26) Warning: imported and not used: 'chronicles' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/discovery.nim(4, 18) Warning: imported and not used: 'sequtils' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/discovery.nim(11, 9) Warning: imported and not used: 'waku_node' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/api/debug.nim(9, 29) Warning: imported and not used: 'waku_core' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/debug.nim(4, 26) Warning: imported and not used: 'chronicles' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/api/health.nim(4, 26) Warning: imported and not used: 'chronicles' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/api/ping.nim(4, 26) Warning: imported and not used: 'chronicles' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/ping.nim(9, 70) Warning: imported and not used: 'ping' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/factory/conf_builder/rln_relay_conf_builder.nim(1, 42) Warning: imported and not used: 'byteutils' [UnusedImport]
+[0m[91m/src/logos-delivery/tools/confutils/cli_args.nim(990, 28) template/generic instantiation of `load` from here
+/src/logos-delivery/nimbledeps/pkgs2/confutils-0.1.1-ed737378087132f9bd1e861e35d8b0dfaa02fd1d/confutils.nim(1583, 13) template/generic instantiation of `loadImpl` from here
+/src/logos-delivery/nimbledeps/pkgs2/confutils-0.1.1-ed737378087132f9bd1e861e35d8b0dfaa02fd1d/confutils.nim(1283, 50) template/generic instantiation of `configurationRtti` from here
+/src/logos-delivery/nimbledeps/pkgs2/confutils-0.1.1-ed737378087132f9bd1e861e35d8b0dfaa02fd1d/confutils.nim(1003, 19) template/generic instantiation of `setField` from here
+/src/logos-delivery/nimbledeps/pkgs2/confutils-0.1.1-ed737378087132f9bd1e861e35d8b0dfaa02fd1d/confutils.nim(980, 16) template/generic instantiation of `newSeq` from here
+/src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/lib/system.nim(651, 10) Warning: Cannot prove that 'result' is initialized. This will become a compile time error in the future. [ProveInit]
+[0m[91m/src/logos-delivery/logos_delivery/waku/api/publish.nim(26, 19) Warning: imported and not used: 'client' [UnusedImport]
+/src/logos-delivery/logos_delivery/waku/api/publish.nim(22, 15) Warning: imported and not used: 'protocol' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/messaging/delivery_service/send_service/relay_processor.nim(6, 27) Warning: imported and not used: 'types' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/messaging/rest_api/event_cache.nim(15, 29) Warning: imported and not used: 'options' [UnusedImport]
+[0m
+Building Leopard-RS: cd /src/logos-delivery/nimcache/debug/liblogosdelivery/vendor_leopard && cmake /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCOMPILER_SUPPORTS_MARCH_NATIVE=FALSE && make libleopard
+-- The C compiler identification is GNU 12.2.0
+-- The CXX compiler identification is GNU 12.2.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Performing Test CXX_FLAG_g
+-- Performing Test CXX_FLAG_g - Failed
+-- Performing Test CXX_FLAG_O0
+-- Performing Test CXX_FLAG_O0 - Success
+-- Performing Test CXX_FLAG_O3
+-- Performing Test CXX_FLAG_O3 - Success
+-- Performing Test CXX_FLAG_Wall
+-- Performing Test CXX_FLAG_Wall - Success
+-- Performing Test CXX_FLAG_Wextra
+-- Performing Test CXX_FLAG_Wextra - Success
+-- Found OpenMP_C: -fopenmp (found version "4.5") 
+-- Found OpenMP_CXX: -fopenmp (found version "4.5") 
+-- Found OpenMP: TRUE (found version "4.5")  
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /src/logos-delivery/nimcache/debug/liblogosdelivery/vendor_leopard
+make[1]: warning: jobserver unavailable: using -j1.  Add '+' to parent make rule.
+make[1]: Entering directory '/src/logos-delivery/nimcache/debug/liblogosdelivery/vendor_leopard'
+make[2]: Entering directory '/src/logos-delivery/nimcache/debug/liblogosdelivery/vendor_leopard'
+make[3]: Entering directory '/src/logos-delivery/nimcache/debug/liblogosdelivery/vendor_leopard'
+make[4]: Entering directory '/src/logos-delivery/nimcache/debug/liblogosdelivery/vendor_leopard'
+make[4]: Leaving directory '/src/logos-delivery/nimcache/debug/liblogosdelivery/vendor_leopard'
+make[4]: Entering directory '/src/logos-delivery/nimcache/debug/liblogosdelivery/vendor_leopard'
+[ 20%] Building CXX object CMakeFiles/libleopard.dir/leopard.cpp.o
+[ 40%] Building CXX object CMakeFiles/libleopard.dir/LeopardCommon.cpp.o
+[ 60%] Building CXX object CMakeFiles/libleopard.dir/LeopardFF16.cpp.o
+In function 'void leopard::ff16::FFT_DIT(uint64_t, void**, unsigned int, unsigned int, const ffe_t*)',
+    inlined from 'void leopard::ff16::ReedSolomonEncode(uint64_t, unsigned int, unsigned int, unsigned int, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:1461:12:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:1374:9: warning: array subscript -1 is outside array bounds of 'leopard::ff16::ffe_t [65535]' {aka 'short unsigned int [65535]'} [-Warray-bounds]
+ 1374 | #pragma omp parallel for
+      |         ^~~
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp: In function 'void leopard::ff16::ReedSolomonEncode(uint64_t, unsigned int, unsigned int, unsigned int, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:524:14: note: at offset -2 into object 'leopard::ff16::FFTSkew' of size 131070
+  524 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff16::FFT_DIT(uint64_t, void**, unsigned int, unsigned int, const ffe_t*)',
+    inlined from 'void leopard::ff16::ReedSolomonEncode(uint64_t, unsigned int, unsigned int, unsigned int, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:1461:12:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:1349:9: warning: array subscript -1 is outside array bounds of 'leopard::ff16::ffe_t [65535]' {aka 'short unsigned int [65535]'} [-Warray-bounds]
+ 1349 | #pragma omp parallel for
+      |         ^~~
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp: In function 'void leopard::ff16::ReedSolomonEncode(uint64_t, unsigned int, unsigned int, unsigned int, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:524:14: note: at offset -2 into object 'leopard::ff16::FFTSkew' of size 131070
+  524 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff16::IFFT_DIT_Decoder(uint64_t, unsigned int, void**, unsigned int, const ffe_t*)',
+    inlined from 'void leopard::ff16::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:1729:21:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:1009:41: warning: array subscript -1 is outside array bounds of 'leopard::ff16::ffe_t [65535]' {aka 'short unsigned int [65535]'} [-Warray-bounds]
+ 1009 |         const ffe_t log_m = skewLUT[dist];
+      |                                         ^
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp: In function 'void leopard::ff16::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:524:14: note: at offset -2 into object 'leopard::ff16::FFTSkew' of size 131070
+  524 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff16::FFT_DIT_ErrorBits(uint64_t, void**, unsigned int, unsigned int, const ffe_t*, const ErrorBitfield&)',
+    inlined from 'void leopard::ff16::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:1765:22:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:1624:9: warning: array subscript -1 is outside array bounds of 'leopard::ff16::ffe_t [65535]' {aka 'short unsigned int [65535]'} [-Warray-bounds]
+ 1624 | #pragma omp parallel for
+      |         ^~~
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp: In function 'void leopard::ff16::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:524:14: note: at offset -2 into object 'leopard::ff16::FFTSkew' of size 131070
+  524 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff16::FFT_DIT_ErrorBits(uint64_t, void**, unsigned int, unsigned int, const ffe_t*, const ErrorBitfield&)',
+    inlined from 'void leopard::ff16::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:1765:22:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:1595:9: warning: array subscript -1 is outside array bounds of 'leopard::ff16::ffe_t [65535]' {aka 'short unsigned int [65535]'} [-Warray-bounds]
+ 1595 | #pragma omp parallel for
+      |         ^~~
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp: In function 'void leopard::ff16::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:524:14: note: at offset -2 into object 'leopard::ff16::FFTSkew' of size 131070
+  524 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff16::IFFT_DIT_Decoder(uint64_t, unsigned int, void**, unsigned int, const ffe_t*)',
+    inlined from 'void leopard::ff16::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:1729:21:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:981:9: warning: array subscript -1 is outside array bounds of 'leopard::ff16::ffe_t [65535]' {aka 'short unsigned int [65535]'} [-Warray-bounds]
+  981 | #pragma omp parallel for
+      |         ^~~
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp: In function 'void leopard::ff16::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF16.cpp:524:14: note: at offset -2 into object 'leopard::ff16::FFTSkew' of size 131070
+  524 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+[ 80%] Building CXX object CMakeFiles/libleopard.dir/LeopardFF8.cpp.o
+In function 'void leopard::ff8::FFT_DIT(uint64_t, void**, unsigned int, unsigned int, const ffe_t*)',
+    inlined from 'void leopard::ff8::ReedSolomonEncode(uint64_t, unsigned int, unsigned int, unsigned int, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1666:12:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1582:46: warning: array subscript -1 is outside array bounds of 'leopard::ff8::ffe_t [255]' {aka 'unsigned char [255]'} [-Warray-bounds]
+ 1582 |             const ffe_t log_m = skewLUT[r + 1];
+      |                                              ^
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp: In function 'void leopard::ff8::ReedSolomonEncode(uint64_t, unsigned int, unsigned int, unsigned int, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:490:14: note: at offset -1 into object 'leopard::ff8::FFTSkew' of size 255
+  490 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff8::FFT_DIT(uint64_t, void**, unsigned int, unsigned int, const ffe_t*)',
+    inlined from 'void leopard::ff8::ReedSolomonEncode(uint64_t, unsigned int, unsigned int, unsigned int, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1666:12:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1559:48: warning: array subscript -1 is outside array bounds of 'leopard::ff8::ffe_t [255]' {aka 'unsigned char [255]'} [-Warray-bounds]
+ 1559 |             const ffe_t log_m01 = skewLUT[i_end];
+      |                                                ^
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp: In function 'void leopard::ff8::ReedSolomonEncode(uint64_t, unsigned int, unsigned int, unsigned int, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:490:14: note: at offset -1 into object 'leopard::ff8::FFTSkew' of size 255
+  490 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff8::FFT_DIT(uint64_t, void**, unsigned int, unsigned int, const ffe_t*)',
+    inlined from 'void leopard::ff8::ReedSolomonEncode(uint64_t, unsigned int, unsigned int, unsigned int, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1666:12:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1560:55: warning: array subscript -1 is outside array bounds of 'leopard::ff8::ffe_t [255]' {aka 'unsigned char [255]'} [-Warray-bounds]
+ 1560 |             const ffe_t log_m02 = skewLUT[i_end + dist];
+      |                                                       ^
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp: In function 'void leopard::ff8::ReedSolomonEncode(uint64_t, unsigned int, unsigned int, unsigned int, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:490:14: note: at offset -1 into object 'leopard::ff8::FFTSkew' of size 255
+  490 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff8::FFT_DIT(uint64_t, void**, unsigned int, unsigned int, const ffe_t*)',
+    inlined from 'void leopard::ff8::ReedSolomonEncode(uint64_t, unsigned int, unsigned int, unsigned int, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1666:12:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1561:59: warning: array subscript -1 is outside array bounds of 'leopard::ff8::ffe_t [255]' {aka 'unsigned char [255]'} [-Warray-bounds]
+ 1561 |             const ffe_t log_m23 = skewLUT[i_end + dist * 2];
+      |                                                           ^
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp: In function 'void leopard::ff8::ReedSolomonEncode(uint64_t, unsigned int, unsigned int, unsigned int, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:490:14: note: at offset -1 into object 'leopard::ff8::FFTSkew' of size 255
+  490 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff8::IFFT_DIT_Decoder(uint64_t, unsigned int, void**, unsigned int, const ffe_t*)',
+    inlined from 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1881:21:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1246:41: warning: array subscript -1 is outside array bounds of 'leopard::ff8::ffe_t [255]' {aka 'unsigned char [255]'} [-Warray-bounds]
+ 1246 |         const ffe_t log_m = skewLUT[dist];
+      |                                         ^
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp: In function 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:490:14: note: at offset -1 into object 'leopard::ff8::FFTSkew' of size 255
+  490 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff8::FFT_DIT_ErrorBits(uint64_t, void**, unsigned int, unsigned int, const ffe_t*, const ErrorBitfield&)',
+    inlined from 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1906:22:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1787:46: warning: array subscript -1 is outside array bounds of 'leopard::ff8::ffe_t [255]' {aka 'unsigned char [255]'} [-Warray-bounds]
+ 1787 |             const ffe_t log_m = skewLUT[r + 1];
+      |                                              ^
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp: In function 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:490:14: note: at offset -1 into object 'leopard::ff8::FFTSkew' of size 255
+  490 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff8::FFT_DIT_ErrorBits(uint64_t, void**, unsigned int, unsigned int, const ffe_t*, const ErrorBitfield&)',
+    inlined from 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1906:22:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1761:51: warning: array subscript -1 is outside array bounds of 'leopard::ff8::ffe_t [255]' {aka 'unsigned char [255]'} [-Warray-bounds]
+ 1761 |             const ffe_t log_m01 = skewLUT[r + dist];
+      |                                                   ^
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp: In function 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:490:14: note: at offset -1 into object 'leopard::ff8::FFTSkew' of size 255
+  490 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff8::FFT_DIT_ErrorBits(uint64_t, void**, unsigned int, unsigned int, const ffe_t*, const ErrorBitfield&)',
+    inlined from 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1906:22:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1762:55: warning: array subscript -1 is outside array bounds of 'leopard::ff8::ffe_t [255]' {aka 'unsigned char [255]'} [-Warray-bounds]
+ 1762 |             const ffe_t log_m23 = skewLUT[r + dist * 3];
+      |                                                       ^
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp: In function 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:490:14: note: at offset -1 into object 'leopard::ff8::FFTSkew' of size 255
+  490 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff8::FFT_DIT_ErrorBits(uint64_t, void**, unsigned int, unsigned int, const ffe_t*, const ErrorBitfield&)',
+    inlined from 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1906:22:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1763:55: warning: array subscript -1 is outside array bounds of 'leopard::ff8::ffe_t [255]' {aka 'unsigned char [255]'} [-Warray-bounds]
+ 1763 |             const ffe_t log_m02 = skewLUT[r + dist * 2];
+      |                                                       ^
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp: In function 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:490:14: note: at offset -1 into object 'leopard::ff8::FFTSkew' of size 255
+  490 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff8::IFFT_DIT_Decoder(uint64_t, unsigned int, void**, unsigned int, const ffe_t*)',
+    inlined from 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1881:21:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1222:48: warning: array subscript -1 is outside array bounds of 'leopard::ff8::ffe_t [255]' {aka 'unsigned char [255]'} [-Warray-bounds]
+ 1222 |             const ffe_t log_m01 = skewLUT[i_end];
+      |                                                ^
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp: In function 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:490:14: note: at offset -1 into object 'leopard::ff8::FFTSkew' of size 255
+  490 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff8::IFFT_DIT_Decoder(uint64_t, unsigned int, void**, unsigned int, const ffe_t*)',
+    inlined from 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1881:21:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1223:55: warning: array subscript -1 is outside array bounds of 'leopard::ff8::ffe_t [255]' {aka 'unsigned char [255]'} [-Warray-bounds]
+ 1223 |             const ffe_t log_m02 = skewLUT[i_end + dist];
+      |                                                       ^
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp: In function 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:490:14: note: at offset -1 into object 'leopard::ff8::FFTSkew' of size 255
+  490 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+In function 'void leopard::ff8::IFFT_DIT_Decoder(uint64_t, unsigned int, void**, unsigned int, const ffe_t*)',
+    inlined from 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)' at /src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1881:21:
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:1224:59: warning: array subscript -1 is outside array bounds of 'leopard::ff8::ffe_t [255]' {aka 'unsigned char [255]'} [-Warray-bounds]
+ 1224 |             const ffe_t log_m23 = skewLUT[i_end + dist * 2];
+      |                                                           ^
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp: In function 'void leopard::ff8::ReedSolomonDecode(uint64_t, unsigned int, unsigned int, unsigned int, unsigned int, const void* const*, const void* const*, void**)':
+/src/logos-delivery/nimbledeps/pkgs2/leopard-0.1.1-2fc77ade5d088afbb56c555a295f1cf286cebb7d/vendor/leopard/LeopardFF8.cpp:490:14: note: at offset -1 into object 'leopard::ff8::FFTSkew' of size 255
+  490 | static ffe_t FFTSkew[kModulus];
+      |              ^~~~~~~
+[100%] Linking CXX static library liblibleopard.a
+make[4]: Leaving directory '/src/logos-delivery/nimcache/debug/liblogosdelivery/vendor_leopard'
+[100%] Built target libleopard
+make[3]: Leaving directory '/src/logos-delivery/nimcache/debug/liblogosdelivery/vendor_leopard'
+make[2]: Leaving directory '/src/logos-delivery/nimcache/debug/liblogosdelivery/vendor_leopard'
+make[1]: Leaving directory '/src/logos-delivery/nimcache/debug/liblogosdelivery/vendor_leopard'
+[91m/src/logos-delivery/logos_delivery/channels/reliable_channel_manager.nim(16, 27) Warning: imported and not used: 'types' [UnusedImport]
+[0m[91m/src/logos-delivery/logos_delivery/waku/persistency/sds_persistency.nim(129, 44) template/generic instantiation of `async` from here
+/src/logos-delivery/logos_delivery/waku/persistency/sds_persistency.nim(158, 17) template/generic instantiation of `setResult` from here
+/src/logos-delivery/logos_delivery/waku/persistency/sds_persistency.nim(144, 38) template/generic instantiation of `newSeq` from here
+/src/logos-delivery/nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/lib/system.nim(651, 10) Warning: Cannot prove that 'result' is initialized. This will become a compile time error in the future. [ProveInit]
+[0m[91m/src/logos-delivery/library/events/json_message_event.nim(1, 39) Warning: imported and not used: 'strutils' [UnusedImport]
+[0m[91m/src/logos-delivery/library/liblogosdelivery.nim(10, 43) Warning: imported and not used: 'health_status' [UnusedImport]
+[0m     Info:  Nimble data file "/src/logos-delivery/nimbledeps/nimbledata2.json" has been saved.
+[91m
+real	26m19.115s
+user	70m55.444s
+sys	12m38.399s
+[0m2026-11-25T21:23:23Z
+total 288180
+-rwxr-xr-x 1 root root 295115696 Nov 25 21:23 liblogosdelivery.so
+-rwxr-xr-x 1 root root 295115696 Nov 25 21:23 liblogosdelivery.so
+nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085
+Nim Compiler Version 2.2.6 [Linux: arm64]
+Compiled at 2026-11-25
+Copyright (c) 2006-2025 by Andreas Rumpf
+
+git hash: ab00c56904e3126ad826bb520d243513a139436a
+active boot switches: -d:release
+nimbledeps/pkgs2/nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085/bin/nim: ELF 64-bit LSB pie executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-aarch64.so.1, BuildID[sha1]=5d0110b57e4c4f504264ae86e68d62e51344db93, for GNU/Linux 3.7.0, not stripped
+ ---> Removed intermediate container 13c9a423a896
+ ---> b3c325d6b716
+Successfully built b3c325d6b716
+Successfully tagged ffi-lib:pinned

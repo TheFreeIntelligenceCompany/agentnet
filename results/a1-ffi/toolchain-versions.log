@@ -1,0 +1,20 @@
+rustc 1.92.0 (ded5c06cf 2025-12-08)
+cargo 1.92.0 (344c4567c 2025-10-21)
+gcc (Debian 12.2.0-14+deb12u1) 12.2.0
+g++ (Debian 12.2.0-14+deb12u1) 12.2.0
+cmake version 3.25.1
+patchelf 0.14.3
+GNU Make 4.3
+git version 2.39.5
+12.13
+6.8.0-117-generic aarch64
+nimble
+nimble v0.26.0 compiled at 2026-09-25 16:55:26
+Nim Compiler Version 2.2.6 [Linux: arm64]
+50
+426M	nimbledeps
+2.1G	/opt/nim
+24M	vendor/zerokit
+291M	build
+liblogosdelivery.so
+0

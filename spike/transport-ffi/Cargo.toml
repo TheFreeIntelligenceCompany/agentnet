@@ -1,0 +1,17 @@
+[package]
+name = "ffi-spike"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+# Pinned to an exact commit of logos-messaging/logos-delivery-rust-bindings (master HEAD at spike time).
+logos-delivery = { git = "https://github.com/logos-messaging/logos-delivery-rust-bindings", rev = "d60fcfd40f2b860000c4df8db4f2f95a6c6f1fad" }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "sync", "signal"] }
+serde_json = "1"
+
+[profile.release]
+debug = false
+
+# standalone: not part of any parent workspace
+[workspace]

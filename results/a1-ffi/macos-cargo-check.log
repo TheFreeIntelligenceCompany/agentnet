@@ -1,0 +1,132 @@
+    Updating git repository `https://github.com/logos-messaging/logos-delivery-rust-bindings`
+    Updating git submodule `https://github.com/logos-messaging/logos-messaging-nim`
+    Updating git submodule `https://github.com/nim-lang/db_connector.git`
+    Updating git submodule `https://github.com/ba0f3/dnsclient.nim.git`
+    Updating git submodule `https://github.com/status-im/nim-bearssl.git`
+    Updating git submodule `https://github.com/status-im/BearSSL`
+    Updating git submodule `https://github.com/status-im/nim-chronicles.git`
+    Updating git submodule `https://github.com/status-im/nim-chronos.git`
+    Updating git submodule `https://github.com/status-im/nim-confutils.git`
+    Updating git submodule `https://github.com/status-im/nim-dnsdisc.git`
+    Updating git submodule `https://github.com/status-im/nim-bearssl.git`
+    Updating git submodule `https://github.com/status-im/BearSSL`
+    Updating git submodule `https://github.com/status-im/nim-chronicles.git`
+    Updating git submodule `https://github.com/status-im/nim-chronos.git`
+    Updating git submodule `https://github.com/status-im/nim-confutils.git`
+    Updating git submodule `https://github.com/status-im/nim-eth.git`
+    Updating git submodule `https://github.com/status-im/nim-faststreams.git`
+    Updating git submodule `https://github.com/status-im/nim-http-utils.git`
+    Updating git submodule `https://github.com/status-im/nim-json-rpc.git`
+    Updating git submodule `https://github.com/status-im/nim-json-serialization.git`
+    Updating git submodule `https://github.com/arnetheduck/nim-results.git`
+    Updating git submodule `https://github.com/status-im/nim-secp256k1.git`
+    Updating git submodule `https://github.com/bitcoin-core/secp256k1.git`
+    Updating git submodule `https://github.com/status-im/nim-serialization.git`
+    Updating git submodule `https://github.com/status-im/nim-stew.git`
+    Updating git submodule `https://github.com/status-im/nim-testutils.git`
+    Updating git submodule `https://github.com/status-im/nim-unittest2.git`
+    Updating git submodule `https://github.com/status-im/nim-websock.git`
+    Updating git submodule `https://github.com/status-im/nim-zlib.git`
+    Updating git submodule `https://github.com/madler/zlib`
+    Updating git submodule `https://github.com/status-im/nimbus-build-system.git`
+    Updating git submodule `https://github.com/status-im/Nim.git`
+    Updating git submodule `https://github.com/nim-lang/csources_v1.git`
+    Updating git submodule `https://github.com/nim-lang/nimble.git`
+    Updating git submodule `https://github.com/cheatfate/nimcrypto.git`
+    Updating git submodule `https://github.com/status-im/nim-eth.git`
+    Updating git submodule `https://github.com/status-im/nim-faststreams.git`
+    Updating git submodule `https://github.com/status-im/nim-http-utils.git`
+    Updating git submodule `https://github.com/status-im/nim-json-rpc.git`
+    Updating git submodule `https://github.com/status-im/nim-json-serialization.git`
+    Updating git submodule `https://github.com/status-im/nim-libbacktrace.git`
+    Updating git submodule `https://github.com/ianlancetaylor/libbacktrace.git`
+    Updating git submodule `https://github.com/gpakosz/whereami.git`
+    Updating git submodule `https://github.com/vacp2p/nim-libp2p.git`
+    Updating git submodule `https://github.com/status-im/nim-metrics.git`
+    Updating git submodule `https://github.com/status-im/nim-minilru.git`
+    Updating git submodule `https://github.com/status-im/nim-nat-traversal.git`
+    Updating git submodule `https://github.com/miniupnp/libnatpmp.git`
+    Updating git submodule `https://github.com/status-im/miniupnp.git`
+    Updating git submodule `https://github.com/status-im/nim-presto.git`
+    Updating git submodule `https://github.com/nitely/nim-regex.git`
+    Updating git submodule `https://github.com/arnetheduck/nim-results.git`
+    Updating git submodule `https://github.com/status-im/nim-secp256k1.git`
+    Updating git submodule `https://github.com/bitcoin-core/secp256k1.git`
+    Updating git submodule `https://github.com/status-im/nim-serialization.git`
+    Updating git submodule `https://github.com/arnetheduck/nim-sqlite3-abi.git`
+    Updating git submodule `https://github.com/status-im/nim-stew.git`
+    Updating git submodule `https://github.com/status-im/nim-stint.git`
+    Updating git submodule `https://github.com/status-im/nim-taskpools.git`
+    Updating git submodule `https://github.com/status-im/nim-testutils.git`
+    Updating git submodule `https://github.com/status-im/nim-toml-serialization.git`
+    Updating git submodule `https://github.com/nitely/nim-unicodedb.git`
+    Updating git submodule `https://github.com/status-im/nim-unittest2.git`
+    Updating git submodule `https://github.com/status-im/nim-web3.git`
+    Updating git submodule `https://github.com/ethereum/execution-apis`
+    Updating git submodule `https://github.com/status-im/nim-websock.git`
+    Updating git submodule `https://github.com/status-im/nim-zlib.git`
+    Updating git submodule `https://github.com/madler/zlib`
+    Updating git submodule `https://github.com/status-im/nimbus-build-system.git`
+    Updating git submodule `https://github.com/status-im/Nim.git`
+    Updating git submodule `https://github.com/cheatfate/nimcrypto.git`
+    Updating git submodule `https://github.com/arnetheduck/nph.git`
+    Updating git submodule `https://github.com/vacp2p/zerokit.git`
+    Blocking waiting for file lock on package cache
+ Downloading crates ...
+  Downloaded zerocopy-derive v0.8.65
+  Downloaded crossbeam-utils v0.8.23
+  Downloaded spin v0.9.9
+  Downloaded crossbeam-channel v0.5.17
+  Downloaded flume v0.11.1
+  Downloaded zerocopy v0.8.65
+    Blocking waiting for file lock on package cache
+   Compiling proc-macro2 v1.0.107
+   Compiling quote v1.0.47
+   Compiling unicode-ident v1.0.27
+   Compiling libc v0.2.191
+   Compiling zerocopy v0.8.65
+    Checking pin-project-lite v0.2.18
+   Compiling serde_core v1.0.229
+    Checking futures-core v0.3.34
+    Checking futures-sink v0.3.34
+    Checking scopeguard v1.2.0
+   Compiling zmij v1.0.23
+   Compiling serde v1.0.229
+   Compiling crossbeam-utils v0.8.23
+    Checking cfg-if v1.0.5
+    Checking lock_api v0.4.14
+    Checking ciborium-io v0.2.2
+    Checking once_cell v1.21.4
+    Checking bytes v1.12.2
+   Compiling serde_json v1.0.154
+   Compiling thiserror v2.0.21
+    Checking tracing-core v0.1.36
+    Checking spin v0.9.9
+    Checking memchr v2.8.3
+   Compiling logos-delivery v0.1.0 (https://github.com/logos-messaging/logos-delivery-rust-bindings?rev=d60fcfd40f2b860000c4df8db4f2f95a6c6f1fad#d60fcfd4)
+    Checking futures-task v0.3.34
+    Checking itoa v1.0.19
+    Checking crossbeam-channel v0.5.17
+    Checking futures-util v0.3.34
+    Checking flume v0.11.1
+    Checking base64 v0.22.1
+   Compiling syn v3.0.10
+   Compiling syn v2.0.119
+    Checking errno v0.3.15
+    Checking mio v1.2.5
+    Checking signal-hook-registry v1.4.8
+   Compiling tokio-macros v2.7.2
+   Compiling serde_derive v1.0.229
+   Compiling thiserror-impl v2.0.21
+    Checking tokio v1.54.1
+   Compiling zerocopy-derive v0.8.65
+   Compiling tracing-attributes v0.1.31
+    Checking tracing v0.1.44
+    Checking tokio-util v0.7.20
+    Checking tokio-stream v0.1.19
+    Checking half v2.7.1
+    Checking ciborium-ll v0.2.2
+    Checking ciborium v0.2.2
+    Checking ffi-spike v0.0.0 (/Users/dennison/develop/FIC-elipsis/spike/transport-ffi)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 4m 12s
+cargo check --locked  67.47s user 19.33s system 34% cpu 4:13.18 total

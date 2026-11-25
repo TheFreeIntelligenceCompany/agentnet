@@ -1,0 +1,12 @@
+total 297132
+-rwxr-xr-x 1 root root 304304536 Nov 25 20:26 liblogosdelivery.so
+	linux-vdso.so.1 (0x0000fa4ac819d000)
+	libm.so.6 => /lib/aarch64-linux-gnu/libm.so.6 (0x0000fa4ac42f0000)
+	libstdc++.so.6 => /lib/aarch64-linux-gnu/libstdc++.so.6 (0x0000fa4ac40d0000)
+	libgomp.so.1 => /lib/aarch64-linux-gnu/libgomp.so.1 (0x0000fa4ac4060000)
+	libgcc_s.so.1 => /lib/aarch64-linux-gnu/libgcc_s.so.1 (0x0000fa4ac4020000)
+	libc.so.6 => /lib/aarch64-linux-gnu/libc.so.6 (0x0000fa4ac3e70000)
+	/lib/ld-linux-aarch64.so.1 (0x0000fa4ac8160000)
+liblogosdelivery.so: ELF 64-bit LSB shared object, ARM aarch64, version 1 (SYSV), dynamically linked, BuildID[sha1]=e9c19c3b88a5420ae8ded4aa6e32cd8057e8bf07, with debug_info, not stripped
+4508
+61

@@ -1,0 +1,61 @@
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  399.9MB
+Step 1/26 : FROM rust:1.92-bookworm AS lib
+ ---> e90e846de412
+Step 2/26 : SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ ---> Using cache
+ ---> 24f556c983ac
+Step 3/26 : ARG LOGOS_DELIVERY_REV=0f2188c09779cc84116db344bbb43ccfe6a27c35
+ ---> Using cache
+ ---> ebb6ef553adc
+Step 4/26 : ARG MAKE_JOBS=6
+ ---> Using cache
+ ---> da71aa308c1c
+Step 5/26 : ARG DISABLE_RLN=false
+ ---> Using cache
+ ---> b0d263c9c310
+Step 6/26 : ARG LOG_LEVEL=ERROR
+ ---> Using cache
+ ---> 7f62aac7a408
+Step 7/26 : RUN date -u +%FT%TZ > /t_apt_start && apt-get update &&     apt-get install -y --no-install-recommends cmake patchelf pkg-config libssl-dev &&     rm -rf /var/lib/apt/lists/* && date -u +%FT%TZ > /t_apt_end
+ ---> Using cache
+ ---> 54f17ee41d4c
+Step 8/26 : WORKDIR /src
+ ---> Using cache
+ ---> 164d54f41ccd
+Step 9/26 : RUN git init logos-delivery && cd logos-delivery &&     git remote add origin https://github.com/logos-messaging/logos-delivery &&     git fetch --depth 1 origin ${LOGOS_DELIVERY_REV} && git checkout --detach FETCH_HEAD &&     git log -n1 --format='logos-delivery %H %cd'
+ ---> Using cache
+ ---> e7cba55c6d86
+Step 10/26 : WORKDIR /src/logos-delivery
+ ---> Using cache
+ ---> 0bd78eb48b48
+Step 11/26 : RUN date -u +%FT%TZ && git submodule update --init --depth 1 vendor/zerokit && date -u +%FT%TZ
+ ---> Using cache
+ ---> 4ff9636a5a02
+Step 12/26 : ARG NIM_PKG_DIR=nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085
+ ---> Using cache
+ ---> f8c853e1e384
+Step 13/26 : RUN if [ "$(uname -m)" = "aarch64" ]; then       date -u +%FT%TZ && git clone --depth 1 --branch v2.2.6 https://github.com/nim-lang/Nim /opt/nim &&       cd /opt/nim && time sh build_all.sh && date -u +%FT%TZ &&       mkdir -p /src/logos-delivery/nimbledeps/pkgs2/${NIM_PKG_DIR} &&       cp -a /opt/nim/. /src/logos-delivery/nimbledeps/pkgs2/${NIM_PKG_DIR}/ &&       printf '{"version":1,"metaData":{"url":"https://github.com/nim-lang/Nim.git","downloadMethod":"git","vcsRevision":"","files":[],"binaries":[],"specialVersions":["2.2.6"]}}'         > /src/logos-delivery/nimbledeps/pkgs2/${NIM_PKG_DIR}/nimblemeta.json ;     fi
+ ---> Using cache
+ ---> a17d97a967c0
+Step 14/26 : RUN date -u +%FT%TZ && time make -j${MAKE_JOBS} DISABLE_RLN=${DISABLE_RLN} LOG_LEVEL=${LOG_LEVEL} liblogosdelivery && date -u +%FT%TZ &&     ls -l build && (cd build && ls -l *.so* ) &&     cd /src/logos-delivery && (ls nimbledeps/pkgs2 | grep -i '^nim-' ; nimbledeps/pkgs2/nim-*/bin/nim --version; file nimbledeps/pkgs2/nim-*/bin/nim)
+ ---> Using cache
+ ---> b3c325d6b716
+Step 15/26 : FROM lib AS app
+ ---> b3c325d6b716
+Step 16/26 : ENV LOGOS_DELIVERY_LIB_DIR=/src/logos-delivery/build     LOGOS_DELIVERY_RELOCATABLE=1     CARGO_TERM_COLOR=never
+ ---> Running in da8d63d795ce
+ ---> Removed intermediate container da8d63d795ce
+ ---> a9a67900dff9
+Step 17/26 : WORKDIR /app
+ ---> Running in 79a8205a2d05
+ ---> Removed intermediate container 79a8205a2d05
+ ---> 36664c124742
+Step 18/26 : COPY Cargo.toml Cargo.lock* ./
+ ---> 74b01dc6435c
+Step 19/26 : COPY src ./src
+ ---> cbd5d0289b11
+Step 20/26 : COPY .cargo ./.cargo

@@ -1,0 +1,232 @@
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon   5.12kB
+Step 1/11 : FROM rust:1.92-bookworm AS lib
+1.92-bookworm: Pulling from library/rust
+f018151ab3f3: Pulling fs layer
+1029f5ddc0d2: Pulling fs layer
+de63e4f470eb: Pulling fs layer
+d72c713ab317: Pulling fs layer
+687ad46596f0: Pulling fs layer
+27e0592ccf01: Download complete
+d72c713ab317: Download complete
+f8bea5de4071: Download complete
+f018151ab3f3: Download complete
+687ad46596f0: Download complete
+1029f5ddc0d2: Download complete
+1029f5ddc0d2: Pull complete
+de63e4f470eb: Download complete
+d72c713ab317: Pull complete
+687ad46596f0: Pull complete
+f018151ab3f3: Pull complete
+de63e4f470eb: Pull complete
+Digest: sha256:e90e846de4124376164ddfbaab4b0774c7bdeef5e738866295e5a90a34a307a2
+Status: Downloaded newer image for rust:1.92-bookworm
+ ---> e90e846de412
+Step 2/11 : ARG LOGOS_DELIVERY_REV=0f2188c09779cc84116db344bbb43ccfe6a27c35
+ ---> Running in 7935dcf3b5c5
+ ---> Removed intermediate container 7935dcf3b5c5
+ ---> ba08adfaef93
+Step 3/11 : ARG MAKE_JOBS=6
+ ---> Running in e82e2b2578ae
+ ---> Removed intermediate container e82e2b2578ae
+ ---> 9b796a4f1ba8
+Step 4/11 : ARG DISABLE_RLN=false
+ ---> Running in 354e84d60a5a
+ ---> Removed intermediate container 354e84d60a5a
+ ---> d66579d714d7
+Step 5/11 : RUN date -u +%FT%TZ > /t_apt_start && apt-get update &&     apt-get install -y --no-install-recommends cmake patchelf pkg-config libssl-dev &&     rm -rf /var/lib/apt/lists/* && date -u +%FT%TZ > /t_apt_end
+ ---> Running in 55173f83d403
+Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [34.8 kB]
+Get:4 http://deb.debian.org/debian bookworm/main arm64 Packages [8689 kB]
+Get:5 http://deb.debian.org/debian bookworm-updates/main arm64 Packages [6936 B]
+Get:6 http://deb.debian.org/debian-security bookworm-security/main arm64 Packages [379 kB]
+Fetched 9317 kB in 1s (8061 kB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+pkg-config is already the newest version (1.8.1-1).
+pkg-config set to manually installed.
+The following additional packages will be installed:
+  cmake-data libarchive13 libjsoncpp25 librhash0 libssl3 libuv1 openssl
+Suggested packages:
+  cmake-doc cmake-format elpa-cmake-mode ninja-build lrzip libssl-doc
+The following NEW packages will be installed:
+  cmake cmake-data libarchive13 libjsoncpp25 librhash0 libuv1 patchelf
+The following packages will be upgraded:
+  libssl-dev libssl3 openssl
+3 upgraded, 7 newly installed, 0 to remove and 118 not upgraded.
+Need to get 15.1 MB of archives.
+After this operation, 38.2 MB of additional disk space will be used.
+Get:1 http://deb.debian.org/debian-security bookworm-security/main arm64 libarchive13 arm64 3.6.2-1+deb12u5 [318 kB]
+Get:2 http://deb.debian.org/debian bookworm/main arm64 libjsoncpp25 arm64 1.9.5-4 [72.3 kB]
+Get:3 http://deb.debian.org/debian bookworm/main arm64 librhash0 arm64 1.4.3-3 [131 kB]
+Get:4 http://deb.debian.org/debian bookworm/main arm64 libuv1 arm64 1.44.2-1+deb12u1 [130 kB]
+Get:5 http://deb.debian.org/debian bookworm/main arm64 cmake-data all 3.25.1-1 [2026 kB]
+Get:6 http://deb.debian.org/debian bookworm/main arm64 cmake arm64 3.25.1-1 [6806 kB]
+Get:7 http://deb.debian.org/debian-security bookworm-security/main arm64 libssl-dev arm64 3.0.22-1~deb12u2 [2322 kB]
+Get:8 http://deb.debian.org/debian-security bookworm-security/main arm64 libssl3 arm64 3.0.22-1~deb12u2 [1829 kB]
+Get:9 http://deb.debian.org/debian-security bookworm-security/main arm64 openssl arm64 3.0.22-1~deb12u2 [1410 kB]
+Get:10 http://deb.debian.org/debian bookworm/main arm64 patchelf arm64 0.14.3-1+b1 [59.0 kB]
+[91mdebconf: delaying package configuration, since apt-utils is not installed
+[0mFetched 15.1 MB in 0s (61.4 MB/s)
+Selecting previously unselected package libarchive13:arm64.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 23281 files and directories currently installed.)
+Preparing to unpack .../0-libarchive13_3.6.2-1+deb12u5_arm64.deb ...
+Unpacking libarchive13:arm64 (3.6.2-1+deb12u5) ...
+Selecting previously unselected package libjsoncpp25:arm64.
+Preparing to unpack .../1-libjsoncpp25_1.9.5-4_arm64.deb ...
+Unpacking libjsoncpp25:arm64 (1.9.5-4) ...
+Selecting previously unselected package librhash0:arm64.
+Preparing to unpack .../2-librhash0_1.4.3-3_arm64.deb ...
+Unpacking librhash0:arm64 (1.4.3-3) ...
+Selecting previously unselected package libuv1:arm64.
+Preparing to unpack .../3-libuv1_1.44.2-1+deb12u1_arm64.deb ...
+Unpacking libuv1:arm64 (1.44.2-1+deb12u1) ...
+Selecting previously unselected package cmake-data.
+Preparing to unpack .../4-cmake-data_3.25.1-1_all.deb ...
+Unpacking cmake-data (3.25.1-1) ...
+Selecting previously unselected package cmake.
+Preparing to unpack .../5-cmake_3.25.1-1_arm64.deb ...
+Unpacking cmake (3.25.1-1) ...
+Preparing to unpack .../6-libssl-dev_3.0.22-1~deb12u2_arm64.deb ...
+Unpacking libssl-dev:arm64 (3.0.22-1~deb12u2) over (3.0.18-1~deb12u1) ...
+Preparing to unpack .../7-libssl3_3.0.22-1~deb12u2_arm64.deb ...
+Unpacking libssl3:arm64 (3.0.22-1~deb12u2) over (3.0.18-1~deb12u1) ...
+Preparing to unpack .../8-openssl_3.0.22-1~deb12u2_arm64.deb ...
+Unpacking openssl (3.0.22-1~deb12u2) over (3.0.18-1~deb12u1) ...
+Selecting previously unselected package patchelf.
+Preparing to unpack .../9-patchelf_0.14.3-1+b1_arm64.deb ...
+Unpacking patchelf (0.14.3-1+b1) ...
+Setting up libarchive13:arm64 (3.6.2-1+deb12u5) ...
+Setting up libssl3:arm64 (3.0.22-1~deb12u2) ...
+Setting up libuv1:arm64 (1.44.2-1+deb12u1) ...
+Setting up libssl-dev:arm64 (3.0.22-1~deb12u2) ...
+Setting up libjsoncpp25:arm64 (1.9.5-4) ...
+Setting up librhash0:arm64 (1.4.3-3) ...
+Setting up cmake-data (3.25.1-1) ...
+Setting up patchelf (0.14.3-1+b1) ...
+Setting up openssl (3.0.22-1~deb12u2) ...
+Setting up cmake (3.25.1-1) ...
+Processing triggers for libc-bin (2.36-9+deb12u13) ...
+ ---> Removed intermediate container 55173f83d403
+ ---> 0cddf1a6d6ec
+Step 6/11 : WORKDIR /src
+ ---> Running in 1019e014bc04
+ ---> Removed intermediate container 1019e014bc04
+ ---> 92a3f930931b
+Step 7/11 : RUN git init logos-delivery && cd logos-delivery &&     git remote add origin https://github.com/logos-messaging/logos-delivery &&     git fetch --depth 1 origin ${LOGOS_DELIVERY_REV} && git checkout --detach FETCH_HEAD &&     git log -n1 --format='logos-delivery %H %cd'
+ ---> Running in 09a3b7a41696
+[91mhint: Using 'master' as the name for the initial branch. This default branch name
+hint: is subject to change. To configure the initial branch name to use in all
+hint: of your new repositories, which will suppress this warning, call:
+hint: 
+hint: 	git config --global init.defaultBranch <name>
+hint: 
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint: 
+hint: 	git branch -m <name>
+[0mInitialized empty Git repository in /src/logos-delivery/.git/
+[91mFrom https://github.com/logos-messaging/logos-delivery
+ * branch            0f2188c09779cc84116db344bbb43ccfe6a27c35 -> FETCH_HEAD
+[0m[91mHEAD is now at 0f2188c docs: changelog for v0.39.1 (#4427)
+[0mlogos-delivery 0f2188c09779cc84116db344bbb43ccfe6a27c35 Tue Oct 6 20:01:37 2026 +0200
+ ---> Removed intermediate container 09a3b7a41696
+ ---> 1ac9d9a1f407
+Step 8/11 : WORKDIR /src/logos-delivery
+ ---> Running in 3aa04d001fd9
+ ---> Removed intermediate container 3aa04d001fd9
+ ---> a39ddddc00f2
+Step 9/11 : RUN date -u +%FT%TZ && git submodule update --init --recursive --depth 1 -j 6 ; date -u +%FT%TZ
+ ---> Running in 4cd0d4eb0292
+2026-11-25T19:47:31Z
+[91mSubmodule 'tests-e2e/vendor/logos-delivery-python-bindings' (https://github.com/logos-messaging/logos-delivery-python-bindings.git) registered for path 'tests-e2e/vendor/logos-delivery-python-bindings'
+[0m[91mSubmodule 'vendor/waku-rlnv2-contract' (https://github.com/logos-messaging/waku-rlnv2-contract.git) registered for path 'vendor/waku-rlnv2-contract'
+[0m[91mSubmodule 'vendor/zerokit' (https://github.com/vacp2p/zerokit.git) registered for path 'vendor/zerokit'
+[0m[91mSkipping submodule 'tests-e2e/vendor/logos-delivery-python-bindings'
+Cloning into '/src/logos-delivery/vendor/waku-rlnv2-contract'...
+[0m[91mCloning into '/src/logos-delivery/vendor/zerokit'...
+[0m[91mFrom https://github.com/logos-messaging/waku-rlnv2-contract
+ * branch            d9906ef40f1e113fcf51de4ad27c61aa45375c2d -> FETCH_HEAD
+[0mSubmodule path 'vendor/waku-rlnv2-contract': checked out 'd9906ef40f1e113fcf51de4ad27c61aa45375c2d'
+[91mSubmodule 'lib/forge-std' (https://github.com/foundry-rs/forge-std) registered for path 'vendor/waku-rlnv2-contract/lib/forge-std'
+[0m[91mSubmodule 'lib/foundry-devops' (https://github.com/Cyfrin/foundry-devops) registered for path 'vendor/waku-rlnv2-contract/lib/foundry-devops'
+[0m[91mSubmodule 'lib/openzeppelin-contracts' (https://github.com/OpenZeppelin/openzeppelin-contracts) registered for path 'vendor/waku-rlnv2-contract/lib/openzeppelin-contracts'
+[0m[91mSubmodule 'lib/openzeppelin-contracts-upgradeable' (https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable) registered for path 'vendor/waku-rlnv2-contract/lib/openzeppelin-contracts-upgradeable'
+[0m[91mCloning into '/src/logos-delivery/vendor/waku-rlnv2-contract/lib/forge-std'...
+[0m[91mCloning into '/src/logos-delivery/vendor/waku-rlnv2-contract/lib/foundry-devops'...
+[0m[91mCloning into '/src/logos-delivery/vendor/waku-rlnv2-contract/lib/openzeppelin-contracts'...
+[0m[91mCloning into '/src/logos-delivery/vendor/waku-rlnv2-contract/lib/openzeppelin-contracts-upgradeable'...
+[0m[91mFrom https://github.com/foundry-rs/forge-std
+ * branch            978ac6fadb62f5f0b723c996f64be52eddba6801 -> FETCH_HEAD
+[0mSubmodule path 'vendor/waku-rlnv2-contract/lib/forge-std': checked out '978ac6fadb62f5f0b723c996f64be52eddba6801'
+[91mFrom https://github.com/Cyfrin/foundry-devops
+ * branch            47393d0a85ad9f6aa127ba2aed2bf9a7a7488bcf -> FETCH_HEAD
+[0mSubmodule path 'vendor/waku-rlnv2-contract/lib/foundry-devops': checked out '47393d0a85ad9f6aa127ba2aed2bf9a7a7488bcf'
+[91mSubmodule 'lib/forge-std' (https://github.com/foundry-rs/forge-std) registered for path 'vendor/waku-rlnv2-contract/lib/foundry-devops/lib/forge-std'
+[0m[91mCloning into '/src/logos-delivery/vendor/waku-rlnv2-contract/lib/foundry-devops/lib/forge-std'...
+[0m[91mFrom https://github.com/foundry-rs/forge-std
+ * branch            978ac6fadb62f5f0b723c996f64be52eddba6801 -> FETCH_HEAD
+[0mSubmodule path 'vendor/waku-rlnv2-contract/lib/foundry-devops/lib/forge-std': checked out '978ac6fadb62f5f0b723c996f64be52eddba6801'
+[91mFrom https://github.com/OpenZeppelin/openzeppelin-contracts
+ * branch            dc44c9f1a4c3b10af99492eed84f83ed244203f6 -> FETCH_HEAD
+[0mSubmodule path 'vendor/waku-rlnv2-contract/lib/openzeppelin-contracts': checked out 'dc44c9f1a4c3b10af99492eed84f83ed244203f6'
+[91mSubmodule 'lib/erc4626-tests' (https://github.com/a16z/erc4626-tests.git) registered for path 'vendor/waku-rlnv2-contract/lib/openzeppelin-contracts/lib/erc4626-tests'
+[0m[91mSubmodule 'lib/forge-std' (https://github.com/foundry-rs/forge-std) registered for path 'vendor/waku-rlnv2-contract/lib/openzeppelin-contracts/lib/forge-std'
+[0m[91mCloning into '/src/logos-delivery/vendor/waku-rlnv2-contract/lib/openzeppelin-contracts/lib/erc4626-tests'...
+[0m[91mCloning into '/src/logos-delivery/vendor/waku-rlnv2-contract/lib/openzeppelin-contracts/lib/forge-std'...
+[0m[91mFrom https://github.com/a16z/erc4626-tests
+ * branch            8b1d7c2ac248c33c3506b1bff8321758943c5e11 -> FETCH_HEAD
+[0mSubmodule path 'vendor/waku-rlnv2-contract/lib/openzeppelin-contracts/lib/erc4626-tests': checked out '8b1d7c2ac248c33c3506b1bff8321758943c5e11'
+[91mFrom https://github.com/foundry-rs/forge-std
+ * branch            c2236853aadb8e2d9909bbecdc490099519b70a4 -> FETCH_HEAD
+[0mSubmodule path 'vendor/waku-rlnv2-contract/lib/openzeppelin-contracts/lib/forge-std': checked out 'c2236853aadb8e2d9909bbecdc490099519b70a4'
+[91mSubmodule 'lib/ds-test' (https://github.com/dapphub/ds-test) registered for path 'vendor/waku-rlnv2-contract/lib/openzeppelin-contracts/lib/forge-std/lib/ds-test'
+[0m[91mCloning into '/src/logos-delivery/vendor/waku-rlnv2-contract/lib/openzeppelin-contracts/lib/forge-std/lib/ds-test'...
+[0m[91mFrom https://github.com/dapphub/ds-test
+ * branch            6da7dd8f7395f83e1fb6fa88a64ba9a030f85d4f -> FETCH_HEAD
+[0mSubmodule path 'vendor/waku-rlnv2-contract/lib/openzeppelin-contracts/lib/forge-std/lib/ds-test': checked out '6da7dd8f7395f83e1fb6fa88a64ba9a030f85d4f'
+[91mFrom https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable
+ * branch            2d081f24cac1a867f6f73d512f2022e1fa987854 -> FETCH_HEAD
+[0mSubmodule path 'vendor/waku-rlnv2-contract/lib/openzeppelin-contracts-upgradeable': checked out '2d081f24cac1a867f6f73d512f2022e1fa987854'
+[91mSubmodule 'lib/erc4626-tests' (https://github.com/a16z/erc4626-tests.git) registered for path 'vendor/waku-rlnv2-contract/lib/openzeppelin-contracts-upgradeable/lib/erc4626-tests'
+[0m[91mSubmodule 'lib/forge-std' (https://github.com/foundry-rs/forge-std) registered for path 'vendor/waku-rlnv2-contract/lib/openzeppelin-contracts-upgradeable/lib/forge-std'
+[0m[91mCloning into '/src/logos-delivery/vendor/waku-rlnv2-contract/lib/openzeppelin-contracts-upgradeable/lib/erc4626-tests'...
+[0m[91mCloning into '/src/logos-delivery/vendor/waku-rlnv2-contract/lib/openzeppelin-contracts-upgradeable/lib/forge-std'...
+[0m[91mFrom https://github.com/a16z/erc4626-tests
+ * branch            8b1d7c2ac248c33c3506b1bff8321758943c5e11 -> FETCH_HEAD
+[0mSubmodule path 'vendor/waku-rlnv2-contract/lib/openzeppelin-contracts-upgradeable/lib/erc4626-tests': checked out '8b1d7c2ac248c33c3506b1bff8321758943c5e11'
+[91mFrom https://github.com/foundry-rs/forge-std
+ * branch            c2236853aadb8e2d9909bbecdc490099519b70a4 -> FETCH_HEAD
+[0mSubmodule path 'vendor/waku-rlnv2-contract/lib/openzeppelin-contracts-upgradeable/lib/forge-std': checked out 'c2236853aadb8e2d9909bbecdc490099519b70a4'
+[91mSubmodule 'lib/ds-test' (https://github.com/dapphub/ds-test) registered for path 'vendor/waku-rlnv2-contract/lib/openzeppelin-contracts-upgradeable/lib/forge-std/lib/ds-test'
+[0m[91mCloning into '/src/logos-delivery/vendor/waku-rlnv2-contract/lib/openzeppelin-contracts-upgradeable/lib/forge-std/lib/ds-test'...
+[0m[91mFrom https://github.com/dapphub/ds-test
+ * branch            6da7dd8f7395f83e1fb6fa88a64ba9a030f85d4f -> FETCH_HEAD
+[0mSubmodule path 'vendor/waku-rlnv2-contract/lib/openzeppelin-contracts-upgradeable/lib/forge-std/lib/ds-test': checked out '6da7dd8f7395f83e1fb6fa88a64ba9a030f85d4f'
+[91mFrom https://github.com/vacp2p/zerokit
+ * branch            ea80f39be3e7944e4537b5f4726a7c4aabfe0ab5 -> FETCH_HEAD
+[0mSubmodule path 'vendor/zerokit': checked out 'ea80f39be3e7944e4537b5f4726a7c4aabfe0ab5'
+2026-11-25T19:47:41Z
+ ---> Removed intermediate container 4cd0d4eb0292
+ ---> 93a6c976b3dd
+Step 10/11 : RUN date -u +%FT%TZ && (time make -j${MAKE_JOBS} update) ; date -u +%FT%TZ
+ ---> Running in 09fe4a402d20
+2026-11-25T19:47:53Z
+[91m/bin/sh: 1: time: not found
+[0m2026-11-25T19:47:53Z
+ ---> Removed intermediate container 09fe4a402d20
+ ---> 23c8234958c3
+Step 11/11 : RUN date -u +%FT%TZ && (time make -j${MAKE_JOBS} DISABLE_RLN=${DISABLE_RLN} liblogosdelivery) ; date -u +%FT%TZ &&     ls -l build && (cd build && ls -l *.so* ) &&     cd /src/logos-delivery && (vendor/nimbus-build-system/vendor/Nim/bin/nim --version || true)
+ ---> Running in 54c2fe1c46b4
+2026-11-25T19:47:59Z
+[91m/bin/sh: 1: time: not found
+[0m2026-11-25T19:47:59Z
+[91mls: cannot access 'build': No such file or directory
+[0mThe command '/bin/sh -c date -u +%FT%TZ && (time make -j${MAKE_JOBS} DISABLE_RLN=${DISABLE_RLN} liblogosdelivery) ; date -u +%FT%TZ &&     ls -l build && (cd build && ls -l *.so* ) &&     cd /src/logos-delivery && (vendor/nimbus-build-system/vendor/Nim/bin/nim --version || true)' returned a non-zero code: 2

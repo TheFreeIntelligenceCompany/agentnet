@@ -1,0 +1,7 @@
+mode=shutdown 8000 settle=
+{"event":"begin","fds":10,"iters":4,"mode":"shutdown","port":20110,"rss_kb":5668,"threads":7}
+{"drop_ms":0.09207,"event":"iter","fds":21,"i":0,"listen_addrs":2,"op_ms":1834.4963509999998,"rss_kb":77048,"shutdown_ms":313.826956,"start_ms":942.524335,"sub_err":null,"sub_ok":true,"threads":7}
+{"drop_ms":9.128611,"event":"iter","fds":25,"i":1,"listen_addrs":2,"op_ms":1893.763496,"rss_kb":101764,"shutdown_ms":382.273891,"start_ms":437.601921,"sub_err":null,"sub_ok":true,"threads":7}
+{"drop_ms":0.904874,"event":"iter","fds":29,"i":2,"listen_addrs":2,"op_ms":1897.18693,"rss_kb":126492,"shutdown_ms":333.62584699999996,"start_ms":543.543177,"sub_err":null,"sub_ok":true,"threads":7}
+{"drop_ms":1.076765,"event":"iter","fds":33,"i":3,"listen_addrs":2,"op_ms":1837.507939,"rss_kb":150984,"shutdown_ms":327.544508,"start_ms":337.820711,"sub_err":null,"sub_ok":true,"threads":7}
+{"event":"end","fds":33,"rss_kb":150984,"threads":7}

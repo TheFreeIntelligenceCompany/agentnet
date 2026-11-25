@@ -1,0 +1,8 @@
+    Updating crates.io index
+error: failed to select a version for the requirement `core2 = "^0.4.0"`
+  version 0.4.0 is yanked
+location searched: crates.io index
+required by package `multihash v0.17.0`
+    ... which satisfies dependency `multihash = "^0.17"` of package `multiaddr v0.17.0`
+    ... which satisfies dependency `multiaddr = "^0.17"` of package `waku-bindings v0.6.0`
+    ... which satisfies dependency `waku-bindings = "=0.6.0"` of package `t v0.0.0 (/w)`

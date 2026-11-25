@@ -1,0 +1,67 @@
+23:REQUIRED_NIMBLE_PIN := $(shell grep -E '^const RequiredNimblePin\s*=' logos_delivery.nimble | grep -oE '"[^"]+"' | tr -d '"')
+25:NIMBLE_TOOLDIR := $(HOME)/.local/nimble-$(REQUIRED_NIMBLE_PIN)/bin
+26:NIMBLE := $(NIMBLE_TOOLDIR)/nimble
+27:export PATH := $(NIMBLE_TOOLDIR):$(HOME)/.nimble/bin:$(PATH)
+33:# The Nim that `nimble setup` installs for the locked `nim` entry. Recursive,
+34:# so it resolves after setup has populated nimbledeps/.
+35:NIM = $(firstword $(shell ls -1 $(CURDIR)/nimbledeps/pkgs2/nim-*/bin/nim.exe 2>/dev/null) $(shell ls -1 $(CURDIR)/nimbledeps/pkgs2/nim-*/bin/nim 2>/dev/null))
+37:NIMBLEDEPS_STAMP := nimbledeps/.nimble-setup
+104:.PHONY: all test clean examples ffi-examples deps nimble install-nimble print-nimble-path print-nim-path
+137:	ln -s logos_delivery.nimble $@
+139:$(NIMBLEDEPS_STAMP): nimble.lock logos_delivery.nimble | install-nimble logos_delivery.nims
+146:# This compares the installed packages with nimble.lock and writes nothing.
+153:# after nimble setup has populated nimbledeps/.
+155:build-deps: | $(NIMBLEDEPS_STAMP)
+156:	$(MAKE) rebuild-bearssl-nimbledeps rebuild-nat-libs-nimbledeps rebuild-leopard-nimbledeps
+162:	rm -rf nimbledeps 2> /dev/null || true
+164:	rm nimble.paths 2> /dev/null || true
+167:install-nimble:
+168:	scripts/install_nimble.sh $(REQUIRED_NIMBLE_PIN) $(NIMBLE_TOOLDIR)
+173:nimble: install-nimble
+180:print-nimble-path:
+245:# Export NIM_PARAMS so nimble can access it
+264:deps: | nimble
+324:# Windows: build with nim directly — `nimble <task>` re-clones git deps every
+325:# build and they intermittently hang on the MSYS2 runner. Flags mirror logos_delivery.nimble.
+540:# Windows: build with nim directly (see logosdeliverynode) — `nimble <task>` re-clones
+542:# mirror logos_delivery.nimble's dynamic-windows task.
+555:liblogosdelivery: | build-deps $(LIBLOGOSDELIVERY_RLN_DEP)
+559:	$(NIMBLE) --verbose liblogosdelivery$(BUILD_COMMAND) logos_delivery.nimble $(NIMBLE_TASK_FLAGS)
+646:	$(MAKE) rebuild-nat-libs-nimbledeps CC=$(ANDROID_TOOLCHAIN_DIR)/bin/$(ANDROID_COMPILER) PORTABLE_NAT_MARCH=
+AGENTS.md
+BearSSL.mk
+CHANGELOG.md
+CLAUDE.md
+Dockerfile
+Dockerfile.lightpushWithMix.compile
+LICENSE-APACHE
+LICENSE-MIT
+Leopard.mk
+Makefile
+Nat.mk
+README.md
+TinyCbor.mk
+apps
+ci
+config.nims
+docker
+docs
+examples
+flake.lock
+flake.nix
+library
+logos_delivery
+logos_delivery.nim
+logos_delivery.nimble
+metrics
+migrations
+nimble.lock
+nix
+scripts
+simulations
+tests
+tests-e2e
+tools
+vendor
+waku-rlnv2-contract
+zerokit

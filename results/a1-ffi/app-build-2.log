@@ -1,0 +1,359 @@
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  399.9MB
+Step 1/28 : FROM rust:1.92-bookworm AS lib
+ ---> e90e846de412
+Step 2/28 : SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ ---> Using cache
+ ---> 24f556c983ac
+Step 3/28 : ARG LOGOS_DELIVERY_REV=0f2188c09779cc84116db344bbb43ccfe6a27c35
+ ---> Using cache
+ ---> ebb6ef553adc
+Step 4/28 : ARG MAKE_JOBS=6
+ ---> Using cache
+ ---> da71aa308c1c
+Step 5/28 : ARG DISABLE_RLN=false
+ ---> Using cache
+ ---> b0d263c9c310
+Step 6/28 : ARG LOG_LEVEL=ERROR
+ ---> Using cache
+ ---> 7f62aac7a408
+Step 7/28 : RUN date -u +%FT%TZ > /t_apt_start && apt-get update &&     apt-get install -y --no-install-recommends cmake patchelf pkg-config libssl-dev &&     rm -rf /var/lib/apt/lists/* && date -u +%FT%TZ > /t_apt_end
+ ---> Using cache
+ ---> 54f17ee41d4c
+Step 8/28 : WORKDIR /src
+ ---> Using cache
+ ---> 164d54f41ccd
+Step 9/28 : RUN git init logos-delivery && cd logos-delivery &&     git remote add origin https://github.com/logos-messaging/logos-delivery &&     git fetch --depth 1 origin ${LOGOS_DELIVERY_REV} && git checkout --detach FETCH_HEAD &&     git log -n1 --format='logos-delivery %H %cd'
+ ---> Using cache
+ ---> e7cba55c6d86
+Step 10/28 : WORKDIR /src/logos-delivery
+ ---> Using cache
+ ---> 0bd78eb48b48
+Step 11/28 : RUN date -u +%FT%TZ && git submodule update --init --depth 1 vendor/zerokit && date -u +%FT%TZ
+ ---> Using cache
+ ---> 4ff9636a5a02
+Step 12/28 : ARG NIM_PKG_DIR=nim-2.2.6-b3179cffd77e51d16ea343b5493d895e8bc8c085
+ ---> Using cache
+ ---> f8c853e1e384
+Step 13/28 : RUN if [ "$(uname -m)" = "aarch64" ]; then       date -u +%FT%TZ && git clone --depth 1 --branch v2.2.6 https://github.com/nim-lang/Nim /opt/nim &&       cd /opt/nim && time sh build_all.sh && date -u +%FT%TZ &&       mkdir -p /src/logos-delivery/nimbledeps/pkgs2/${NIM_PKG_DIR} &&       cp -a /opt/nim/. /src/logos-delivery/nimbledeps/pkgs2/${NIM_PKG_DIR}/ &&       printf '{"version":1,"metaData":{"url":"https://github.com/nim-lang/Nim.git","downloadMethod":"git","vcsRevision":"","files":[],"binaries":[],"specialVersions":["2.2.6"]}}'         > /src/logos-delivery/nimbledeps/pkgs2/${NIM_PKG_DIR}/nimblemeta.json ;     fi
+ ---> Using cache
+ ---> a17d97a967c0
+Step 14/28 : RUN date -u +%FT%TZ && time make -j${MAKE_JOBS} DISABLE_RLN=${DISABLE_RLN} LOG_LEVEL=${LOG_LEVEL} liblogosdelivery && date -u +%FT%TZ &&     ls -l build && (cd build && ls -l *.so* ) &&     cd /src/logos-delivery && (ls nimbledeps/pkgs2 | grep -i '^nim-' ; nimbledeps/pkgs2/nim-*/bin/nim --version; file nimbledeps/pkgs2/nim-*/bin/nim)
+ ---> Using cache
+ ---> b3c325d6b716
+Step 15/28 : FROM rust:1.92-bookworm AS app
+ ---> e90e846de412
+Step 16/28 : SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ ---> Using cache
+ ---> 24f556c983ac
+Step 17/28 : COPY --from=lib /src/logos-delivery/build/liblogosdelivery.so /libdir/liblogosdelivery.so
+ ---> e7c8bfdfae7e
+Step 18/28 : ENV LOGOS_DELIVERY_LIB_DIR=/libdir     LOGOS_DELIVERY_RELOCATABLE=1     CARGO_TERM_COLOR=never
+ ---> Running in c4008c909aa0
+ ---> Removed intermediate container c4008c909aa0
+ ---> 4e063fe4a469
+Step 19/28 : WORKDIR /app
+ ---> Running in 2c7c15c77a10
+ ---> Removed intermediate container 2c7c15c77a10
+ ---> d85226fbfb9b
+Step 20/28 : COPY Cargo.toml Cargo.lock* ./
+ ---> d35cbbc3888a
+Step 21/28 : COPY src ./src
+ ---> 4b9ee6e13cd4
+Step 22/28 : COPY .cargo ./.cargo
+ ---> c2801acd9596
+Step 23/28 : RUN date -u +%FT%TZ && time cargo build --release --locked && date -u +%FT%TZ &&     ls -l target/release/ffi-spike &&     mkdir -p /out && cp target/release/ffi-spike /libdir/liblogosdelivery.so /out/ &&     (cd /out && ldd ./ffi-spike && ldd ./liblogosdelivery.so && ls -l /out && strip -o /tmp/lib.stripped.so liblogosdelivery.so && ls -l /tmp/lib.stripped.so)
+ ---> Running in 548aac5aec14
+2026-11-25T22:03:44Z
+[91m    Updating git repository `https://github.com/logos-messaging/logos-delivery-rust-bindings`
+[0m[91m    Updating git submodule `https://github.com/logos-messaging/logos-messaging-nim`
+[0m[91m    Updating git submodule `https://github.com/nim-lang/db_connector.git`
+[0m[91m    Updating git submodule `https://github.com/ba0f3/dnsclient.nim.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-bearssl.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/BearSSL`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-chronicles.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-chronos.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-confutils.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-dnsdisc.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-bearssl.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/BearSSL`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-chronicles.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-chronos.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-confutils.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-eth.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-faststreams.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-http-utils.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-json-rpc.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-json-serialization.git`
+[0m[91m    Updating git submodule `https://github.com/arnetheduck/nim-results.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-secp256k1.git`
+[0m[91m    Updating git submodule `https://github.com/bitcoin-core/secp256k1.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-serialization.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-stew.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-testutils.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-unittest2.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-websock.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-zlib.git`
+[0m[91m    Updating git submodule `https://github.com/madler/zlib`
+[0m[91m    Updating git submodule `https://github.com/status-im/nimbus-build-system.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/Nim.git`
+[0m[91m    Updating git submodule `https://github.com/nim-lang/csources_v1.git`
+[0m[91m    Updating git submodule `https://github.com/nim-lang/nimble.git`
+[0m[91m    Updating git submodule `https://github.com/cheatfate/nimcrypto.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-eth.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-faststreams.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-http-utils.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-json-rpc.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-json-serialization.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-libbacktrace.git`
+[0m[91m    Updating git submodule `https://github.com/ianlancetaylor/libbacktrace.git`
+[0m[91m    Updating git submodule `https://github.com/gpakosz/whereami.git`
+[0m[91m    Updating git submodule `https://github.com/vacp2p/nim-libp2p.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-metrics.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-minilru.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-nat-traversal.git`
+[0m[91m    Updating git submodule `https://github.com/miniupnp/libnatpmp.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/miniupnp.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-presto.git`
+[0m[91m    Updating git submodule `https://github.com/nitely/nim-regex.git`
+[0m[91m    Updating git submodule `https://github.com/arnetheduck/nim-results.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-secp256k1.git`
+[0m[91m    Updating git submodule `https://github.com/bitcoin-core/secp256k1.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-serialization.git`
+[0m[91m    Updating git submodule `https://github.com/arnetheduck/nim-sqlite3-abi.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-stew.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-stint.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-taskpools.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-testutils.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-toml-serialization.git`
+[0m[91m    Updating git submodule `https://github.com/nitely/nim-unicodedb.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-unittest2.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-web3.git`
+[0m[91m    Updating git submodule `https://github.com/ethereum/execution-apis`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-websock.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/nim-zlib.git`
+[0m[91m    Updating git submodule `https://github.com/madler/zlib`
+[0m[91m    Updating git submodule `https://github.com/status-im/nimbus-build-system.git`
+[0m[91m    Updating git submodule `https://github.com/status-im/Nim.git`
+[0m[91m    Updating git submodule `https://github.com/cheatfate/nimcrypto.git`
+[0m[91m    Updating git submodule `https://github.com/arnetheduck/nph.git`
+[0m[91m    Updating git submodule `https://github.com/vacp2p/zerokit.git`
+[0m[91m    Updating crates.io index
+[0m[91m Downloading crates ...
+[0m[91m  Downloaded ciborium-io v0.2.2
+[0m[91m  Downloaded zmij v1.0.23
+[0m[91m  Downloaded unicode-ident v1.0.27
+[0m[91m  Downloaded tracing-core v0.1.36
+[0m[91m  Downloaded tracing-attributes v0.1.31
+[0m[91m  Downloaded spin v0.9.9
+[0m[91m  Downloaded futures-util v0.3.34
+[0m[91m  Downloaded mio v1.2.5
+[0m[91m  Downloaded memchr v2.8.3
+[0m[91m  Downloaded once_cell v1.21.4
+[0m[91m  Downloaded syn v2.0.119
+[0m[91m  Downloaded half v2.7.1
+[0m[91m  Downloaded syn v3.0.10
+[0m[91m  Downloaded futures-sink v0.3.34
+[0m[91m  Downloaded errno v0.3.15
+[0m[91m  Downloaded crossbeam-utils v0.8.23
+[0m[91m  Downloaded tracing v0.1.44
+[0m[91m  Downloaded serde_derive v1.0.229
+[0m[91m  Downloaded ciborium-ll v0.2.2
+[0m[91m  Downloaded tokio v1.54.1
+[0m[91m  Downloaded serde v1.0.229
+[0m[91m  Downloaded zerocopy-derive v0.8.65
+[0m[91m  Downloaded tokio-util v0.7.20
+[0m[91m  Downloaded libc v0.2.191
+[0m[91m  Downloaded zerocopy v0.8.65
+[0m[91m  Downloaded crossbeam-channel v0.5.17
+[0m[91m  Downloaded bytes v1.12.2
+[0m[91m  Downloaded ciborium v0.2.2
+[0m[91m  Downloaded proc-macro2 v1.0.107
+[0m[91m  Downloaded cfg-if v1.0.5
+[0m[91m  Downloaded serde_json v1.0.154
+[0m[91m  Downloaded tokio-stream v0.1.19
+[0m[91m  Downloaded thiserror-impl v2.0.21
+[0m[91m  Downloaded signal-hook-registry v1.4.8
+[0m[91m  Downloaded scopeguard v1.2.0
+[0m[91m  Downloaded pin-project-lite v0.2.18
+[0m[91m  Downloaded lock_api v0.4.14
+[0m[91m  Downloaded itoa v1.0.19
+[0m[91m  Downloaded futures-task v0.3.34
+[0m[91m  Downloaded futures-core v0.3.34
+[0m[91m  Downloaded flume v0.11.1
+[0m[91m  Downloaded base64 v0.22.1
+[0m[91m  Downloaded tokio-macros v2.7.2
+[0m[91m  Downloaded thiserror v2.0.21
+[0m[91m  Downloaded serde_core v1.0.229
+[0m[91m  Downloaded quote v1.0.47
+[0m[91m   Compiling proc-macro2 v1.0.107
+   Compiling quote v1.0.47
+[0m[91m   Compiling unicode-ident v1.0.27
+   Compiling libc v0.2.191
+   Compiling serde_core v1.0.229
+[0m[91m   Compiling zerocopy v0.8.65
+[0m[91m   Compiling pin-project-lite v0.2.18
+[0m[91m   Compiling futures-core v0.3.34
+[0m[91m   Compiling[0m[91m cfg-if v1.0.5
+[0m[91m   Compiling[0m[91m serde v1.0.229
+[0m[91m   Compiling[0m[91m futures-sink v0.3.34
+[0m[91m   Compiling crossbeam-utils v0.8.23
+[0m[91m   Compiling zmij v1.0.23
+[0m[91m   Compiling scopeguard v1.2.0
+[0m[91m   Compiling once_cell v1.21.4
+[0m[91m   Compiling[0m[91m lock_api v0.4.14
+[0m[91m   Compiling[0m[91m ciborium-io v0.2.2
+[0m[91m   Compiling[0m[91m serde_json v1.0.154
+[0m[91m   Compiling[0m[91m thiserror v2.0.21
+[0m[91m   Compiling[0m[91m bytes v1.12.2
+[0m[91m   Compiling syn v3.0.10
+[0m[91m   Compiling syn v2.0.119
+[0m[91m   Compiling errno v0.3.15
+[0m[91m   Compiling mio v1.2.5
+[0m[91m   Compiling[0m[91m signal-hook-registry v1.4.8
+[0m[91m   Compiling spin v0.9.9
+[0m[91m   Compiling tracing-core v0.1.36
+[0m[91m   Compiling itoa v1.0.19
+[0m[91m   Compiling logos-delivery v0.1.0 (https://github.com/logos-messaging/logos-delivery-rust-bindings?rev=d60fcfd40f2b860000c4df8db4f2f95a6c6f1fad#d60fcfd4)
+[0m[91m   Compiling memchr v2.8.3
+[0m[91m   Compiling[0m[91m futures-task v0.3.34
+[0m[91m   Compiling futures-util v0.3.34
+[0m[91m   Compiling[0m[91m crossbeam-channel v0.5.17
+[0m[91m   Compiling flume v0.11.1
+[0m[91m   Compiling base64 v0.22.1
+[0m[91m   Compiling tokio-macros v2.7.2
+   Compiling serde_derive v1.0.229
+   Compiling thiserror-impl v2.0.21
+[0m[91m   Compiling tokio v1.54.1
+[0m[91m   Compiling zerocopy-derive v0.8.65
+   Compiling tracing-attributes v0.1.31
+[0m[91m   Compiling tracing v0.1.44
+[0m[91m   Compiling tokio-util v0.7.20
+[0m[91m   Compiling tokio-stream v0.1.19
+[0m[91m   Compiling half v2.7.1
+[0m[91m   Compiling ciborium-ll v0.2.2
+[0m[91m   Compiling ciborium v0.2.2
+[0m[91m   Compiling ffi-spike v0.0.0 (/app)
+[0m[91m    Finished `release` profile [optimized] target(s) in 6m 54s
+[0m[91m
+real	6m51.179s
+user	9m2.592s
+sys	6m1.788s
+[0m2026-11-25T22:10:35Z
+-rwxr-xr-x 2 root root 1978352 Nov 25 22:10 target/release/ffi-spike
+	linux-vdso.so.1 (0x0000e9891ae38000)
+	liblogosdelivery.so => /out/./liblogosdelivery.so (0x0000e989170a0000)
+	libgcc_s.so.1 => /lib/aarch64-linux-gnu/libgcc_s.so.1 (0x0000e98917060000)
+	libm.so.6 => /lib/aarch64-linux-gnu/libm.so.6 (0x0000e98916fb0000)
+	libc.so.6 => /lib/aarch64-linux-gnu/libc.so.6 (0x0000e98916e00000)
+	libstdc++.so.6 => /lib/aarch64-linux-gnu/libstdc++.so.6 (0x0000e98916be0000)
+	libgomp.so.1 => /lib/aarch64-linux-gnu/libgomp.so.1 (0x0000e98916b70000)
+	/lib/ld-linux-aarch64.so.1 (0x0000e9891adf0000)
+	linux-vdso.so.1 (0x0000e6847a35d000)
+	libm.so.6 => /lib/aarch64-linux-gnu/libm.so.6 (0x0000e68476690000)
+	libstdc++.so.6 => /lib/aarch64-linux-gnu/libstdc++.so.6 (0x0000e68476470000)
+	libgomp.so.1 => /lib/aarch64-linux-gnu/libgomp.so.1 (0x0000e68476400000)
+	libgcc_s.so.1 => /lib/aarch64-linux-gnu/libgcc_s.so.1 (0x0000e684763c0000)
+	libc.so.6 => /lib/aarch64-linux-gnu/libc.so.6 (0x0000e68476210000)
+	/lib/ld-linux-aarch64.so.1 (0x0000e6847a320000)
+total 290096
+-rwxr-xr-x 1 root root   1978352 Nov 25 22:10 ffi-spike
+-rwxr-xr-x 1 root root 295115696 Nov 25 22:11 liblogosdelivery.so
+-rwxr-xr-x 1 root root 57006712 Nov 25 22:11 /tmp/lib.stripped.so
+ ---> Removed intermediate container 548aac5aec14
+ ---> bbbdcf025c60
+Step 24/28 : FROM debian:bookworm-slim AS run
+bookworm-slim: Pulling from library/debian
+7f1aa0b5c351: Pulling fs layer
+97a697cd8275: Download complete
+7f1aa0b5c351: Download complete
+7f1aa0b5c351: Pull complete
+Digest: sha256:e67eeead736ff7bbe258ef088bff683635c561b1fcfefad0806c1df4ab49ce0e
+Status: Downloaded newer image for debian:bookworm-slim
+ ---> e67eeead736f
+Step 25/28 : RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates procps && rm -rf /var/lib/apt/lists/*
+ ---> Running in 698731c0ecc2
+Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [34.8 kB]
+Get:4 http://deb.debian.org/debian bookworm/main arm64 Packages [8689 kB]
+Get:5 http://deb.debian.org/debian bookworm-updates/main arm64 Packages [6936 B]
+Get:6 http://deb.debian.org/debian-security bookworm-security/main arm64 Packages [379 kB]
+Fetched 9317 kB in 5s (2060 kB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following additional packages will be installed:
+  libncursesw6 libproc2-0 libssl3 openssl
+Recommended packages:
+  libgpm2 psmisc
+The following NEW packages will be installed:
+  ca-certificates libncursesw6 libproc2-0 libssl3 openssl procps
+0 upgraded, 6 newly installed, 0 to remove and 0 not upgraded.
+Need to get 4280 kB of archives.
+After this operation, 12.5 MB of additional disk space will be used.
+Get:1 http://deb.debian.org/debian bookworm/main arm64 libncursesw6 arm64 6.4-4 [122 kB]
+Get:2 http://deb.debian.org/debian bookworm/main arm64 libproc2-0 arm64 2:4.0.2-3 [60.1 kB]
+Get:3 http://deb.debian.org/debian bookworm/main arm64 procps arm64 2:4.0.2-3 [698 kB]
+Get:4 http://deb.debian.org/debian-security bookworm-security/main arm64 libssl3 arm64 3.0.22-1~deb12u2 [1829 kB]
+Get:5 http://deb.debian.org/debian-security bookworm-security/main arm64 openssl arm64 3.0.22-1~deb12u2 [1410 kB]
+Get:6 http://deb.debian.org/debian-security bookworm-security/main arm64 ca-certificates all 20250419~deb12u2 [161 kB]
+[91mdebconf: delaying package configuration, since apt-utils is not installed
+[0mFetched 4280 kB in 1s (7130 kB/s)
+Selecting previously unselected package libncursesw6:arm64.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 6090 files and directories currently installed.)
+Preparing to unpack .../0-libncursesw6_6.4-4_arm64.deb ...
+Unpacking libncursesw6:arm64 (6.4-4) ...
+Selecting previously unselected package libproc2-0:arm64.
+Preparing to unpack .../1-libproc2-0_2%3a4.0.2-3_arm64.deb ...
+Unpacking libproc2-0:arm64 (2:4.0.2-3) ...
+Selecting previously unselected package procps.
+Preparing to unpack .../2-procps_2%3a4.0.2-3_arm64.deb ...
+Unpacking procps (2:4.0.2-3) ...
+Selecting previously unselected package libssl3:arm64.
+Preparing to unpack .../3-libssl3_3.0.22-1~deb12u2_arm64.deb ...
+Unpacking libssl3:arm64 (3.0.22-1~deb12u2) ...
+Selecting previously unselected package openssl.
+Preparing to unpack .../4-openssl_3.0.22-1~deb12u2_arm64.deb ...
+Unpacking openssl (3.0.22-1~deb12u2) ...
+Selecting previously unselected package ca-certificates.
+Preparing to unpack .../5-ca-certificates_20250419~deb12u2_all.deb ...
+Unpacking ca-certificates (20250419~deb12u2) ...
+Setting up libssl3:arm64 (3.0.22-1~deb12u2) ...
+Setting up libproc2-0:arm64 (2:4.0.2-3) ...
+Setting up libncursesw6:arm64 (6.4-4) ...
+Setting up procps (2:4.0.2-3) ...
+Setting up openssl (3.0.22-1~deb12u2) ...
+Setting up ca-certificates (20250419~deb12u2) ...
+debconf: unable to initialize frontend: Dialog
+debconf: (TERM is not set, so the dialog frontend is not usable.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC contains: /etc/perl /usr/local/lib/aarch64-linux-gnu/perl/5.36.0 /usr/local/share/perl/5.36.0 /usr/lib/aarch64-linux-gnu/perl5/5.36 /usr/share/perl5 /usr/lib/aarch64-linux-gnu/perl-base /usr/lib/aarch64-linux-gnu/perl/5.36 /usr/share/perl/5.36 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 7.)
+debconf: falling back to frontend: Teletype
+Updating certificates in /etc/ssl/certs...
+148 added, 0 removed; done.
+Processing triggers for libc-bin (2.36-9+deb12u14) ...
+Processing triggers for ca-certificates (20250419~deb12u2) ...
+Updating certificates in /etc/ssl/certs...
+0 added, 0 removed; done.
+Running hooks in /etc/ca-certificates/update.d...
+done.
+ ---> Removed intermediate container 698731c0ecc2
+ ---> 8eae26c50396
+Step 26/28 : COPY --from=app /out/ /opt/ffi/
+ ---> f0fc0c207cd0
+Step 27/28 : WORKDIR /opt/ffi
+ ---> Running in c4fd625f388e
+ ---> Removed intermediate container c4fd625f388e
+ ---> 90e380a66539
+Step 28/28 : ENTRYPOINT ["/opt/ffi/ffi-spike"]
+ ---> Running in 25ac9fc1dfb1
+ ---> Removed intermediate container 25ac9fc1dfb1
+ ---> f6c9fc52403c
+Successfully built f6c9fc52403c
+Successfully tagged ffi-spike:pinned

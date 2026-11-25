@@ -1,0 +1,3 @@
+[target.'cfg(target_os = "linux")']
+# liblogosdelivery.so is shipped next to the binary (LOGOS_DELIVERY_RELOCATABLE=1 build)
+rustflags = ["-C", "link-arg=-Wl,-rpath,$ORIGIN"]
