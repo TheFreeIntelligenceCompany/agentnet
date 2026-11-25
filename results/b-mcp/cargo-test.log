@@ -1,0 +1,128 @@
+   Compiling agentnet-mcp v0.1.0 (/Users/dennison/develop/FIC-elipsis/crates/mcp)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 12.27s
+     Running unittests src/lib.rs (target/debug/deps/agentnet_mcp-3bd1abb58763ea4b)
+
+running 7 tests
+test uris::tests::parses_base_uris ... ok
+test uris::tests::hints_map_to_uris ... ok
+test uris::tests::parses_query_and_decodes ... ok
+test uris::tests::percent_roundtrip ... ok
+test uris::tests::rejects_bad_queries ... ok
+test uris::tests::subscribable_rules ... ok
+test uris::tests::unknown_uris_are_not_found ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/resources.rs (target/debug/deps/resources-b9e2ce1d99a653e5)
+
+running 10 tests
+test capabilities_and_server_info ... ok
+test legacy_clients_get_the_legacy_not_found_code ... ok
+test lists_resources_and_templates ... ok
+test reads_are_uncacheable_json_documents ... ok
+test inbox_pagination_by_cursor_in_the_uri ... ok
+test engine_errors_on_resource_reads_map_to_standard_codes ... ok
+test invalid_query_arguments_are_invalid_params ... ok
+test outbox_and_conversation_pagination ... ok
+test resource_documents_have_the_documented_shape ... ok
+test unknown_uri_is_the_standard_not_found_error ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/subscriptions.rs (target/debug/deps/subscriptions-7c7ab6d1100764f8)
+
+running 17 tests
+test cancel_stops_notifications_and_releases_resources ... ok
+test client_disconnect_ends_listens_promptly_on_the_stdio_code_path ... ok
+test http_shutdown_ends_open_streams_promptly ... ok
+test legacy_pump_ends_when_session_ends ... ok
+test hint_right_after_acknowledgment_is_not_lost ... ok
+test legacy_subscribe_rejects_unknown_uris_and_2026_listen_is_unavailable ... ok
+test bursts_under_capacity_are_coalesced ... ok
+test many_listens_open_and_close_without_leaks ... ok
+test only_known_uris_are_accepted ... ok
+test server_shutdown_token_ends_listens ... ok
+test each_hint_kind_maps_to_its_uri ... ok
+test legacy_lagged_receiver_notifies_all_subscribed_uris ... ok
+test http_listen_filters_cancels_and_cleans_up ... ok
+test conversation_template_instances_are_subscribable ... ok
+test lagged_receiver_notifies_every_subscribed_uri_once ... ok
+test listen_notifies_only_for_the_subscribed_uri ... ok
+test legacy_subscribe_and_unsubscribe ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.58s
+
+     Running tests/tools.rs (target/debug/deps/tools-b185f039375d8e15)
+
+running 11 tests
+test mutating_tools_emit_hints_after_persistence ... ok
+test engine_domain_errors_surface_actionably ... ok
+test tool_annotations_mark_read_only_tools ... ok
+test unknown_tool_is_a_protocol_error ... ok
+test tool_descriptions_state_the_trust_and_delivery_semantics ... ok
+test input_schemas_encode_the_documented_limits ... ok
+test schema_violations_are_tool_errors_not_protocol_errors ... ok
+test tools_list_has_all_tools_with_valid_documented_schemas ... ok
+test happy_paths_every_tool_and_outputs_match_declared_schemas ... ok
+test boundary_validation_rejects_before_reaching_the_engine ... ok
+test every_api_error_code_maps_consistently ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/transports.rs (target/debug/deps/transports-2a841d3882b54328)
+
+running 17 tests
+test http_options_debug_redacts_the_token ... ok
+test serve_http_refuses_unsafe_configuration ... ok
+HTTP no token -> 401 www-authenticate=Some("Bearer")
+VERSION transport=http lifecycle=discover offered=2026-07-28 negotiated=2026-07-28
+HTTP wrong token -> 401
+HTTP token prefix -> 401
+HTTP token plus suffix -> 401
+test router_fails_closed_with_an_unusable_token ... ok
+HTTP Basic scheme -> 401
+test http_configured_origins_and_hosts_are_honoured ... ok
+HTTP bare token -> 401
+HTTP empty bearer -> 401
+HTTP bearer without value -> 401
+VERSION transport=http lifecycle=initialize offered=2026-07-28 negotiated=2025-11-25
+HTTP bad Origin -> 403 Forbidden: Origin header is not allowed
+VERSION transport=http lifecycle=initialize offered=2025-11-25 negotiated=2025-11-25
+HTTP bad Host -> 403 Forbidden: Host header is not allowed
+VERSION transport=http lifecycle=initialize offered=2025-06-18 negotiated=2025-06-18
+test http_auth_origin_and_host_rules ... ok
+VERSION transport=http lifecycle=initialize offered=2025-03-26 negotiated=2025-03-26
+VERSION transport=http lifecycle=initialize offered=2024-11-05 negotiated=2024-11-05
+test http_version_negotiation_table ... ok
+CONCURRENT 50 send_message calls in 48.801958ms
+test fifty_concurrent_tool_calls_over_http ... ok
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.83s
+DISCOVER supportedVersions=["2024-11-05","2025-03-26","2025-06-18","2025-11-25","2026-07-28"]
+test stdio_raw_discover_and_unsupported_versions ... ok
+STDIN-EOF exit without listeners: 12.653542ms
+test stdio_seeded_pagination_through_the_process ... ok
+test stdio_exits_promptly_on_eof_without_listeners ... ok
+test stdio_stdout_carries_only_protocol_frames ... ok
+test http_binary_refuses_non_loopback_and_serves_loopback ... ok
+CONCURRENT 50 send_message calls in 37.816792ms
+VERSION transport=stdio lifecycle=discover offered=2026-07-28 negotiated=2026-07-28
+test fifty_concurrent_tool_calls_over_stdio ... ok
+test tools_and_resources_over_http ... ok
+VERSION transport=stdio lifecycle=initialize offered=2026-07-28 negotiated=2025-11-25
+VERSION transport=stdio lifecycle=initialize offered=2025-11-25 negotiated=2025-11-25
+VERSION transport=stdio lifecycle=initialize offered=2025-06-18 negotiated=2025-06-18
+VERSION transport=stdio lifecycle=initialize offered=2025-03-26 negotiated=2025-03-26
+VERSION transport=stdio lifecycle=initialize offered=2024-11-05 negotiated=2024-11-05
+test stdio_version_negotiation_table ... ok
+STDIN-EOF exit with 2 active listeners: 523.264875ms status=exit status: 0
+test stdio_exits_promptly_on_eof_with_an_active_listener ... ok
+test stdio_listen_and_legacy_subscribe_end_to_end ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.98s
+
+   Doc-tests agentnet_mcp
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
