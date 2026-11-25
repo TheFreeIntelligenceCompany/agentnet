@@ -1,0 +1,30 @@
+[workspace]
+resolver = "2"
+members = ["crates/transport"]
+exclude = ["spike", "upstream"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.88"
+license = "MIT OR Apache-2.0"
+repository = "https://example.invalid/agentnet"
+publish = false
+
+[workspace.dependencies]
+agentnet-transport = { path = "crates/transport", default-features = false }
+agentnet-core = { path = "crates/core" }
+agentnet-mcp = { path = "crates/mcp" }
+agentnet-daemon = { path = "crates/daemon" }
+async-trait = "0.1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "net", "io-util", "signal", "fs", "process"] }
+tracing = "0.1"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[profile.release]
+lto = "thin"
