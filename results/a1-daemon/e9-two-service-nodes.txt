@@ -1,0 +1,17 @@
+NA peers: [('172.28.66.11', 'Connected'), ('172.28.66.10', 'Connected')]
+store counts both up: R1=1 OK  R2=1 OK
+### stop R1
+### NA publishes 3 with R1 down
+OK HTTP 200 OK HTTP 200 OK HTTP 200 
+### NB relay poll:
+[{"payload":"Ym90aC11cC0x","contentTopic":"/agentnet/1/spike-a1-r2/proto","version":0,"timestamp":1795638178279200512,"ephemeral":false,"proof":""},{"payload":"cjEtZG93bi0x","contentTopic":"/agentnet/1/spike-a1-r2/proto","version":0,"timestamp":1795638184376468992,"ephemeral":false,"proof":""},{"payload":"cjEtZG93bi0y","contentTopic":"/agentnet/1/spike-a1-r2/proto","version":0,"timestamp":17956381
+HTTP 200
+store count R2=4 OK
+### NB store query via explicit peerAddr=R2:
+{"requestId":"26a4982ab157c42f80af","statusCode":200,"statusDesc":"OK","messages":[{"messageHash":"0x825ccc2e2aac6181187331946881b9640605f704fde2bde9b224787fb2f07253"},{"messageHash":"0x7b7aeff6971f331549d9f4942e9c0081926d27141fa5aa0c73ebce870199946e"},{"messageHash":"0x0749ebe51b48e1b07fcf34c6fe8f9f49db8ceb84e7974e1e3ab91747fc91ebdd"},{"messageHash":"0x61ac251b571b605e71277618f153af887464de1dcd66e78ba9446d8b0a843bee"}]}
+HTTP 200
+### NB store query w/o peerAddr (configured --storenode=R1, down):
+No history response received (timeout)
+HTTP 500
+### start R1 again; wait 15s; R1 store only has pre-outage message(s):
+store counts: R1=1 OK  R2=4 OK

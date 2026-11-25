@@ -1,0 +1,152 @@
+# AgentNet spike A1 - transport path (3): Rust adapter -> separately running Logos Delivery node via REST.
+# LOCALHOST / CONTAINER-NETWORK TEST ONLY. Disposable test nodekeys live in .env (never reuse).
+# Image pinned by digest (amd64 only on Docker Hub; runs under qemu on arm64 hosts).
+name: agentnet-relay
+
+x-image: &img wakuorg/nwaku@sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73  # tag v0.39.2
+
+
+services:
+  r1:
+    image: *img
+    platform: linux/amd64
+    container_name: an-r1
+    command:
+      - --nodekey=${R1_KEY}
+      - --nat=extip:172.28.66.10
+      - --relay=true
+      - --store=true
+      - --store-message-db-url=sqlite:///data/r1-store.sqlite3
+      - --store-message-retention-policy=${R1_RETENTION:-time:3600;capacity:5000}
+      - --filter=true
+      - --lightpush=true
+      - --rest=true
+      - --rest-address=0.0.0.0
+      - --rest-port=8645
+      - --rest-admin=true
+      - --rest-relay-cache-capacity=50
+      - --rest-messaging-cache-capacity=50
+      - --max-msg-size=${MAX_MSG_SIZE:-150KiB}
+      - --cluster-id=66
+      - --num-shards-in-network=1
+      - --shard=0
+      - --discv5-discovery=false
+      - --peer-exchange=false
+      - --relay-peer-exchange=false
+      - --rendezvous=false
+      - --enable-kad-discovery=false
+      - --quic-support=false
+      - --mix=false
+      - --rln-relay=false
+      - --listen-address=0.0.0.0
+      - --dns-addrs-name-server=${DNS_NS:-1.1.1.1}  # online-monitor queries one.one.one.one via this server every 5s
+      - --tcp-port=60000
+      - --metrics-server=false
+      - --peer-persistence=false
+      - --local-storage-path=/data
+      - --log-level=INFO
+    ports: ["127.0.0.1:18640:8645"]
+    volumes: ["r1data:/data"]
+    networks:
+      relaynet: {ipv4_address: 172.28.66.10}
+
+  na:
+    image: *img
+    platform: linux/amd64
+    container_name: an-na
+    depends_on: [r1]
+    command:
+      - --nodekey=${NA_KEY}
+      - --nat=extip:172.28.66.21
+      - --relay=true
+      - --store=false
+      - --filter=false
+      - --lightpush=false
+      - --staticnode=/ip4/172.28.66.10/tcp/60000/p2p/${R1_PEER_ID}
+      - --staticnode=${R2_STATIC:-/ip4/172.28.66.10/tcp/60000/p2p/${R1_PEER_ID}}  # second service node when the r2 variant is up
+      - --storenode=/ip4/172.28.66.10/tcp/60000/p2p/${R1_PEER_ID}
+      - --filternode=/ip4/172.28.66.10/tcp/60000/p2p/${R1_PEER_ID}
+      - --lightpushnode=/ip4/172.28.66.10/tcp/60000/p2p/${R1_PEER_ID}
+      - --rest=true
+      - --rest-address=0.0.0.0
+      - --rest-port=8645
+      - --rest-admin=true
+      - --rest-relay-cache-capacity=${CLIENT_CACHE:-50}
+      - --max-msg-size=${MAX_MSG_SIZE:-150KiB}
+      - --cluster-id=66
+      - --num-shards-in-network=1
+      - --shard=0
+      - --discv5-discovery=false
+      - --peer-exchange=false
+      - --relay-peer-exchange=false
+      - --rendezvous=false
+      - --enable-kad-discovery=false
+      - --quic-support=false
+      - --mix=false
+      - --rln-relay=false
+      - --listen-address=0.0.0.0
+      - --dns-addrs-name-server=${DNS_NS:-1.1.1.1}  # online-monitor queries one.one.one.one via this server every 5s
+      - --tcp-port=60000
+      - --metrics-server=false
+      - --peer-persistence=false
+      - --local-storage-path=/data
+      - --log-level=INFO
+    ports: ["127.0.0.1:18641:8645"]
+    networks:
+      relaynet: {ipv4_address: 172.28.66.21}
+
+  nb:
+    image: *img
+    platform: linux/amd64
+    container_name: an-nb
+    depends_on: [r1]
+    command:
+      - --nodekey=${NB_KEY}
+      - --nat=extip:172.28.66.22
+      - --relay=true
+      - --store=false
+      - --filter=false
+      - --lightpush=false
+      - --staticnode=/ip4/172.28.66.10/tcp/60000/p2p/${R1_PEER_ID}
+      - --staticnode=${R2_STATIC:-/ip4/172.28.66.10/tcp/60000/p2p/${R1_PEER_ID}}  # second service node when the r2 variant is up
+      - --storenode=/ip4/172.28.66.10/tcp/60000/p2p/${R1_PEER_ID}
+      - --filternode=/ip4/172.28.66.10/tcp/60000/p2p/${R1_PEER_ID}
+      - --lightpushnode=/ip4/172.28.66.10/tcp/60000/p2p/${R1_PEER_ID}
+      - --rest=true
+      - --rest-address=0.0.0.0
+      - --rest-port=8645
+      - --rest-admin=true
+      - --rest-relay-cache-capacity=${CLIENT_CACHE:-50}
+      - --max-msg-size=${MAX_MSG_SIZE:-150KiB}
+      - --cluster-id=66
+      - --num-shards-in-network=1
+      - --shard=0
+      - --discv5-discovery=false
+      - --peer-exchange=false
+      - --relay-peer-exchange=false
+      - --rendezvous=false
+      - --enable-kad-discovery=false
+      - --quic-support=false
+      - --mix=false
+      - --rln-relay=false
+      - --listen-address=0.0.0.0
+      - --dns-addrs-name-server=${DNS_NS:-1.1.1.1}  # online-monitor queries one.one.one.one via this server every 5s
+      - --tcp-port=60000
+      - --metrics-server=false
+      - --peer-persistence=false
+      - --local-storage-path=/data
+      - --log-level=INFO
+    ports: ["127.0.0.1:18642:8645"]
+    networks:
+      relaynet: {ipv4_address: 172.28.66.22}
+
+volumes:
+  r1data:
+
+networks:
+  relaynet:
+    driver: bridge
+    # set INTERNAL=true to remove all egress (see scripts/internal-net.sh); compose cannot interpolate bool here
+    internal: ${NET_INTERNAL:-false}
+    ipam:
+      config: [{subnet: 172.28.66.0/24}]

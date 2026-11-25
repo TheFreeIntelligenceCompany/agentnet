@@ -1,0 +1,132 @@
+{
+  "basic": {
+    "A_to_B": {
+      "delivered_unique": 100,
+      "delivery_rate": 1.0,
+      "direction": "A->B",
+      "duplicates": 0,
+      "integrity_failures": 0,
+      "latency_ms_max": 56.057,
+      "latency_ms_p50": 27.718,
+      "latency_ms_p95": 30.056,
+      "latency_ms_p99": 33.282,
+      "max_batch_receiver": 2,
+      "missing_seqs": [],
+      "ordering_violations": 0,
+      "own_echo_seen_by_sender": 100,
+      "poll_calls_receiver": 336,
+      "poll_nonempty_receiver": 199,
+      "publish_call_ms_p50": 2.960584,
+      "publish_call_ms_p95": 4.951791,
+      "publish_http_failures": 0,
+      "sent": 100
+    },
+    "B_to_A": {
+      "delivered_unique": 100,
+      "delivery_rate": 1.0,
+      "direction": "B->A",
+      "duplicates": 0,
+      "integrity_failures": 0,
+      "latency_ms_max": 33.758,
+      "latency_ms_p50": 27.498,
+      "latency_ms_p95": 31.245,
+      "latency_ms_p99": 31.866,
+      "max_batch_receiver": 1,
+      "missing_seqs": [],
+      "ordering_violations": 0,
+      "own_echo_seen_by_sender": 100,
+      "poll_calls_receiver": 335,
+      "poll_nonempty_receiver": 200,
+      "publish_call_ms_p50": 3.1332920000000004,
+      "publish_call_ms_p95": 7.30025,
+      "publish_http_failures": 0,
+      "sent": 100
+    },
+    "content_topic": "/agentnet/1/probe-465aad5/proto",
+    "hash_crosscheck": {
+      "distinct_relay_observed_hashes": 200,
+      "found_in_R1_store_with_identical_hash": 200,
+      "store_total_for_topic": 200
+    },
+    "n_per_direction": 100,
+    "poll_interval_ms": 25,
+    "publish_errors": [
+      [],
+      []
+    ],
+    "publish_interval_ms": 25
+  },
+  "burst": [
+    {
+      "burst": 40,
+      "lost": 0,
+      "lost_first": [],
+      "lost_last": [],
+      "max_batch_per_poll": 40,
+      "poll_ms": 1500,
+      "publish_failures": 0,
+      "received": 40,
+      "send_secs": 0.105505666
+    },
+    {
+      "burst": 100,
+      "lost": 50,
+      "lost_first": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "lost_last": [
+        49,
+        48,
+        47,
+        46,
+        45
+      ],
+      "max_batch_per_poll": 50,
+      "poll_ms": 1500,
+      "publish_failures": 0,
+      "received": 50,
+      "send_secs": 0.26017575
+    },
+    {
+      "burst": 100,
+      "lost": 0,
+      "lost_first": [],
+      "lost_last": [],
+      "max_batch_per_poll": 45,
+      "poll_ms": 100,
+      "publish_failures": 0,
+      "received": 100,
+      "send_secs": 0.24995925
+    }
+  ],
+  "mode": "all",
+  "note": "LOCALHOST/container-network test; synthetic payloads",
+  "offline": {
+    "B_connected_to_R1_after_secs": 1.10976575,
+    "B_relay_cache_after_restart_before_resubscribe": "404 Not Found /agentnet/1/probe-465aad5-offline/proto",
+    "B_rest_healthy_after_secs": 0.967107708,
+    "content_topic": "/agentnet/1/probe-465aad5-offline/proto",
+    "docker_stop_secs": 2.124633083,
+    "offline_messages": 20,
+    "publish_errors": [],
+    "publish_failures_while_B_down": 0,
+    "second_identical_query_entries": 20,
+    "store_query_via_B_pageSize7": {
+      "entries": 20,
+      "entries_whose_hash_matches_local_recompute": 20,
+      "errors": [],
+      "in_ascending_order": true,
+      "integrity_failures": 0,
+      "missing": [],
+      "pages": 3,
+      "total_secs": 0.045291708,
+      "unique_offline_seqs": 20
+    }
+  },
+  "run": "465aad5",
+  "started_ns": "1795638530228371000"
+}

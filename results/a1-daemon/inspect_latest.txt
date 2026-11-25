@@ -1,0 +1,1 @@
+["/usr/bin/logosdeliverynode"] ["--help"] {"build":"https://ci.infra.status.im/job/nim-waku/job/docker-latest/1125/","commit":"39eda3103293b9cd2e7e846a48ab18486998623c","description":"Logos Delivery node","maintainer":"jakub@status.im","source":"https://github.com/logos-messaging/logos-delivery","version":"nightly-1-g39eda310"} 2026-11-09T17:41:09.569359636Z

@@ -1,0 +1,19 @@
+v0.39.2: Pulling from wakuorg/nwaku
+40e8901e3153: Pulling fs layer
+de5d8349b771: Pulling fs layer
+d5b54e6cfea5: Pulling fs layer
+44cf07d57ee4: Pulling fs layer
+a614bf0fc0ed: Pulling fs layer
+a614bf0fc0ed: Download complete
+40e8901e3153: Download complete
+de5d8349b771: Download complete
+44cf07d57ee4: Download complete
+44cf07d57ee4: Pull complete
+d5b54e6cfea5: Download complete
+de5d8349b771: Pull complete
+a614bf0fc0ed: Pull complete
+40e8901e3153: Pull complete
+d5b54e6cfea5: Pull complete
+Digest: sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73
+Status: Downloaded newer image for wakuorg/nwaku:v0.39.2
+docker.io/wakuorg/nwaku:v0.39.2

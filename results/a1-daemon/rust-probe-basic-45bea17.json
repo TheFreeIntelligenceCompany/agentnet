@@ -1,0 +1,63 @@
+{
+  "basic": {
+    "A_to_B": {
+      "delivered_unique": 100,
+      "delivery_rate": 1.0,
+      "direction": "A->B",
+      "duplicates": 0,
+      "integrity_failures": 0,
+      "latency_ms_max": 197.656,
+      "latency_ms_p50": 51.519,
+      "latency_ms_p95": 168.927,
+      "latency_ms_p99": 197.555,
+      "max_batch_receiver": 3,
+      "missing_seqs": [],
+      "ordering_violations": 0,
+      "own_echo_seen_by_sender": 100,
+      "poll_calls_receiver": 287,
+      "poll_nonempty_receiver": 185,
+      "publish_call_ms_p50": 32.946292,
+      "publish_call_ms_p95": 75.307125,
+      "publish_http_failures": 0,
+      "sent": 100
+    },
+    "B_to_A": {
+      "delivered_unique": 100,
+      "delivery_rate": 1.0,
+      "direction": "B->A",
+      "duplicates": 0,
+      "integrity_failures": 0,
+      "latency_ms_max": 447.438,
+      "latency_ms_p50": 87.52,
+      "latency_ms_p95": 202.686,
+      "latency_ms_p99": 347.183,
+      "max_batch_receiver": 3,
+      "missing_seqs": [],
+      "ordering_violations": 0,
+      "own_echo_seen_by_sender": 100,
+      "poll_calls_receiver": 282,
+      "poll_nonempty_receiver": 178,
+      "publish_call_ms_p50": 53.09775,
+      "publish_call_ms_p95": 132.531666,
+      "publish_http_failures": 0,
+      "sent": 100
+    },
+    "content_topic": "/agentnet/1/probe-45bea17/proto",
+    "hash_crosscheck": {
+      "distinct_relay_observed_hashes": 200,
+      "found_in_R1_store_with_identical_hash": 200,
+      "store_total_for_topic": 200
+    },
+    "n_per_direction": 100,
+    "poll_interval_ms": 25,
+    "publish_errors": [
+      [],
+      []
+    ],
+    "publish_interval_ms": 25
+  },
+  "mode": "basic",
+  "note": "LOCALHOST/container-network test; synthetic payloads",
+  "run": "45bea17",
+  "started_ns": "1795637891062325000"
+}

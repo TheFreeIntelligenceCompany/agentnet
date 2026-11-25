@@ -1,0 +1,4 @@
+18640 peers: ['Connected', 'Connected']
+18641 peers: ['Connected', 'Connected']
+18642 peers: ['Connected', 'Connected']
+18643 peers: ['Connected', 'Connected', 'CannotConnect']

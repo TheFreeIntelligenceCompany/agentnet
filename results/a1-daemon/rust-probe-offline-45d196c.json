@@ -1,0 +1,28 @@
+{
+  "mode": "offline",
+  "note": "LOCALHOST/container-network test; synthetic payloads",
+  "offline": {
+    "B_connected_to_R1_after_secs": 1.455408042,
+    "B_relay_cache_after_restart_before_resubscribe": "404 Not Found /agentnet/1/probe-45d196c-offline/proto",
+    "B_rest_healthy_after_secs": 1.310153375,
+    "content_topic": "/agentnet/1/probe-45d196c-offline/proto",
+    "docker_stop_secs": 1.1618145420000001,
+    "offline_messages": 20,
+    "publish_errors": [],
+    "publish_failures_while_B_down": 0,
+    "second_identical_query_entries": 21,
+    "store_query_via_B_pageSize7": {
+      "entries": 21,
+      "entries_whose_hash_matches_local_recompute": 21,
+      "errors": [],
+      "in_ascending_order": true,
+      "integrity_failures": 0,
+      "missing": [],
+      "pages": 3,
+      "total_secs": 0.04846275,
+      "unique_offline_seqs": 20
+    }
+  },
+  "run": "45d196c",
+  "started_ns": "1795637968715091000"
+}

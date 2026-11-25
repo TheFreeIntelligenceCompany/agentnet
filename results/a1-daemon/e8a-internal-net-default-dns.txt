@@ -1,0 +1,35 @@
+network internal flag: true, DNS_NS=1.1.1.1; host-published port reachable? 000
+### egress sanity from inside the network (expect failure):
+nc: connect to 1.1.1.1 port 53 (tcp) failed: Network unreachable
+rc=1
+rc=1
+nc: connect to 1.1.1.1 port 443 (tcp) failed: Network unreachable
+### wait for NA/NB to connect to R1
+### demo-basic from inside the internal network
+### subscribe NA, NB (content topic /agentnet/1/spike-a1/proto)
+OK
+HTTP 200
+OK
+HTTP 200
+### A -> B
+OK
+HTTP 200
+### NB poll
+[]
+HTTP 200
+### NB poll again (expect empty: destructive read)
+[]
+HTTP 200
+### B -> A reply
+Failed to publish: publish failed in relay: NoPeersToPublish
+HTTP 400
+### NA poll (own msg A->B may also appear? reply should)
+[{"payload":"aGVsbG8gZnJvbSBBIDE3OTU2Mzc4MDIyMDA3MzY2Njc=","contentTopic":"/agentnet/1/spike-a1/proto","version":0,"timestamp":1795637802262110208,"ephemeral":false,"proof":""}]
+HTTP 200
+### Store query on R1 (self store) include data
+{"requestId":"","statusCode":200,"statusDesc":"OK","messages":[{"messageHash":"0xe9fc8fb41849aee715422deb60926e0734e8a41b254aeffdd78aa4d891ddc96d","message":{"payload":"ZWdyZXNzLTE3OTU2MzY2OTE=","contentTopic":"/agentnet/1/spike-a1/proto","version":0,"timestamp":1795636691437078528,"ephemeral":false},"pubsubTopic":"/waku/2/rs/66/0"},{"messageHash":"0x0eb67b0909a37f7e1ff8fec3a8d5bae3e79ff2ff2de4af05f260f51a7accfb41","message":{"payload":"ZWdyZXNzLTE3OTU2MzY3MDE=","contentTopic":"/agentnet/1/spike-a1/proto","version":0,"timestamp":1795636701644843776,"ephemeral":false},"pubsubTopic":"/waku/2/rs/66/0"},{"messageHash":"0xea235198c4fae82d89cda989c628b24e1e81ef504283e3073671dc64c83fdb95","message":{"payload":"ZWdyZXNzLTE3OTU2MzY3MTE=","contentTopic":"/agentnet/1/spike-a1/proto","version":0,"timestamp":1795636711914035456,"ephemeral":false},"pubsubTopic":"/waku/2/rs/66/0"},{"messageHash":"0x01e4d1139673dc40048d8ca12d72d8e9cd2edbb7b9c802d91b7c3b0a66956572","message":{"payload":"ZWdyZXNzLTE3OTU2MzY3MjE=","contentTopic":"/agentnet/1/spike-a1/proto","version":0,"timestamp":1795636722080858880,"ephemeral":false},"pubsubTopic":"/waku/2/rs/66/0"},{"messageHash":"0xdc6fad4a8fd6ded1cf9373bd86c3780b121254e18c6a7f1b42f4faa6a0a1f908","message":{"payload":"ZWdyZXNzLTE3OTU2MzY3MzI=","contentTopic":"/agentnet/1/spike-a1/proto","version":0,"timestamp":1795636732244666880,"ephemeral":false},"pubsubTopic":"/waku/2/rs/66/0"},{"messageHash":"0x3c278da044c2a70b5ab62d48a59921b192a1103ead2910eeaa31865e4d452c54","message":{"payload":"ZWdyZXNzLTE3OTU2MzY3NDI=","contentTopic":"/agentnet/1/spike-a1/proto","version":0,"timestamp":1795636742300701952,"ephemeral":false},"pubsubTopic":"/waku/2/rs/66/0"},{"messageHash":"0xc5732aaf656caa96846e10832fa8ff4219e95634fa08561c667551904a834193","message":{"payload":"ZWdyZXNzLTE3OTU2MzY3NTI=","contentTopic":"/agentnet/1/spike-a1/proto","version":0,"timestamp":1795636752358003200,"ephemeral":false},"pubsubTopic":"/waku/2/rs/66/0"},{"messageHash":"0x65eed097522eb65b1c1a8027d670098790d08f9b9c1f4be017f86072a72f888d","message":{"payload":"ZWdyZXNzLTE3OTU2MzY3NjI=","contentTopic":"/agentnet/1/spike-a1/proto","version":0,"timestamp":1795636762419767552,"ephemeral":false},"pubsubTopic":"/waku/2/rs/66/0"},{"messageHash":"0x48f43ef5d08f87d3b6ca1b0ebc978b5551f2041e7b0c195cda39581bd1d02dc5","message":{"payload":"ZWdyZXNzLTE3OTU2MzY3NzI=","contentTopic":"/agentnet/1/spike-a1/proto","version":0,"timestamp":1795636772492002816,"ephemeral":false},"pubsubTopic":"/waku/2/rs/66/0"},{"messageHash":"0xda783830170714da5bea98ddd9bad3a658fb8c29104aa77634262561cf436241","message":{"payload":"ZWdyZXNzLTE3OTU2MzY3ODI=","contentTopic":"/agentnet/1/spike-a1/proto","version":0,"timestamp":1795636782544026368,"ephemeral":false},"pubsubTopic":"/waku/2/rs/66/0"}],"paginationCursor":"0xda783830170714da5bea98ddd9bad3a658fb8c29104aa77634262561cf436241"}
+HTTP 200
+### health NB
+{"nodeHealth":"READY","connectionStatus":"Disconnected","protocolsHealth":[{"Relay":"NOT_READY","desc":"No connected peers"},{"Lightpush":"NOT_MOUNTED"},{"Legacy Lightpush":"NOT_MOUNTED"},{"Filter":"NOT_MOUNTED"},{"Store":"NOT_MOUNTED"},{"Peer Exchange":"NOT_MOUNTED"},{"Rendezvous":"NOT_MOUNTED"},{"Mix":"NOT_MOUNTED"},{"Lightpush Client":"NOT_READY","desc":"No Lightpush service peer available yet"},{"Legacy Lightpush Client":"NOT_READY","desc":"No Lightpush service peer available yet"},{"Store Client":"NOT_READY","desc":"No Store service peer available yet, neither Store service set up for the node"},{"Filter Client":"NOT_READY","desc":"No Filter service peer available yet"},{"Rln Relay":"NOT_MOUNTED"}]}
+### R1 log lines mentioning offline/online
+  INF 2026-11-25 20:12:11.535+00:00 Node is online                             topics="waku online monitor" tid=1 file=online_monitor.nim:53

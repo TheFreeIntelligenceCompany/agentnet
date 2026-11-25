@@ -1,0 +1,157 @@
+{
+ "size_boundary": {
+  "max_ok_payload_bytes": 153516,
+  "first_fail_payload_bytes": 153517,
+  "max_msg_size_configured": 153600,
+  "error_at_first_fail": [
+   400,
+   "Failed to publish: publish failed in relay: NoPeersToPublish"
+  ],
+  "receiver_got_max_ok_message": [
+   200,
+   200,
+   204827
+  ]
+ },
+ "size_2MB": [
+  400,
+  "Failed to publish: Message size exceeded maximum of 153600 bytes"
+ ],
+ "cases": {
+  "bad_base64": {
+   "http": 400,
+   "body": ""
+  },
+  "empty_payload": {
+   "http": 400,
+   "body": "Invalid content body, could not decode: Unable to deserialize data: "
+  },
+  "missing_payload": {
+   "http": 400,
+   "body": "Invalid content body, could not decode: Unable to deserialize data: "
+  },
+  "missing_contentTopic": {
+   "http": 400,
+   "body": "Invalid content body, could not decode: Unable to deserialize data: "
+  },
+  "empty_body": {
+   "http": 400,
+   "body": ""
+  },
+  "invalid_json": {
+   "http": 400,
+   "body": "Invalid content body, could not decode: Unable to deserialize data: "
+  },
+  "ct_no_slashes": {
+   "http": 400,
+   "body": "Failed to publish. Autosharding error: invalid format: content-topic 'foo' must start with slash"
+  },
+  "ct_3_parts": {
+   "http": 400,
+   "body": "Failed to publish. Autosharding error: invalid format: Invalid content topic structure. Expected either /<application>/<version>/<topic-name>/<encoding> or /<gen>/<application>/<version>/<topic-name>/<encoding>"
+  },
+  "ct_5_parts_generation0": {
+   "http": 200,
+   "body": "OK"
+  },
+  "ct_generation1": {
+   "http": 400,
+   "body": "Failed to publish. Autosharding error: Generation > 0 are not supported yet"
+  },
+  "ct_unicode_name": {
+   "http": 200,
+   "body": "OK"
+  },
+  "ct_empty_string": {
+   "http": 400,
+   "body": "Invalid content body, could not decode: Unable to deserialize data: "
+  },
+  "ct_unknown_encoding": {
+   "http": 200,
+   "body": "OK"
+  },
+  "ct_very_long_1000": {
+   "http": 200,
+   "body": "OK"
+  },
+  "version_1": {
+   "http": 200,
+   "body": "OK"
+  },
+  "meta_big_base64": {
+   "http": 200,
+   "body": "OK"
+  },
+  "timestamp_60s_past": {
+   "http": 200,
+   "body": "OK"
+  },
+  "timestamp_60s_future": {
+   "http": 200,
+   "body": "OK"
+  },
+  "timestamp_negative": {
+   "http": 200,
+   "body": "OK"
+  },
+  "unknown_field": {
+   "http": 400,
+   "body": "Invalid content body, could not decode: Unable to deserialize data: "
+  },
+  "subscribe_bad_ct": {
+   "http": 500,
+   "body": "Subscribe failed:Failed to decode subscription event: Autosharding error: invalid format: content-topic 'not-a-topic' must start with slash"
+  },
+  "poll_unsubscribed_ct": {
+   "http": 404,
+   "body": "/agentnet/1/never-subscribed/proto"
+  },
+  "publish_unsubscribed_ct_valid": {
+   "http": 200,
+   "body": "OK"
+  }
+ },
+ "stored_payloads_on_R1_for_limits_topic": [],
+ "NB_received_after_cases": [
+  "hi",
+  "old",
+  "fut",
+  "neg"
+ ],
+ "static_pubsub": {
+  "subscribe_static_ok": [
+   [
+    200,
+    "OK"
+   ],
+   [
+    200,
+    "OK"
+   ]
+  ],
+  "subscribe_wrong_cluster": [
+   200,
+   "OK"
+  ],
+  "subscribe_bad_format": [
+   400,
+   "Invalid pubsub topic(s): @[\"/waku/2/default-waku/proto\"]"
+  ],
+  "subscribe_shard5": [
+   200,
+   "OK"
+  ],
+  "publish_static": [
+   200,
+   "OK"
+  ],
+  "publish_static_unsubscribed_shard": [
+   400,
+   "Failed to publish: Node not subscribed to topic: /waku/2/rs/66/7"
+  ],
+  "NB_poll_static": [
+   200,
+   "[{\"payload\":\"cmVwbHkgZnJvbSBC\",\"contentTopic\":\"/agentnet/1/spike-a1/proto\",\"version\":0,\"timestamp\":1795636199872353792,\"ephemeral\":false,\"proof\":\"\"},{\"payload\":\"c3RvcmUtbXNnLTE=\",\"contentTopic\":\"/agentnet/1/spike-a1-store/proto\",\"version\":0,\"timestamp\":1795636220413078272,\"ephemeral\":false,\"proof\":\"\"},{\"payload\":\"c3RvcmUtbXNnLTI=\",\"contentTopic\":\"/agentnet/1/spike-a1-store/proto\",\"version\":0,\"timestamp\":1795636220809830400,\"ephemeral\":false,\"proof\":\"\"},{\"payload\":\"c3RvcmUtbXNnLTM=\",\"contentTopic\":\"/agentnet/1/spike-a1-store/proto\",\"version\":0,\"timestamp\":1795636221219016960,\"ephemeral\":false,\"proof\":\"\"},{\"payload\":\"c3RvcmUtbXNnLTQ=\",\"contentTopic\":\"/agentnet/1/spike-a1-store/proto\",\"version\":0,\"timestamp\":1795636221669562624,\"ephemeral\":false,\"proof\":\"\"},{\"payload\":\"c3RvcmUtbXNnLTU=\",\"contentTopic\":\"/agentnet/1/spike-a1-store/proto\",\"version\":0,\"timestamp\":1795636222032481792,\"ephemeral\":false,\"proof\":\"\"},{\"payload\":\"RVBIRU1FUkFMLW1zZw==\",\"contentTopic\":\"/agentnet/1/spike-a1-store/proto\",\"version\":0,\"timestamp\":1795636222385498880,\"ephemeral\":true,\"proof\":\"\"},{\"payload\":\"aGk=\",\"contentTopic\":\"/0/agentnet/1/spike-a1-limits/proto\",\"version\":0,\"timestamp\":1795636261700828672,\"ephemeral\":false,\"proof\":\"\"},{\"payload\":\"aGk=\",\"contentTopic\":\"/agentnet/1/caf\u00e9-\u2603/proto\",\"version\":0,\"timestamp\":1795636261754679552,\"ephemeral\":false,\"proof\":\"\"},{\"payload\":\"aGk=\",\"contentTopic\":\"/agentnet/1/x/weirdenc\",\"version\":0,\"timestamp\":1795636261774298112,\"ephemeral\":false,\"proof\":\"\"},{\"payload\":\"aGk=\",\"contentTopic\":\"/agentnet/1/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/proto\",\"version\":0,\"timestamp\":1795636261794631168,\"ephemeral\":false,\"proof\":\"\"},{\"payload\":\"aGk=\",\"contentTopic\":\"/agentnet/1/never-subscribed/proto\",\"version\":0,\"timestamp\":1795636261957080576,\"ephemeral\":true,\"proof\":\"\"},{\"payload\":\"c3RhdGljLXB1YnN1Yg==\",\"contentTopic\":\"/agentnet/1/static/proto\",\"version\":0,\"timestamp\":1795636265360876032,\"ephemeral\":true,\"proof\":\"\"}]"
+  ]
+ }
+}

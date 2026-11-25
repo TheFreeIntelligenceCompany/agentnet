@@ -1,0 +1,53 @@
+{
+  "burst": [
+    {
+      "burst": 40,
+      "lost": 0,
+      "lost_first": [],
+      "lost_last": [],
+      "max_batch_per_poll": 40,
+      "poll_ms": 1500,
+      "publish_failures": 0,
+      "received": 40,
+      "send_secs": 0.254923625
+    },
+    {
+      "burst": 100,
+      "lost": 50,
+      "lost_first": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "lost_last": [
+        49,
+        48,
+        47,
+        46,
+        45
+      ],
+      "max_batch_per_poll": 50,
+      "poll_ms": 1500,
+      "publish_failures": 0,
+      "received": 50,
+      "send_secs": 0.946390416
+    },
+    {
+      "burst": 100,
+      "lost": 0,
+      "lost_first": [],
+      "lost_last": [],
+      "max_batch_per_poll": 17,
+      "poll_ms": 100,
+      "publish_failures": 0,
+      "received": 100,
+      "send_secs": 1.1812925
+    }
+  ],
+  "mode": "burst",
+  "note": "LOCALHOST/container-network test; synthetic payloads",
+  "run": "45cd130",
+  "started_ns": "1795637950223911000"
+}

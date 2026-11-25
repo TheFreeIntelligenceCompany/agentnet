@@ -1,0 +1,28 @@
+### baseline peers NB: 1 ['Connected']
+### stop R1 at 19:52:12
+peers NB: 1 ['CanConnect']
+### NB store query with R1 down
+No history response received (timeout)
+HTTP 500
+
+real	0m5.014s
+user	0m0.003s
+sys	0m0.004s
+### NA publish with R1 down
+Failed to publish: publish failed in relay: NoPeersToPublish
+HTTP 400
+### NB lightpush with R1 down
+{"statusDesc":"Push request timed out"}
+HTTP 503
+### NB filter ping with R1 down
+{"requestId":"req-9","statusDesc":"failed to dialPeer: Future operation cancelled!"}
+HTTP 500
+### NB health
+{"nodeHealth":"READY","connectionStatus":"Disconnected","protocolsHealth":[{"Relay":"NOT_READY","desc":"No connected peers"},{"Lightpush":"NOT_MOUNTED"},{"Legacy Lightpush":"NOT_MOUNTED"},{"Filter":"NOT_MOUNTED"},{"Store":"NOT_MOUNTED"},{"Peer Exchange":"NOT_MOUNTED"},{"Rendezvous":"NOT_MOUNTED"},{"Mix":"NOT_MOUNTED"},{"Lightpush Client":"NOT_READY","desc":"No Lightpush service peer available yet"},{"Legacy Lightpush Client":"NOT_READY","desc":"No Lightpush service peer available yet"},{"Store Client":"NOT_READY","desc":"No Store service peer available yet, neither Store service set up for the node"},{"Filter Client":"NOT_READY","desc":"No Filter service peer available yet"},{"Rln Relay":"NOT_MOUNTED"}]}
+### start R1 at 19:52:31 and poll NB peers until connected
+NB reconnected to R1 after 113s (poll #54)
+### NA publish after R1 back (relay mesh formed?)
+OK
+HTTP 200
+[{"payload":"YWZ0ZXItcjEtYmFjaw==","contentTopic":"/agentnet/1/spike-a1/proto","version":0,"timestamp":1795636470671304960,"ephemeral":false,"proof":""}]
+HTTP 200

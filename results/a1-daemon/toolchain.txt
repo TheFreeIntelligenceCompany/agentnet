@@ -1,0 +1,37 @@
+date: 2026-11-25T20:26:11Z
+rustc 1.92.0 (ded5c06cf 2025-12-08)
+cargo 1.92.0 (344c4567c 2025-10-21)
+Docker version 29.8.1, build 4a63305d74
+Docker Compose version 5.6.0
+colima version 0.10.3
+git commit: 00f6c297e92a82c04a4ab507db0a61435650d7e8
+
+runtime: docker
+arch: aarch64
+client: v29.8.1
+server: v29.5.2
+Darwin MacBookPro 25.6.0 Darwin Kernel Version 25.6.0: Fri Jul 31 19:18:49 PDT 2026; root:xnu-12377.161.14~5/RELEASE_ARM64_T6000 arm64
+server=29.5.2 os=Ubuntu 24.04.4 LTS arch=aarch64 cpus=6 mem=10403803136
+name = "base64"
+version = "0.22.1"
+--
+name = "base64"
+version = "0.23.1"
+--
+name = "reqwest"
+version = "0.12.28"
+--
+name = "rustls"
+version = "0.23.46"
+--
+name = "serde"
+version = "1.0.229"
+--
+name = "serde_json"
+version = "1.0.154"
+--
+name = "sha2"
+version = "0.10.9"
+--
+name = "tokio"
+version = "1.54.1"

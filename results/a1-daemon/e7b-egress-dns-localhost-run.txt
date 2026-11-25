@@ -1,0 +1,6 @@
+bridge=br-b16f1657223c dur=100
+stack restarted at 20:20:37
+total packets on bridge: 1175
+packets with an endpoint outside 172.28.66.0/24 (excluding IPv6 multicast listener reports from the VM):        0
+distinct external endpoints:
+(ip:port pairs, external side)

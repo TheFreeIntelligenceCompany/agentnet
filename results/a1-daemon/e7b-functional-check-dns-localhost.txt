@@ -1,0 +1,23 @@
+### subscribe NA, NB (content topic /agentnet/1/spike-a1/proto)
+OK
+HTTP 200
+OK
+HTTP 200
+### A -> B
+OK
+HTTP 200
+### NB poll
+[{"payload":"ZWdyZXNzLTE3OTU2MzgwNTg=","contentTopic":"/agentnet/1/spike-a1/proto","version":0,"timestamp":1795638058090398976,"ephemeral":false,"proof":""},{"payload":"ZWdyZXNzLTE3OTU2MzgwNjg=","contentTopic":"/agentnet
+HTTP 200
+### NB poll again (expect empty: destructive read)
+[]
+HTTP 200
+### B -> A reply
+OK
+HTTP 200
+### NA poll (own msg A->B may also appear? reply should)
+[{"payload":"ZWdyZXNzLTE3OTU2MzgwNTg=","contentTopic":"/agentnet/1/spike-a1/proto","version":0,"timestamp":1795638058090398976,"ephemeral":false,"proof":""},{"payload":"ZWdyZXNzLTE3OTU2MzgwNjg=","contentTopic":"/agentnet
+HTTP 200
+### Store query on R1 (self store) include data
+{"requestId":"","statusCode":200,"statusDesc":"OK","messages":[{"messageHash":"0xe9fc8fb41849aee715422deb60926e0734e8a41b254aeffdd78aa4d891ddc96d","message":{"payload":"ZWdyZXNzLTE3OTU2MzY2OTE=","contentTopic":"/agentnet
+HTTP 200

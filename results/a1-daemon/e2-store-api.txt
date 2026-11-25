@@ -1,0 +1,39 @@
+OK
+HTTP 200
+### publish 5 persistent + 1 ephemeral on /agentnet/1/spike-a1-store/proto from NA
+OK
+HTTP 200
+OK
+HTTP 200
+OK
+HTTP 200
+OK
+HTTP 200
+OK
+HTTP 200
+OK
+HTTP 200
+### store query via R1 self (no peerAddr), page size 2 (descending default?)
+{"requestId":"","statusCode":200,"statusDesc":"OK","messages":[{"messageHash":"0x132755734ecdfb8cbf45bf51c3ec60cc363904f6e48ce768b6f56e2ae1b43055","message":{"payload":"c3RvcmUtbXNnLTE=","contentTopic":"/agentnet/1/spike-a1-store/proto","version":0,"timestamp":1795636220413078272,"ephemeral":false},"pubsubTopic":"/waku/2/rs/66/0"},{"messageHash":"0xb93e49b516b2a3e3b92aa9baa6dce71770fbffbd6b88f11dbc78ec90760bebb5","message":{"payload":"c3RvcmUtbXNnLTI=","contentTopic":"/agentnet/1/spike-a1-store/proto","version":0,"timestamp":1795636220809830400,"ephemeral":false},"pubsubTopic":"/waku/2/rs/66/0"}],"paginationCursor":"0xb93e49b516b2a3e3b92aa9baa6dce71770fbffbd6b88f11dbc78ec90760bebb5"}
+HTTP 200
+### same from NB via peerAddr=R1, ascending=true pageSize=2
+{"requestId":"9c9254a0d5c6cfd94f2d","statusCode":200,"statusDesc":"OK","messages":[{"messageHash":"0x132755734ecdfb8cbf45bf51c3ec60cc363904f6e48ce768b6f56e2ae1b43055","message":{"payload":"c3RvcmUtbXNnLTE=","contentTopic":"/agentnet/1/spike-a1-store/proto","version":0,"timestamp":1795636220413078272,"ephemeral":false},"pubsubTopic":"/waku/2/rs/66/0"},{"messageHash":"0xb93e49b516b2a3e3b92aa9baa6dce71770fbffbd6b88f11dbc78ec90760bebb5","message":{"payload":"c3RvcmUtbXNnLTI=","contentTopic":"/agentnet/1/spike-a1-store/proto","version":0,"timestamp":1795636220809830400,"ephemeral":false},"pubsubTopic":"/waku/2/rs/66/0"}],"paginationCursor":"0xb93e49b516b2a3e3b92aa9baa6dce71770fbffbd6b88f11dbc78ec90760bebb5"}
+HTTP 200
+### same from NB WITHOUT peerAddr (uses --storenode peer selection)
+{"requestId":"c102fb7b4adfb11511ec","statusCode":200,"statusDesc":"OK","messages":[{"messageHash":"0x132755734ecdfb8cbf45bf51c3ec60cc363904f6e48ce768b6f56e2ae1b43055","message":{"payload":"c3RvcmUtbXNnLTE=","contentTopic":"/agentnet/1/spike-a1-store/proto","version":0,"timestamp":1795636220413078272,"ephemeral":false},"pubsubTopic":"/waku/2/rs/66/0"},{"messageHash":"0xb93e49b516b2a3e3b92aa9baa6dce71770fbffbd6b88f11dbc78ec90760bebb5","message":{"payload":"c3RvcmUtbXNnLTI=","contentTopic":"/agentnet/1/spike-a1-store/proto","version":0,"timestamp":1795636220809830400,"ephemeral":false},"pubsubTopic":"/waku/2/rs/66/0"}],"paginationCursor":"0xb93e49b516b2a3e3b92aa9baa6dce71770fbffbd6b88f11dbc78ec90760bebb5"}
+HTTP 200
+### time range [START,END] includeData=false (hashes only)
+{"requestId":"","statusCode":200,"statusDesc":"OK","messages":[{"messageHash":"0x132755734ecdfb8cbf45bf51c3ec60cc363904f6e48ce768b6f56e2ae1b43055"},{"messageHash":"0xb93e49b516b2a3e3b92aa9baa6dce71770fbffbd6b88f11dbc78ec90760bebb5"},{"messageHash":"0xd5f0cc496f8d5a8a2f628dc50117be143e7652ce4e439415edbc7ae44e1cf456"},{"messageHash":"0x4ea029374b5e33f258c46390233c22a1990eb45bf9b037e596f27098745ab01c"},{"messageHash":"0x9afc64360123c1a27231f9547d142adb6c10c1f631201b2e495506d87112a94d"}]}
+HTTP 200
+### pubsubTopic only filter (no content topic)
+{"requestId":"","statusCode":200,"statusDesc":"OK","messages":[{"messageHash":"0xa0a1e090e1f3c15b16e3f3c9df34837178e00cd9b4212e0c517cc04eb368f87e"},{"messageHash":"0xb44bc13c85780c79f378885e026a12c2b71d483e04f1c1750892dc498dbbe6d9"},{"messageHash":"0x132755734ecdfb8cbf45bf51c3ec60cc363904f6e48ce768b6f56e2ae1b43055"},{"messageHash":"0xb93e49b516b2a3e3b92aa9baa6dce71770fbffbd6b88f11dbc78ec90760bebb5"},{"messageHash":"0xd5f0cc496f8d5a8a2f628dc50117be143e7652ce4e439415edbc7ae44e1cf456"},{"messageHash":"0x4ea029374b5e33f258c46390233c22a1990eb45bf9b037e596f27098745ab01c"},{"messageHash":"0x9afc64360123c1a27231f9547d142adb6c10c1f631201b2e495506d87112a94d"}]}
+HTTP 200
+### time range > 24h
+time range exceeds 24h
+HTTP 400
+### no filters at all
+{"requestId":"","statusCode":200,"statusDesc":"OK","messages":[{"messageHash":"0xa0a1e090e1f3c15b16e3f3c9df34837178e00cd9b4212e0c517cc04eb368f87e"},{"messageHash":"0xb44bc13c85780c79f378885e026a12c2b71d483e04f1c1750892dc498dbbe6d9"},{"messageHash":"0x132755734ecdfb8cbf45bf51c3ec60cc363904f6e48ce768b6f56e2ae1b43055"}],"paginationCursor":"0x132755734ecdfb8cbf45bf51c3ec60cc363904f6e48ce768b6f56e2ae1b43055"}
+HTTP 200
+### pageSize 1000 (cap?)
+{"requestId":"","statusCode":200,"statusDesc":"OK","messages":[{"messageHash":"0x132755734ecdfb8cbf45bf51c3ec60cc363904f6e48ce768b6f56e2ae1b43055"},{"messageHash":"0xb93e49b516b2a3e3b92aa9baa6dce71770fbffbd6b88f11dbc78ec90760bebb5"},{"messageHash":"0xd5f0cc496f8d5a8a2f628dc50117be143e7652ce4e439415edbc7ae44e1cf456"},{"messageHash":"0x4ea029374b5e33f258c46390233c22a1990eb45bf9b037e596f27098745ab01c"},{"messageHash":"0x9afc64360123c1a27231f9547d142adb6c10c1f631201b2e495506d87112a94d"}]}
+HTTP 200

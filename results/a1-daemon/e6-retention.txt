@@ -1,0 +1,9 @@
+=== policy 'capacity:8'
+stored right after publishing 12: 12
+stored after 0s wait, no restart (policy only runs every 30min): 12
+stored after restart (policy executes at start): 9
+=== policy 'time:60'
+stored right after publishing 12: 21
+stored after 70s wait, no restart (policy only runs every 30min): 21
+stored after restart (policy executes at start): 0
+=== restore default policy

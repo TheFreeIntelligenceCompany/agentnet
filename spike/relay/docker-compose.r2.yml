@@ -1,0 +1,46 @@
+# Variant: adds a second service node R2 (relay+store+filter+lightpush, own sqlite). Use scripts/up.sh r2.
+# R2 statically peers with R1; NA/NB also dial R2 (R2_STATIC env, set by up.sh).
+services:
+  r2:
+    image: wakuorg/nwaku@sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73
+    platform: linux/amd64
+    container_name: an-r2
+    command:
+      - --nodekey=${R2_KEY}
+      - --nat=extip:172.28.66.11
+      - --relay=true
+      - --store=true
+      - --store-message-db-url=sqlite:///data/r2-store.sqlite3
+      - --store-message-retention-policy=time:3600;capacity:5000
+      - --filter=true
+      - --lightpush=true
+      - --staticnode=/ip4/172.28.66.10/tcp/60000/p2p/${R1_PEER_ID}
+      - --rest=true
+      - --rest-address=0.0.0.0
+      - --rest-port=8645
+      - --rest-admin=true
+      - --max-msg-size=${MAX_MSG_SIZE:-150KiB}
+      - --cluster-id=66
+      - --num-shards-in-network=1
+      - --shard=0
+      - --discv5-discovery=false
+      - --peer-exchange=false
+      - --relay-peer-exchange=false
+      - --rendezvous=false
+      - --enable-kad-discovery=false
+      - --quic-support=false
+      - --mix=false
+      - --rln-relay=false
+      - --listen-address=0.0.0.0
+      - --dns-addrs-name-server=${DNS_NS:-1.1.1.1}
+      - --tcp-port=60000
+      - --metrics-server=false
+      - --peer-persistence=false
+      - --local-storage-path=/data
+      - --log-level=INFO
+    ports: ["127.0.0.1:18643:8645"]
+    volumes: ["r2data:/data"]
+    networks:
+      relaynet: {ipv4_address: 172.28.66.11}
+volumes:
+  r2data:

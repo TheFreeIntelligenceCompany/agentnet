@@ -1,0 +1,16 @@
+latest: Pulling from wakuorg/nwaku
+2fc76bd62cd2: Pulling fs layer
+3fd84001ff9e: Pulling fs layer
+a9c697404828: Pulling fs layer
+b8d726647b34: Pulling fs layer
+b8d726647b34: Download complete
+2fc76bd62cd2: Download complete
+a9c697404828: Download complete
+a9c697404828: Pull complete
+3fd84001ff9e: Download complete
+b8d726647b34: Pull complete
+2fc76bd62cd2: Pull complete
+3fd84001ff9e: Pull complete
+Digest: sha256:443a8dfe2e9985e9f8c1c1874408a63151aa26ac32ee5ae8f3307b32a16a4f26
+Status: Downloaded newer image for wakuorg/nwaku:latest
+docker.io/wakuorg/nwaku:latest

@@ -1,0 +1,40 @@
+### subscribe
+OK
+HTTP 200
+OK
+HTTP 200
+["/agentnet/1/spike-a1-messaging/proto"]
+HTTP 200
+### ma (Core) send
+{"requestId":"b97062d5f85800c93ac1"}
+HTTP 200
+### ma send events
+[{"requestId":"b97062d5f85800c93ac1","events":[{"kind":"propagated","messageHash":"0xad2907bace4f5d254765f839a6c3f2578fa7a45f60f2ae5bb3ae9dda675c6112","timestamp":1795638309825141760}]}]
+HTTP 200
+### mb received events
+[{"seq":1,"messageHash":"0xad2907bace4f5d254765f839a6c3f2578fa7a45f60f2ae5bb3ae9dda675c6112","message":{"payload":"bXNnLTEtZnJvbS1jb3Jl","contentTopic":"/agentnet/1/spike-a1-messaging/proto","version":0,"timestamp":1795638309801900288,"ephemeral":false,"proof":""},"source":"live"}]
+HTTP 200
+### mb (Edge) send reply
+{"requestId":"34ed86b8eb96d3703eea"}
+HTTP 200
+### mb send events
+[{"requestId":"34ed86b8eb96d3703eea","events":[{"kind":"propagated","messageHash":"0xe5cf44e76412fa3b8203126ff077ffd12fdf3cb75af934f647be9318239c7dce","timestamp":1795638312885723136}]}]
+HTTP 200
+### ma received events
+[{"seq":1,"messageHash":"0xad2907bace4f5d254765f839a6c3f2578fa7a45f60f2ae5bb3ae9dda675c6112","message":{"payload":"bXNnLTEtZnJvbS1jb3Jl","contentTopic":"/agentnet/1/spike-a1-messaging/proto","version":0,"timestamp":1795638309801900288,"ephemeral":false,"proof":""},"source":"live"},{"seq":2,"messageHash":"0xe5cf44e76412fa3b8203126ff077ffd12fdf3cb75af934f647be9318239c7dce","message":{"payload":"cmVwbHktZnJvbS1lZGdl","contentTopic":"/agentnet/1/spike-a1-messaging/proto","version":0,"timestamp":1795638312864259840,"ephemeral":false,"proof":""},"source":"live"}]
+HTTP 200
+### offline: stop mb, ma sends 3, start mb
+{"requestId":"bdd9d4bcdc3bbdad0b5b"} HTTP 200 {"requestId":"d22aa7840d7b2c66945f"} HTTP 200 {"requestId":"af3c687a4ddb8ed8c0f5"} HTTP 200 
+### mb after restart: subscriptions (in-memory, lost?)
+[]
+HTTP 200
+OK
+HTTP 200
+### mb received events after resubscribe (any source=history?)
+[{"seq":1,"messageHash":"0xad2907bace4f5d254765f839a6c3f2578fa7a45f60f2ae5bb3ae9dda675c6112","message":{"payload":"bXNnLTEtZnJvbS1jb3Jl","contentTopic":"/agentnet/1/spike-a1-messaging/proto","version":0,"timestamp":1795638309801900288,"ephemeral":false,"proof":""},"source":"history"},{"seq":2,"messageHash":"0xe5cf44e76412fa3b8203126ff077ffd12fdf3cb75af934f647be9318239c7dce","message":{"payload":"cmVwbHktZnJvbS1lZGdl","contentTopic":"/agentnet/1/spike-a1-messaging/proto","version":0,"timestamp":1795638312864259840,"ephemeral":false,"proof":""},"source":"history"},{"seq":3,"messageHash":"0xfef3973a46f499606d857f3b6f5bfd5d76c2c1dcd803f71751f5b7e3469db156","message":{"payload":"d2hpbGUtbWItZG93bi0x","contentTopic":"/agentnet/1/spike-a1-messaging/proto","version":0,"timestamp":1795638316265960704,"ephemeral":false,"proof":""},"source":"history"},{"seq":4,"messageHash":"0x820fb3f1b13ecfe5f0b10c86ec82de3c58370a5dc0fd3654da7f5850a745824a","message":{"payload":"d2hpbGUtbWItZG93bi0y","contentTopic":"/agentnet/1/spike-a1-messaging/proto","version":0,"timestamp":1795638316595346432,"ephemeral":false,"proof":""},"source":"history"},{"seq":5,"messageHash":"0x73b97c064b5944fdca5e871b07d29a7b510469d3c611cda42597bbc955a86829","message":{"payload":"d2hpbGUtbWItZG93bi0z","contentTopic":"/agentnet/1/spike-a1-messaging/proto","version":0,"timestamp":1795638316920889600,"ephemeral":false,"proof":""},"source":"history"}]
+HTTP 200
+### errors
+Invalid message: Incorrect base64 string
+HTTP 400
+Invalid message: invalid content topic: 'bad': invalid format: content-topic 'bad' must start with slash
+HTTP 400

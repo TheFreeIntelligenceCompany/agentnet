@@ -1,0 +1,2 @@
+wakuorg/nwaku:latest 95.9MB
+wakuorg/nwaku:v0.39.2 94.7MB

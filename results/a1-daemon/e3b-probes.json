@@ -1,0 +1,141 @@
+{
+ "size_band": {
+  "153516": [
+   400,
+   "Failed to publish: publish failed in relay: NoPeersToPublish"
+  ],
+  "153517": [
+   400,
+   "Failed to publish: publish failed in relay: NoPeersToPublish"
+  ],
+  "153530": [
+   400,
+   "Failed to publish: publish failed in relay: NoPeersToPublish"
+  ],
+  "153560": [
+   400,
+   "Failed to publish: Message size exceeded maximum of 153600 bytes"
+  ],
+  "153580": [
+   400,
+   "Failed to publish: Message size exceeded maximum of 153600 bytes"
+  ],
+  "153590": [
+   400,
+   "Failed to publish: Message size exceeded maximum of 153600 bytes"
+  ],
+  "153600": [
+   400,
+   "Failed to publish: Message size exceeded maximum of 153600 bytes"
+  ],
+  "153700": [
+   400,
+   "Failed to publish: Message size exceeded maximum of 153600 bytes"
+  ],
+  "154000": [
+   400,
+   "Failed to publish: Message size exceeded maximum of 153600 bytes"
+  ]
+ },
+ "meta": {
+  "0": {
+   "publish": [
+    200,
+    "OK"
+   ]
+  },
+  "32": {
+   "publish": [
+    200,
+    "OK"
+   ]
+  },
+  "64": {
+   "publish": [
+    200,
+    "OK"
+   ]
+  },
+  "65": {
+   "publish": [
+    200,
+    "OK"
+   ]
+  },
+  "100": {
+   "publish": [
+    200,
+    "OK"
+   ]
+  },
+  "2000": {
+   "publish": [
+    200,
+    "OK"
+   ]
+  }
+ },
+ "meta_received_payload_and_metalen": [
+  [
+   "meta0",
+   0
+  ],
+  [
+   "meta32",
+   32
+  ],
+  [
+   "meta64",
+   64
+  ]
+ ],
+ "identical_ts_publish_twice": {
+  "pub": [
+   [
+    200,
+    "OK"
+   ],
+   [
+    400,
+    "Failed to publish: publish failed in relay: NoPeersToPublish"
+   ]
+  ],
+  "NB_received_count": 1
+ },
+ "identical_ts_NA_cache_count": 4,
+ "cache_overflow_70_into_cap50": {
+  "count": 50,
+  "first": [
+   "cap-049",
+   "cap-050",
+   "cap-051"
+  ],
+  "last": [
+   "cap-047",
+   "cap-048",
+   "cap-069"
+  ],
+  "missing": [
+   "cap-000",
+   "cap-001",
+   "cap-002",
+   "cap-003",
+   "cap-004",
+   "cap-005",
+   "cap-006",
+   "cap-007",
+   "cap-008",
+   "cap-009",
+   "cap-010",
+   "cap-011",
+   "cap-012",
+   "cap-013",
+   "cap-014",
+   "cap-015",
+   "cap-016",
+   "cap-017",
+   "cap-018",
+   "cap-019"
+  ]
+ }
+}

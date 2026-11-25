@@ -1,0 +1,39 @@
+### NB filter subscribe (NB is NOT relay-REST-subscribed to /agentnet/1/spike-a1-filter/proto)
+{"requestId":"req-1","statusDesc":"OK"}
+HTTP 200
+### NB filter ping
+{"requestId":"req-1","statusDesc":"OK"}
+HTTP 200
+### R1 admin view of filter subscriptions
+[{"peerId":"16Uiu2HAmGGTNKYN2QDGjGj2HK1fXFUZ4js6P5K1VmMvEofo4MfAZ","filterCriteria":[{"pubsubTopic":"/waku/2/rs/66/0","contentTopic":"/agentnet/1/spike-a1-filter/proto"}]}]
+HTTP 200
+### NA relay publish on /agentnet/1/spike-a1-filter/proto (NA also relay-subscribed? no)
+OK
+HTTP 200
+### NB filter poll
+[{"payload":"dmlhLXJlbGF5LUEtdG8tZmlsdGVyLUI=","contentTopic":"/agentnet/1/spike-a1-filter/proto","version":0,"timestamp":1795636319669606144,"ephemeral":false}]
+HTTP 200
+### NB filter poll again (expect empty, destructive)
+[]
+HTTP 200
+### lightpush v3 from NB (NB -> R1 -> relay), pubsubTopic given
+{"relayPeerCount":2}
+HTTP 200
+### lightpush v3 without pubsubTopic (autosharding)
+{"relayPeerCount":2}
+HTTP 200
+### lightpush legacy v1
+OK
+HTTP 200
+### NB filter poll (should hold lightpush-delivered msgs)
+[{"payload":"bGlnaHRwdXNoLXYzLWZyb20tQg==","contentTopic":"/agentnet/1/spike-a1-filter/proto","version":0,"timestamp":1795636321756376320,"ephemeral":false},{"payload":"bGlnaHRwdXNoLXYzLWZyb20tQg==","contentTopic":"/agentnet/1/spike-a1-filter/proto","version":0,"timestamp":1795636321806723072,"ephemeral":true},{"payload":"bGlnaHRwdXNoLXYzLWZyb20tQg==","contentTopic":"/agentnet/1/spike-a1-filter/proto","version":0,"timestamp":1795636321837371648,"ephemeral":false}]
+HTTP 200
+### filter unsubscribe
+{"requestId":"req-2","statusDesc":"OK"}
+HTTP 200
+### R1 admin filter subs after
+[]
+HTTP 200
+### R1 store contents of /agentnet/1/spike-a1-filter/proto
+{"requestId":"","statusCode":200,"statusDesc":"OK","messages":[{"messageHash":"0x63a1291ca7705433a39199a0ef2c0f33f31f399caa7d52c8f700abdc796e694d","message":{"payload":"dmlhLXJlbGF5LUEtdG8tZmlsdGVyLUI=","contentTopic":"/agentnet/1/spike-a1-filter/proto","version":0,"timestamp":1795636319669606144,"ephemeral":false},"pubsubTopic":"/waku/2/rs/66/0"},{"messageHash":"0xf91f1a4797e0b9e9388042b025775b7cc2b10dd16dca4a3c46cf567d50f60feb","message":{"payload":"bGlnaHRwdXNoLXYzLWZyb20tQg==","contentTopic":"/agentnet/1/spike-a1-filter/proto","version":0,"timestamp":1795636321756376320,"ephemeral":false},"pubsubTopic":"/waku/2/rs/66/0"},{"messageHash":"0x95cb6ee85e997967df02374132bdadb70f2bbe8f8f1b6fdfb21d87df23fa2c74","message":{"payload":"bGlnaHRwdXNoLXYzLWZyb20tQg==","contentTopic":"/agentnet/1/spike-a1-filter/proto","version":0,"timestamp":1795636321837371648,"ephemeral":false},"pubsubTopic":"/waku/2/rs/66/0"}]}
+HTTP 200

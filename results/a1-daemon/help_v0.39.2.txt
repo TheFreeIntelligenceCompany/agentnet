@@ -1,0 +1,278 @@
+[33mUsage: 
+[0m[1m
+[36mlogosdeliverynode[0m [OPTIONS]...
+
+The following options are available:
+
+ [34m[1m--help                  [0m  Show this help message and exit.[0m
+ [34m[1m--version               [0m  Show program's version and exit.[0m
+ [34m[1m--entry-layer           [0m  Top API layer to run: kernel (transport only),
+                               messaging, or channels (messaging + reliable
+                               channels). [=kernel].[0m
+ [34m[1m--mode                  [0m  Node operating mode: Edge (client-only) or Core
+                               (full service node). Applies to
+                               --entry-layer=messaging|channels; rejected for
+                               --entry-layer=kernel. Default is Core. [=none()].[0m
+ [34m[1m--reliability           [0m  Confirm each send against a Store node:
+                               true|false. Default is the value of the network
+                               preset, or true without a preset. [=none()].[0m
+ [34m[1m--anonymity-level       [0m  Sender anonymity level: None, Preferred or
+                               Required. A level above None mounts mix. Default
+                               is None. [=none()].[0m
+ [34m[1m--config-file           [0m  Loads configuration from a TOML file (cmd-line
+                               parameters take precedence).[0m
+ [34m[1m--log-level             [0m  Sets the log level for process. Supported levels:
+                               TRACE, DEBUG, INFO, NOTICE, WARN, ERROR or FATAL
+                               [=INFO].[0m
+ [34m[1m--log-format            [0m  Specifies what kind of logs should be written to
+                               stdout. Supported formats: TEXT, JSON [=TEXT].[0m
+ [34m[1m--rln-relay-cred-path   [0m  The path for persisting rln-relay credential
+                               (requires --rln-relay).[0m
+ [34m[1m--rln-relay-eth-client-address[0m  HTTP address of an Ethereum testnet client e.g.,
+                               http://localhost:8540/. Argument may be repeated.
+                               (requires --rln-relay)
+                               [=@[EthRpcUrl("http://localhost:8540/")]].[0m
+ [34m[1m--rln-relay-eth-contract-address[0m  Address of membership contract on an Ethereum
+                               testnet. (requires --rln-relay).[0m
+ [34m[1m--rln-relay-chain-id    [0m  Chain ID of the provided contract (optional, will
+                               fetch from RPC provider if not used) (requires
+                               --rln-relay) [=0].[0m
+ [34m[1m--rln-relay-cred-password[0m  Password for encrypting RLN credentials (requires
+                               --rln-relay).[0m
+ [34m[1m--rln-relay-user-message-limit[0m  Set a user message limit for the rln membership
+                               registration. Must be a positive integer. Default
+                               is 1. (requires --rln-relay) [=none()].[0m
+ [34m[1m--rln-relay-epoch-sec   [0m  Epoch size in seconds used to rate limit RLN
+                               memberships. Default is 1 second. (requires
+                               --rln-relay) [=none()].[0m
+ [34m[1m--max-msg-size          [0m  Maximum message size. Accepted units: KiB, KB,
+                               and B. e.g. 1024KiB; 1500 B; etc. [=150KiB].[0m
+ [34m[1m--protected-shard       [0m  Shards and its public keys to be used for message
+                               validation, shard:pubkey. Argument may be
+                               repeated. [=@[]].[0m
+ [34m[1m--preset                [0m  Network preset to use. 'twn' is The RLN-protected
+                               Waku Network (cluster 1). 'logos.dev' is the
+                               Logos Dev Network (cluster 3). 'logos.test' is
+                               the Logos Test Network (cluster 2). 'status.prod'
+                               is the Status Production Network (cluster 16, RLN
+                               off, auto-sharding with 1 shard). Overrides other
+                               values..[0m
+ [34m[1m--cluster-id            [0m  Cluster id that the node is running in. Node in a
+                               different cluster id is disconnected. Default is
+                               0. [=none()].[0m
+ [34m[1m--agent-string          [0m  Node agent string which is used as identifier in
+                               network [=logos-delivery-"v0.39.2"].[0m
+ [34m[1m--nodekey               [0m  P2P node private key as 64 char hex string..[0m
+ [34m[1m--listen-address        [0m  Listening address for LibP2P (and Discovery v5,
+                               if enabled) traffic. [=0.0.0.0].[0m
+ [34m[1m--tcp-port              [0m  TCP listening port. [=60000].[0m
+ [34m[1m--ports-shift           [0m  Add a shift to all port numbers. [=0].[0m
+ [34m[1m--nat                   [0m  Specify method to use for determining public
+                               address. Must be one of: any, none, upnp, pmp,
+                               extip:<IP>. [=any].[0m
+ [34m[1m--nat-discovery-timeout-ms[0m  Time limit in milliseconds for NAT gateway
+                               discovery. [=1000].[0m
+ [34m[1m--ext-multiaddr         [0m  External multiaddresses to advertise to the
+                               network. Argument may be repeated..[0m
+ [34m[1m--ext-multiaddr-only    [0m  Only announce external multiaddresses setup with
+                               --ext-multiaddr [=false].[0m
+ [34m[1m--max-connections       [0m  Maximum allowed number of libp2p connections.
+                               (Default: 150) that's recommended value for
+                               better connectivity [=150].[0m
+ [34m[1m--relay-service-ratio   [0m  This percentage ratio represents the relay peers
+                               to service peers. For example, 60:40, tells that
+                               60% of the max-connections will be used for relay
+                               protocol and the other 40% of max-connections
+                               will be reserved for other service protocols
+                               (e.g., filter, lightpush, store, metadata, etc.)
+                               [=50:50].[0m
+ [34m[1m--ip-colocation-limit   [0m  Max num allowed peers from the same IP. Set it to
+                               0 to remove the limitation. [=5].[0m
+ [34m[1m--max-pure-libp2p-peers [0m  Max inbound peers that are not waku nodes but
+                               offer a protocol this node consumes (kademlia
+                               service discovery, mix). 0 admits none. Default
+                               is 20 without a network preset; logos.dev and
+                               logos.test presets set 50, other presets 0.
+                               [=none()].[0m
+ [34m[1m--peer-store-capacity   [0m  Maximum stored peers in the peerstore..[0m
+ [34m[1m--peer-persistence      [0m  Enable peer persistence. [=false].[0m
+ [34m[1m--dns-addrs-name-server [0m  DNS name server IPs to query for DNS multiaddrs
+                               resolution. Argument may be repeated.
+                               [=@[1.1.1.1, 1.0.0.1]].[0m
+ [34m[1m--dns4-domain-name      [0m  The domain name resolving to the node's public
+                               IPv4 address.[0m
+ [34m[1m--relay-client          [0m  Set the node as a relay-client. Set it to true
+                               for nodes that run behind a NAT or firewall and
+                               hence would have reachability issues. [=false].[0m
+ [34m[1m--relay                 [0m  Enable relay protocol: true|false. Default is
+                               true. [=none()].[0m
+ [34m[1m--relay-peer-exchange   [0m  Enable gossipsub peer exchange in relay protocol:
+                               true|false [=false].[0m
+ [34m[1m--relay-shard-manager   [0m  Enable experimental shard aware peer manager for
+                               relay protocol: true|false [=false].[0m
+ [34m[1m--rln-relay             [0m  Enable spam protection through rln-relay:
+                               true|false. Default is false. [=none()].[0m
+ [34m[1m--rln-relay-membership-index[0m  The index of the onchain commitment to use
+                               (requires --rln-relay).[0m
+ [34m[1m--rln-disable-validation[0m  Disable validation RLN proofs of received
+                               messages: true|false [=false].[0m
+ [34m[1m--entry-node            [0m  Entry node address (enrtree:, enr:, or
+                               multiaddr). Automatically classified and
+                               distributed to DNS discovery, discv5 bootstrap,
+                               and static nodes. Argument may be repeated..[0m
+ [34m[1m--staticnode            [0m  Peer multiaddr to directly connect with. Argument
+                               may be repeated..[0m
+ [34m[1m--num-shards-in-network [0m  Enables autosharding and set number of shards in
+                               the cluster, set to `0` to use static sharding
+                               [=0].[0m
+ [34m[1m--shard                 [0m  Shards index to subscribe to
+                               [0..NUM_SHARDS_IN_NETWORK-1]. Argument may be
+                               repeated. Subscribes to all shards by default in
+                               auto-sharding, no shard for static sharding.[0m
+ [34m[1m--content-topic         [0m  Default content topic to subscribe to. Argument
+                               may be repeated..[0m
+ [34m[1m--store                 [0m  Enable/disable waku store protocol. Default is
+                               false. [=none()].[0m
+ [34m[1m--storenode             [0m  Peer multiaddress to query for storage.[0m
+ [34m[1m--store-message-retention-policy[0m  Message store retention policy. Multiple policies
+                               may be provided as a semicolon-separated string
+                               and are applied as a union. Time retention
+                               policy: 'time:<seconds>'. Capacity retention
+                               policy: 'capacity:<count>'. Size retention
+                               policy: 'size:<xMB/xGB>'. Set to 'none' to
+                               disable. Example:
+                               'time:3600;size:1GB;capacity:100'. (requires
+                               --store) [=time:172800].[0m
+ [34m[1m--store-message-db-url  [0m  The database connection URL for persistent
+                               storage. (requires --store)
+                               [=sqlite://store.sqlite3].[0m
+ [34m[1m--store-message-db-vacuum[0m  Enable database vacuuming at start. Only
+                               supported by SQLite database engine. (requires
+                               --store) [=false].[0m
+ [34m[1m--store-message-db-migration[0m  Enable database migration at start. (requires
+                               --store) [=true].[0m
+ [34m[1m--store-max-num-db-connections[0m  Maximum number of simultaneous Postgres
+                               connections. (requires --store) [=50].[0m
+ [34m[1m--store-resume          [0m  Enable store resume functionality (requires
+                               --store) [=false].[0m
+ [34m[1m--store-sync            [0m  Enable store sync protocol: true|false (requires
+                               --store) [=false].[0m
+ [34m[1m--store-sync-interval   [0m  Interval between store sync attempts. In seconds.
+                               (requires --store-sync) [=300].[0m
+ [34m[1m--store-sync-range      [0m  Amount of time to sync. In seconds. (requires
+                               --store-sync) [=3600].[0m
+ [34m[1m--filter                [0m  Enable filter protocol: true|false. Default is
+                               true. [=none()].[0m
+ [34m[1m--filternode            [0m  Peer multiaddr to request content filtering of
+                               messages..[0m
+ [34m[1m--filter-subscription-timeout[0m  Timeout in seconds for a filter subscription that
+                               is not pinged or refreshed. (requires --filter)
+                               [=300].[0m
+ [34m[1m--filter-max-peers-to-serve[0m  Maximum number of filter peers to serve at a
+                               time. (requires --filter) [=1000].[0m
+ [34m[1m--filter-max-criteria   [0m  Maximum number of pubsub and content topic
+                               combinations per peer at a time. (requires
+                               --filter) [=1000].[0m
+ [34m[1m--lightpush             [0m  Enable lightpush protocol: true|false. Default is
+                               true. [=none()].[0m
+ [34m[1m--lightpushnode         [0m  Peer multiaddr to request lightpush of published
+                               messages..[0m
+ [34m[1m--rest                  [0m  Enable Waku REST HTTP server: true|false
+                               [=false].[0m
+ [34m[1m--rest-address          [0m  Listening address of the REST HTTP server.
+                               (requires --rest) [=127.0.0.1].[0m
+ [34m[1m--rest-port             [0m  Listening port of the REST HTTP server. (requires
+                               --rest) [=8645].[0m
+ [34m[1m--rest-relay-cache-capacity[0m  Capacity of the Relay REST API message cache.
+                               (requires --rest) [=50].[0m
+ [34m[1m--rest-messaging-cache-capacity[0m  Capacity of the messaging REST API
+                               received-messages cache. The newest messages are
+                               kept until polled. (requires --rest) [=50].[0m
+ [34m[1m--rest-admin            [0m  Enable access to REST HTTP Admin API: true|false
+                               (requires --rest) [=false].[0m
+ [34m[1m--rest-allow-origin     [0m  Allow cross-origin requests from the specified
+                               origin. Argument may be repeated. Wildcards: * or
+                               ? allowed. Ex.: "localhost:*" or "127.0.0.1:8080"
+                               (requires --rest) [=@[]].[0m
+ [34m[1m--metrics-server        [0m  Enable the metrics server: true|false [=false].[0m
+ [34m[1m--metrics-server-address[0m  Listening address of the metrics server.
+                               (requires --metrics-server) [=127.0.0.1].[0m
+ [34m[1m--metrics-server-port   [0m  Listening HTTP port of the metrics server.
+                               (requires --metrics-server) [=8008].[0m
+ [34m[1m--metrics-logging       [0m  Enable metrics logging: true|false [=true].[0m
+ [34m[1m--dns-discovery-url     [0m  URL for DNS node list in format
+                               'enrtree://<key>@<fqdn>', enables DNS Discovery.[0m
+ [34m[1m--discv5-discovery      [0m  Enable discovering nodes via Node Discovery v5.
+                               Default is true. [=none()].[0m
+ [34m[1m--discv5-udp-port       [0m  Listening UDP port for Node Discovery v5.
+                               (requires --discv5-discovery) [=9000].[0m
+ [34m[1m--discv5-bootstrap-node [0m  Text-encoded ENR for bootstrap node. Used when
+                               connecting to the network. Argument may be
+                               repeated. (requires --discv5-discovery).[0m
+ [34m[1m--discv5-enr-auto-update[0m  Discovery can automatically update its ENR with
+                               the IP address and UDP port as seen by other
+                               nodes it communicates with. This option allows to
+                               enable/disable this functionality (requires
+                               --discv5-discovery) [=false].[0m
+ [34m[1m--peer-exchange         [0m  Enable waku peer exchange protocol (responder
+                               side): true|false. Default is true. [=none()].[0m
+ [34m[1m--peer-exchange-node    [0m  Peer multiaddr to send peer exchange requests to.
+                               (enables peer exchange protocol requester side).[0m
+ [34m[1m--rendezvous            [0m  Enable waku rendezvous discovery server. Default
+                               is true. [=none()].[0m
+ [34m[1m--mix                   [0m  Enable mix protocol: true|false. Default is
+                               false. [=none()].[0m
+ [34m[1m--mixkey                [0m  ED25519 private key as 64 char hex string,
+                               without 0x. If not provided, a random key will be
+                               generated. (requires --mix).[0m
+ [34m[1m--mixnode               [0m  A mix node to seed the pool with, as
+                               multiaddr:mixPubKey. The multiaddress carries a
+                               /p2p/<peer id> on TCP or QUIC-v1 over IPv4
+                               (directly or through a circuit relay), or names
+                               its host (dns4), which is resolved after the
+                               mount. Argument may be repeated. (requires
+                               --mix).[0m
+ [34m[1m--enable-kad-discovery  [0m  Enable extended kademlia discovery. Can be
+                               enabled without bootstrap nodes for the first
+                               node in the network. Default is false. [=none()].[0m
+ [34m[1m--kad-bootstrap-node    [0m  Peer multiaddr for kademlia discovery bootstrap
+                               node (must include /p2p/<peerID>). Argument may
+                               be repeated. (requires --enable-kad-discovery or
+                               --plugin-kad-discovery).[0m
+ [34m[1m--kad-random-lookup-interval[0m  Interval seconds between random kademlia lookups.
+                               0 (the default) disables them. (requires
+                               --enable-kad-discovery or --plugin-kad-discovery)
+                               [=0].[0m
+ [34m[1m--kad-service-lookup-interval[0m  Interval seconds between service-specific
+                               kademlia lookups. (requires
+                               --enable-kad-discovery or --plugin-kad-discovery)
+                               [=60].[0m
+ [34m[1m--plugin-kad-discovery  [0m  Run kademlia service discovery through an
+                               externally registered plugin instead of
+                               in-process. Turns off in-process kademlia
+                               discovery. Default is false. [=none()].[0m
+ [34m[1m--websocket-support     [0m  Enable websocket: true|false [=false].[0m
+ [34m[1m--websocket-port        [0m  WebSocket listening port. (requires
+                               --websocket-support) [=8000].[0m
+ [34m[1m--websocket-secure-support[0m  Enable secure websocket: true|false (requires
+                               --websocket-support) [=false].[0m
+ [34m[1m--websocket-secure-key-path[0m  Secure websocket key path: '/path/to/key.txt'
+                               (requires --websocket-secure-support).[0m
+ [34m[1m--websocket-secure-cert-path[0m  Secure websocket certificate path:
+                               '/path/to/cert.txt' (requires
+                               --websocket-secure-support).[0m
+ [34m[1m--quic-support          [0m  Enable QUIC transport: true|false [=true].[0m
+ [34m[1m--quic-port             [0m  QUIC (UDP) listening port. Default is the TCP
+                               port (--tcp-port). (requires --quic-support)
+                               [=none()].[0m
+ [34m[1m--rate-limit            [0m  Rate limit settings for different protocols.
+                               Format: protocol:volume/period<unit>. Where
+                               'protocol' can be one of:
+                               <store|storev3|lightpush|px|filter>; if not
+                               defined it means a global setting. 'volume' and
+                               'period' must be integer values. 'unit' must be
+                               one of <h|m|s|ms> - hours, minutes, seconds,
+                               milliseconds respectively. Argument may be
+                               repeated. [=@[]].[0m
+ [34m[1m--local-storage-path    [0m  Path to store local data. [=./data].[0m
+

@@ -1,0 +1,23 @@
+### subscribe NA, NB (content topic /agentnet/1/spike-a1/proto)
+OK
+HTTP 200
+OK
+HTTP 200
+### A -> B
+OK
+HTTP 200
+### NB poll
+[{"payload":"aGVsbG8gZnJvbSBBIDE3OTU2MzYxOTc0ODg3MjQwMDA=","contentTopic":"/agentnet/1/spike-a1/proto","version":0,"timestamp":1795636197597569536,"ephemeral":false,"proof":""}]
+HTTP 200
+### NB poll again (expect empty: destructive read)
+[]
+HTTP 200
+### B -> A reply
+OK
+HTTP 200
+### NA poll (own msg A->B may also appear? reply should)
+[{"payload":"aGVsbG8gZnJvbSBBIDE3OTU2MzYxOTc0ODg3MjQwMDA=","contentTopic":"/agentnet/1/spike-a1/proto","version":0,"timestamp":1795636197597569536,"ephemeral":false,"proof":""},{"payload":"cmVwbHkgZnJvbSBC","contentTopic":"/agentnet/1/spike-a1/proto","version":0,"timestamp":1795636199872353792,"ephemeral":false,"proof":""}]
+HTTP 200
+### Store query on R1 (self store) include data
+{"requestId":"","statusCode":200,"statusDesc":"OK","messages":[{"messageHash":"0xa0a1e090e1f3c15b16e3f3c9df34837178e00cd9b4212e0c517cc04eb368f87e","message":{"payload":"aGVsbG8gZnJvbSBBIDE3OTU2MzYxOTc0ODg3MjQwMDA=","contentTopic":"/agentnet/1/spike-a1/proto","version":0,"timestamp":1795636197597569536,"ephemeral":false},"pubsubTopic":"/waku/2/rs/66/0"},{"messageHash":"0xb44bc13c85780c79f378885e026a12c2b71d483e04f1c1750892dc498dbbe6d9","message":{"payload":"cmVwbHkgZnJvbSBC","contentTopic":"/agentnet/1/spike-a1/proto","version":0,"timestamp":1795636199872353792,"ephemeral":false},"pubsubTopic":"/waku/2/rs/66/0"}]}
+HTTP 200

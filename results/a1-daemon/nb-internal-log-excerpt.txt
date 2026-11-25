@@ -1,0 +1,2 @@
+ERR 2026-11-25 20:12:06.397+00:00 Could not retrieve the primary IP address  topics="waku switch" tid=1 file=waku_switch.nim:53 family=IPv4 error="Network unreachable"
+ERR 2026-11-25 20:12:06.416+00:00 Could not retrieve the primary IP address  topics="waku switch" tid=1 file=waku_switch.nim:53 family=IPv4 error="Network unreachable"

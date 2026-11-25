@@ -1,0 +1,75 @@
+# Variant: clients running the higher-level `--entry-layer=messaging` stack (REST /messaging/v1/*) instead of the kernel REST.
+# ma = Core mode (full node), mb = Edge mode (client only). Experimental smoke test only. Ports 18651/18652.
+services:
+  ma:
+    image: wakuorg/nwaku@sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73
+    platform: linux/amd64
+    container_name: an-ma
+    command: &common
+      - --entry-layer=messaging
+      - --nodekey=${MA_KEY}
+      - --nat=extip:172.28.66.31
+      - --staticnode=/ip4/172.28.66.10/tcp/60000/p2p/${R1_PEER_ID}
+      - --storenode=/ip4/172.28.66.10/tcp/60000/p2p/${R1_PEER_ID}
+      - --rest=true
+      - --rest-address=0.0.0.0
+      - --rest-port=8645
+      - --rest-admin=true
+      - --cluster-id=66
+      - --num-shards-in-network=1
+      - --shard=0
+      - --discv5-discovery=false
+      - --peer-exchange=false
+      - --relay-peer-exchange=false
+      - --rendezvous=false
+      - --enable-kad-discovery=false
+      - --quic-support=false
+      - --mix=false
+      - --rln-relay=false
+      - --listen-address=0.0.0.0
+      - --dns-addrs-name-server=${DNS_NS:-1.1.1.1}
+      - --tcp-port=60000
+      - --metrics-server=false
+      - --peer-persistence=false
+      - --local-storage-path=/data
+      - --log-level=INFO
+      - --mode=Core
+    ports: ["127.0.0.1:18651:8645"]
+    networks:
+      relaynet: {ipv4_address: 172.28.66.31}
+  mb:
+    image: wakuorg/nwaku@sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73
+    platform: linux/amd64
+    container_name: an-mb
+    command:
+      - --entry-layer=messaging
+      - --nodekey=${MB_KEY}
+      - --nat=extip:172.28.66.32
+      - --staticnode=/ip4/172.28.66.10/tcp/60000/p2p/${R1_PEER_ID}
+      - --storenode=/ip4/172.28.66.10/tcp/60000/p2p/${R1_PEER_ID}
+      - --rest=true
+      - --rest-address=0.0.0.0
+      - --rest-port=8645
+      - --rest-admin=true
+      - --cluster-id=66
+      - --num-shards-in-network=1
+      - --shard=0
+      - --discv5-discovery=false
+      - --peer-exchange=false
+      - --relay-peer-exchange=false
+      - --rendezvous=false
+      - --enable-kad-discovery=false
+      - --quic-support=false
+      - --mix=false
+      - --rln-relay=false
+      - --listen-address=0.0.0.0
+      - --dns-addrs-name-server=${DNS_NS:-1.1.1.1}
+      - --tcp-port=60000
+      - --metrics-server=false
+      - --peer-persistence=false
+      - --local-storage-path=/data
+      - --log-level=INFO
+      - --mode=Edge
+    ports: ["127.0.0.1:18652:8645"]
+    networks:
+      relaynet: {ipv4_address: 172.28.66.32}

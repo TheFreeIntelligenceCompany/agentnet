@@ -1,0 +1,1 @@
+["/usr/bin/logosdeliverynode"] {"build":"https://ci.infra.status.im/job/nim-waku/job/deploy-status-prod/55/","commit":"fd07b72c370a6b39c69870c087cc0d928d485327","description":"Logos Delivery node","maintainer":"jakub@status.im","source":"https://github.com/logos-messaging/logos-delivery","version":"v0.39.2"} 2026-10-13T19:01:29.550851671Z
