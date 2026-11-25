@@ -1,0 +1,81 @@
+# relay-gated run, 2026-11-25T20:53:24Z, LOCALHOST (colima amd64 nodes), node A 18641 / node B 18642, image v0.39.2
+# cmd: AGENTNET_RELAY_TESTS=1 cargo test -p agentnet-transport --all-features --test logos_rest_relay -- --nocapture --test-threads=1
+# disruptive tests (#[ignore]) NOT run
+## run 1
+    Blocking waiting for file lock on build directory
+   Compiling agentnet-transport v0.1.0 (/Users/dennison/develop/FIC-elipsis/crates/transport)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.24s
+     Running tests/logos_rest_relay.rs (target/debug/deps/logos_rest_relay-c9a72af5478f425b)
+
+running 7 tests
+test a_to_b_and_b_to_a_with_identical_ids_in_live_and_history ... ok
+test history_paginates_across_pages_and_dedupes_against_live ... live frames received by B: 12/12
+ok
+test isolation_audit_passes_with_right_allowlist_and_fails_closed_with_wrong_one ... status: TransportStatus { ready: true, peers: [PeerInfo { peer_id: "16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV", connected: true, allowed: true }], isolation_violation: None, detail: "node reachable; 1 connected allowed peer(s)" }
+violation text: Some("node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV)")
+ok
+test max_payload_len_is_accepted_and_delivered_and_one_more_is_rejected_locally ... max_payload_len(/agentnet/1/ttest-61200547958f03/proto) = 153503
+measured node boundary for topic of 38 bytes: largest accepted payload = 153511; our max_payload_len = 153503; slack = 8
+ok
+test node_restart_triggers_transparent_resubscribe ... ignored, restarts container an-na; run last with AGENTNET_RELAY_DISRUPTIVE=1 -- --ignored
+test private_mode_config_rejects_public_ip_and_hostnames ... ok
+test r1_down_gives_unavailable_and_history_unavailable ... ignored, stops container an-r1; run last with AGENTNET_RELAY_DISRUPTIVE=1 -- --ignored
+
+test result: ok. 5 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 11.68s
+
+exit=0
+## run 2
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.32s
+     Running tests/logos_rest_relay.rs (target/debug/deps/logos_rest_relay-c9a72af5478f425b)
+
+running 7 tests
+test a_to_b_and_b_to_a_with_identical_ids_in_live_and_history ... ok
+test history_paginates_across_pages_and_dedupes_against_live ... live frames received by B: 12/12
+ok
+test isolation_audit_passes_with_right_allowlist_and_fails_closed_with_wrong_one ... status: TransportStatus { ready: true, peers: [PeerInfo { peer_id: "16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV", connected: true, allowed: true }], isolation_violation: None, detail: "node reachable; 1 connected allowed peer(s)" }
+violation text: Some("node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV)")
+ok
+test max_payload_len_is_accepted_and_delivered_and_one_more_is_rejected_locally ... max_payload_len(/agentnet/1/ttest-612005fef48003/proto) = 153503
+measured node boundary for topic of 38 bytes: largest accepted payload = 153511; our max_payload_len = 153503; slack = 8
+ok
+test node_restart_triggers_transparent_resubscribe ... ignored, restarts container an-na; run last with AGENTNET_RELAY_DISRUPTIVE=1 -- --ignored
+test private_mode_config_rejects_public_ip_and_hostnames ... ok
+test r1_down_gives_unavailable_and_history_unavailable ... ignored, stops container an-r1; run last with AGENTNET_RELAY_DISRUPTIVE=1 -- --ignored
+
+test result: ok. 5 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 11.04s
+
+exit=0
+## run 3
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.32s
+     Running tests/logos_rest_relay.rs (target/debug/deps/logos_rest_relay-c9a72af5478f425b)
+
+running 7 tests
+test a_to_b_and_b_to_a_with_identical_ids_in_live_and_history ... ok
+test history_paginates_across_pages_and_dedupes_against_live ... live frames received by B: 12/12
+ok
+test isolation_audit_passes_with_right_allowlist_and_fails_closed_with_wrong_one ... status: TransportStatus { ready: true, peers: [PeerInfo { peer_id: "16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV", connected: true, allowed: true }], isolation_violation: None, detail: "node reachable; 1 connected allowed peer(s)" }
+violation text: Some("node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV)")
+ok
+test max_payload_len_is_accepted_and_delivered_and_one_more_is_rejected_locally ... max_payload_len(/agentnet/1/ttest-612006b8298603/proto) = 153503
+measured node boundary for topic of 38 bytes: largest accepted payload = 153511; our max_payload_len = 153503; slack = 8
+ok
+test node_restart_triggers_transparent_resubscribe ... ignored, restarts container an-na; run last with AGENTNET_RELAY_DISRUPTIVE=1 -- --ignored
+test private_mode_config_rejects_public_ip_and_hostnames ... ok
+test r1_down_gives_unavailable_and_history_unavailable ... ignored, stops container an-r1; run last with AGENTNET_RELAY_DISRUPTIVE=1 -- --ignored
+
+test result: ok. 5 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 11.64s
+
+exit=0
+
+# offline run: cargo test -p agentnet-transport --all-features
+     Running unittests src/lib.rs (target/debug/deps/agentnet_transport-93a3b6c2b7da7eef)
+test result: ok. 64 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.32s
+     Running tests/logos_rest_relay.rs (target/debug/deps/logos_rest_relay-c9a72af5478f425b)
+test result: ok. 5 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+# skip behaviour without env:
+skipped (set AGENTNET_RELAY_TESTS=1 to run against the spike relay)
+skipped (set AGENTNET_RELAY_TESTS=1 to run against the spike relay)
+skipped (set AGENTNET_RELAY_TESTS=1 to run against the spike relay)
+skipped (set AGENTNET_RELAY_TESTS=1 to run against the spike relay)
+test result: ok. 5 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 0.00s
