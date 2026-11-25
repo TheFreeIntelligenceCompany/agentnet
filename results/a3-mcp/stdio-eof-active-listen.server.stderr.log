@@ -1,0 +1,5 @@
+2026-11-25T20:01:22.844250Z  INFO mcp_spike_server: starting stdio server epoch=18eb623b338433281349f
+2026-11-25T20:01:22.844997Z  INFO serve_inner: rmcp::service: Service initialized as server peer_info=None
+2026-11-25T20:01:22.845771Z  INFO serve_inner: rmcp::service: input stream terminated
+2026-11-25T20:01:27.849206Z  WARN serve_inner: rmcp::service: timed out draining in-flight responses
+2026-11-25T20:01:27.849595Z  INFO serve_inner: rmcp::service: serve finished quit_reason=Closed

@@ -1,0 +1,5 @@
+# stdio EOF with an active listen
+[+     1ms] -> {"jsonrpc":"2.0","id":1,"method":"subscriptions/listen","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"raw-stdio","version":"0"},"io.modelcontextprotocol/clientCapabilities":{}},"notifications":{"resourceSubscriptions":["spike://inbox"]}}}
+[+     6ms] <- {"jsonrpc":"2.0","method":"notifications/subscriptions/acknowledged","params":{"_meta":{"io.modelcontextprotocol/subscriptionId":1},"notifications":{"resourceSubscriptions":["spike://inbox"]}}}
+# stdin closed; server exit after 5017ms: exit status: 0
+# every stdout line parsed as JSON (stdout carries protocol frames only)

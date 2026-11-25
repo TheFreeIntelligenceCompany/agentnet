@@ -1,0 +1,6 @@
+2026-11-25T20:01:23.960892Z  INFO mcp_spike_server: starting stdio server epoch=18eb623b7612f8f0134c0
+2026-11-25T20:01:23.961588Z  INFO serve_inner: rmcp::service: Service initialized as server peer_info=Some(InitializeRequestParams { meta: None, protocol_version: ProtocolVersion("2025-03-26"), capabilities: ClientCapabilities { experimental: None, extensions: None, roots: None, sampling: None, elicitation: None }, client_info: Implementation { name: "raw-legacy", title: None, version: "0", description: None, icons: None, website_url: None } })
+2026-11-25T20:01:23.961803Z  INFO serve_inner: rmcp::service: received notification notification=InitializedNotification(NotificationNoParam { method: InitializedNotificationMethod, extensions: Extensions })
+2026-11-25T20:01:23.961880Z  INFO serve_inner: rmcp::handler::server: client initialized
+2026-11-25T20:01:23.961924Z  INFO serve_inner: rmcp::service: input stream terminated
+2026-11-25T20:01:23.961955Z  INFO serve_inner: rmcp::service: serve finished quit_reason=Closed

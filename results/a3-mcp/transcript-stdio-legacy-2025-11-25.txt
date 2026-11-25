@@ -1,0 +1,21 @@
+# 2025-11-25
+# --- client offers protocolVersion 2025-11-25
+[+     0ms] -> {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"raw-legacy","version":"0"}}}
+[+     6ms] <- {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-11-25","capabilities":{"resources":{"subscribe":true},"tools":{}},"serverInfo":{"name":"mcp-spike","version":"0.0.0"},"instructions":"Spike server: call echo_send; read/subscribe spike://inbox."}}
+# server negotiated 2025-11-25
+[+     7ms] -> {"jsonrpc":"2.0","method":"notifications/initialized"}
+[+     7ms] -> {"jsonrpc":"2.0","id":2,"method":"resources/subscribe","params":{"uri":"spike://inbox"}}
+[+     7ms] <- {"jsonrpc":"2.0","id":2,"result":{}}
+[+     7ms] -> {"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"echo_send","arguments":{"sender":"legacy","body":"hello"}}}
+[+     7ms] <- {"jsonrpc":"2.0","id":3,"result":{"content":[{"type":"text","text":"{\"cursor\":\"18eb623b33811e181349d:1\",\"id\":\"18eb623b33811e181349d-1\",\"seq\":1}"}],"structuredContent":{"cursor":"18eb623b33811e181349d:1","id":"18eb623b33811e181349d-1","seq":1},"isError":false}}
+[+     7ms] <- {"jsonrpc":"2.0","method":"notifications/resources/updated","params":{"uri":"spike://inbox"}}
+[+   514ms] -> {"jsonrpc":"2.0","id":4,"method":"resources/unsubscribe","params":{"uri":"spike://inbox"}}
+[+   514ms] <- {"jsonrpc":"2.0","id":4,"result":{}}
+[+   514ms] -> {"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"echo_send","arguments":{"sender":"legacy","body":"after unsubscribe"}}}
+[+   515ms] <- {"jsonrpc":"2.0","id":5,"result":{"content":[{"type":"text","text":"{\"cursor\":\"18eb623b33811e181349d:2\",\"id\":\"18eb623b33811e181349d-2\",\"seq\":2}"}],"structuredContent":{"cursor":"18eb623b33811e181349d:2","id":"18eb623b33811e181349d-2","seq":2},"isError":false}}
+# no resources/updated after resources/unsubscribe
+[+  1020ms] -> {"jsonrpc":"2.0","id":6,"method":"subscriptions/listen","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"raw-stdio","version":"0"},"io.modelcontextprotocol/clientCapabilities":{}},"notifications":{"resourceSubscriptions":["spike://inbox"]}}}
+[+  1021ms] <- {"jsonrpc":"2.0","method":"notifications/subscriptions/acknowledged","params":{"_meta":{"io.modelcontextprotocol/subscriptionId":6},"notifications":{"resourceSubscriptions":["spike://inbox"]}}}
+[+  1021ms] -> {"jsonrpc":"2.0","method":"notifications/cancelled","params":{"requestId":6}}
+# stdin closed; server exit after 30ms: exit status: 0
+# every stdout line parsed as JSON (stdout carries protocol frames only)

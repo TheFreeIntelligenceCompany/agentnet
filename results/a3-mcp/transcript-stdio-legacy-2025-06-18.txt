@@ -1,0 +1,8 @@
+# 2025-06-18
+# --- client offers protocolVersion 2025-06-18
+[+     0ms] -> {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"raw-legacy","version":"0"}}}
+[+     5ms] <- {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{"resources":{"subscribe":true},"tools":{}},"serverInfo":{"name":"mcp-spike","version":"0.0.0"},"instructions":"Spike server: call echo_send; read/subscribe spike://inbox."}}
+# server negotiated 2025-06-18
+[+     5ms] -> {"jsonrpc":"2.0","method":"notifications/initialized"}
+# stdin closed; server exit after 26ms: exit status: 0
+# every stdout line parsed as JSON (stdout carries protocol frames only)

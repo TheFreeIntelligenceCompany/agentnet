@@ -1,0 +1,20 @@
+# server bound: 127.0.0.1:50759
+# no token:
+HTTP/1.1 401 Unauthorized
+content-type: text/plain; charset=utf-8
+www-authenticate: Bearer
+content-length: 12
+date: Wed, 25 Nov 2026 19:58:39 GMT
+
+unauthorized
+# good token:
+HTTP/1.1 200 OK
+content-type: text/event-stream
+cache-control: no-cache
+x-accel-buffering: no
+transfer-encoding: chunked
+date: Wed, 25 Nov 2026 19:58:39 GMT
+
+data: {"jsonrpc":"2.0","id":1,"result":{"resultType":"complete","supportedVersions":["2024-11-05","2025-03-26","2025-06-18","2025-11-25","2026-07-28"],"capabilities":{"resources":{"subscribe":true},"tools":{}},"instructions":"Spike server: call echo_send; read/subscribe spike://inbox.","ttlMs":0,"cacheScope":"private","_meta":{"io.modelcontextprotocol/serverInfo":{"name":"mcp-spike","version":"0.0.0"}}}}
+
+

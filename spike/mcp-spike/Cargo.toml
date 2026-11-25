@@ -1,0 +1,36 @@
+[package]
+name = "mcp-spike"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.88"
+publish = false
+license = "Apache-2.0"
+
+# Standalone crate: not a member of any parent workspace.
+[workspace]
+
+[dependencies]
+# Exact pin: 3.11.0 is the newest release on crates.io (2026-11-17) and implements 2026-07-28.
+rmcp = { version = "=3.11.0", default-features = false, features = [
+    "server",
+    "client",
+    "macros",
+    "transport-io",
+    "transport-child-process",
+    "transport-streamable-http-server",
+    "transport-streamable-http-client-reqwest",
+    "reqwest",
+] }
+axum = { version = "0.8", default-features = false, features = ["http1", "tokio"] }
+anyhow = "1"
+schemars = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+subtle = "2"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "signal", "sync", "time", "net", "io-std", "process", "io-util"] }
+tokio-util = "0.7"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+
+[dev-dependencies]
+reqwest = { version = "0.13", default-features = false, features = ["rustls", "json", "stream"] }

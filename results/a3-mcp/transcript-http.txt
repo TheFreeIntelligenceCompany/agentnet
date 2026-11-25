@@ -1,0 +1,185 @@
+# Streamable HTTP on 127.0.0.1 (bearer token redacted)
+# modern: server/discover
+[+     1ms] -> POST /mcp
+      Authorization: Bearer <redacted>
+      Content-Type: application/json
+      Accept: application/json, text/event-stream
+      MCP-Protocol-Version: 2026-07-28
+      Mcp-Method: server/discover
+      {"jsonrpc":"2.0","id":1,"method":"server/discover","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"raw-stdio","version":"0"},"io.modelcontextprotocol/clientCapabilities":{}}}}
+[+     9ms] <- HTTP 200 content-type: text/event-stream; cache-control: no-cache; x-accel-buffering: no; transfer-encoding: chunked; date: Wed, 25 Nov 2026 20:01:22 GMT
+[+    10ms] <- body: data: {"jsonrpc":"2.0","id":1,"result":{"resultType":"complete","supportedVersions":["2024-11-05","2025-03-26","2025-06-18","2025-11-25","2026-07-28"],"capabilities":{"resources":{"subscribe":true},"tools":{}},"instructions":"Spike server: call echo_send; read/subscribe spike://inbox.","ttlMs":0,"cacheScope":"private","_meta":{"io.modelcontextprotocol/serverInfo":{"name":"mcp-spike","version":"0.0.0"}}}}
+# modern: tools/call
+[+    10ms] -> POST /mcp
+      Authorization: Bearer <redacted>
+      Content-Type: application/json
+      Accept: application/json, text/event-stream
+      MCP-Protocol-Version: 2026-07-28
+      Mcp-Method: tools/call
+      Mcp-Name: echo_send
+      {"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"raw-stdio","version":"0"},"io.modelcontextprotocol/clientCapabilities":{}},"name":"echo_send","arguments":{"sender":"raw","body":"first"}}}
+[+    11ms] <- HTTP 200 content-type: text/event-stream; cache-control: no-cache; x-accel-buffering: no; transfer-encoding: chunked; date: Wed, 25 Nov 2026 20:01:22 GMT
+[+    11ms] <- body: data: {"jsonrpc":"2.0","id":2,"result":{"resultType":"complete","content":[{"type":"text","text":"{\"cursor\":\"18eb623b330395601349c:1\",\"id\":\"18eb623b330395601349c-1\",\"seq\":1}"}],"structuredContent":{"cursor":"18eb623b330395601349c:1","id":"18eb623b330395601349c-1","seq":1},"isError":false}}
+# modern: subscriptions/listen (response stream stays open)
+[+    11ms] -> POST /mcp
+      Authorization: Bearer <redacted>
+      Content-Type: application/json
+      Accept: application/json, text/event-stream
+      MCP-Protocol-Version: 2026-07-28
+      Mcp-Method: subscriptions/listen
+      {"jsonrpc":"2.0","id":3,"method":"subscriptions/listen","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"raw-stdio","version":"0"},"io.modelcontextprotocol/clientCapabilities":{}},"notifications":{"resourceSubscriptions":["spike://inbox"]}}}
+[+    12ms] <- HTTP 200 content-type: text/event-stream; cache-control: no-cache; x-accel-buffering: no; transfer-encoding: chunked; date: Wed, 25 Nov 2026 20:01:22 GMT
+[+    12ms] <- SSE chunk: data: {"jsonrpc":"2.0","method":"notifications/subscriptions/acknowledged","params":{"_meta":{"io.modelcontextprotocol/subscriptionId":3},"notifications":{"resourceSubscriptions":["spike://inbox"]}}}
+# modern: tools/call while listen stream is open
+[+    12ms] -> POST /mcp
+      Authorization: Bearer <redacted>
+      Content-Type: application/json
+      Accept: application/json, text/event-stream
+      MCP-Protocol-Version: 2026-07-28
+      Mcp-Method: tools/call
+      Mcp-Name: echo_send
+      {"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"raw-stdio","version":"0"},"io.modelcontextprotocol/clientCapabilities":{}},"name":"echo_send","arguments":{"sender":"raw","body":"second"}}}
+[+    13ms] <- HTTP 200 content-type: text/event-stream; cache-control: no-cache; x-accel-buffering: no; transfer-encoding: chunked; date: Wed, 25 Nov 2026 20:01:22 GMT
+[+    13ms] <- body: data: {"jsonrpc":"2.0","id":4,"result":{"resultType":"complete","content":[{"type":"text","text":"{\"cursor\":\"18eb623b330395601349c:2\",\"id\":\"18eb623b330395601349c-2\",\"seq\":2}"}],"structuredContent":{"cursor":"18eb623b330395601349c:2","id":"18eb623b330395601349c-2","seq":2},"isError":false}}
+[+    13ms] <- SSE chunk: data: {"jsonrpc":"2.0","method":"notifications/resources/updated","params":{"_meta":{"io.modelcontextprotocol/subscriptionId":3},"uri":"spike://inbox"}}
+# client closes the SSE response stream = cancellation
+# server-side active listeners now 0
+# modern: resources/read with cursor
+[+    39ms] -> POST /mcp
+      Authorization: Bearer <redacted>
+      Content-Type: application/json
+      Accept: application/json, text/event-stream
+      MCP-Protocol-Version: 2026-07-28
+      Mcp-Method: resources/read
+      Mcp-Name: spike://inbox?limit=1
+      {"jsonrpc":"2.0","id":5,"method":"resources/read","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"raw-stdio","version":"0"},"io.modelcontextprotocol/clientCapabilities":{}},"uri":"spike://inbox?limit=1"}}
+[+    40ms] <- HTTP 200 content-type: text/event-stream; cache-control: no-cache; x-accel-buffering: no; transfer-encoding: chunked; date: Wed, 25 Nov 2026 20:01:22 GMT
+[+    41ms] <- body: data: {"jsonrpc":"2.0","id":5,"result":{"resultType":"complete","ttlMs":0,"cacheScope":"private","contents":[{"uri":"spike://inbox?limit=1","mimeType":"application/json","text":"{\"epoch\":\"18eb623b330395601349c\",\"records\":[{\"seq\":1,\"id\":\"18eb623b330395601349c-1\",\"sender\":\"raw\",\"body\":\"first\",\"conversation_id\":null,\"received_at_ms\":1795636882865}],\"cursor\":\"18eb623b330395601349c:1\",\"next_cursor\":\"18eb623b330395601349c:1\"}"}]}}
+# negative: no Authorization
+[+    41ms] -> POST /mcp
+      Content-Type: application/json
+      Accept: application/json, text/event-stream
+      MCP-Protocol-Version: 2026-07-28
+      Mcp-Method: tools/list
+      {"jsonrpc":"2.0","id":6,"method":"tools/list","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"raw-stdio","version":"0"},"io.modelcontextprotocol/clientCapabilities":{}}}}
+[+    41ms] <- HTTP 401 content-type: text/plain; charset=utf-8; www-authenticate: Bearer; content-length: 12; date: Wed, 25 Nov 2026 20:01:22 GMT
+[+    41ms] <- body: unauthorized
+# negative: valid token, Origin: http://evil.example
+[+    41ms] -> POST /mcp
+      Authorization: Bearer <redacted>
+      Content-Type: application/json
+      Accept: application/json, text/event-stream
+      MCP-Protocol-Version: 2026-07-28
+      Mcp-Method: tools/list
+      Origin: http://evil.example
+      {"jsonrpc":"2.0","id":7,"method":"tools/list","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"raw-stdio","version":"0"},"io.modelcontextprotocol/clientCapabilities":{}}}}
+[+    41ms] <- HTTP 403 content-length: 39; date: Wed, 25 Nov 2026 20:01:22 GMT
+[+    41ms] <- body: Forbidden: Origin header is not allowed
+# negative: valid token, Host: evil.example (DNS rebinding)
+[+    41ms] -> POST /mcp
+      Authorization: Bearer <redacted>
+      Content-Type: application/json
+      Accept: application/json, text/event-stream
+      MCP-Protocol-Version: 2026-07-28
+      Mcp-Method: tools/list
+      Host: evil.example
+      {"jsonrpc":"2.0","id":8,"method":"tools/list","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"raw-stdio","version":"0"},"io.modelcontextprotocol/clientCapabilities":{}}}}
+[+    41ms] <- HTTP 403 content-length: 37; date: Wed, 25 Nov 2026 20:01:22 GMT
+[+    41ms] <- body: Forbidden: Host header is not allowed
+# negative: header/body mismatch (Mcp-Method: tools/list, body tools/call)
+[+    41ms] -> POST /mcp
+      Authorization: Bearer <redacted>
+      Content-Type: application/json
+      Accept: application/json, text/event-stream
+      MCP-Protocol-Version: 2026-07-28
+      Mcp-Method: tools/list
+      {"jsonrpc":"2.0","id":9,"method":"tools/call","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"raw-stdio","version":"0"},"io.modelcontextprotocol/clientCapabilities":{}},"name":"echo_send","arguments":{"sender":"x","body":"y"}}}
+[+    42ms] <- HTTP 400 content-type: application/json; content-length: 131; date: Wed, 25 Nov 2026 20:01:22 GMT
+[+    42ms] <- body: {"jsonrpc":"2.0","id":9,"error":{"code":-32020,"message":"Mcp-Method header `tools/list` does not match body method `tools/call`"}}
+# => status 400 (spec: 400 + HeaderMismatch -32020)
+# negative: modern body but MCP-Protocol-Version header omitted
+[+    42ms] -> POST /mcp
+      Authorization: Bearer <redacted>
+      Content-Type: application/json
+      Accept: application/json, text/event-stream
+      Mcp-Method: tools/list
+      {"jsonrpc":"2.0","id":10,"method":"tools/list","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"raw-stdio","version":"0"},"io.modelcontextprotocol/clientCapabilities":{}}}}
+[+    42ms] <- HTTP 400 content-type: application/json; content-length: 128; date: Wed, 25 Nov 2026 20:01:22 GMT
+[+    42ms] <- body: {"jsonrpc":"2.0","id":10,"error":{"code":-32020,"message":"request _meta protocolVersion requires MCP-Protocol-Version header"}}
+# => status 400 (spec: server MUST reject, or MAY treat as 2025-03-26)
+# negative: unsupported version 1900-01-01 (header and body)
+[+    42ms] -> POST /mcp
+      Authorization: Bearer <redacted>
+      Content-Type: application/json
+      Accept: application/json, text/event-stream
+      Mcp-Method: tools/list
+      MCP-Protocol-Version: 1900-01-01
+      {"jsonrpc":"2.0","id":11,"method":"tools/list","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"1900-01-01","io.modelcontextprotocol/clientInfo":{"name":"raw-stdio","version":"0"},"io.modelcontextprotocol/clientCapabilities":{}}}}
+[+    43ms] <- HTTP 400 content-type: application/json; content-length: 203; date: Wed, 25 Nov 2026 20:01:22 GMT
+[+    43ms] <- body: {"jsonrpc":"2.0","id":11,"error":{"code":-32022,"message":"Unsupported protocol version","data":{"requested":"1900-01-01","supported":["2024-11-05","2025-03-26","2025-06-18","2025-11-25","2026-07-28"]}}}
+# => status 400 (spec: 400 + UnsupportedProtocolVersion -32022)
+# negative: GET /mcp without session (removed in 2026-07-28)
+[+    43ms] <- HTTP 400 content-length: 35; date: Wed, 25 Nov 2026 20:01:22 GMT
+[+    43ms] <- body: Bad Request: Session ID is required
+# negative: DELETE /mcp (removed in 2026-07-28)
+[+    43ms] <- HTTP 400 content-length: 35; date: Wed, 25 Nov 2026 20:01:22 GMT
+[+    43ms] <- body: Bad Request: Session ID is required
+# === legacy client: 2025-11-25 initialize over Streamable HTTP (sessions) ===
+# legacy: initialize
+[+    43ms] -> POST /mcp
+      Authorization: Bearer <redacted>
+      Content-Type: application/json
+      Accept: application/json, text/event-stream
+      {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"raw-legacy","version":"0"}}}
+[+    44ms] <- HTTP 200 content-type: text/event-stream; cache-control: no-cache; x-accel-buffering: no; mcp-session-id: d79f83e5-1081-47b4-a9d2-fa1ca38c5603; transfer-encoding: chunked; date: Wed, 25 Nov 2026 20:01:22 GMT
+[+    44ms] <- body: data: 
+id: 0
+retry: 3000
+
+data: {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-11-25","capabilities":{"resources":{"subscribe":true},"tools":{}},"serverInfo":{"name":"mcp-spike","version":"0.0.0"},"instructions":"Spike server: call echo_send; read/subscribe spike://inbox."}}
+# legacy: notifications/initialized
+[+    44ms] -> POST /mcp
+      Authorization: Bearer <redacted>
+      Content-Type: application/json
+      Accept: application/json, text/event-stream
+      Mcp-Session-Id: d79f83e5-1081-47b4-a9d2-fa1ca38c5603
+      MCP-Protocol-Version: 2025-11-25
+      {"jsonrpc":"2.0","method":"notifications/initialized"}
+[+    44ms] <- HTTP 202 content-length: 0; date: Wed, 25 Nov 2026 20:01:22 GMT
+[+    44ms] <- body: 
+# legacy: resources/subscribe
+[+    44ms] -> POST /mcp
+      Authorization: Bearer <redacted>
+      Content-Type: application/json
+      Accept: application/json, text/event-stream
+      Mcp-Session-Id: d79f83e5-1081-47b4-a9d2-fa1ca38c5603
+      MCP-Protocol-Version: 2025-11-25
+      {"jsonrpc":"2.0","id":2,"method":"resources/subscribe","params":{"uri":"spike://inbox"}}
+[+    45ms] <- HTTP 200 content-type: text/event-stream; cache-control: no-cache; x-accel-buffering: no; transfer-encoding: chunked; date: Wed, 25 Nov 2026 20:01:22 GMT
+[+    45ms] <- body: data: 
+id: 0/0
+retry: 3000
+
+data: {"jsonrpc":"2.0","id":2,"result":{}}
+id: 1/0
+# legacy: GET /mcp (standalone SSE stream, session-bound)
+[+    45ms] <- HTTP 200 content-type: text/event-stream; cache-control: no-cache; x-accel-buffering: no; transfer-encoding: chunked; date: Wed, 25 Nov 2026 20:01:22 GMT
+# legacy: tools/call
+[+    45ms] -> POST /mcp
+      Authorization: Bearer <redacted>
+      Content-Type: application/json
+      Accept: application/json, text/event-stream
+      Mcp-Session-Id: d79f83e5-1081-47b4-a9d2-fa1ca38c5603
+      MCP-Protocol-Version: 2025-11-25
+      {"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"echo_send","arguments":{"sender":"legacy","body":"hello"}}}
+[+    46ms] <- HTTP 200 content-type: text/event-stream; cache-control: no-cache; x-accel-buffering: no; transfer-encoding: chunked; date: Wed, 25 Nov 2026 20:01:22 GMT
+[+    46ms] <- body: data: 
+id: 0/1
+retry: 3000
+
+data: {"jsonrpc":"2.0","id":3,"result":{"content":[{"type":"text","text":"{\"cursor\":\"18eb623b330395601349c:3\",\"id\":\"18eb623b330395601349c-3\",\"seq\":3}"}],"structuredContent":{"cursor":"18eb623b330395601349c:3","id":"18eb623b330395601349c-3","seq":3},"isError":false}}
+id: 1/1
+[+    46ms] <- GET-stream chunk: data: \nid: 0\nretry: 3000
+[+    46ms] <- GET-stream chunk: data: {"jsonrpc":"2.0","method":"notifications/resources/updated","params":{"uri":"spike://inbox"}}\nid: 0
+# legacy: DELETE session
+[+    46ms] <- HTTP 202

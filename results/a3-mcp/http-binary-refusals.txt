@@ -1,0 +1,4 @@
+Error: refusing non-loopback bind 0.0.0.0:0 in the spike
+rc=1
+Error: token in $SPIKE_TOKEN is shorter than 16 bytes
+rc=1

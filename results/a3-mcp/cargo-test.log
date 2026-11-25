@@ -1,0 +1,111 @@
+   Compiling mcp-spike v0.0.0 (/Users/dennison/develop/FIC-elipsis/spike/mcp-spike)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 24.87s
+     Running unittests src/lib.rs (target/debug/deps/mcp_spike-2feaae5d2037aa91)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/mcp-spike-server.rs (target/debug/deps/mcp_spike_server-acda76fb06fa5352)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/spike.rs (target/debug/deps/spike-2632ac977b0a7f70)
+
+running 10 tests
+test t1_negotiated_versions_stdio_and_http ... [1795636701.158] T1 transport=stdio mode=discover negotiated=2026-07-28
+[1795636701.221] T1 transport=http  mode=discover negotiated=2026-07-28
+[1795636701.259] T1 transport=stdio mode=auto negotiated=2026-07-28
+[1795636701.265] T1 transport=http  mode=auto negotiated=2026-07-28
+[1795636701.274] T1 transport=stdio mode=initialize(default=LATEST) negotiated=2025-11-25
+[1795636701.280] T1 transport=http  mode=initialize(default=LATEST) negotiated=2025-11-25
+ok
+test t2_tool_call_over_stdio ... [1795636701.290] T2 tool schema: {"name":"echo_send","description":"Append a record to the in-memory inbox and notify subscribers of spike://inbox","inputSchema":{"$schema":"https://json-schema.org/draft/2020-12/schema","properties":{"body":{"description":"Message body (max 4096 bytes).","type":"string"},"conversation_id":{"description":"Optional conversation identifier.","type":["string","null"]},"sender":{"description":"Logical sender name.","type":"string"}},"required":["sender","body"],"type":"object"},"outputSchema":{"$schema":"https://json-schema.org/draft/2020-12/schema","properties":{"cursor":{"description":"Cursor positioned immediately after this record.","type":"string"},"id":{"type":"string"},"seq":{"format":"uint64","minimum":0,"type":"integer"}},"required":["id","seq","cursor"],"type":"object"}}
+[1795636701.291] T2 echo_send -> EchoSendOutput { id: "18eb6210edfc1ca0e845-1", seq: 1, cursor: "18eb6210edfc1ca0e845:1" }
+[1795636701.292] T2 unknown tool error: Mcp error: -32602: tool not found
+[1795636701.292] T2 bad args -> Ok(CallToolResult { result_type: Some(ResultType("complete")), content: [Text(TextContent { text: "failed to deserialize parameters: invalid type: integer `1`, expected a string", meta: None, annotations: None })], structured_content: None, is_error: Some(true), meta: None })
+ok
+test t3_tool_call_over_http_and_auth ... [1795636701.305] T3 echo_send over http -> EchoSendOutput { id: "18eb6210ee447fe0e79a-1", seq: 1, cursor: "18eb6210ee447fe0e79a:1" }
+[1795636701.308] T3 rmcp client wrong token -> Some("Send message error Transport [rmcp::transport::worker::WorkerTransport<rmcp::transport::streamable_http_client::StreamableHttpClientWorker<reqwest::async_impl::client::Client>>] error: Auth required, when send discover request")
+[1795636701.309] T3 rmcp legacy client empty token -> Some("Send message error Transport [rmcp::transport::worker::WorkerTransport<rmcp::transport::streamable_http_client::StreamableHttpClientWorker<reqwest::async_impl::client::Client>>] error: Auth required, when send initialize request")
+[1795636701.310] T3 raw http [no Authorization] -> 401 www-authenticate=Some("Bearer") body=unauthorized
+[1795636701.310] T3 raw http [wrong token] -> 401 www-authenticate=Some("Bearer") body=unauthorized
+[1795636701.311] T3 raw http [Basic scheme] -> 401 www-authenticate=Some("Bearer") body=unauthorized
+[1795636701.312] T3 raw http [valid token] -> 200 www-authenticate=None body=data: {"jsonrpc":"2.0","id":1,"result":{"resultType":"complete","supportedVersions":["2024-11-05","2025-03-26","2025-06-18","2025-11-25","2026-07-28"],"capabilities":{"resources":{"subscribe":true},"t
+[1795636701.313] T3 raw http [valid token + Origin: http://evil.example] -> 403 www-authenticate=None body=Forbidden: Origin header is not allowed
+[1795636701.313] T3 raw http [valid token + Host: evil.example] -> 403 www-authenticate=None body=Forbidden: Host header is not allowed
+ok
+test t4_subscribe_notify_reread_http_and_stdio ... [1795636701.327] T4 [http] requested=[inbox, not-offered] acknowledged=SubscriptionFilter { tools_list_changed: None, prompts_list_changed: None, resources_list_changed: None, resource_subscriptions: Some(["spike://inbox"]) }
+[1795636701.330] T4 [http] notification after echo #1: Some(ResourceUpdatedNotification(Notification { method: ResourceUpdatedNotificationMethod, params: ResourceUpdatedNotificationParam { uri: "spike://inbox", meta: None }, extensions: Extensions }))
+[1795636701.337] T4 [http] re-read from cursor 18eb6210ef884698e79a:1 -> ["two", "three"]
+[1795636701.357] T4 [stdio] requested=[inbox, not-offered] acknowledged=SubscriptionFilter { tools_list_changed: None, prompts_list_changed: None, resources_list_changed: None, resource_subscriptions: Some(["spike://inbox"]) }
+[1795636701.434] T4 [stdio] notification after echo #1: Some(ResourceUpdatedNotification(Notification { method: ResourceUpdatedNotificationMethod, params: ResourceUpdatedNotificationParam { uri: "spike://inbox", meta: None }, extensions: Extensions }))
+[1795636701.477] T4 [stdio] re-read from cursor 18eb6210f1687848e84a:1 -> ["two", "three"]
+ok
+test t4b_legacy_resources_subscribe_and_unsubscribe ... [1795636701.498] T4b [stdio] legacy notifications/resources/updated uri=spike://inbox
+[1795636702.204] T4b [stdio] after unsubscribe, notification within 700ms: none (pass)
+[1795636702.206] T4b [stdio] listen() on legacy-negotiated session -> Some("Mcp error: -32601: subscriptions/listen")
+[1795636702.222] T4b [http] legacy notifications/resources/updated uri=spike://inbox
+[1795636702.928] T4b [http] after unsubscribe, notification within 700ms: none (pass)
+[1795636702.932] T4b [http] listen() on legacy-negotiated session -> Some("Mcp error: -32601: subscriptions/listen")
+ok
+test t5_cancel_stops_notifications ... [1795636702.972] T5 http: server-side active listeners after cancel = 1
+[1795636702.974] T5 http: cancelled.next() = None, end=Some(Cancelled)
+[1795636703.000] T5 stdio: cancelled.next() = Ok(Ok(None)), end=Some(Cancelled)
+ok
+test t6_reconnect_loses_notifications_client_recovers_from_cursor ... [1795636706.047] T6 client#1 consumed 1 record(s); saved cursor 18eb6212087e60a0e79a:1
+[1795636706.108] T6 3 records appended during the gap; active listeners = 0
+[1795636706.854] T6 after reconnect, notification replayed within 700ms: NONE (gap notifications lost, as designed)
+[1795636706.857] T6 recovered from cursor 18eb6212087e60a0e79a:1: ["m2", "m3", "m4"]
+[1795636706.864] T6 stale-epoch cursor against restarted server -> Mcp error: -32602: cursor belongs to a different server epoch (server restarted); re-read from the beginning({"cursor_epoch":"18eb6212087e60a0e79a","server_epoch":"18eb62123a227628e79a"})
+ok
+test t7_pagination_over_multiple_pages ... [1795636706.905] T7 [stdio] page 1: 10 records, next_cursor=Some("18eb62123ae37080ebc0:10")
+[1795636706.905] T7 [stdio] page 2: 10 records, next_cursor=Some("18eb62123ae37080ebc0:20")
+[1795636706.906] T7 [stdio] page 3: 5 records, next_cursor=None
+[1795636706.907] T7 [stdio] templates: [{"uriTemplate":"spike://inbox{?cursor,limit}","name":"inbox-page"}]
+[1795636706.907] T7 [stdio] resources: [{"uri":"spike://inbox","name":"inbox"}]
+[1795636706.907] T7 [stdio] read spike://inbox?cursor=garbage -> Mcp error: -32602: malformed cursor (expected <epoch>:<seq>)
+[1795636706.907] T7 [stdio] read spike://inbox?limit=0 -> Mcp error: -32602: limit must be a positive integer
+[1795636706.908] T7 [stdio] read spike://other -> Mcp error: -32602: resource_not_found({"uri":"spike://other"})
+[1795636707.009] T7 [http] page 1: 10 records, next_cursor=Some("18eb62123cfe5d58e79a:10")
+[1795636707.021] T7 [http] page 2: 10 records, next_cursor=Some("18eb62123cfe5d58e79a:20")
+[1795636707.038] T7 [http] page 3: 5 records, next_cursor=None
+[1795636707.052] T7 [http] templates: [{"uriTemplate":"spike://inbox{?cursor,limit}","name":"inbox-page"}]
+[1795636707.067] T7 [http] resources: [{"uri":"spike://inbox","name":"inbox"}]
+[1795636707.071] T7 [http] read spike://inbox?cursor=garbage -> Mcp error: -32602: malformed cursor (expected <epoch>:<seq>)
+[1795636707.092] T7 [http] read spike://inbox?limit=0 -> Mcp error: -32602: limit must be a positive integer
+[1795636707.100] T7 [http] read spike://other -> Mcp error: -32602: resource_not_found({"uri":"spike://other"})
+ok
+test t8_fifty_concurrent_tool_calls ... [1795636707.144] T8 [stdio] 50 concurrent calls ok in 22.388375ms; inbox before=0 after=50 seqs 1..=50 unique=50
+[1795636707.255] T8 [http] 50 concurrent calls ok in 74.005333ms; inbox before=0 after=50 seqs 1..=50 unique=50
+ok
+test t9_legacy_versions_negotiation ... [1795636707.299] T9 offered=2025-11-25 transport=stdio negotiated=2025-11-25 tool_call_ok=true
+[1795636707.308] T9 offered=2025-11-25 transport=http negotiated=2025-11-25 tool_call_ok=true
+[1795636707.333] T9 offered=2025-06-18 transport=stdio negotiated=2025-06-18 tool_call_ok=true
+[1795636707.352] T9 offered=2025-06-18 transport=http negotiated=2025-06-18 tool_call_ok=true
+[1795636707.368] T9 offered=2025-03-26 transport=stdio negotiated=2025-03-26 tool_call_ok=true
+[1795636707.376] T9 offered=2025-03-26 transport=http negotiated=2025-03-26 tool_call_ok=true
+[1795636707.394] T9 offered=2024-11-05 transport=stdio negotiated=2024-11-05 tool_call_ok=true
+[1795636707.412] T9 offered=2024-11-05 transport=http negotiated=2024-11-05 tool_call_ok=true
+ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.00s
+
+     Running tests/transcripts.rs (target/debug/deps/transcripts-9cc7a282031a7cf5)
+
+running 4 tests
+test raw_http_modern_and_legacy ... ok
+test raw_stdio_legacy_versions ... ok
+test raw_stdio_modern_2026_07_28 ... ok
+test stdio_shutdown_with_active_listener ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.49s
+
+   Doc-tests mcp_spike
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
