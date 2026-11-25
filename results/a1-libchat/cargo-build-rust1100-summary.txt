@@ -1,0 +1,22 @@
+warning: unused dependency `hkdf`
+  --> core/crypto/Cargo.toml:13:1
+   |
+13 | hkdf = "0.12"
+   | ^^^^^^^^^^^^^
+   |
+   = note: `cargo::unused_dependencies` is set to `warn` by default
+help: consider removing the dependency on `hkdf`
+warning: `crypto` (manifest) generated 1 warning
+warning: unused dependency `chat-sqlite`
+  --> core/integration_tests_core/Cargo.toml:12:1
+   |
+12 | chat-sqlite = { workspace = true }
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::unused_dependencies` is set to `warn` by default
+help: consider removing the dependency on `chat-sqlite`
+warning: `integration_tests_core` (manifest) generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2m 28s
+warning: the following packages contain code that will be rejected by a future version of Rust: proc-macro-error2 v2.0.1
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+cargo build --locked  301.15s user 104.00s system 269% cpu 2:30.36 total

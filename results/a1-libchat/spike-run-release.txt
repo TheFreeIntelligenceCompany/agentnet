@@ -1,0 +1,73 @@
+warning: method `entry` is never used
+  --> src/main.rs:64:8
+   |
+44 | impl Hub {
+   | -------- method in this implementation
+...
+64 |     fn entry(&self, i: usize) -> (String, Vec<u8>) {
+   |        ^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+A addr = 3f9674a83c7cc69ee5a730caadf027f9321aab5632ad459c52e4ddf18cad1556
+B addr = 95e461bfc1b1379e25809737236be7ec33c0bb12f4e5ddb7f082f5336f63458f
+C addr = 4f074b6a2f0439ef7285d6b61b47c84f4ba16ce4a5bf1c878965e0070c979203
+[PASS] T0 contact establishment (A->B welcome via registry key package): convo_a=e872ef56.. convo_b=e872ef56.. equal=true
+[OBSERVED] T0 hub log after establishment: 2 envelopes
+[PASS] T1a A->B 256-byte binary payload (0x00..0xff patterns): received 1 msgs, equal=true
+[PASS] T1b B->A 1000-byte binary payload: received 1
+[OBSERVED] T1c empty payload A->B: received [[]]
+[OBSERVED] T1d size 16384 B: send=Ok delivered_ok=true inbound_errors=[]
+[OBSERVED] T1d size 65536 B: send=Ok delivered_ok=true inbound_errors=[]
+[OBSERVED] T1d size 130048 B: send=Ok delivered_ok=true inbound_errors=[]
+[OBSERVED] T1d size 131072 B: send=Ok delivered_ok=true inbound_errors=[]
+[OBSERVED] T1d size 132096 B: send=Ok delivered_ok=true inbound_errors=[]
+[OBSERVED] T1d size 262144 B: send=Ok delivered_ok=true inbound_errors=[]
+[OBSERVED] T1d size 1048576 B: send=Ok delivered_ok=true inbound_errors=[]
+[OBSERVED] T2 relay-visible envelope: delivery_address=42832133055c (len 12) wire_len=1747 ; convo_id=e872ef56acacb617d53a132b2ed984cc
+[PASS] T2a plaintext marker absent from wire bytes: leaks=false
+[OBSERVED] T2b delivery address vs conversation id: address_contains_convo_id_prefix=false; wire_contains_convo_id_ascii=true
+[PASS] T2c wrong recipient C gets no plaintext: C events=0 errors=[]
+[PASS] T2d intended recipient B decrypts same bytes: 1
+[PASS] T3a tampered ciphertext variants rejected (0 plaintext delivered): [
+    (
+        "byte 5 (envelope header)",
+        0,
+        [],
+    ),
+    (
+        "middle",
+        0,
+        [
+            "generic: An error occurred during AEAD decryption.",
+        ],
+    ),
+    (
+        "last byte (AEAD tag area)",
+        0,
+        [
+            "generic: The requested secret was deleted to preserve forward secrecy.",
+        ],
+    ),
+    (
+        "truncated to half",
+        0,
+        [
+            "Failed to decode payload: failed to decode Protobuf message: EnvelopeV1.payload: buffer underflow",
+        ],
+    ),
+]
+[FAIL] T3b original still decrypts after failed tamper attempts (state not poisoned): 0
+[PASS] T4 replayed ciphertext (x2) not delivered again: redelivered=0 errors=["generic: The requested secret was deleted to preserve forward secrecy.", "generic: The requested secret was deleted to preserve forward secrecy."]
+[PASS] T5a 3 messages delivered order 3,1,2 all decrypt: got [[111, 0], [111, 1], [111, 2]] errors=[]
+[OBSERVED] T5b 40 messages, newest delivered first then rest: decrypted=32 missing_indexes=[0, 1, 2, 3, 4, 5, 6, 7] distinct_errors={"generic: Generation is too old to be processed."}
+[OBSERVED] T6a B conversations before/after restart (same sqlcipher file, same installation): before=1 after=1 can_send_after=false can_receive_after=true
+[OBSERVED] T6b B identity after restart: addr_same=true
+[FAIL] T6c B(restarted) decrypts message sent to the pre-restart conversation: received=0 errors=[]
+[FAIL] T6d B(restarted) can send in pre-restart conversation: Err("convo with id: mls group not found was not found")
+[OBSERVED] T7a welcome envelopes held: 2 envelope(s)
+[PASS] T7a offline-in-network, process alive: welcome processed later: errors=[]
+[OBSERVED] T7b A invites offline E (registry still holds E's old key package): create_direct_conversation=Ok("dd8b968b")
+[FAIL] T7b E restarts, then receives held welcome sent while it was down: ConversationStarted=false errors=["generic: No matching key package was found in the key store."]
+done
+cargo run --release --quiet  0.57s user 1.84s system 0% cpu 4:05.75 total

@@ -1,0 +1,17 @@
+    Updating crates.io index
+    Updating git repository `https://github.com/logos-messaging/chat_proto`
+    Updating git repository `https://github.com/vacp2p/de-mls`
+    Updating git repository `https://github.com/logos-messaging/sds-rs`
+    Updating git repository `https://github.com/logos-messaging/logos-delivery-rust-bindings`
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+error: rustc 1.92.0 is not supported by the following packages:
+  de-mls@4.0.0 requires rustc 1.95
+  de-mls@4.0.0 requires rustc 1.95
+  de-mls@4.0.0 requires rustc 1.95
+Either upgrade rustc or select compatible dependency versions with
+`cargo update <name>@<current-ver> --precise <compatible-ver>`
+where `<compatible-ver>` is the latest version supporting rustc 1.92.0
+
+cargo build --locked  40.10s user 11.53s system 53% cpu 1:35.81 total

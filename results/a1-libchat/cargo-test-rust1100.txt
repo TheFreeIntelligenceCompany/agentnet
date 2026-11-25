@@ -1,0 +1,539 @@
+ Downloading crates ...
+  Downloaded lazy_static v1.5.0
+  Downloaded thread_local v1.1.9
+   Compiling tracing-core v0.1.36
+   Compiling bitflags v2.11.1
+   Compiling rustix v1.1.4
+   Compiling errno v0.3.14
+   Compiling fastrand v2.4.1
+   Compiling lazy_static v1.5.0
+   Compiling thread_local v1.1.9
+   Compiling nu-ansi-term v0.50.3
+   Compiling sharded-slab v0.1.7
+   Compiling message-types v0.1.0 (/Users/dennison/develop/FIC-elipsis/upstream/libchat/extensions/message-types)
+   Compiling tower-http v0.6.11
+   Compiling security-framework v3.7.0
+   Compiling rusqlite v0.42.0
+   Compiling crypto v0.1.0 (/Users/dennison/develop/FIC-elipsis/upstream/libchat/core/crypto)
+   Compiling tracing v0.1.44
+   Compiling alloy-trie v0.9.5
+   Compiling alloy-json-rpc v2.0.5
+   Compiling hyper-util v0.1.20
+   Compiling tracing-log v0.2.0
+   Compiling alloy-transport v2.0.5
+   Compiling tracing-subscriber v0.3.23
+   Compiling message-store v0.1.0 (/Users/dennison/develop/FIC-elipsis/upstream/libchat/extensions/message-store)
+   Compiling rustls-platform-verifier v0.7.0
+   Compiling tempfile v3.27.0
+   Compiling alloy-consensus v2.0.5
+   Compiling prost-build v0.14.3
+   Compiling hyper-rustls v0.27.9
+   Compiling reqwest v0.13.4
+   Compiling reqwest v0.12.28
+   Compiling hashgraph-like-consensus v0.6.0
+   Compiling de-mls v4.0.0 (https://github.com/vacp2p/de-mls?rev=4d85a02#4d85a02f)
+   Compiling alloy-transport-http v2.0.5
+   Compiling alloy-rpc-client v2.0.5
+   Compiling alloy-consensus-any v2.0.5
+   Compiling alloy-network-primitives v2.0.5
+   Compiling alloy-rpc-types-eth v2.0.5
+   Compiling alloy-rpc-types-any v2.0.5
+   Compiling alloy-rpc-types v2.0.5
+   Compiling alloy-network v2.0.5
+   Compiling alloy-provider v2.0.5
+   Compiling alloy-signer-local v2.0.5
+   Compiling alloy-contract v2.0.5
+   Compiling alloy v2.0.5
+   Compiling libchat v0.1.0 (/Users/dennison/develop/FIC-elipsis/upstream/libchat/core/conversations)
+   Compiling chat-sqlite v0.1.0 (/Users/dennison/develop/FIC-elipsis/upstream/libchat/extensions/sqlite)
+   Compiling components v0.1.0 (/Users/dennison/develop/FIC-elipsis/upstream/libchat/extensions/components)
+   Compiling integration_tests_core v0.1.0 (/Users/dennison/develop/FIC-elipsis/upstream/libchat/core/integration_tests_core)
+   Compiling logos-generic-chat v0.1.0 (/Users/dennison/develop/FIC-elipsis/upstream/libchat/crates/generic-chat)
+warning: unused dependency `hkdf`
+  --> core/crypto/Cargo.toml:13:1
+   |
+13 | hkdf = "0.12"
+   | ^^^^^^^^^^^^^
+   |
+   = note: `cargo::unused_dependencies` is set to `warn` by default
+help: consider removing the dependency on `hkdf`
+warning: `crypto` (manifest) generated 1 warning
+warning: unused dependency `chat-sqlite`
+  --> core/integration_tests_core/Cargo.toml:12:1
+   |
+12 | chat-sqlite = { workspace = true }
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::unused_dependencies` is set to `warn` by default
+help: consider removing the dependency on `chat-sqlite`
+warning: unused dependency `chat-sqlite`
+  --> core/integration_tests_core/Cargo.toml:22:1
+   |
+22 | chat-sqlite = { workspace = true }
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+help: consider removing the dependency on `chat-sqlite`
+warning: `integration_tests_core` (manifest) generated 2 warnings
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 10s
+warning: the following packages contain code that will be rejected by a future version of Rust: proc-macro-error2 v2.0.1
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+     Running unittests src/lib.rs (target/debug/build/chat-sqlite/cd68e06be252a087/out/chat_sqlite-cd68e06be252a087)
+
+running 11 tests
+test common::tests::a_config_does_not_print_its_key ... ok
+test common::tests::a_file_database_runs_in_wal ... ok
+test common::tests::a_plain_database_still_opens ... ok
+test identity::tests::satisfies_the_identity_contract ... ok
+test common::tests::a_wrong_key_is_reported_as_a_wrong_key ... ok
+test common::tests::the_same_key_reopens_the_database ... ok
+test tests::test_conversation_roundtrip ... ok
+test identity::tests::an_installation_outlives_the_store_that_wrote_it ... ok
+test kv::tests::satisfies_the_substrate_contract ... ok
+test common::tests::a_passphrase_database_does_not_open_with_a_raw_key ... ok
+test common::tests::a_busy_database_is_not_reported_as_a_wrong_key ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.22s
+
+     Running unittests src/lib.rs (target/debug/build/crypto/6207d0d8f415e08d/out/crypto-6207d0d8f415e08d)
+
+running 5 tests
+test signatures::tests::rejects_non_canonical_y ... ok
+test signatures::tests::rejects_small_order_keys ... ok
+test signatures::tests::imports_an_rfc8032_seed ... ok
+test signatures::tests::signatures_roundtrip_and_verify ... ok
+test signatures::tests::a_key_rebuilt_from_its_seed_is_the_same_key ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/build/integration_tests_core/4ec54fb63b577f41/out/integration_tests_core-4ec54fb63b577f41)
+
+running 2 tests
+test wakeup::tests::test_wakeup_service ... ok
+test test_client::tests::test_ ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running tests/causal_history.rs (target/debug/build/integration_tests_core/5cd0940943f38711/out/causal_history-5cd0940943f38711)
+
+running 1 test
+test missing_group_message_is_detected ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/mls_integration.rs (target/debug/build/integration_tests_core/7a48f3603e24d5c3/out/mls_integration-7a48f3603e24d5c3)
+
+running 5 tests
+test adding_seated_signers_changes_nothing ... ok
+test remove_group_signer_rejects_a_non_signer ... ok
+test burst_delivered_out_of_order_is_read_whole ... ok
+test create_group ... ok
+test remove_group_signers ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.13s
+
+     Running tests/test_direct_v1.rs (target/debug/build/integration_tests_core/60339003d76761b0/out/test_direct_v1-60339003d76761b0)
+
+running 7 tests
+test direct_convo_with_yourself_is_refused ... ok
+test wakeup_naming_the_inbox_is_an_error ... ok
+test happypath_roundtrip ... ok
+test account_listing_your_installation_does_not_seat_you_twice ... ok
+test replayed_invite_is_rejected ... ok
+test members_cannot_be_added_to_a_received_direct_convo ... ok
+test invite_for_another_installation_is_rejected ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+     Running tests/test_group_v2.rs (target/debug/build/integration_tests_core/c071800273577df9/out/test_group_v2-c071800273577df9)
+
+running 13 tests
+test groupv2_2way_roundtrip ... ok
+test a_lone_member_adds_within_the_batch_window_and_the_freeze ... ok
+test core_client_batch_add ... ok
+test direct_v1_then_group_v2_reuses_key_package ... ok
+test member_joins_two_groups ... ok
+test missing_group_v2_message_is_detected ... ok
+test core_client ... ok
+test group_name_propagation ... ok
+test remove_member_refuses_to_target_self ... ok
+test remove_signer_rejects_a_non_signer ... ok
+test replies_acknowledge_the_message_they_were_sent_after ... ok
+test core_client_remove_signer ... ok
+test core_client_four_members_two_epochs ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s
+
+     Running tests/test_group_v2_scale.rs (target/debug/build/integration_tests_core/2205876e9eb3fa49/out/test_group_v2_scale-2205876e9eb3fa49)
+
+running 2 tests
+test groupv2_grows_one_member_at_a_time ... ok
+test groupv2_grows_in_batches ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 19.91s
+
+     Running tests/test_group_v2_trace.rs (target/debug/build/integration_tests_core/270c91ca56999b00/out/test_group_v2_trace-270c91ca56999b00)
+
+running 1 test
+test members_record_each_epoch_they_enter_and_their_own_removal ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.35s
+
+     Running tests/test_group_v3.rs (target/debug/build/integration_tests_core/3b168ce21b579355/out/test_group_v3-3b168ce21b579355)
+
+running 14 tests
+test groupv3_member_fetches_a_lost_message_only_its_sender_names ... ok
+test groupv3_member_fetches_a_lost_message_by_an_id_learned_after_its_send ... ok
+test groupv3_2way_roundtrip ... ok
+test groupv3_repeated_content_gets_distinct_ids ... ok
+test groupv3_an_invite_is_pending_until_its_commit_lands ... ok
+test groupv3_joiner_fetches_what_was_sent_while_its_invite_was_in_flight ... ok
+test groupv3_member_fetches_a_lost_message_another_member_names ... ok
+test groupv3_resend_heals_a_lost_message ... ok
+test groupv3_removed_member ... ok
+test groupv3_resend_heals_a_lost_commit ... ok
+test groupv3_later_commit_finalizes_the_deferred_commit_at_once ... ok
+test groupv3_two_commits_for_one_epoch_do_not_fork ... ok
+test groupv3_members_added_later_receive_the_next_message ... ok
+test groupv3_member_four_commits_behind_catches_up_without_waiting ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.85s
+
+     Running tests/test_group_v3_beacons.rs (target/debug/build/integration_tests_core/121e1e7f18452b21/out/test_group_v3_beacons-121e1e7f18452b21)
+
+running 6 tests
+test a_failed_beacon_does_not_stop_the_invitation ... ok
+test an_idle_member_delivers_its_beacon_once_the_transport_recovers ... ok
+test a_failed_beacon_does_not_stop_a_join ... ok
+test a_member_publishes_a_beacon_after_a_peers_commit ... ok
+test retries_do_not_multiply_across_epochs ... ok
+test a_delivery_between_epochs_does_not_start_another_schedule ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.24s
+
+     Running tests/test_group_v3_fork.rs (target/debug/build/integration_tests_core/e02c46f6b4362b27/out/test_group_v3_fork-e02c46f6b4362b27)
+
+running 10 tests
+test a_joiners_first_message_confirms_it ... ok
+test a_member_is_confirmed_by_a_message ... ok
+test a_healthy_group_is_synced ... ok
+test a_member_who_missed_a_commit_is_behind ... ok
+test a_rival_heard_before_our_own_commit_lands_is_a_fork ... ok
+test a_fork_shares_the_epoch_not_the_fingerprint ... ok
+test both_sides_of_a_fork_see_it ... ok
+test a_commit_on_the_other_branch_is_only_a_suspicion ... ok
+test each_side_of_a_fork_sees_the_other_forked ... ok
+test the_side_that_stays_clears_once_the_other_is_readded ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.44s
+
+     Running tests/test_group_v3_readd.rs (target/debug/build/integration_tests_core/4882235cbf269b33/out/test_group_v3_readd-4882235cbf269b33)
+
+running 18 tests
+test a_commit_that_removes_us_waits_for_finality ... ok
+test a_removed_member_can_be_added_again ... ok
+test a_removed_member_can_be_added_again_by_whoever_removed_it ... ok
+test a_readd_keeps_one_tick ... ok
+test a_forked_member_is_readded_once_and_everyone_hears_each_other ... ok
+test a_retry_reaches_the_next_member ... ok
+test a_fork_whose_branches_drift_apart_is_repaired ... ok
+test an_unsigned_request_changes_nothing ... ok
+test a_replayed_request_does_not_remove_a_repaired_member ... ok
+test a_welcome_after_the_wait_is_refused ... ok
+test without_a_fork_there_is_no_branch_to_ask ... ok
+test an_unasked_welcome_does_not_replace_a_group ... ok
+test asking_twice_before_an_answer_gets_one_repair ... ok
+test a_welcome_from_outside_the_chosen_branch_is_refused ... ok
+test branches_that_grow_after_the_fork_rank_alike ... ok
+test with_three_branches_exactly_one_repairs ... ok
+test the_answerer_is_one_the_asker_knows ... ok
+test a_member_far_behind_is_not_readded ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 20.65s
+
+     Running tests/test_group_v3_trace.rs (target/debug/build/integration_tests_core/693c1315230690e5/out/test_group_v3_trace-693c1315230690e5)
+
+running 1 test
+test members_record_each_epoch_they_enter_and_what_became_of_each_post ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s
+
+     Running unittests src/lib.rs (target/debug/build/libchat/236e67139d2be8d1/out/libchat-236e67139d2be8d1)
+
+running 116 tests
+test causal_history::tests::a_reference_to_someone_elses_message_is_not_our_acknowledgement ... ok
+test causal_history::tests::a_peer_referencing_our_message_acknowledges_it ... ok
+test causal_history::tests::lamport_clock_increments_per_send ... ok
+test causal_history::tests::a_gap_is_reported_only_once ... ok
+test causal_history::tests::a_peer_acknowledges_a_message_only_once ... ok
+test causal_history::tests::detects_a_gap_when_a_referenced_message_was_never_seen ... ok
+test causal_history::tests::each_peer_acknowledges_separately ... ok
+test causal_history::tests::a_malformed_sender_id_is_ignored ... ok
+test clock::tests::mock_clock_clones_share_time ... ok
+test causal_history::tests::missing_message_carries_sender_id_of_the_original_author ... ok
+test causal_history::tests::no_gap_when_all_messages_are_delivered_in_order ... ok
+test conversation::group_v3::beacons::tests::a_key_that_signs_two_branches_counts_for_neither ... ok
+test conversation::group_v3::beacons::tests::a_branch_whose_keys_tie_is_not_a_target ... ok
+test conversation::group_v3::beacons::tests::a_branch_is_sealed_to_its_most_signed_key ... ok
+test conversation::group_v3::beacons::tests::a_member_from_before_the_fork_is_shown_first ... ok
+test conversation::group_v3::beacons::tests::a_member_signing_far_ahead_evicts_only_itself ... ok
+test conversation::group_v3::beacons::tests::a_state_whose_signers_moved_on_is_not_a_target ... ok
+test conversation::group_v3::beacons::tests::a_beacon_too_far_ahead_is_dropped ... ok
+test conversation::group_v3::beacons::tests::a_beacon_no_member_signed_is_dropped ... ok
+test conversation::group_v3::beacons::tests::a_state_we_held_long_ago_is_never_a_target ... ok
+test conversation::group_v3::beacons::tests::an_unvouched_branch_never_wins ... ok
+test conversation::group_v3::beacons::tests::both_branches_at_one_epoch_are_kept ... ok
+test conversation::group_v3::beacons::tests::a_repeated_frame_is_not_verified_again ... ok
+test conversation::group_v3::beacons::tests::branches_at_different_epochs_are_not_compared ... ok
+test conversation::group_v3::beacons::tests::a_beacon_for_the_next_epoch_waits_for_its_roster ... ok
+test conversation::group_v3::beacons::tests::a_forged_or_unsigned_beacon_never_counts_or_becomes_a_target ... ok
+test conversation::group_v3::beacons::tests::only_the_current_state_has_a_key ... ok
+test conversation::group_v3::beacons::tests::a_tie_goes_to_the_smaller_id ... ok
+test conversation::group_v3::beacons::tests::each_signer_counts_once_per_branch ... ok
+test conversation::group_v3::beacons::tests::our_own_beacon_coming_back_is_not_reported ... ok
+test conversation::group_v3::beacons::tests::the_lowest_epoch_signers_are_forgotten_first ... ok
+test conversation::group_v3::beacons::tests::the_target_comes_with_its_signers ... ok
+test conversation::group_v3::beacons::tests::the_target_is_the_most_signed_other_branch ... ok
+test conversation::group_v3::beacons::tests::a_key_shown_on_two_branches_counts_for_neither ... ok
+test conversation::group_v3::beacons::tests::two_branches_that_tie_are_no_target ... ok
+test conversation::group_v3::beacons::tests::a_vouch_must_be_signed_by_the_key_it_names ... ok
+test conversation::group_v3::beacons::tests::only_a_verified_peer_beacon_is_reported ... ok
+test conversation::group_v3::debug_data::tests::another_earlier_state_is_forked ... ok
+test conversation::group_v3::debug_data::tests::another_state_at_our_epoch_is_forked ... ok
+test conversation::group_v3::debug_data::tests::no_epoch_data_is_unconfirmed ... ok
+test conversation::group_v3::debug_data::tests::only_the_newest_epochs_are_kept ... ok
+test conversation::group_v3::debug_data::tests::our_earlier_state_is_behind ... ok
+test conversation::group_v3::debug_data::tests::our_state_at_our_epoch_is_synced ... ok
+test conversation::group_v3::debug_data::tests::past_our_epoch_through_another_state_is_forked ... ok
+test conversation::group_v3::debug_data::tests::past_our_epoch_through_our_state_is_ahead ... ok
+test conversation::group_v3::debug_data::tests::past_our_epoch_without_our_epoch_is_unconfirmed ... ok
+test conversation::group_v3::debug_data::tests::the_newest_shared_epoch_decides ... ok
+test conversation::group_v3::external::tests::a_malformed_beacon_is_refused ... ok
+test conversation::group_v3::external::tests::a_repeated_field_cannot_smuggle_a_large_allocation ... ok
+test conversation::group_v3::beacons::tests::evidence_from_outside_our_roster_counts_for_nothing ... ok
+test conversation::group_v3::external::tests::a_well_formed_beacon_is_admitted ... ok
+test conversation::group_v3::external::tests::a_beacon_signed_by_an_outsider_does_not_verify ... ok
+test conversation::group_v3::beacons::tests::evidence_without_our_branch_never_wins ... ok
+test conversation::group_v3::external::tests::the_largest_well_formed_beacon_fits_the_bound ... ok
+test conversation::group_v3::external::tests::the_signed_encoding_is_unchanged ... ok
+test conversation::group_v3::payloads::sds_message::tests::encodes_the_sds_header_with_the_spec_field_numbers ... ok
+test conversation::group_v3::payloads::tests::a_packet_outside_sds_decodes_back ... ok
+test conversation::group_v3::payloads::tests::an_mls_message_is_not_an_external_frame ... ok
+test conversation::group_v3::payloads::tests::an_sds_record_is_never_outside_sds ... ok
+test conversation::group_v3::payloads::tests::outgoing_message_id_covers_the_whole_envelope ... ok
+test conversation::group_v3::external::tests::a_verified_beacon_names_its_signer ... ok
+test conversation::group_v3::payloads::tests::sds_content_decodes_back_to_the_envelope ... ok
+test conversation::group_v3::payloads::tests::sds_content_under_another_message_id_is_rejected ... ok
+test conversation::group_v3::readd::tests::a_state_only_we_signed_has_no_answerer ... ok
+test conversation::group_v3::readd::tests::a_stranger_is_refused ... ok
+test conversation::group_v3::readd::tests::an_asker_ahead_of_us_is_refused ... ok
+test conversation::group_v3::readd::tests::an_asker_in_a_state_we_were_in_is_behind ... ok
+test conversation::group_v3::external::tests::an_unsigned_beacon_does_not_verify ... ok
+test conversation::group_v3::readd::tests::an_asker_readded_since_its_state_is_refused ... ok
+test conversation::group_v3::readd::tests::an_asker_stuck_after_its_readd_is_repaired ... ok
+test conversation::group_v3::readd::tests::each_attempt_names_the_next_signer ... ok
+test conversation::group_v3::readd::tests::only_the_named_member_repairs ... ok
+test conversation::group_v3::readd::tests::retries_keep_moving_past_the_last_attempt ... ok
+test conversation::group_v3::readd::tests::the_named_member_repairs_a_forked_member ... ok
+test conversation::group_v3::readd::tests::what_we_heard_alone_does_not_refuse ... ok
+test conversation::group_v3::readd::tests::with_no_record_of_the_epoch_we_accept ... ok
+test conversation::group_v3::external::tests::every_signed_field_is_covered ... ok
+test conversation::group_v3::sealed::tests::a_malformed_sealed_message_is_refused ... ok
+test conversation::group_v3::sealed::tests::a_request_naming_someone_else_does_not_verify ... ok
+test conversation::group_v3::sealed::tests::a_short_key_is_refused_before_sealing ... ok
+test conversation::group_v3::sealed::tests::a_message_for_another_conversation_does_not_open ... ok
+test conversation::group_v3::sealed::tests::a_relabelled_message_does_not_open ... ok
+test conversation::group_v3::beacons::tests::what_the_answerer_heard_alone_does_not_count ... ok
+test conversation::group_v3::sealed::tests::a_signed_request_verifies ... ok
+test conversation::group_v3::sealed::tests::the_signed_encoding_is_unchanged ... ok
+test conversation::group_v3::sealed::tests::an_unsigned_request_does_not_verify ... ok
+test conversation::group_v3::sync_state::tests::a_fork_clears_once_the_rivals_signers_are_back_on_our_branch ... ok
+test conversation::group_v3::sync_state::tests::a_fork_cleared_by_an_older_beacon_is_unknown ... ok
+test conversation::group_v3::sync_state::tests::a_new_epoch_forgets_all_but_a_fork ... ok
+test conversation::group_v3::sync_state::tests::a_peer_ahead_is_lagging_never_forked ... ok
+test conversation::group_v3::sync_state::tests::a_peer_ahead_never_clears_a_fork ... ok
+test conversation::group_v3::sync_state::tests::a_peer_behind_that_agrees_is_unknown ... ok
+test conversation::group_v3::sync_state::tests::a_peer_behind_that_differs_is_forked ... ok
+test conversation::group_v3::sync_state::tests::a_peer_behind_what_we_remember_is_unknown ... ok
+test conversation::group_v3::sync_state::tests::a_rival_still_signed_elsewhere_keeps_the_fork ... ok
+test conversation::group_v3::sync_state::tests::an_inconclusive_beacon_changes_nothing ... ok
+test conversation::group_v3::sealed::tests::a_request_opens_with_the_key_it_was_sealed_to ... ok
+test conversation::group_v3::sync_state::tests::our_own_branch_does_not_hide_a_rival ... ok
+test conversation::group_v3::sync_state::tests::same_epoch_different_id_is_forked ... ok
+test conversation::group_v3::sync_state::tests::only_the_newest_rivals_are_kept ... ok
+test conversation::group_v3::sync_state::tests::same_epoch_same_id_is_synced ... ok
+test conversation::group_v3::sync_state::tests::the_fork_is_dated_by_the_oldest_rival ... ok
+test conversation::mls_groups::tests::creator_and_joiner_configs_match ... ok
+test conversation::mls_trace::record::tests::an_epoch_state_keeps_its_digest ... ok
+test conversation::mls_trace::record::tests::a_conversation_id_stays_one_word ... ok
+test conversation::mls_trace::record::tests::unreadable_line ... ok
+test conversation::mls_utils::tests::hpke_public_key_length_is_enforced ... ok
+test storage::in_memory_store::tests::satisfies_the_identity_contract ... ok
+test storage::in_memory_store::tests::satisfies_the_substrate_contract ... ok
+test tracked_delivery::tests::a_known_id_keeps_nothing ... ok
+test tracked_delivery::tests::a_receipt_names_its_message_for_one_report ... ok
+test conversation::group_v3::sealed::tests::the_largest_request_is_admitted ... ok
+test conversation::group_v3::beacons::tests::the_branch_with_more_signers_wins ... ok
+test conversation::group_v3::sealed::tests::every_signed_field_is_covered ... ok
+test conversation::group_v3::beacons::tests::the_verified_cache_is_bounded ... ok
+test conversation::group_v3::readd::tests::readded::a_received_commit_names_only_the_readded_signer ... ok
+
+test result: ok. 116 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.27s
+
+     Running unittests src/lib.rs (target/debug/build/logos-generic-chat/e797f2b69ec96ca1/out/logos_generic_chat-e797f2b69ec96ca1)
+
+running 8 tests
+test delivery_in_process::tests::fetch_delivers_what_the_ids_name_on_the_address ... ok
+test client::sender_check_tests::acks_name_the_peers_that_hold_the_message ... ok
+test members::tests::a_participant_id_that_is_not_an_account_is_rejected ... ok
+test installation::tests::validation_follows_the_auth_service ... ok
+test members::tests::a_participant_id_yields_its_account ... ok
+test installation::tests::an_installation_signs_as_its_key_for_its_account ... ok
+test client::sender_check_tests::missing_message_hint_names_the_signer ... ok
+test installation::tests::a_stored_installation_comes_back_as_itself ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/group_v2.rs (target/debug/build/logos-generic-chat/e51739ac64958611/out/group_v2-e51739ac64958611)
+
+running 13 tests
+test group_metadata_defaults_to_empty ... ok
+test group_creator_is_in_own_roster ... ok
+test group_invite_of_unpublished_account_is_an_error ... ok
+test invited_member_is_pending_until_the_group_commits ... ok
+test group_metadata_reaches_joiners ... ok
+test a_sent_message_is_acknowledged_by_the_peers_that_reply ... ok
+test removing_a_non_member_is_an_error ... ok
+test removing_yourself_is_refused ... ok
+test peers_invited_to_many_groups ... ok
+test pending_clears_once_the_add_commits ... ok
+test group_v2_three_members ... ok
+test a_removed_member_leaves_the_roster ... ok
+test add_batch_with_missing_key_package_invites_no_one ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.12s
+
+     Running tests/group_v3.rs (target/debug/build/logos-generic-chat/9bd1030b7095d13a/out/group_v3-9bd1030b7095d13a)
+
+running 3 tests
+test a_sent_message_is_reported_delivered ... ok
+test a_lost_message_arrives_by_the_id_its_sender_learned_after_the_send ... ok
+test a_group_carries_messages_and_grows ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.11s
+
+     Running tests/installation_reuse.rs (target/debug/build/logos-generic-chat/9860ccb10757a6ec/out/installation_reuse-9860ccb10757a6ec)
+
+running 8 tests
+test a_minted_installation_needs_an_answer ... ok
+test a_revoked_endorsement_still_stops_the_open ... ok
+test the_stored_signer_is_the_one_that_signs ... ok
+test a_failed_mint_stores_nothing ... ok
+test the_installation_is_unreachable_without_the_database_key ... ok
+test an_unreadable_record_stops_the_open_rather_than_replacing_it ... ok
+test a_stored_installation_opens_when_the_registry_cannot_answer ... ok
+test a_client_reopens_as_the_installation_its_store_holds ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/saro_and_raya.rs (target/debug/build/logos-generic-chat/c2abd44c817581dd/out/saro_and_raya-c2abd44c817581dd)
+
+running 11 tests
+test dropping_client_shuts_down_worker ... ok
+test malformed_inbound_surfaces_as_error_event ... ok
+test group_metadata_on_direct_conversation_errors ... ok
+test direct_conversation_lists_its_participants ... ok
+test unpublished_account_address_is_an_error ... ok
+test direct_v1_integration ... ok
+test direct_v1_standalone_integration ... ok
+test a_send_returns_the_id_the_receiver_sees ... ok
+test direct_v1_by_account_address ... ok
+test removing_a_member_is_unsupported_on_a_direct_conversation ... ok
+test saro_raya_message_exchange ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s
+
+     Running unittests src/lib.rs (target/debug/build/message-store/9c4d563617268605/out/message_store-9c4d563617268605)
+
+running 12 tests
+test tests::a_page_continues_below_its_cursor_while_messages_arrive ... ok
+test tests::a_sent_message_is_marked_delivered_once ... ok
+test tests::a_record_rolls_back_with_the_applications_transaction ... ok
+test tests::delete_chat_leaves_other_chats ... ok
+test tests::delete_removes_one_message ... ok
+test tests::a_chat_reads_as_one_list_across_its_conversations ... ok
+test tests::a_deleted_seq_is_never_handed_out_again ... ok
+test tests::content_is_kept_as_bytes ... ok
+test tests::migrate_leaves_the_databases_other_tables_alone ... ok
+test tests::messages_read_back_oldest_first_as_recorded ... ok
+test tests::count_is_every_message_of_a_chat_not_a_page ... ok
+test tests::messages_outlive_the_connection_that_recorded_them ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running unittests src/lib.rs (target/debug/build/message-types/195829765431d149/out/message_types-195829765431d149)
+
+running 14 tests
+test tests::a_body_from_a_build_predating_this_crate_is_text ... ok
+test tests::a_version_below_ours_is_malformed_not_unsupported_format ... ok
+test tests::an_unknown_type_degrades_to_its_fallback ... ok
+test tests::an_unknown_type_without_a_fallback_still_says_something ... ok
+test tests::buffers_shorter_than_the_header_are_treated_as_legacy ... ok
+test tests::a_broken_envelope_is_reported_as_malformed ... ok
+test tests::encoded_bytes_are_stable ... ok
+test tests::a_newer_envelope_version_is_reported_as_such ... ok
+test tests::every_variant_renders_without_further_parsing ... ok
+test tests::reply_round_trips_and_keeps_its_target ... ok
+test tests::text_round_trips ... ok
+test tests::the_body_is_encoded_as_a_byte_string ... ok
+test tests::unframed_non_utf8_bytes_are_not_rendered_as_text ... ok
+test tests::unknown_envelope_fields_are_ignored ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests chat_sqlite
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests crypto
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests integration_tests_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests libchat
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests logos_generic_chat
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests message_store
+
+running 1 test
+test extensions/message-store/src/../README.md - (line 17) ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+all doctests ran in 0.94s; merged doctests compilation took 0.51s
+   Doc-tests message_types
+
+running 1 test
+test extensions/message-types/src/lib.rs - (line 10) ... ignored
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+all doctests ran in 1.25s; merged doctests compilation took 0.17s
+cargo test --locked  159.62s user 28.46s system 126% cpu 2:29.22 total

@@ -1,0 +1,71 @@
+warning: method `entry` is never used
+  --> src/main.rs:64:8
+   |
+44 | impl Hub {
+   | -------- method in this implementation
+...
+64 |     fn entry(&self, i: usize) -> (String, Vec<u8>) {
+   |        ^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+A addr = 98c2cf33a1b22cb7792a7a2516661849a1305e4d04039c2e66aeb1dd1a9edc43
+B addr = 0e94870cfe465325f2d26587fc6dbbb7669f8236d5b9917b446842d58c7bf041
+C addr = d9bd474b800f006556e19e0710368e1bd012c063f9ab8ba1ba20605d7e12387b
+[PASS] T0 contact establishment (A->B welcome via registry key package): convo_a=d74ad983.. convo_b=d74ad983.. equal=true
+[OBSERVED] T0 hub log after establishment: 2 envelopes
+[PASS] T1a A->B 256-byte binary payload (0x00..0xff patterns): received 1 msgs, equal=true
+[PASS] T1b B->A 1000-byte binary payload: received 1
+[OBSERVED] T1c empty payload A->B: received [[]]
+[OBSERVED] T1d size 16384 B: send=Ok delivered_ok=true inbound_errors=[]
+[OBSERVED] T1d size 65536 B: send=Ok delivered_ok=true inbound_errors=[]
+[OBSERVED] T1d size 130048 B: send=Ok delivered_ok=true inbound_errors=[]
+[OBSERVED] T1d size 131072 B: send=Ok delivered_ok=true inbound_errors=[]
+[OBSERVED] T1d size 132096 B: send=Ok delivered_ok=true inbound_errors=[]
+[OBSERVED] T1d size 262144 B: send=Ok delivered_ok=true inbound_errors=[]
+[OBSERVED] T1d size 1048576 B: send=Ok delivered_ok=true inbound_errors=[]
+[OBSERVED] T2 relay-visible envelope: delivery_address=0f37f7b1c83e (len 12) wire_len=1747 ; convo_id=d74ad9838137224a8453426ecfe772c5
+[PASS] T2a plaintext marker absent from wire bytes: leaks=false
+[OBSERVED] T2b delivery address vs conversation id: address_contains_convo_id_prefix=false; wire_contains_convo_id_ascii=true
+[PASS] T2c wrong recipient C gets no plaintext: C events=0 errors=[]
+[PASS] T2d intended recipient B decrypts same bytes: 1
+
+thread '<unnamed>' (26043284) panicked at /Users/dennison/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/openmls-0.8.1/src/framing/private_message_in.rs:136:17:
+Ciphertext decryption failed
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+[PASS] T3a tampered ciphertext variants rejected (0 plaintext delivered): [
+    (
+        "byte 5 (envelope header)",
+        0,
+        [],
+    ),
+    (
+        "middle",
+        0,
+        [],
+    ),
+    (
+        "last byte (AEAD tag area)",
+        0,
+        [],
+    ),
+    (
+        "truncated to half",
+        0,
+        [],
+    ),
+]
+[FAIL] T3b original still decrypts after failed tamper attempts (state not poisoned): 0
+[PASS] T4 replayed ciphertext (x2) not delivered again: redelivered=0 errors=[]
+[FAIL] T5a 3 messages delivered order 3,1,2 all decrypt: got [] errors=[]
+[OBSERVED] T5b 40 messages, newest delivered first then rest: decrypted=0 missing_indexes=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39] distinct_errors={}
+[OBSERVED] T6a B conversations before/after restart (same sqlcipher file, same installation): before=1 after=1 can_send_after=false can_receive_after=true
+[OBSERVED] T6b B identity after restart: addr_same=true
+[FAIL] T6c B(restarted) decrypts message sent to the pre-restart conversation: received=0 errors=[]
+[FAIL] T6d B(restarted) can send in pre-restart conversation: Err("convo with id: mls group not found was not found")
+[OBSERVED] T7a welcome envelopes held: 2 envelope(s)
+[PASS] T7a offline-in-network, process alive: welcome processed later: errors=[]
+[OBSERVED] T7b A invites offline E (registry still holds E's old key package): create_direct_conversation=Ok("2ac01380")
+[FAIL] T7b E restarts, then receives held welcome sent while it was down: ConversationStarted=false errors=["generic: No matching key package was found in the key store."]
+done
+cargo run --quiet  1.13s user 0.35s system 10% cpu 14.447 total
