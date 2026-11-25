@@ -15,6 +15,24 @@ serde_json.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
 tracing.workspace = true
+base64.workspace = true
+sha2.workspace = true
+hpke = { version = "=0.15.1", default-features = false, features = ["alloc", "getrandom", "x25519", "chacha"] }
+ed25519-dalek = "3"
+getrandom = "0.4"
+data-encoding = "2"
+zeroize = "1"
+uuid = { version = "1", default-features = false }
+age = { version = "0.12", default-features = false, features = ["armor"] }
+
+[features]
+# Exposes `envelope::testing` (malformed/forwarded frame builders) to integration tests.
+test-support = []
+
+[dev-dependencies]
+agentnet-core = { path = ".", features = ["test-support"] }
+proptest = "1"
+tempfile = "3"
 
 [lints]
 workspace = true

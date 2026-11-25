@@ -1,0 +1,83 @@
+    Blocking waiting for file lock on build directory
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.83s
+     Running unittests src/lib.rs (target/debug/deps/agentnet_core-63ebd6fbb71e7599)
+
+running 28 tests
+test address::tests::rejects_non_canonical_point_encoding ... ok
+test address::tests::known_vector ... ok
+test address::tests::strictness ... ok
+test address::tests::trailing_bits_must_be_zero ... ok
+test address::tests::rejects_weak_keys ... ok
+test address::tests::ordering_and_hash ... ok
+test contact::tests::duplicate_keys_rejected ... ok
+test contact::tests::document_shape_errors ... ok
+test contact::tests::record_layout_is_as_specified ... ok
+test address::tests::topic_vector_and_all_buckets_valid ... ok
+test contact::tests::low_order_kem_keys_rejected ... ok
+test contact::tests::swapped_kem_key_from_other_identity ... ok
+test contact::tests::roundtrip ... ok
+test contact::tests::kem_expiry ... ok
+test address::tests::roundtrip_and_serde ... ok
+test envelope::tests::padding_rule ... ok
+test contact::tests::tampered_fields_rejected ... ok
+test envelope::tests::uuid_validation ... ok
+test identity::tests::file_validation ... ok
+test identity::tests::debug_has_no_secrets ... ok
+test envelope::tests::serde_rejects_duplicates_and_unknown_fields ... ok
+test envelope::tests::roundtrip_and_layout ... ok
+test envelope::tests::field_rules ... ok
+test identity::tests::file_roundtrip_in_memory ... ok
+test contact::tests::strict_record_validation ... ok
+test identity::tests::rotation_and_prune ... ok
+test identity::tests::generate_validates_buckets ... ok
+test identity::tests::previous_keys_are_capped ... ok
+
+test result: ok. 28 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/crypto.rs (target/debug/deps/crypto-11dd40d685982236)
+
+running 34 tests
+test constants_match_spec ... ok
+test files::debug_output_has_no_key_material ... ok
+test files::save_into_missing_directory_fails_cleanly ... ok
+test files::load_rejects_bad_files ... ok
+test forged_sender_is_bad_signature ... ok
+test frame_layout_offsets ... ok
+test equal_frame_length_within_a_bucket ... ok
+test header_errors_are_distinct ... ok
+test contact_record_round_trip_and_tampering ... ok
+test files::save_load_permissions_and_atomicity ... ok
+test inbox_buckets_in_contact_and_topic ... ok
+test prop_address_parse_total ... ok
+test nonzero_padding_is_rejected ... ok
+test kem_rotation_keeps_old_key_until_retire_time ... ok
+test prop_contact_parse_total ... ok
+test envelope_parsing_is_strict ... ok
+test round_trip_all_message_types ... ok
+test seal_refuses_expired_recipient_key ... ok
+test seal_rejects_mismatches ... ok
+test signature_over_other_domain_is_rejected ... ok
+test surreptitious_forwarding_is_wrong_recipient ... ok
+test prop_open_never_panics_on_arbitrary_bytes ... ok
+test max_frame_len_cap_and_too_large ... ok
+test time_checks_and_exact_boundaries ... ok
+test unicode_bodies_are_byte_exact ... ok
+test wrong_recipient_field_after_valid_signature ... ok
+test wrong_recipient_is_not_for_us ... ok
+test bucket_boundaries_are_exact ... ok
+test prop_authentic_garbage_envelope_never_panics ... ok
+test truncation_at_every_length_is_rejected ... ok
+test prop_round_trip ... ok
+test encrypted_export_import ... ok
+test ten_thousand_random_frames_never_panic ... ok
+test every_single_bit_flip_is_rejected ... ok
+
+test result: ok. 34 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 17.87s
+
+   Doc-tests agentnet_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+exit=0
