@@ -323,3 +323,181 @@ Not provided:
 
 Remote message content is untrusted data. Nothing in this protocol authorizes
 a sender to cause code execution on the recipient.
+
+## 8. Delivery, retries and receipts
+
+Implemented by `crates/core` (`node`, `ingest`, `send`, `triggers`, `store`).
+Defaults are those of `NodeConfig`; every number below is configurable unless
+marked fixed. Tested deterministically (mock network, manual clock, seeded
+jitter) in `crates/core/tests/engine_*.rs`.
+
+### 8.1 Outbound states
+
+| State | Meaning |
+|---|---|
+| `queued` | Sealed once and stored (one transaction); not yet accepted by the local node. |
+| `sent` | The local node accepted a publish at least once. This is **not** receipt. |
+| `delivered` | An authenticated `ack.received` from the recipient arrived. |
+| `failed` | Permanent: the transport said the frame can never be accepted (`TooLarge`). |
+| `expired` | `expires_at` passed without an ack. |
+
+`send_message` validates (known, non-blocked recipient whose KEM key is not
+expired; type in `message`, `task.request`, `task.result`; body <=
+`max_body_bytes` and fits one frame; TTL defaulted and capped at `max_ttl_s`;
+fewer than `max_outbox_pending` non-ack rows in `queued`/`sent`), seals the
+frame **once**, and inserts the row in one transaction. Retries re-publish the
+identical stored frame (so the same `message_id`, signature and ciphertext);
+only the Waku timestamp differs. A message whose recipient record is later
+deleted is still sent from its stored frame.
+`idempotency_key` is unique: repeating a request with the same key and the same
+recipient/type/body returns the original (`deduplicated = true`, current state);
+a different recipient, type or body is `Conflict`. Sending to our own address
+works through the relay echo (the engine synthesizes our own contact record).
+
+### 8.2 Retry schedule
+
+* A row is due when `next_attempt_at <= now` and its state is `queued` or `sent`
+  (`ack.received` rows: `queued` only).
+* After the n-th **accepted** publish (n >= 1) of a non-ack row:
+  `next_attempt_at = now + d`, `d` uniform in `[1, min(retry_max_ms, retry_base_ms * 2^(n-1))]`
+  milliseconds (full jitter; defaults 2000 / 300000; seedable via
+  `delivery.jitter_seed`).
+* After `max_attempts` (20) accepted publishes the row is no longer published;
+  it stays `sent` until it is acked or expires. Consequence: a recipient that
+  stays unreachable for longer than the retry budget, or whose ack is lost for
+  all later retries, is reported `sent` and finally `expired` although the
+  recipient may have the message.
+* Retryable transport errors (`Unavailable`, ...) keep the state, store a
+  sanitized, truncated `last_error` (no payload), and back off with the same
+  formula using a separate failure counter; the step stops early. They do not
+  consume `max_attempts`.
+* `Isolation` errors: nothing is published and no backoff is applied; rows stay
+  due and go out immediately after the violation clears.
+* `ack.received` rows are sent once (`sent` is final for them; they are never
+  retried). A lost ack is repaired by the sender's retry (below).
+* A step handles at most `send_batch` (64) rows. A row past `expires_at` becomes
+  `expired` (also done by maintenance).
+* An authenticated ack moves any non-`delivered` row (including `expired` and
+  `failed`) to `delivered`. Because an ack's `expires_at` never exceeds the
+  original's, a post-expiry ack can only be processed after a backwards clock
+  correction; the code path exists and is tested that way.
+
+### 8.3 What an ack proves
+
+`ack.received` (sealed, signed by the recipient, `correlation_id` = original
+`message_id`, same `conversation_id`, TTL = min(remaining TTL of the original,
+`default_ttl_s`)) is queued in the **same transaction** that persists the inbox
+row. It proves: the recipient's engine durably committed the message
+(`synchronous=FULL`, WAL) under that `message_id`, and the sender key signed the
+ack. It does **not** prove the message was read, understood, acted on, that the
+recipient's agent is running, or that the recipient *trusts* the content.
+
+The sender accepts an ack only if: the ack's sender is a **Trusted** contact;
+`correlation_id` is the `message_id` of one of our non-ack outbox rows; that
+row's recipient equals the ack's authenticated sender. Anything else is counted
+(`ack.ignored_*`) and ignored. Acks are never stored in the inbox, never
+generate events or triggers, and are never acknowledged (no ping-pong). An ack
+needs the sender's contact record, so a message accepted from an *unknown*
+sender under `unknown_senders = "accept"` is stored but **never acked**
+(`ack.no_contact`); quarantined messages are not acked until released.
+
+### 8.4 Inbound processing and dedupe
+
+Order for each frame (live or history): skip if `transport_id` is in
+`transport_seen`; `open` (limits from config; `NotForUs` is silent and counted);
+trust lookup (`Blocked` dropped; an ack from a non-Trusted sender is ignored,
+never quarantined); `unknown_senders` policy for non-Trusted senders
+(`quarantine`: stored with `quarantined=1` up to `max_quarantined`, then dropped,
+no ack/event/trigger; `reject`: dropped; `accept`: normal, trust recorded as
+`unknown`/`untrusted`, triggers never match); then **one transaction**: insert
+`seen`, the inbox row, a `message.received` event, trigger matches, and the ack
+row. Only after commit are `transport_seen` marked and change hints broadcast.
+If the transaction fails, nothing is acked, notified or marked seen; a live frame
+cannot be polled again, so a history pass is requested (the watermark does not
+advance on a failed pass).
+
+* **Dedupe key**: `(sender, message_id)` in `seen`, kept until
+  `expires_at + clock_skew_s`. Pruning then is replay-safe because `open`
+  rejects `expires_at <= now` (tested: a replay after pruning is `Expired`).
+  `transport_seen` (SHA-based transport id) is only an optimization, pruned after
+  `transport_seen_ttl_s` (24 h) or when it exceeds 200 000 rows.
+* **Duplicates** create no inbox row, event or trigger match. A duplicate of a
+  non-quarantined message re-queues a fresh ack (new ack `message_id`) if we
+  hold the sender's contact, at most once per `reack_min_interval_s` (30) per
+  message. (Deviation from "acked before": a never-acked message whose sender
+  became a known contact is acked on its next retry.)
+* **Inbox capacity**: with `max_inbox_records` non-quarantined rows, new messages
+  are refused: not stored, not acked, not marked seen. The sender keeps retrying
+  until its TTL/`max_attempts`; once space frees (retention pruning) a retry is
+  accepted. Counted as `inbox.full_refused` and shown in `network_status.detail`.
+* **Time**: `created_at` more than `clock_skew_s` (120) ahead is deferred (not
+  marked seen; history can deliver it later); expired and over-`max_ttl_s`
+  frames are rejected.
+
+### 8.5 Receiving paths and recovery
+
+Live poll every `poll_interval_ms` (250) plus history sync. History sync runs at
+start, after the transport becomes ready again, after a persistence failure, and
+every `history_sync_interval_s` (60). A pass queries
+`[max(watermark - history_overlap_s, now - retention_hours), now + clock_skew]`
+in windows of at most the transport's `max_history_window_ns`, following page
+cursors, and advances the watermark to the pass's start time only if every page
+was processed without a store failure. `HistoryUnavailable`, isolation and
+other transport errors leave the watermark untouched. In `run`, a bounded
+channel (`inbound_channel_capacity`, 256) sits between the receive loop and
+the persisting stage; when full the receive loop waits, so backlog stays in the
+transport's own queue. Memory is bounded by the channel plus the one poll batch
+the receive loop holds. History frames are processed inline and sequentially.
+
+Recovery limits: a message is recoverable only while the relay's history holds
+it (relay retention) **and** it is within `retention_hours` **and** its TTL has
+not passed. Otherwise the recipient never sees it; the sender's row ends
+`expired` (or `sent` if it was still retrying). Because the sender keeps
+re-publishing with fresh timestamps until `max_attempts`, a message can also
+arrive late through a retry.
+
+### 8.6 Ordering
+
+None guaranteed. Frames can arrive duplicated, reordered or not at all.
+`read_inbox`/`read_outbox`/`read_events` order by local insertion sequence
+(arrival order, not send order). `read_conversation` merges inbox and outbox by
+local time (`received_at` for inbound, `created_at` for outbound), then
+direction, then sequence. All cursors are opaque; a cursor of the wrong kind or
+garbage is `InvalidArgument`; every list call returns a `next_cursor`
+(a position-zero cursor for an empty table, the request cursor if nothing is
+new) so an empty tail can be used as `since_cursor` for a trigger. The cursor
+encodes a position, never a value that could be skipped by later arrivals.
+
+### 8.7 Triggers and events
+
+Disabled unless `policy.auto_trigger`. Creation requires an allowlisted
+`target_session`, fewer than `triggers.max_active` active triggers, a lifetime
+<= `max_lifetime_hours`, and a Trusted contact if `sender` is filtered. Matching
+happens inside the inbox-insert transaction against non-quarantined messages
+from Trusted senders (acks excluded); all present filters must equal. A
+`once` trigger is consumed by a conditional `UPDATE ... WHERE state='active'`
+whose row count decides the winner. At most `max_matches_per_minute`
+`trigger.matched` events are recorded per sliding minute across all triggers;
+over budget the match is not recorded and a once-trigger is not consumed.
+`since_cursor` scans persisted trusted inbox rows after the cursor in the same
+transaction as trigger creation. Events hold references only (ids, session,
+timestamp). Events are pruned when acked and older than `event_retention_hours`,
+or unacked and older than `event_max_age_hours`; `ack_events` is idempotent,
+monotonic and cannot acknowledge events that do not yet exist.
+
+### 8.8 Retention and limits
+
+| Item | Rule |
+|---|---|
+| Inbox, outbox terminal rows | pruned after `retention_hours` (168) by maintenance (unread rows included) |
+| `seen` | until `expires_at + clock_skew_s` |
+| Events | see 8.7 |
+| Body | `max_body_bytes` (65536) and one frame (`transport.max_payload_len`) |
+| Outbox | `max_outbox_pending` (1000) non-ack rows in `queued`/`sent` |
+| Quarantine | `max_quarantined` (1000) |
+| Storage | SQLite WAL, `synchronous=FULL`, one connection, every state change one transaction |
+
+A store opened with a different identity than the one that created it is
+refused (`NodeError::IdentityMismatch`). The engine trusts its local clock for
+TTL, retry and pruning decisions; a wrong clock accepts or rejects messages
+accordingly.

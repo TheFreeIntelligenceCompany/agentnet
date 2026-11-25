@@ -1,0 +1,476 @@
+//! Inbound frame processing, in exactly this order:
+//! transport dedupe -> `open` -> trust -> (ack handling | policy + one
+//! transaction that persists the message, events, trigger matches and the ack)
+//! -> only then `transport_seen` and change hints.
+
+use agentnet_transport::InboundFrame;
+use rusqlite::{params, OptionalExtension, Transaction};
+
+use crate::api::{ChangeHint, Trust};
+use crate::config::UnknownSenders;
+use crate::envelope::{self, Envelope, MESSAGE_TYPE_ACK_RECEIVED};
+use crate::error::OpenError;
+use crate::node::{trust_to_db, Node};
+use crate::send::OutboxInsert;
+use crate::store::StoreError;
+use crate::triggers::Candidate;
+
+/// What happened to one inbound frame.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FrameOutcome {
+    /// The transport id was already processed.
+    AlreadySeen,
+    /// Another agent's frame in a shared bucket.
+    NotForUs,
+    /// `open` rejected the frame (counted by kind).
+    Invalid,
+    /// `created_at` too far in the future; not marked seen, may be valid later.
+    Deferred,
+    /// Sender is blocked.
+    Blocked,
+    /// Policy `reject` dropped it.
+    Rejected,
+    /// Stored quarantined.
+    Quarantined,
+    /// Quarantine is full; dropped.
+    QuarantineFull,
+    /// Inbox is full; refused and not acked (the sender keeps retrying).
+    InboxFull,
+    /// New message persisted.
+    Accepted,
+    /// Already persisted; `reacked` tells whether an ack was re-queued.
+    Duplicate {
+        /// An ack was queued again.
+        reacked: bool,
+    },
+    /// A valid ack updated an outbox row.
+    AckApplied,
+    /// An ack that was ignored (wrong party, unknown id, untrusted, duplicate).
+    AckIgnored,
+    /// The database failed; nothing was recorded, the frame is not marked seen.
+    StoreFailure,
+}
+
+impl FrameOutcome {
+    /// True for [`FrameOutcome::StoreFailure`].
+    pub fn is_store_failure(&self) -> bool {
+        matches!(self, Self::StoreFailure)
+    }
+}
+
+fn open_error_kind(e: &OpenError) -> &'static str {
+    match e {
+        OpenError::Truncated => "truncated",
+        OpenError::FrameTooLarge => "frame_too_large",
+        OpenError::BadMagic => "bad_magic",
+        OpenError::UnknownFrameVersion(_) => "unknown_frame_version",
+        OpenError::UnknownSuite(_) => "unknown_suite",
+        OpenError::NotForUs => "not_for_us",
+        OpenError::BadLengthPrefix => "bad_length_prefix",
+        OpenError::NonZeroPadding => "non_zero_padding",
+        OpenError::UnknownEnvelopeVersion(_) => "unknown_envelope_version",
+        OpenError::MalformedEnvelope(_) => "malformed_envelope",
+        OpenError::InvalidField(_) => "invalid_field",
+        OpenError::BadSignature => "bad_signature",
+        OpenError::WrongRecipient => "wrong_recipient",
+        OpenError::FromFuture => "from_future",
+        OpenError::Expired => "expired",
+        OpenError::ExpiresBeforeCreated => "expires_before_created",
+        OpenError::TtlTooLong => "ttl_too_long",
+    }
+}
+
+enum MsgTx {
+    Duplicate {
+        reacked: bool,
+    },
+    Accepted {
+        acked: bool,
+        consumed: bool,
+        quarantined: bool,
+    },
+    InboxFull,
+    QuarantineFull,
+}
+
+enum AckTx {
+    Applied { conversation_id: Option<String> },
+    Ignored(&'static str),
+}
+
+impl Node {
+    fn mark_transport_seen(&self, frame: &InboundFrame) {
+        let now = self.now();
+        let r = self.store.tx(|tx| {
+            tx.execute(
+                "INSERT OR IGNORE INTO transport_seen (transport_id, first_seen) VALUES (?1, ?2)",
+                params![frame.transport_id.as_slice(), now],
+            )?;
+            Ok(())
+        });
+        if r.is_err() {
+            self.metrics.inc("store.transport_seen_error");
+        }
+    }
+
+    /// Process one frame from the transport (live or history).
+    pub fn ingest_frame(&self, frame: &InboundFrame) -> FrameOutcome {
+        self.metrics.inc("frame.received");
+        // 1. transport-level dedupe
+        match self.store.read(|c| {
+            Ok(c.query_row(
+                "SELECT 1 FROM transport_seen WHERE transport_id = ?1",
+                [frame.transport_id.as_slice()],
+                |_| Ok(()),
+            )
+            .optional()?
+            .is_some())
+        }) {
+            Ok(true) => {
+                self.metrics.inc("frame.transport_seen");
+                return FrameOutcome::AlreadySeen;
+            }
+            Ok(false) => {}
+            Err(_) => return self.store_failure(),
+        }
+        // 2. open
+        let now = self.now();
+        let env = match envelope::open(&self.identity, &frame.payload, now, &self.open_limits) {
+            Ok(o) => o.envelope,
+            Err(OpenError::NotForUs) => {
+                self.metrics.inc("frame.not_for_us");
+                self.mark_transport_seen(frame);
+                return FrameOutcome::NotForUs;
+            }
+            Err(OpenError::FromFuture) => {
+                self.metrics.inc("open_error.from_future");
+                return FrameOutcome::Deferred;
+            }
+            Err(e) => {
+                self.metrics
+                    .inc(&format!("open_error.{}", open_error_kind(&e)));
+                self.mark_transport_seen(frame);
+                return FrameOutcome::Invalid;
+            }
+        };
+        // 3. trust
+        let trust = match self.store.read(|c| self.load_contact(c, &env.sender)) {
+            Ok(Some(row)) => row.trust,
+            Ok(None) => Trust::Unknown,
+            Err(_) => return self.store_failure(),
+        };
+        if trust == Trust::Blocked {
+            self.metrics.inc("drop.blocked");
+            self.mark_transport_seen(frame);
+            return FrameOutcome::Blocked;
+        }
+        // 4. acks (never subject to quarantine policy; never stored in the inbox)
+        if env.message_type == MESSAGE_TYPE_ACK_RECEIVED {
+            return self.ingest_ack(frame, &env, trust);
+        }
+        let policy = self.config.policy.unknown_senders;
+        if trust != Trust::Trusted && policy == UnknownSenders::Reject {
+            self.metrics.inc("drop.rejected_unknown_sender");
+            self.mark_transport_seen(frame);
+            return FrameOutcome::Rejected;
+        }
+        let quarantine = trust != Trust::Trusted && policy == UnknownSenders::Quarantine;
+        // 5. one transaction
+        let res = self
+            .store
+            .tx(|tx| self.persist_message(tx, &env, trust, quarantine, now));
+        let res = match res {
+            Ok(r) => r,
+            Err(_) => return self.store_failure(),
+        };
+        match res {
+            MsgTx::InboxFull => {
+                self.metrics.inc("inbox.full_refused");
+                FrameOutcome::InboxFull
+            }
+            MsgTx::QuarantineFull => {
+                self.metrics.inc("drop.quarantine_full");
+                FrameOutcome::QuarantineFull
+            }
+            MsgTx::Duplicate { reacked } => {
+                self.metrics.inc("message.duplicate");
+                self.mark_transport_seen(frame);
+                if reacked {
+                    self.metrics.inc("ack.requeued");
+                    self.send_nudge.notify_one();
+                }
+                FrameOutcome::Duplicate { reacked }
+            }
+            MsgTx::Accepted {
+                acked,
+                consumed,
+                quarantined,
+            } => {
+                self.mark_transport_seen(frame);
+                if quarantined {
+                    self.metrics.inc("message.quarantined");
+                    return FrameOutcome::Quarantined;
+                }
+                self.metrics.inc("message.accepted");
+                self.hint(ChangeHint::Inbox);
+                if let Some(c) = env.conversation_id.clone() {
+                    self.hint(ChangeHint::Conversation { conversation_id: c });
+                }
+                self.hint(ChangeHint::Events);
+                if consumed {
+                    self.hint(ChangeHint::Triggers);
+                }
+                if acked {
+                    self.send_nudge.notify_one();
+                }
+                FrameOutcome::Accepted
+            }
+        }
+    }
+
+    fn store_failure(&self) -> FrameOutcome {
+        self.metrics.inc("store.error");
+        FrameOutcome::StoreFailure
+    }
+
+    fn persist_message(
+        &self,
+        tx: &Transaction<'_>,
+        env: &Envelope,
+        trust: Trust,
+        quarantine: bool,
+        now: i64,
+    ) -> Result<MsgTx, StoreError> {
+        let sender = env.sender.to_string();
+        let seen: Option<Option<i64>> = tx
+            .query_row(
+                "SELECT last_reack_at FROM seen WHERE sender = ?1 AND message_id = ?2",
+                params![sender, env.message_id],
+                |r| r.get(0),
+            )
+            .optional()?;
+        if let Some(last) = seen {
+            // Duplicate: no inbox row, no event, no trigger. Maybe re-ack.
+            let stored_q: Option<i64> = tx
+                .query_row(
+                    "SELECT quarantined FROM inbox WHERE sender = ?1 AND message_id = ?2",
+                    params![sender, env.message_id],
+                    |r| r.get(0),
+                )
+                .optional()?;
+            let mut reacked = false;
+            if stored_q == Some(0) {
+                let min = i64::try_from(
+                    self.config
+                        .delivery
+                        .reack_min_interval_s
+                        .saturating_mul(1000),
+                )
+                .unwrap_or(i64::MAX);
+                if last.is_none_or(|l| now.saturating_sub(l) >= min) {
+                    if self.queue_ack(tx, env, now)? {
+                        tx.execute(
+                            "UPDATE seen SET last_reack_at = ?3 WHERE sender = ?1 AND message_id = ?2",
+                            params![sender, env.message_id, now],
+                        )?;
+                        reacked = true;
+                    }
+                } else {
+                    self.metrics.inc("ack.reack_rate_limited");
+                }
+            }
+            return Ok(MsgTx::Duplicate { reacked });
+        }
+        if quarantine {
+            let n: i64 = tx.query_row(
+                "SELECT COUNT(*) FROM inbox WHERE quarantined = 1",
+                [],
+                |r| r.get(0),
+            )?;
+            if u64::try_from(n).unwrap_or(u64::MAX) >= self.config.storage.max_quarantined {
+                return Ok(MsgTx::QuarantineFull);
+            }
+        } else {
+            let n: i64 = tx.query_row(
+                "SELECT COUNT(*) FROM inbox WHERE quarantined = 0",
+                [],
+                |r| r.get(0),
+            )?;
+            if u64::try_from(n).unwrap_or(u64::MAX) >= self.config.storage.max_inbox_records {
+                return Ok(MsgTx::InboxFull);
+            }
+        }
+        tx.execute(
+            "INSERT INTO seen (sender, message_id, expires_at) VALUES (?1, ?2, ?3)",
+            params![sender, env.message_id, env.expires_at],
+        )?;
+        tx.execute(
+            "INSERT INTO inbox (message_id, sender, type, conversation_id, correlation_id, body,
+                                created_at, expires_at, received_at, quarantined, sender_trust)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+            params![
+                env.message_id,
+                sender,
+                env.message_type,
+                env.conversation_id,
+                env.correlation_id,
+                env.body,
+                env.created_at,
+                env.expires_at,
+                now,
+                i64::from(quarantine),
+                trust_to_db(trust),
+            ],
+        )?;
+        if quarantine {
+            return Ok(MsgTx::Accepted {
+                acked: false,
+                consumed: false,
+                quarantined: true,
+            });
+        }
+        self.insert_event(tx, "message.received", &env.message_id, None, None, now)?;
+        let mut consumed = false;
+        if trust == Trust::Trusted {
+            let cand = Candidate {
+                message_id: &env.message_id,
+                sender: &sender,
+                message_type: &env.message_type,
+                conversation_id: env.conversation_id.as_deref(),
+                correlation_id: env.correlation_id.as_deref(),
+            };
+            consumed = self.fire_triggers(tx, &cand, now, None)?.consumed > 0;
+        }
+        let acked = self.queue_ack(tx, env, now)?;
+        if acked {
+            tx.execute(
+                "UPDATE seen SET last_reack_at = ?3 WHERE sender = ?1 AND message_id = ?2",
+                params![sender, env.message_id, now],
+            )?;
+        }
+        Ok(MsgTx::Accepted {
+            acked,
+            consumed,
+            quarantined: false,
+        })
+    }
+
+    /// Seal an `ack.received` for `orig` and insert it into the outbox. Needs the
+    /// sender's contact record; without one (accept-policy unknown sender) no
+    /// ack is possible and `false` is returned.
+    pub(crate) fn queue_ack(
+        &self,
+        tx: &Transaction<'_>,
+        orig: &Envelope,
+        now: i64,
+    ) -> Result<bool, StoreError> {
+        let Some(row) = self.load_contact(tx, &orig.sender)? else {
+            self.metrics.inc("ack.no_contact");
+            return Ok(false);
+        };
+        let default_ttl = i64::try_from(self.config.delivery.default_ttl_s.saturating_mul(1000))
+            .unwrap_or(i64::MAX);
+        let ttl = orig.expires_at.saturating_sub(now).min(default_ttl);
+        if ttl <= 0 {
+            return Ok(false);
+        }
+        let Ok(mut env) = Envelope::new(
+            self.own,
+            orig.sender,
+            MESSAGE_TYPE_ACK_RECEIVED,
+            String::new(),
+            now,
+            ttl,
+        ) else {
+            return Err(StoreError::Corrupt("random number generator failed"));
+        };
+        env.conversation_id = orig.conversation_id.clone();
+        env.correlation_id = Some(orig.message_id.clone());
+        let frame =
+            match envelope::seal(&self.identity, &row.contact, &env, now, self.max_frame_len) {
+                Ok(f) => f,
+                Err(_) => {
+                    self.metrics.inc("ack.seal_failed");
+                    return Ok(false);
+                }
+            };
+        self.insert_outbox_row(
+            tx,
+            &OutboxInsert {
+                env: &env,
+                topic: &row.contact.inbox_topic().to_string(),
+                frame: &frame,
+                is_ack: true,
+                idempotency_key: None,
+            },
+            now,
+        )?;
+        self.metrics.inc("ack.queued");
+        Ok(true)
+    }
+
+    fn ingest_ack(&self, frame: &InboundFrame, env: &Envelope, trust: Trust) -> FrameOutcome {
+        if trust != Trust::Trusted {
+            self.metrics.inc("ack.ignored_untrusted");
+            self.mark_transport_seen(frame);
+            return FrameOutcome::AckIgnored;
+        }
+        let now = self.now();
+        let sender = env.sender.to_string();
+        let res = self.store.tx(|tx| {
+            let inserted = tx.execute(
+                "INSERT OR IGNORE INTO seen (sender, message_id, expires_at) VALUES (?1, ?2, ?3)",
+                params![sender, env.message_id, env.expires_at],
+            )?;
+            if inserted == 0 {
+                return Ok(AckTx::Ignored("duplicate"));
+            }
+            let Some(corr) = env.correlation_id.as_deref() else {
+                return Ok(AckTx::Ignored("no_correlation"));
+            };
+            let row: Option<(String, i64, String, Option<String>)> = tx
+                .query_row(
+                    "SELECT recipient, is_ack, state, conversation_id FROM outbox WHERE message_id = ?1",
+                    [corr],
+                    |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
+                )
+                .optional()?;
+            let Some((recipient, is_ack, state, conv)) = row else {
+                return Ok(AckTx::Ignored("unknown_id"));
+            };
+            if is_ack != 0 {
+                return Ok(AckTx::Ignored("ack_for_ack"));
+            }
+            if recipient != sender {
+                return Ok(AckTx::Ignored("wrong_party"));
+            }
+            if state == "delivered" {
+                return Ok(AckTx::Ignored("already_delivered"));
+            }
+            // A late ack after `expired` (or even `failed`) still proves delivery.
+            tx.execute(
+                "UPDATE outbox SET state='delivered', delivered_at=?2, next_attempt_at=NULL
+                 WHERE message_id=?1",
+                params![corr, now],
+            )?;
+            Ok(AckTx::Applied { conversation_id: conv })
+        });
+        match res {
+            Err(_) => self.store_failure(),
+            Ok(AckTx::Ignored(why)) => {
+                self.metrics.inc(&format!("ack.ignored_{why}"));
+                self.mark_transport_seen(frame);
+                FrameOutcome::AckIgnored
+            }
+            Ok(AckTx::Applied { conversation_id }) => {
+                self.metrics.inc("ack.applied");
+                self.mark_transport_seen(frame);
+                self.hint(ChangeHint::Outbox);
+                if let Some(c) = conversation_id {
+                    self.hint(ChangeHint::Conversation { conversation_id: c });
+                }
+                FrameOutcome::AckApplied
+            }
+        }
+    }
+}

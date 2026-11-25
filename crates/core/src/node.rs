@@ -1,0 +1,726 @@
+//! The durable engine. See the module docs of [`crate`] and `docs/protocol.md`
+//! ("Delivery, retries and receipts").
+//!
+//! Layout: this file holds the struct, construction, the deterministic step
+//! functions and `run`. Inbound processing is in `ingest`, the outbound path in
+//! `send`, triggers/events in `triggers`, and the `AgentApi` implementation in
+//! `api_impl`.
+
+use std::path::Path;
+use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
+
+use agentnet_transport::{ContentTopic, HistoryQuery, InboundFrame, Transport, TransportError};
+use rusqlite::OptionalExtension;
+use tokio::sync::{broadcast, mpsc, watch, Notify};
+use tokio_util::sync::CancellationToken;
+
+use crate::address::Address;
+use crate::api::{ApiError, ChangeHint, DeliveryState, Trust};
+use crate::clock::Clock;
+use crate::config::NodeConfig;
+use crate::contact::VerifiedContact;
+use crate::envelope::OpenLimits;
+use crate::identity::Identity;
+use crate::metrics::{Metrics, NodeMetrics};
+use crate::store::{kv_get, kv_set, Store, StoreError};
+
+const KV_OWN_ADDRESS: &str = "own_address";
+pub(crate) const KV_HISTORY_WATERMARK: &str = "history_watermark_ms";
+pub(crate) const KV_EVENTS_ACK: &str = "events_ack_seq";
+const HISTORY_PAGE_LIMIT: u32 = 100;
+const MAX_HISTORY_PAGES: usize = 100_000;
+const MAINTENANCE_INTERVAL: Duration = Duration::from_secs(30);
+const TRANSPORT_SEEN_CAP: i64 = 200_000;
+const MAX_LAST_ERROR_LEN: usize = 120;
+
+/// Errors from constructing or stepping a [`Node`].
+#[derive(Debug, thiserror::Error)]
+pub enum NodeError {
+    /// Invalid configuration.
+    #[error("invalid configuration: {0}")]
+    Config(String),
+    /// The store failed.
+    #[error("store error: {0}")]
+    Store(#[from] StoreError),
+    /// The data directory belongs to a different identity.
+    #[error(
+        "this store was created by identity {stored} but the supplied identity is {given}; \
+         refusing to run (wrong identity file, or the identity was lost and regenerated)"
+    )]
+    IdentityMismatch {
+        /// Address recorded in the store.
+        stored: String,
+        /// Address of the supplied identity.
+        given: String,
+    },
+    /// The transport failed.
+    #[error("transport error: {0}")]
+    Transport(#[from] TransportError),
+}
+
+/// Result of one [`Node::step_receive`].
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct ReceiveReport {
+    /// Frames returned by the transport.
+    pub polled: usize,
+    /// Frames that were processed (all of them unless a store failure occurred).
+    pub processed: usize,
+    /// Frames whose processing failed on a store error.
+    pub store_failures: usize,
+}
+
+/// Result of one [`Node::step_send`].
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct SendReport {
+    /// Frames the transport accepted.
+    pub published: usize,
+    /// Publish attempts that failed (retryable or permanent).
+    pub failed: usize,
+    /// Rows moved to `expired`.
+    pub expired: usize,
+    /// The step stopped early because the transport is unavailable/isolated.
+    pub deferred: bool,
+}
+
+/// Result of one [`Node::step_history_sync`].
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct HistoryReport {
+    /// True when the pass finished and the watermark was advanced.
+    pub completed: bool,
+    /// Frames returned by history (including repeats).
+    pub frames: usize,
+    /// Why the pass did not complete (sanitized).
+    pub error: Option<String>,
+}
+
+/// Result of one [`Node::step_maintenance`].
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct MaintenanceReport {
+    /// Outbox rows moved to `expired`.
+    pub outbox_expired: usize,
+    /// Triggers moved to `expired`.
+    pub triggers_expired: usize,
+    /// Rows deleted across all pruned tables.
+    pub pruned_rows: usize,
+}
+
+/// The agent engine. Create with [`Node::open`].
+pub struct Node {
+    pub(crate) identity: Identity,
+    pub(crate) own: Address,
+    pub(crate) own_str: String,
+    pub(crate) topic: ContentTopic,
+    pub(crate) store: Store,
+    pub(crate) transport: Arc<dyn Transport>,
+    pub(crate) config: NodeConfig,
+    pub(crate) clock: Arc<dyn Clock>,
+    pub(crate) rng: Mutex<u64>,
+    pub(crate) changes: broadcast::Sender<ChangeHint>,
+    pub(crate) metrics: Metrics,
+    pub(crate) send_nudge: Notify,
+    pub(crate) history_kick: Notify,
+    pub(crate) max_frame_len: usize,
+    pub(crate) open_limits: OpenLimits,
+    subscribed: AtomicBool,
+    last_live_poll_at: AtomicI64,
+    transport_was_ok: AtomicBool,
+    history_needed: AtomicBool,
+    pause: watch::Sender<bool>,
+}
+
+impl std::fmt::Debug for Node {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Node")
+            .field("address", &self.own_str)
+            .finish_non_exhaustive()
+    }
+}
+
+pub(crate) fn splitmix(state: &mut u64) -> u64 {
+    *state = state.wrapping_add(0x9E37_79B9_7F4A_7C15);
+    let mut z = *state;
+    z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+    z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+    z ^ (z >> 31)
+}
+
+/// Truncate and strip control characters so an error string is safe to store.
+pub(crate) fn sanitize(s: &str) -> String {
+    s.chars()
+        .filter(|c| !c.is_control())
+        .take(MAX_LAST_ERROR_LEN)
+        .collect()
+}
+
+pub(crate) fn trust_to_db(t: Trust) -> &'static str {
+    match t {
+        Trust::Trusted => "trusted",
+        Trust::Untrusted => "untrusted",
+        Trust::Blocked => "blocked",
+        Trust::Unknown => "unknown",
+    }
+}
+
+pub(crate) fn trust_from_db(s: &str) -> Trust {
+    match s {
+        "trusted" => Trust::Trusted,
+        "blocked" => Trust::Blocked,
+        "untrusted" => Trust::Untrusted,
+        _ => Trust::Unknown,
+    }
+}
+
+pub(crate) fn state_from_db(s: &str) -> DeliveryState {
+    match s {
+        "sent" => DeliveryState::Sent,
+        "delivered" => DeliveryState::Delivered,
+        "failed" => DeliveryState::Failed,
+        "expired" => DeliveryState::Expired,
+        _ => DeliveryState::Queued,
+    }
+}
+
+/// A stored contact.
+pub(crate) struct ContactRow {
+    pub contact: VerifiedContact,
+    pub trust: Trust,
+    pub alias: Option<String>,
+    pub added_at: i64,
+}
+
+impl Node {
+    /// Open the engine on the store at `store_path`.
+    ///
+    /// The caller (the daemon) owns the data-directory lock and has loaded the
+    /// identity file. Fails with [`NodeError::IdentityMismatch`] if the store
+    /// was created by a different identity.
+    pub fn open(
+        identity: Identity,
+        store_path: &Path,
+        transport: Arc<dyn Transport>,
+        config: NodeConfig,
+        clock: Arc<dyn Clock>,
+    ) -> Result<Arc<Self>, NodeError> {
+        config.validate().map_err(NodeError::Config)?;
+        let store = Store::open(store_path)?;
+        let own = identity.address();
+        let own_str = own.to_string();
+        store
+            .tx(|tx| match kv_get(tx, KV_OWN_ADDRESS)? {
+                Some(stored) if stored != own_str => {
+                    Err(StoreError::Api(ApiError::internal(stored)))
+                }
+                Some(_) => Ok(()),
+                None => kv_set(tx, KV_OWN_ADDRESS, &own_str),
+            })
+            .map_err(|e| match e {
+                StoreError::Api(a) => NodeError::IdentityMismatch {
+                    stored: a.message,
+                    given: own_str.clone(),
+                },
+                other => NodeError::Store(other),
+            })?;
+        let topic = identity.inbox_topic();
+        let max_frame_len = transport.max_payload_len(&topic);
+        let d = &config.delivery;
+        let seed = match d.jitter_seed {
+            Some(s) => s,
+            None => {
+                let mut b = [0u8; 8];
+                let _ = getrandom::fill(&mut b);
+                u64::from_le_bytes(b)
+            }
+        };
+        let open_limits = OpenLimits {
+            clock_skew_ms: i64::try_from(d.clock_skew_s.saturating_mul(1000)).unwrap_or(i64::MAX),
+            max_ttl_ms: i64::try_from(d.max_ttl_s.saturating_mul(1000)).unwrap_or(i64::MAX),
+            max_frame_len,
+        };
+        let (changes, _) = broadcast::channel(256);
+        let (pause, _) = watch::channel(false);
+        Ok(Arc::new(Self {
+            identity,
+            own,
+            own_str,
+            topic,
+            store,
+            transport,
+            config,
+            clock,
+            rng: Mutex::new(seed),
+            changes,
+            metrics: Metrics::default(),
+            send_nudge: Notify::new(),
+            history_kick: Notify::new(),
+            max_frame_len,
+            open_limits,
+            subscribed: AtomicBool::new(false),
+            last_live_poll_at: AtomicI64::new(0),
+            transport_was_ok: AtomicBool::new(true),
+            history_needed: AtomicBool::new(false),
+            pause,
+        }))
+    }
+
+    /// The agent's address string.
+    pub fn address(&self) -> &str {
+        &self.own_str
+    }
+
+    /// Snapshot of the counters.
+    pub fn metrics(&self) -> NodeMetrics {
+        self.metrics.snapshot()
+    }
+
+    pub(crate) fn now(&self) -> i64 {
+        self.clock.now_ms()
+    }
+
+    pub(crate) fn hint(&self, h: ChangeHint) {
+        let _ = self.changes.send(h);
+    }
+
+    pub(crate) fn history_pending(&self) -> bool {
+        self.history_needed.load(Ordering::SeqCst)
+    }
+
+    pub(crate) fn last_live_poll(&self) -> Option<i64> {
+        match self.last_live_poll_at.load(Ordering::SeqCst) {
+            0 => None,
+            t => Some(t),
+        }
+    }
+
+    /// Test hook: row count of one of the engine's tables.
+    #[doc(hidden)]
+    pub fn debug_table_count(&self, table: &str) -> u64 {
+        const TABLES: [&str; 9] = [
+            "contacts",
+            "outbox",
+            "inbox",
+            "seen",
+            "transport_seen",
+            "triggers",
+            "events",
+            "kv",
+            "sqlite_master",
+        ];
+        if !TABLES.contains(&table) {
+            return 0;
+        }
+        self.store
+            .read(|c| {
+                let n: i64 =
+                    c.query_row(&format!("SELECT COUNT(*) FROM {table}"), [], |r| r.get(0))?;
+                Ok(u64::try_from(n).unwrap_or(0))
+            })
+            .unwrap_or(0)
+    }
+
+    /// Test hook: the stored history watermark (Unix ms).
+    #[doc(hidden)]
+    pub fn debug_history_watermark(&self) -> Option<i64> {
+        self.store
+            .read(|c| kv_get(c, KV_HISTORY_WATERMARK))
+            .ok()
+            .flatten()
+            .and_then(|s| s.parse().ok())
+    }
+
+    /// Test hook: make the next `n` store transactions fail (simulated disk error).
+    #[doc(hidden)]
+    pub fn inject_store_failures(&self, n: u32) {
+        self.store.inject_failures(n);
+    }
+
+    /// Test hook: pause or resume the processing stage of [`Node::run`].
+    #[doc(hidden)]
+    pub fn set_processing_paused(&self, paused: bool) {
+        self.pause.send_replace(paused);
+    }
+
+    /// Checkpoint and close the database. Later calls fail with `Unavailable`.
+    pub fn close(&self) {
+        self.store.close();
+    }
+
+    /// Full-jitter exponential backoff after `n >= 1` completed attempts:
+    /// uniform in `[1, min(retry_max, retry_base * 2^(n-1))]` milliseconds.
+    pub(crate) fn backoff_ms(&self, n: u32) -> i64 {
+        let d = &self.config.delivery;
+        let shift = n.saturating_sub(1).min(32);
+        let ceiling = d
+            .retry_base_ms
+            .saturating_mul(1u64 << shift)
+            .min(d.retry_max_ms)
+            .max(1);
+        let r = {
+            let mut g = self.rng.lock().unwrap_or_else(|e| e.into_inner());
+            splitmix(&mut g)
+        };
+        i64::try_from(1 + r % ceiling).unwrap_or(i64::MAX)
+    }
+
+    /// Load a contact (or synthesize our own record for self-addressed mail).
+    pub(crate) fn load_contact(
+        &self,
+        conn: &rusqlite::Connection,
+        addr: &Address,
+    ) -> Result<Option<ContactRow>, StoreError> {
+        let now = self.now();
+        if *addr == self.own {
+            let doc = self.identity.contact_record().to_document();
+            let contact = VerifiedContact::parse_and_verify_allow_expired(&doc, now)
+                .map_err(|_| StoreError::Corrupt("own contact record"))?;
+            return Ok(Some(ContactRow {
+                contact,
+                trust: Trust::Trusted,
+                alias: Some("self".into()),
+                added_at: self.identity.created_at(),
+            }));
+        }
+        let row: Option<(String, Option<String>, String, i64)> = conn
+            .query_row(
+                "SELECT document, alias, trust, added_at FROM contacts WHERE address = ?1",
+                [addr.to_string()],
+                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
+            )
+            .optional()?;
+        let Some((doc, alias, trust, added_at)) = row else {
+            return Ok(None);
+        };
+        let contact = VerifiedContact::parse_and_verify_allow_expired(&doc, now)
+            .map_err(|_| StoreError::Corrupt("stored contact record failed verification"))?;
+        if contact.address != *addr {
+            return Err(StoreError::Corrupt("stored contact address mismatch"));
+        }
+        Ok(Some(ContactRow {
+            contact,
+            trust: trust_from_db(&trust),
+            alias,
+            added_at,
+        }))
+    }
+
+    // ------------------------------------------------------------------ steps
+
+    async fn poll_frames(&self) -> Result<Vec<InboundFrame>, TransportError> {
+        if !self.subscribed.load(Ordering::SeqCst) {
+            self.transport.subscribe(&self.topic).await?;
+            self.subscribed.store(true, Ordering::SeqCst);
+        }
+        let frames = self.transport.poll(&self.topic).await;
+        match &frames {
+            Ok(_) => {
+                self.last_live_poll_at.store(self.now(), Ordering::SeqCst);
+                if !self.transport_was_ok.swap(true, Ordering::SeqCst) {
+                    self.metrics.inc("transport.recovered");
+                    self.history_kick.notify_one();
+                }
+            }
+            Err(_) => {
+                self.transport_was_ok.store(false, Ordering::SeqCst);
+                self.metrics.inc("transport.poll_error");
+            }
+        }
+        frames
+    }
+
+    /// Poll the live queue once and process every frame returned.
+    pub async fn step_receive(&self) -> Result<ReceiveReport, NodeError> {
+        let frames = self.poll_frames().await?;
+        let mut rep = ReceiveReport {
+            polled: frames.len(),
+            ..Default::default()
+        };
+        for f in &frames {
+            if self.ingest_frame(f).is_store_failure() {
+                rep.store_failures += 1;
+            } else {
+                rep.processed += 1;
+            }
+        }
+        if rep.store_failures > 0 {
+            self.note_live_loss();
+        }
+        Ok(rep)
+    }
+
+    /// A live frame could not be persisted: it will not be polled again, so
+    /// ask for a history pass to recover it.
+    fn note_live_loss(&self) {
+        self.history_needed.store(true, Ordering::SeqCst);
+        self.history_kick.notify_one();
+    }
+
+    /// Catch up from the transport's history (see module docs). The watermark
+    /// advances only after a pass that processed every page without a store
+    /// failure; `HistoryUnavailable` and other transport errors leave it as is.
+    pub async fn step_history_sync(&self) -> Result<HistoryReport, NodeError> {
+        let now = self.now();
+        let d = &self.config.delivery;
+        let retention_ms = i64::try_from(
+            self.config
+                .storage
+                .retention_hours
+                .saturating_mul(3_600_000),
+        )
+        .unwrap_or(i64::MAX);
+        let overlap_ms =
+            i64::try_from(d.history_overlap_s.saturating_mul(1000)).unwrap_or(i64::MAX);
+        let wm: Option<i64> = self
+            .store
+            .read(|c| kv_get(c, KV_HISTORY_WATERMARK))?
+            .and_then(|s| s.parse().ok());
+        let floor = now.saturating_sub(retention_ms);
+        let start_ms = match wm {
+            Some(w) => w.saturating_sub(overlap_ms).max(floor),
+            None => floor,
+        };
+        let start_ns = start_ms.saturating_mul(1_000_000);
+        // Sender timestamps may run ahead of our clock by up to the accepted skew.
+        let end_ns = now
+            .saturating_add(self.open_limits.clock_skew_ms)
+            .saturating_mul(1_000_000);
+        let max_window = self.transport.max_history_window_ns().max(1);
+        let mut rep = HistoryReport::default();
+        let mut ws = start_ns;
+        let mut pages = 0usize;
+        loop {
+            let we = ws.saturating_add(max_window).min(end_ns);
+            let mut cursor: Option<String> = None;
+            loop {
+                pages += 1;
+                if pages > MAX_HISTORY_PAGES {
+                    rep.error = Some("too many history pages".into());
+                    return Ok(rep);
+                }
+                let q = HistoryQuery {
+                    topic: self.topic.clone(),
+                    start_ns: ws,
+                    end_ns: we,
+                    cursor: cursor.clone(),
+                    limit: HISTORY_PAGE_LIMIT,
+                };
+                let page = match self.transport.history(&q).await {
+                    Ok(p) => p,
+                    Err(e) => {
+                        self.metrics.inc(match e {
+                            TransportError::HistoryUnavailable(_) => "history.unavailable",
+                            TransportError::Isolation(_) => "history.isolation",
+                            _ => "history.error",
+                        });
+                        rep.error = Some(sanitize(&e.to_string()));
+                        return Ok(rep);
+                    }
+                };
+                for f in &page.frames {
+                    rep.frames += 1;
+                    if self.ingest_frame(f).is_store_failure() {
+                        rep.error = Some("storage error while processing history".into());
+                        return Ok(rep);
+                    }
+                }
+                match page.next_cursor {
+                    Some(c) if Some(&c) != cursor.as_ref() => cursor = Some(c),
+                    _ => break,
+                }
+            }
+            if we >= end_ns {
+                break;
+            }
+            ws = we;
+        }
+        self.store
+            .tx(|tx| kv_set(tx, KV_HISTORY_WATERMARK, &now.to_string()))?;
+        self.history_needed.store(false, Ordering::SeqCst);
+        self.metrics.inc("history.completed");
+        rep.completed = true;
+        Ok(rep)
+    }
+
+    /// Expire and prune (see `docs/protocol.md`).
+    pub fn step_maintenance(&self) -> Result<MaintenanceReport, NodeError> {
+        let now = self.now();
+        let c = &self.config;
+        let hours = |h: u64| i64::try_from(h.saturating_mul(3_600_000)).unwrap_or(i64::MAX);
+        let skew_ms = self.open_limits.clock_skew_ms;
+        let retention = now.saturating_sub(hours(c.storage.retention_hours));
+        let ev_ret = now.saturating_sub(hours(c.storage.event_retention_hours));
+        let ev_max = now.saturating_sub(hours(c.storage.event_max_age_hours));
+        let ts_ttl = now.saturating_sub(
+            i64::try_from(c.delivery.transport_seen_ttl_s.saturating_mul(1000)).unwrap_or(i64::MAX),
+        );
+        let (rep, expired_msgs) = self.store.tx(|tx| {
+            let mut rep = MaintenanceReport::default();
+            let mut expired: Vec<(Option<String>, bool)> = Vec::new();
+            {
+                let mut st = tx.prepare(
+                    "UPDATE outbox SET state='expired', next_attempt_at=NULL
+                     WHERE expires_at <= ?1 AND (state='queued' OR (state='sent' AND is_ack=0))
+                     RETURNING conversation_id, is_ack",
+                )?;
+                let rows = st.query_map([now], |r| Ok((r.get::<_, Option<String>>(0)?, r.get::<_, i64>(1)? != 0)))?;
+                for r in rows {
+                    expired.push(r?);
+                }
+            }
+            rep.outbox_expired = expired.len();
+            rep.triggers_expired = tx.execute(
+                "UPDATE triggers SET state='expired' WHERE state='active' AND expires_at <= ?1",
+                [now],
+            )?;
+            // `seen` rows are kept until expires_at + clock_skew: an envelope
+            // that expired is rejected by `open` anyway, so pruning then is replay-safe.
+            let mut pruned = 0;
+            pruned += tx.execute(
+                "DELETE FROM seen WHERE expires_at < ?1",
+                [now.saturating_sub(skew_ms)],
+            )?;
+            pruned += tx.execute("DELETE FROM transport_seen WHERE first_seen < ?1", [ts_ttl])?;
+            pruned += tx.execute(
+                "DELETE FROM transport_seen WHERE transport_id NOT IN
+                 (SELECT transport_id FROM transport_seen ORDER BY first_seen DESC LIMIT ?1)",
+                [TRANSPORT_SEEN_CAP],
+            )?;
+            pruned += tx.execute(
+                "DELETE FROM events WHERE (acked=1 AND timestamp < ?1) OR (acked=0 AND timestamp < ?2)",
+                [ev_ret, ev_max],
+            )?;
+            pruned += tx.execute("DELETE FROM inbox WHERE received_at < ?1", [retention])?;
+            pruned += tx.execute(
+                "DELETE FROM outbox WHERE state IN ('delivered','failed','expired')
+                 AND created_at < ?1",
+                [retention],
+            )?;
+            pruned += tx.execute(
+                "DELETE FROM triggers WHERE state != 'active' AND created_at < ?1",
+                [ev_ret],
+            )?;
+            rep.pruned_rows = pruned;
+            Ok((rep, expired))
+        })?;
+        if !expired_msgs.is_empty() {
+            self.metrics
+                .add("outbox.expired", expired_msgs.len() as u64);
+            if expired_msgs.iter().any(|(_, ack)| !ack) {
+                self.hint(ChangeHint::Outbox);
+            }
+            for (cid, ack) in expired_msgs {
+                if let (Some(cid), false) = (cid, ack) {
+                    self.hint(ChangeHint::Conversation {
+                        conversation_id: cid,
+                    });
+                }
+            }
+        }
+        if rep.triggers_expired > 0 {
+            self.hint(ChangeHint::Triggers);
+        }
+        Ok(rep)
+    }
+
+    // -------------------------------------------------------------------- run
+
+    async fn wait_unpaused(&self) {
+        let mut rx = self.pause.subscribe();
+        while *rx.borrow() {
+            if rx.changed().await.is_err() {
+                break;
+            }
+        }
+    }
+
+    /// Drive the engine until `shutdown` is cancelled, then close the store.
+    ///
+    /// Tasks: a receive loop feeding a bounded channel (capacity
+    /// `inbound_channel_capacity`; when full the receive loop awaits, so the
+    /// transport's queue absorbs the backlog and nothing is dropped or grows
+    /// without bound apart from the one poll batch the receive loop holds), a
+    /// processing stage that persists frames, a send loop, a history loop (at
+    /// start, after the transport recovers, on a persistence failure and every
+    /// `history_sync_interval_s`) and a maintenance loop. On shutdown the loops
+    /// stop, the frame being processed finishes, buffered unprocessed frames are
+    /// left to history recovery, and the database is checkpointed and closed.
+    pub async fn run(self: &Arc<Self>, shutdown: CancellationToken) {
+        let cap = self.config.delivery.inbound_channel_capacity;
+        let (tx, mut rx) = mpsc::channel::<InboundFrame>(cap);
+        let poll_every = Duration::from_millis(self.config.delivery.poll_interval_ms);
+        let hist_every = Duration::from_secs(self.config.delivery.history_sync_interval_s);
+
+        let receive = async {
+            let mut tick = tokio::time::interval(poll_every);
+            tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
+            loop {
+                tokio::select! {
+                    _ = shutdown.cancelled() => return,
+                    _ = tick.tick() => {}
+                }
+                let frames = match self.poll_frames().await {
+                    Ok(f) => f,
+                    Err(_) => continue,
+                };
+                for f in frames {
+                    tokio::select! {
+                        _ = shutdown.cancelled() => return,
+                        r = tx.send(f) => if r.is_err() { return },
+                    }
+                }
+            }
+        };
+        let process = async {
+            loop {
+                let f = tokio::select! {
+                    _ = shutdown.cancelled() => return,
+                    f = rx.recv() => match f { Some(f) => f, None => return },
+                };
+                tokio::select! {
+                    _ = shutdown.cancelled() => return,
+                    _ = self.wait_unpaused() => {}
+                }
+                if self.ingest_frame(&f).is_store_failure() {
+                    self.note_live_loss();
+                }
+            }
+        };
+        let send = async {
+            loop {
+                tokio::select! {
+                    _ = shutdown.cancelled() => return,
+                    _ = self.step_send() => {}
+                }
+                tokio::select! {
+                    _ = shutdown.cancelled() => return,
+                    _ = self.send_nudge.notified() => {}
+                    _ = tokio::time::sleep(poll_every) => {}
+                }
+            }
+        };
+        let history = async {
+            loop {
+                tokio::select! {
+                    _ = shutdown.cancelled() => return,
+                    _ = self.step_history_sync() => {}
+                }
+                tokio::select! {
+                    _ = shutdown.cancelled() => return,
+                    _ = self.history_kick.notified() => {}
+                    _ = tokio::time::sleep(hist_every) => {}
+                }
+            }
+        };
+        let maintenance = async {
+            loop {
+                let _ = self.step_maintenance();
+                tokio::select! {
+                    _ = shutdown.cancelled() => return,
+                    _ = tokio::time::sleep(MAINTENANCE_INTERVAL) => {}
+                }
+            }
+        };
+        tokio::join!(receive, process, send, history, maintenance);
+        self.store.close();
+    }
+}

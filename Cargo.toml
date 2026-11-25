@@ -26,6 +26,8 @@ reqwest = { version = "0.12.28", default-features = false, features = ["rustls-t
 base64 = "0.22.1"
 sha2 = "0.10.9"
 url = "2.5"
+rusqlite = { version = "0.42", features = ["bundled"] }
+tokio-util = "0.7"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
