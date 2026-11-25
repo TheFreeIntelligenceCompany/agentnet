@@ -78,6 +78,8 @@ pub struct LogosRestMetrics {
     pub resubscribes: u64,
     /// Isolation audits actually sent to the node.
     pub audits_run: u64,
+    /// Redial requests (`POST /admin/v1/peers` with the static peers) sent.
+    pub redials: u64,
 }
 
 #[derive(Default)]
@@ -86,6 +88,7 @@ struct Counters {
     mismatches: AtomicU64,
     resubscribes: AtomicU64,
     audits: AtomicU64,
+    redials: AtomicU64,
 }
 
 #[derive(Default)]
@@ -93,6 +96,7 @@ struct AuditState {
     checked_at: Option<Instant>,
     violation: Option<String>,
     peers: Vec<PeerInfo>,
+    last_redial: Option<Instant>,
 }
 
 struct Resp {
@@ -123,6 +127,8 @@ impl LogosRestTransport {
     /// Performs no network I/O.
     pub fn new(cfg: LogosRestConfig) -> Result<Self, TransportError> {
         let url = cfg.validate()?;
+        let mut cfg = cfg;
+        cfg.allowed_peer_ids = cfg.effective_allowed_peer_ids();
         let http = reqwest::Client::builder()
             .redirect(reqwest::redirect::Policy::none())
             .no_proxy()
@@ -160,6 +166,7 @@ impl LogosRestTransport {
             hash_mismatches: self.counters.mismatches.load(Ordering::Relaxed),
             resubscribes: self.counters.resubscribes.load(Ordering::Relaxed),
             audits_run: self.counters.audits.load(Ordering::Relaxed),
+            redials: self.counters.redials.load(Ordering::Relaxed),
         }
     }
 
@@ -222,6 +229,15 @@ impl LogosRestTransport {
     }
 
     async fn refresh_audit(&self, st: &mut AuditState) -> Result<(), TransportError> {
+        let r = self.refresh_audit_once(st).await;
+        if r.is_ok() && self.redial_wanted(st) && self.redial(st).await {
+            // The dial is synchronous on the node; look again.
+            return self.refresh_audit_once(st).await;
+        }
+        r
+    }
+
+    async fn refresh_audit_once(&self, st: &mut AuditState) -> Result<(), TransportError> {
         match self.fetch_audit().await {
             Ok((peers, violation)) => {
                 st.checked_at = Some(Instant::now());
@@ -234,6 +250,34 @@ impl LogosRestTransport {
                 Err(e)
             }
         }
+    }
+
+    /// True when static peers are configured, no allowlisted peer is connected
+    /// and the redial rate limit allows another attempt.
+    fn redial_wanted(&self, st: &AuditState) -> bool {
+        !self.cfg.static_peers.is_empty()
+            && st.checked_at.is_some()
+            && !st.peers.iter().any(|p| p.connected && p.allowed)
+            && st
+                .last_redial
+                .is_none_or(|t| t.elapsed() >= self.cfg.redial_interval)
+    }
+
+    /// Asks the node to dial exactly the configured static peers. Failures are
+    /// not fatal (the next audit decides); returns whether the node said OK.
+    async fn redial(&self, st: &mut AuditState) -> bool {
+        st.last_redial = Some(Instant::now());
+        self.counters.redials.fetch_add(1, Ordering::Relaxed);
+        let Ok(body) = serde_json::to_vec(&self.cfg.static_peers) else {
+            return false;
+        };
+        matches!(
+            self.call(Method::POST, "/admin/v1/peers", Some(body)).await,
+            Ok(Resp {
+                status: 200..=299,
+                ..
+            })
+        )
     }
 
     /// Forces an isolation audit now. `Ok` means no violation; a violation is
@@ -262,6 +306,9 @@ impl LogosRestTransport {
             .is_some_and(|t| t.elapsed() < self.cfg.audit_interval);
         if !fresh {
             self.refresh_audit(&mut st).await?;
+        } else if self.redial_wanted(&st) && self.redial(&mut st).await {
+            // Cached audit says nobody is connected: dial, then re-audit.
+            self.refresh_audit_once(&mut st).await?;
         }
         match &st.violation {
             Some(v) => Err(TransportError::Isolation(v.clone())),

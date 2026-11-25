@@ -789,3 +789,121 @@ async fn no_redirects_and_no_proxy_env() {
     ));
     assert_eq!(target.hits().len(), 0);
 }
+
+const PEERS_DOWN: &str = r#"[{"multiaddr":"/ip4/172.28.66.10/tcp/60000/p2p/16Uiu2HAmRelayOne","shards":[0],"connected":"CannotConnect"}]"#;
+const STATIC: &str = "/ip4/172.28.66.10/tcp/60000/p2p/16Uiu2HAmRelayOne";
+
+fn redial_cfg(url: &str) -> LogosRestConfig {
+    LogosRestConfig {
+        node_url: url.into(),
+        static_peers: vec![STATIC.into()],
+        request_timeout: Duration::from_secs(2),
+        ..Default::default()
+    }
+}
+
+/// Node whose peer is disconnected until it receives a dial.
+async fn redial_stub(dial_works: bool) -> Stub {
+    let dialled = Arc::new(std::sync::atomic::AtomicBool::new(false));
+    spawn_stub(move |req| match (req.method.as_str(), req.path.as_str()) {
+        ("GET", "/admin/v1/peers") => ok(if dialled.load(Ordering::SeqCst) {
+            PEERS_OK
+        } else {
+            PEERS_DOWN
+        }),
+        ("POST", "/admin/v1/peers") => {
+            if dial_works {
+                dialled.store(true, Ordering::SeqCst);
+                ok("OK")
+            } else {
+                status(500, "dial failed")
+            }
+        }
+        _ => ok("OK"),
+    })
+    .await
+}
+
+fn dials(stub: &Stub) -> Vec<Req> {
+    stub.hits()
+        .into_iter()
+        .filter(|r| r.method == "POST" && r.path == "/admin/v1/peers")
+        .collect()
+}
+
+#[tokio::test]
+async fn redial_issued_when_disconnected_and_only_static_peers_in_body() {
+    let stub = redial_stub(true).await;
+    let t = LogosRestTransport::new(redial_cfg(&stub.url)).unwrap();
+    assert_eq!(
+        t.config().allowed_peer_ids,
+        vec![RELAY.to_string()],
+        "derived"
+    );
+    t.publish(&topic(), b"x").await.unwrap();
+    let d = dials(&stub);
+    assert_eq!(d.len(), 1);
+    assert_eq!(d[0].body, format!("[\"{STATIC}\"]").into_bytes());
+    assert_eq!(t.metrics().redials, 1);
+    // connected now: no further dials
+    t.publish(&topic(), b"y").await.unwrap();
+    assert!(t.status().await.ready);
+    assert_eq!(dials(&stub).len(), 1);
+}
+
+#[tokio::test]
+async fn no_dial_when_peer_already_connected_or_no_static_peers() {
+    let stub = spawn_stub(healthy).await;
+    let t = LogosRestTransport::new(redial_cfg(&stub.url)).unwrap();
+    t.publish(&topic(), b"x").await.unwrap();
+    assert!(dials(&stub).is_empty());
+    // disconnected but nothing configured to dial
+    let stub = spawn_stub(|req| {
+        if req.path == "/admin/v1/peers" {
+            ok(PEERS_DOWN)
+        } else {
+            ok("OK")
+        }
+    })
+    .await;
+    let t = LogosRestTransport::new(cfg(&stub.url)).unwrap();
+    let _ = t.publish(&topic(), b"x").await;
+    let _ = t.status().await;
+    assert!(dials(&stub).is_empty());
+    assert_eq!(t.metrics().redials, 0);
+}
+
+#[tokio::test]
+async fn redial_is_rate_limited_and_failures_are_not_fatal() {
+    let stub = redial_stub(false).await;
+    let mut c = redial_cfg(&stub.url);
+    c.redial_interval = Duration::from_millis(300);
+    c.audit_interval = Duration::ZERO;
+    let t = LogosRestTransport::new(c).unwrap();
+    for _ in 0..5 {
+        // audit passes (no violation); node merely has no connected peer
+        assert!(t.publish(&topic(), b"x").await.is_ok());
+        let _ = t.status().await;
+    }
+    assert_eq!(dials(&stub).len(), 1, "rate limited within the interval");
+    tokio::time::sleep(Duration::from_millis(400)).await;
+    let _ = t.status().await;
+    assert_eq!(dials(&stub).len(), 2);
+    assert_eq!(t.metrics().redials, 2);
+    assert!(
+        !t.status().await.ready,
+        "failed dial leaves the node not ready"
+    );
+}
+
+#[tokio::test]
+async fn redial_also_runs_from_poll_and_history_with_cached_audit() {
+    let stub = redial_stub(true).await;
+    let mut c = redial_cfg(&stub.url);
+    c.audit_interval = Duration::from_secs(60);
+    let t = LogosRestTransport::new(c).unwrap();
+    // first call audits (not fresh) and redials
+    let _ = t.poll(&topic()).await;
+    assert_eq!(dials(&stub).len(), 1);
+    assert_eq!(t.metrics().audits_run, 2, "audit, dial, re-audit");
+}

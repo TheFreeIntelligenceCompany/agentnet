@@ -69,6 +69,14 @@ pub struct LogosRestConfig {
     /// Maximum age of a cached isolation audit.
     #[serde(deserialize_with = "de_duration")]
     pub audit_interval: Duration,
+    /// Static peer multiaddrs (each ending in `/p2p/<id>`) that the adapter may
+    /// ask the node to dial when no allowlisted peer is connected. In private
+    /// mode each must be a literal private IP with an allowlisted id; if
+    /// `allowed_peer_ids` is empty it is derived from these.
+    pub static_peers: Vec<String>,
+    /// Minimum time between redial attempts.
+    #[serde(deserialize_with = "de_duration")]
+    pub redial_interval: Duration,
 }
 
 impl Default for LogosRestConfig {
@@ -85,6 +93,8 @@ impl Default for LogosRestConfig {
             store_peer: None,
             max_message_bytes: 153_600,
             audit_interval: Duration::from_secs(15),
+            static_peers: Vec::new(),
+            redial_interval: Duration::from_secs(10),
         }
     }
 }
@@ -140,12 +150,17 @@ pub(crate) fn peer_id_of_multiaddr(addr: &str) -> Option<&str> {
     last.filter(|s| valid_peer_id(s))
 }
 
-fn check_store_peer_private(addr: &str, allowed: &[String]) -> Result<(), TransportError> {
-    let iso =
-        |m: &str| TransportError::Isolation(format!("store_peer rejected in private mode: {m}"));
+fn check_peer_addr_private(
+    what: &str,
+    addr: &str,
+    allowed: &[String],
+) -> Result<(), TransportError> {
+    let iso = |m: &str| TransportError::Isolation(format!("{what} rejected in private mode: {m}"));
     let mut segs = addr.split('/');
     if segs.next() != Some("") {
-        return Err(protocol("store_peer must be a multiaddr starting with '/'"));
+        return Err(protocol(format!(
+            "{what} must be a multiaddr starting with '/'"
+        )));
     }
     let ok = match (segs.next(), segs.next()) {
         (Some("ip4"), Some(a)) => a.parse::<Ipv4Addr>().map(is_private_ipv4).unwrap_or(false),
@@ -161,7 +176,28 @@ fn check_store_peer_private(addr: &str, allowed: &[String]) -> Result<(), Transp
     }
 }
 
+/// `/.../p2p/<id>` with the peer id as the final segment.
+fn static_peer_shape_ok(addr: &str) -> bool {
+    addr.len() <= 512
+        && addr.starts_with('/')
+        && addr.rsplit('/').nth(1) == Some("p2p")
+        && peer_id_of_multiaddr(addr).is_some()
+}
+
 impl LogosRestConfig {
+    /// The allowlist in force: `allowed_peer_ids`, or, when that is empty, the
+    /// peer ids of `static_peers`.
+    pub fn effective_allowed_peer_ids(&self) -> Vec<String> {
+        if self.allowed_peer_ids.is_empty() {
+            self.static_peers
+                .iter()
+                .filter_map(|p| peer_id_of_multiaddr(p).map(str::to_string))
+                .collect()
+        } else {
+            self.allowed_peer_ids.clone()
+        }
+    }
+
     /// Validates the configuration and returns the parsed node URL.
     ///
     /// Isolation failures (public host, preset cluster id, empty allowlist,
@@ -197,22 +233,37 @@ impl LogosRestConfig {
                         self.cluster_id
                     )));
                 }
-                if self.allowed_peer_ids.is_empty() {
+                let allowed = self.effective_allowed_peer_ids();
+                if allowed.is_empty() {
                     return Err(TransportError::Isolation(
-                        "private mode requires a non-empty allowed_peer_ids".into(),
+                        "private mode requires a non-empty allowed_peer_ids (or static_peers)"
+                            .into(),
                     ));
                 }
-                if let Some(bad) = self.allowed_peer_ids.iter().find(|p| !valid_peer_id(p)) {
+                if let Some(bad) = allowed.iter().find(|p| !valid_peer_id(p)) {
                     return Err(protocol(format!(
                         "invalid peer id in allowed_peer_ids: {:?}",
                         bad.chars().take(40).collect::<String>()
                     )));
                 }
                 if let Some(sp) = &self.store_peer {
-                    check_store_peer_private(sp, &self.allowed_peer_ids)?;
+                    check_peer_addr_private("store_peer", sp, &allowed)?;
+                }
+                for sp in &self.static_peers {
+                    if !static_peer_shape_ok(sp) {
+                        return Err(protocol(
+                            "static_peers must be multiaddrs ending in /p2p/<id>",
+                        ));
+                    }
+                    check_peer_addr_private("static_peers entry", sp, &allowed)?;
                 }
             }
             NetworkMode::Public => {
+                if self.static_peers.iter().any(|p| !static_peer_shape_ok(p)) {
+                    return Err(protocol(
+                        "static_peers must be multiaddrs ending in /p2p/<id>",
+                    ));
+                }
                 if url.scheme() == "http" && !private {
                     return Err(protocol(
                         "plain http is only accepted for private/loopback hosts (the node has no TLS)",
@@ -424,6 +475,40 @@ mod tests {
         assert!(
             d.validate().is_err(),
             "default has no allowlist: fails closed"
+        );
+    }
+
+    #[test]
+    fn static_peers_validation_and_derived_allowlist() {
+        let sp = "/ip4/172.28.66.10/tcp/60000/p2p/16Uiu2HAmPeerA";
+        let mut c = cfg("http://127.0.0.1:1");
+        c.static_peers = vec![sp.into()];
+        assert!(c.validate().is_ok());
+        // derived allowlist
+        c.allowed_peer_ids.clear();
+        assert!(c.validate().is_ok());
+        assert_eq!(
+            c.effective_allowed_peer_ids(),
+            vec!["16Uiu2HAmPeerA".to_string()]
+        );
+        // id not in explicit allowlist
+        c.allowed_peer_ids = vec!["16Uiu2HAmPeerB".into()];
+        assert!(matches!(c.validate(), Err(TransportError::Isolation(_))));
+        c.allowed_peer_ids = vec!["16Uiu2HAmPeerA".into()];
+        for bad in [
+            "/ip4/8.8.8.8/tcp/60000/p2p/16Uiu2HAmPeerA",
+            "/dns4/x.example.com/tcp/60000/p2p/16Uiu2HAmPeerA",
+            "/ip4/172.28.66.10/tcp/60000",
+            "/ip4/172.28.66.10/tcp/60000/p2p/16Uiu2HAmPeerA/p2p-circuit",
+            "172.28.66.10",
+            "",
+        ] {
+            c.static_peers = vec![bad.into()];
+            assert!(c.validate().is_err(), "{bad}");
+        }
+        assert_eq!(
+            LogosRestConfig::default().redial_interval,
+            Duration::from_secs(10)
         );
     }
 

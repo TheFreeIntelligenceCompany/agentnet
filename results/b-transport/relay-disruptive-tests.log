@@ -1,0 +1,169 @@
+    Updating crates.io index
+     Locking 8 packages to latest compatible versions
+      Adding fallible-iterator v0.3.0
+      Adding fallible-streaming-iterator v0.1.9
+      Adding hashlink v0.12.2
+      Adding libsqlite3-sys v0.40.0
+      Adding rsqlite-vfs v0.2.0
+      Adding rusqlite v0.42.0 (available: v0.43.0)
+      Adding sqlite-wasm-rs v0.6.3
+      Adding vcpkg v0.2.15
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.16s
+     Running tests/logos_rest_relay.rs (target/debug/deps/logos_rest_relay-c9a72af5478f425b)
+
+running 2 tests
+test node_restart_triggers_transparent_resubscribe ... ok
+test r1_down_gives_unavailable_and_history_unavailable ... 
+thread 'r1_down_gives_unavailable_and_history_unavailable' (26726050) panicked at crates/transport/tests/logos_rest_relay.rs:525:5:
+node did not become ready again
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    r1_down_gives_unavailable_and_history_unavailable
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 5 filtered out; finished in 261.15s
+
+error: test failed, to rerun pass `-p agentnet-transport --test logos_rest_relay`
+exit=101
+[{"multiaddr":"/ip4/172.28.66.10/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV","protocols":["/ipfs/id/1.0.0","/libp2p/autonat/1.0.0","/libp2p/circuit/relay/0.2.0/hop","/vac/waku/metadata/1.0.0","/vac/waku/store-query/3.0.0","/vac/waku/relay/2.0.0","/ipfs/ping/1.0.0","/vac/waku/lightpush/3.0.0","/vac/waku/lightpush/2.0.0-beta1","/vac/waku/filter-subscribe/2.0.0-beta1","/vac/waku/filter-push/2.0.0-beta1"],"shards":[0],"connected":"CannotConnect","agent":"logos-delivery-\"v0.39.2\"","origin":"UnknownOrigin"}]
+######## 2026-11-25T21:27:48Z re-run with adapter redial (static_peers) ########
+# cmd: AGENTNET_RELAY_TESTS=1 AGENTNET_RELAY_DISRUPTIVE=1 cargo test -p agentnet-transport --all-features --test logos_rest_relay -- --ignored --nocapture --test-threads=1
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.40s
+     Running tests/logos_rest_relay.rs (target/debug/deps/logos_rest_relay-c9a72af5478f425b)
+
+running 2 tests
+test node_restart_triggers_transparent_resubscribe ... ready again after 3.378895416s (redials sent: 0)
+ok
+test r1_down_gives_unavailable_and_history_unavailable ... ready again after 11.382871292s (redials sent: 4)
+time-to-reconnect after R1 restart (adapter redial): 11.382871292s
+ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 50.62s
+
+exit=0
+
+######## normal relay-gated run after redial change ########
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.78s
+     Running tests/logos_rest_relay.rs (target/debug/deps/logos_rest_relay-c9a72af5478f425b)
+
+running 8 tests
+test a_to_b_and_b_to_a_with_identical_ids_in_live_and_history ... 
+thread 'a_to_b_and_b_to_a_with_identical_ids_in_live_and_history' (26769582) panicked at crates/transport/tests/logos_rest_relay.rs:200:5:
+assertion `left == right` failed: B should receive exactly one frame
+  left: 0
+ right: 1
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test adapter_redial_restores_a_disconnected_client ... ready again after 21.666583ms (redials sent: 0)
+http://127.0.0.1:18641: ready after 21.666583ms, metrics LogosRestMetrics { malformed_skipped: 0, hash_mismatches: 0, resubscribes: 0, audits_run: 1, redials: 0 }
+ready again after 18.23525ms (redials sent: 0)
+http://127.0.0.1:18642: ready after 18.23525ms, metrics LogosRestMetrics { malformed_skipped: 0, hash_mismatches: 0, resubscribes: 0, audits_run: 1, redials: 0 }
+ok
+test history_paginates_across_pages_and_dedupes_against_live ... live frames received by B: 0/12
+
+thread 'history_paginates_across_pages_and_dedupes_against_live' (26770543) panicked at crates/transport/tests/logos_rest_relay.rs:271:5:
+live delivery far worse than expected
+FAILED
+test isolation_audit_passes_with_right_allowlist_and_fails_closed_with_wrong_one ... status: TransportStatus { ready: true, peers: [PeerInfo { peer_id: "16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV", connected: true, allowed: true }], isolation_violation: None, detail: "node reachable; 1 connected allowed peer(s)" }
+violation text: Some("node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV)")
+ok
+test max_payload_len_is_accepted_and_delivered_and_one_more_is_rejected_locally ... max_payload_len(/agentnet/1/ttest-612084edd36a03/proto) = 153503
+NOTE: exact-max frame not received live within 15 s; checking history
+measured node boundary for topic of 38 bytes: largest accepted payload = 153511; our max_payload_len = 153503; slack = 8
+ok
+test node_restart_triggers_transparent_resubscribe ... ignored, restarts container an-na; run last with AGENTNET_RELAY_DISRUPTIVE=1 -- --ignored
+test private_mode_config_rejects_public_ip_and_hostnames ... ok
+test r1_down_gives_unavailable_and_history_unavailable ... ignored, stops container an-r1; run last with AGENTNET_RELAY_DISRUPTIVE=1 -- --ignored
+
+failures:
+
+failures:
+    a_to_b_and_b_to_a_with_identical_ids_in_live_and_history
+    history_paginates_across_pages_and_dedupes_against_live
+
+test result: FAILED. 4 passed; 2 failed; 2 ignored; 0 measured; 0 filtered out; finished in 51.53s
+
+error: test failed, to rerun pass `-p agentnet-transport --test logos_rest_relay`
+exit=101
+######## offline suite ########
+     Running unittests src/lib.rs (target/debug/deps/agentnet_transport-93a3b6c2b7da7eef)
+test result: ok. 69 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.49s
+     Running tests/logos_rest_relay.rs (target/debug/deps/logos_rest_relay-c9a72af5478f425b)
+test result: ok. 6 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+# NOTE: the run above failed because an-nb was still disconnected from R1 (the preceding disruptive test only gave node A an adapter; B was redialled by this run's first audit and its gossipsub mesh had not re-formed yet). Re-run once all nodes were Connected and settled:
+######## normal relay-gated re-run, topology settled ########
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.04s
+     Running tests/logos_rest_relay.rs (target/debug/deps/logos_rest_relay-c9a72af5478f425b)
+
+running 8 tests
+test a_to_b_and_b_to_a_with_identical_ids_in_live_and_history ... 
+thread 'a_to_b_and_b_to_a_with_identical_ids_in_live_and_history' (26774503) panicked at crates/transport/tests/logos_rest_relay.rs:200:5:
+assertion `left == right` failed: B should receive exactly one frame
+  left: 0
+ right: 1
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test adapter_redial_restores_a_disconnected_client ... ready again after 12.032958ms (redials sent: 0)
+http://127.0.0.1:18641: ready after 12.032958ms, metrics LogosRestMetrics { malformed_skipped: 0, hash_mismatches: 0, resubscribes: 0, audits_run: 1, redials: 0 }
+ready again after 8.227875ms (redials sent: 0)
+http://127.0.0.1:18642: ready after 8.227875ms, metrics LogosRestMetrics { malformed_skipped: 0, hash_mismatches: 0, resubscribes: 0, audits_run: 1, redials: 0 }
+ok
+test history_paginates_across_pages_and_dedupes_against_live ... live frames received by B: 0/12
+
+thread 'history_paginates_across_pages_and_dedupes_against_live' (26775430) panicked at crates/transport/tests/logos_rest_relay.rs:271:5:
+live delivery far worse than expected
+FAILED
+test isolation_audit_passes_with_right_allowlist_and_fails_closed_with_wrong_one ... status: TransportStatus { ready: true, peers: [PeerInfo { peer_id: "16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV", connected: true, allowed: true }], isolation_violation: None, detail: "node reachable; 1 connected allowed peer(s)" }
+violation text: Some("node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV)")
+ok
+test max_payload_len_is_accepted_and_delivered_and_one_more_is_rejected_locally ... max_payload_len(/agentnet/1/ttest-612088cfb98903/proto) = 153503
+NOTE: exact-max frame not received live within 15 s; checking history
+measured node boundary for topic of 38 bytes: largest accepted payload = 153511; our max_payload_len = 153503; slack = 8
+ok
+test node_restart_triggers_transparent_resubscribe ... ignored, restarts container an-na; run last with AGENTNET_RELAY_DISRUPTIVE=1 -- --ignored
+test private_mode_config_rejects_public_ip_and_hostnames ... ok
+test r1_down_gives_unavailable_and_history_unavailable ... ignored, stops container an-r1; run last with AGENTNET_RELAY_DISRUPTIVE=1 -- --ignored
+
+failures:
+
+failures:
+    a_to_b_and_b_to_a_with_identical_ids_in_live_and_history
+    history_paginates_across_pages_and_dedupes_against_live
+
+test result: FAILED. 4 passed; 2 failed; 2 ignored; 0 measured; 0 filtered out; finished in 52.22s
+
+error: test failed, to rerun pass `-p agentnet-transport --test logos_rest_relay`
+exit=101
+
+# NOTE: live relay A<->B delivery was broken for ~9 min after the R1 restart even though all peers were Connected (mesh empty/flapping; see E12). The two failing normal runs above were during that window. Re-run after A->B delivery recovered (diag probe 21:37:07Z):
+######## normal relay-gated run, relay mesh recovered ########
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.74s
+     Running tests/logos_rest_relay.rs (target/debug/deps/logos_rest_relay-c9a72af5478f425b)
+
+running 8 tests
+test a_to_b_and_b_to_a_with_identical_ids_in_live_and_history ... ok
+test adapter_redial_restores_a_disconnected_client ... ready again after 7.60375ms (redials sent: 0)
+http://127.0.0.1:18641: ready after 7.60375ms, metrics LogosRestMetrics { malformed_skipped: 0, hash_mismatches: 0, resubscribes: 0, audits_run: 1, redials: 0 }
+ready again after 17.272875ms (redials sent: 0)
+http://127.0.0.1:18642: ready after 17.272875ms, metrics LogosRestMetrics { malformed_skipped: 0, hash_mismatches: 0, resubscribes: 0, audits_run: 1, redials: 0 }
+ok
+test history_paginates_across_pages_and_dedupes_against_live ... live frames received by B: 12/12
+ok
+test isolation_audit_passes_with_right_allowlist_and_fails_closed_with_wrong_one ... status: TransportStatus { ready: true, peers: [PeerInfo { peer_id: "16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV", connected: true, allowed: true }], isolation_violation: None, detail: "node reachable; 1 connected allowed peer(s)" }
+violation text: Some("node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV)")
+ok
+test max_payload_len_is_accepted_and_delivered_and_one_more_is_rejected_locally ... max_payload_len(/agentnet/1/ttest-6120a1ce84c803/proto) = 153503
+measured node boundary for topic of 38 bytes: largest accepted payload = 153511; our max_payload_len = 153503; slack = 8
+ok
+test node_restart_triggers_transparent_resubscribe ... ignored, restarts container an-na; run last with AGENTNET_RELAY_DISRUPTIVE=1 -- --ignored
+test private_mode_config_rejects_public_ip_and_hostnames ... ok
+test r1_down_gives_unavailable_and_history_unavailable ... ignored, stops container an-r1; run last with AGENTNET_RELAY_DISRUPTIVE=1 -- --ignored
+
+test result: ok. 6 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 12.23s
+
+exit=0

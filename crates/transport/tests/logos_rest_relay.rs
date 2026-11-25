@@ -83,7 +83,11 @@ fn config(url: &str, allowed: Vec<String>) -> LogosRestConfig {
 }
 
 fn adapter(url: &str) -> LogosRestTransport {
-    LogosRestTransport::new(config(url, vec![r1_peer_id()])).unwrap()
+    let mut cfg = config(url, vec![r1_peer_id()]);
+    // Lets the adapter itself restore the link after R1 restarts (the node never
+    // redials by itself with --dns-addrs-name-server=127.0.0.1).
+    cfg.static_peers = vec![format!("{R1_MULTIADDR_PREFIX}{}", r1_peer_id())];
+    LogosRestTransport::new(cfg).unwrap()
 }
 
 /// Retries `Unavailable` (another agent may be restarting containers).
@@ -514,15 +518,39 @@ fn disruptive_enabled() -> bool {
 }
 
 /// Waits until `t` reports ready (connected to R1); can take about two minutes.
-async fn wait_ready(t: &LogosRestTransport) {
-    let deadline = Instant::now() + Duration::from_secs(240);
-    while Instant::now() < deadline {
+async fn wait_ready(t: &LogosRestTransport) -> Duration {
+    let started = Instant::now();
+    while started.elapsed() < Duration::from_secs(240) {
+        // status() lazily audits and redials the static peers when none is connected
         if t.status().await.ready {
-            return;
+            let took = started.elapsed();
+            println!(
+                "ready again after {took:?} (redials sent: {})",
+                t.metrics().redials
+            );
+            return took;
         }
-        tokio::time::sleep(Duration::from_secs(2)).await;
+        tokio::time::sleep(Duration::from_secs(1)).await;
     }
-    panic!("node did not become ready again");
+    panic!(
+        "node did not become ready again (redials: {})",
+        t.metrics().redials
+    );
+}
+
+/// Not disruptive: if a client lost R1 (it never redials by itself), the adapter must
+/// restore the link through its own redial.
+#[tokio::test]
+async fn adapter_redial_restores_a_disconnected_client() {
+    if !enabled() {
+        return;
+    }
+    let _g = SERIAL.lock().await;
+    for url in [NODE_A, NODE_B] {
+        let t = adapter(url);
+        let took = wait_ready(&t).await;
+        println!("{url}: ready after {took:?}, metrics {:?}", t.metrics());
+    }
 }
 
 #[tokio::test]
@@ -595,6 +623,7 @@ async fn r1_down_gives_unavailable_and_history_unavailable() {
     .await;
     // restore: R1 first, then wait until the client reconnects
     docker(&["start", "an-r1"]);
-    wait_ready(&a).await;
+    let took = wait_ready(&a).await;
+    println!("time-to-reconnect after R1 restart (adapter redial): {took:?}");
     outcome
 }
