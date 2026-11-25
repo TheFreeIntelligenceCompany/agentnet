@@ -1,0 +1,110 @@
+{
+  "A": "an1bgdc37h426zivuixnogfsvmoe5xw3kr5q33uhkvlghybfn2wgdzxoqo7ya",
+  "B": "an1ahlz3uptb3p2yeryjnt24ocjmcflp3mndce7faqxmpy2xfspgtj2h65nre",
+  "messages_tracked": 200,
+  "note": "localhost/container network, amd64 nwaku image under qemu; latency = poller receive Instant - Instant before publish call (includes HTTP publish, relay hop(s) and poll interval)",
+  "poll_ms": 25,
+  "poll_stats_A": {
+    "errors": 0,
+    "last_error": "",
+    "max_batch": 5,
+    "msgs": 100,
+    "nonempty": 71,
+    "polls": 366
+  },
+  "poll_stats_B": {
+    "errors": 0,
+    "last_error": "",
+    "max_batch": 10,
+    "msgs": 65,
+    "nonempty": 7,
+    "polls": 355
+  },
+  "publish_call_ms": {
+    "max_ms": 488.6,
+    "n": 200,
+    "p50_ms": 33.6,
+    "p95_ms": 298.2,
+    "p99_ms": 407.7
+  },
+  "publish_failures": [],
+  "publish_pacing_ms": 25,
+  "results": [
+    {
+      "correlation_mismatch": 0,
+      "delivered_unique": 65,
+      "delivery_rate": 0.65,
+      "direction": "A->B",
+      "duplicates_delivered_to_app": 0,
+      "integrity_failures": 0,
+      "latency": {
+        "max_ms": 3849.1,
+        "n": 65,
+        "p50_ms": 1013.3,
+        "p95_ms": 3384.8,
+        "p99_ms": 3849.1
+      },
+      "missing_seqs": [
+        0,
+        1,
+        5,
+        8,
+        11,
+        13,
+        15,
+        16,
+        19,
+        22,
+        24,
+        25,
+        26,
+        27,
+        29,
+        32,
+        35,
+        36,
+        37,
+        40,
+        45,
+        46,
+        49,
+        54,
+        56,
+        57,
+        58,
+        59,
+        64,
+        66,
+        68,
+        71,
+        73,
+        78,
+        79
+      ],
+      "other_open_errors": {},
+      "sent": 100,
+      "wire_duplicates_rejected_by_dedupe": 0
+    },
+    {
+      "correlation_mismatch": 0,
+      "delivered_unique": 100,
+      "delivery_rate": 1.0,
+      "direction": "B->A",
+      "duplicates_delivered_to_app": 0,
+      "integrity_failures": 0,
+      "latency": {
+        "max_ms": 3865.6,
+        "n": 100,
+        "p50_ms": 571.9,
+        "p95_ms": 3345.7,
+        "p99_ms": 3593.6
+      },
+      "missing_seqs": [],
+      "other_open_errors": {},
+      "sent": 100,
+      "wire_duplicates_rejected_by_dedupe": 0
+    }
+  ],
+  "topic_A": "/agentnet/1/inbox-0b/proto",
+  "topic_B": "/agentnet/1/inbox-06/proto"
+}

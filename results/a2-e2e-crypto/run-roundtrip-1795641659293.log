@@ -1,0 +1,21 @@
+e2e-crypto roundtrip started at unix_ms=1795641659293; LOCALHOST/container network; relay nodes NA=http://127.0.0.1:18641 NB=http://127.0.0.1:18642 R1=http://127.0.0.1:18640
+
+=== TEST roundtrip ===
+A=an1yortts7bzyebphsrij3jsupbv7aopa56ipfkupwqho2sy64orri44nxeiy topic /agentnet/1/inbox-0c/proto
+B=an14tekaqflrakytcvijeh56eoehetsqnsxt3l5qz4yqrktkpraij6rt624nm topic /agentnet/1/inbox-09/proto
+  canary: 5 consecutive bidirectional round trips reached after 0 failed canaries
+  mesh ready: R1 has 2 mesh peers on shard 0 after 0.68s; drained 0 stale cached messages
+A->B: sent 100 delivered_unique 100 app_dups 0 replay_rejects 0 integrity_fail 0 errs {}
+  ok: A->B: all 100 publishes accepted
+  ok: A->B: 100/100 decrypted+signature-verified+integrity ok (got 100)
+  ok: A->B: no app-level dups/integrity/correlation/sender failures
+B->A: sent 100 delivered_unique 100 app_dups 0 replay_rejects 0 integrity_fail 0 errs {}
+  ok: B->A: all 100 publishes accepted
+  ok: B->A: 100/100 decrypted+signature-verified+integrity ok (got 100)
+  ok: B->A: no app-level dups/integrity/correlation/sender failures
+  ok: no publish failures ([])
+=== roundtrip : PASS ===
+
+SUMMARY:
+  roundtrip        PASS
+wrote ../../results/a2-e2e-crypto/summary-roundtrip-1795641659293.json and ../../results/a2-e2e-crypto/run-roundtrip-1795641659293.log

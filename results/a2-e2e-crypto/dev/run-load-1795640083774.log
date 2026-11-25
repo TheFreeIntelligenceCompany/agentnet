@@ -1,0 +1,18 @@
+e2e-crypto load started at unix_ms=1795640083774; LOCALHOST/container network; relay nodes NA=http://127.0.0.1:18641 NB=http://127.0.0.1:18642 R1=http://127.0.0.1:18640
+
+=== TEST load ===
+run n=100 poll=50ms: 32 (node,topic) pollers for 100 clients
+  mesh ready: R1 has 2 mesh peers on shard 0 after 0.52s; drained 0 stale cached messages
+  n=100: sent 1000 published_ok 1000 delivered 911 missing 89 app_dups 0 replay_rejects 0 hpke_fail observed 5678 expected 6295 other {"hpke_open": 5678}
+  ok: n=100: all 1000 publishes accepted ([])
+  ok: n=100: no duplicate application deliveries
+run n=100 poll=200ms: 32 (node,topic) pollers for 100 clients
+  mesh ready: R1 has 2 mesh peers on shard 0 after 1.79s; drained 2 stale cached messages
+  n=100: sent 1000 published_ok 1000 delivered 679 missing 321 app_dups 0 replay_rejects 0 hpke_fail observed 4784 expected 6360 other {"hpke_open": 4784}
+  ok: n=100: all 1000 publishes accepted ([])
+  ok: n=100: no duplicate application deliveries
+=== load : PASS ===
+
+SUMMARY:
+  load             PASS
+wrote ../../results/a2-e2e-crypto/summary-load-1795640083774.json and ../../results/a2-e2e-crypto/run-load-1795640083774.log

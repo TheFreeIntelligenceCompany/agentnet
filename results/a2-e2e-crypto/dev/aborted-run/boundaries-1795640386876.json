@@ -1,0 +1,174 @@
+{
+  "b_errs": {
+    "bad_magic": 11
+  },
+  "cap_plaintext_bytes": 153471,
+  "envelope_json_overhead_bytes_empty_body": 286,
+  "formula": "153600 - (topic_len + 51)",
+  "frame_overhead_bytes": "4 header + 32 enc + 16 tag = 52; plaintext = 4 len + 64 sig + envelope + padding",
+  "max_ascii_body_pow2": 130718,
+  "max_ascii_body_pow2_capped": 153117,
+  "measured_max_payload_bytes": 153523,
+  "node_limit_bytes": 153600,
+  "oversize_probe": [
+    {
+      "payload_bytes": 153524,
+      "result": "HTTP 400 Failed to publish: publish failed in relay: NoPeersToPublish"
+    },
+    {
+      "payload_bytes": 153525,
+      "result": "HTTP 400 Failed to publish: publish failed in relay: NoPeersToPublish"
+    },
+    {
+      "payload_bytes": 153543,
+      "result": "HTTP 400 Failed to publish: publish failed in relay: NoPeersToPublish"
+    },
+    {
+      "payload_bytes": 153623,
+      "result": "HTTP 400 Failed to publish: Message size exceeded maximum of 153600 bytes"
+    },
+    {
+      "payload_bytes": 200000,
+      "result": "HTTP 400 Failed to publish: Message size exceeded maximum of 153600 bytes"
+    },
+    {
+      "payload_bytes": 2000000,
+      "result": "HTTP 400 Failed to publish: Message size exceeded maximum of 153600 bytes"
+    }
+  ],
+  "relay_sends": [
+    {
+      "bypass_frame_len": 262196,
+      "bypass_node_response": "HTTP 400 Failed to publish: Message size exceeded maximum of 153600 bytes",
+      "max_body": 130718,
+      "oversize_local_reject": "local reject: frame 262196 B > node limit 153523 B",
+      "policy": "pow2",
+      "published": true
+    },
+    {
+      "bypass_frame_len": 262196,
+      "bypass_node_response": "HTTP 400 Failed to publish: Message size exceeded maximum of 153600 bytes",
+      "max_body": 153117,
+      "oversize_local_reject": "plaintext exceeds padding policy cap",
+      "policy": "pow2_capped",
+      "published": true
+    }
+  ],
+  "table": [
+    {
+      "base64_len_pow2": 752,
+      "body_len": 0,
+      "fits_capped": true,
+      "fits_pow2": true,
+      "frame_len_capped": 564,
+      "frame_len_pow2": 564
+    },
+    {
+      "base64_len_pow2": 752,
+      "body_len": 1,
+      "fits_capped": true,
+      "fits_pow2": true,
+      "frame_len_capped": 564,
+      "frame_len_pow2": 564
+    },
+    {
+      "base64_len_pow2": 752,
+      "body_len": 100,
+      "fits_capped": true,
+      "fits_pow2": true,
+      "frame_len_capped": 564,
+      "frame_len_pow2": 564
+    },
+    {
+      "base64_len_pow2": 1436,
+      "body_len": 400,
+      "fits_capped": true,
+      "fits_pow2": true,
+      "frame_len_capped": 1076,
+      "frame_len_pow2": 1076
+    },
+    {
+      "base64_len_pow2": 2800,
+      "body_len": 1000,
+      "fits_capped": true,
+      "fits_pow2": true,
+      "frame_len_capped": 2100,
+      "frame_len_pow2": 2100
+    },
+    {
+      "base64_len_pow2": 21916,
+      "body_len": 10000,
+      "fits_capped": true,
+      "fits_pow2": true,
+      "frame_len_capped": 16436,
+      "frame_len_pow2": 16436
+    },
+    {
+      "base64_len_pow2": 87452,
+      "body_len": 60000,
+      "fits_capped": true,
+      "fits_pow2": true,
+      "frame_len_capped": 65588,
+      "frame_len_pow2": 65588
+    },
+    {
+      "base64_len_pow2": 87452,
+      "body_len": 65000,
+      "fits_capped": true,
+      "fits_pow2": true,
+      "frame_len_capped": 65588,
+      "frame_len_pow2": 65588
+    },
+    {
+      "base64_len_pow2": 174832,
+      "body_len": 100000,
+      "fits_capped": true,
+      "fits_pow2": true,
+      "frame_len_capped": 131124,
+      "frame_len_pow2": 131124
+    },
+    {
+      "base64_len_pow2": 174832,
+      "body_len": 130718,
+      "fits_capped": true,
+      "fits_pow2": true,
+      "frame_len_capped": 131124,
+      "frame_len_pow2": 131124
+    },
+    {
+      "base64_len_pow2": 349596,
+      "body_len": 130719,
+      "fits_capped": true,
+      "fits_pow2": false,
+      "frame_len_capped": 153523,
+      "frame_len_pow2": 262196
+    },
+    {
+      "base64_len_pow2": 349596,
+      "body_len": 140000,
+      "fits_capped": true,
+      "fits_pow2": false,
+      "frame_len_capped": 153523,
+      "frame_len_pow2": 262196
+    },
+    {
+      "base64_len_pow2": 349596,
+      "body_len": 153117,
+      "fits_capped": true,
+      "fits_pow2": false,
+      "frame_len_capped": 153523,
+      "frame_len_pow2": 262196
+    },
+    {
+      "base64_len_pow2": 349596,
+      "body_len": 153118,
+      "fits_capped": false,
+      "fits_pow2": false,
+      "frame_len_capped": null,
+      "frame_len_pow2": 262196
+    }
+  ],
+  "topic": "/agentnet/1/inbox-0a/proto",
+  "topic_len": 26,
+  "unicode_body_utf8_len": 173
+}

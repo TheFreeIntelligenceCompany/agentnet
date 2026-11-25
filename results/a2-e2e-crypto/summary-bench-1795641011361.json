@@ -1,0 +1,22 @@
+{
+  "note": "LOCALHOST/container-network test (amd64 nwaku image under qemu on arm64 host); synthetic identities",
+  "started_unix_ms": 1795641011361,
+  "tests": [
+    {
+      "data": {
+        "build": "release",
+        "failed_open_non_recipient_us": 225.51338330000002,
+        "frame_len": 564,
+        "full_open_frame_incl_sig_verify_us": 584.2596916,
+        "host": "macOS arm64 native (not under qemu)",
+        "n": 10000,
+        "seal_us": 587.0509791000001,
+        "short_frame_reject_us": 0.00205,
+        "successful_hpke_open_us": 471.57616669999993
+      },
+      "failures": [],
+      "name": "bench",
+      "pass": true
+    }
+  ]
+}

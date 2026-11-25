@@ -1,0 +1,89 @@
+{
+  "note": "clients alternate NA/NB; each (node,topic) has ONE poller fanning out to every logical client in that bucket (GET is destructive, cache of 50 is shared by all topics on a node). n=1 sends to itself (loopback). The poll=1000ms n=100 run is a deliberate control to show cache-overflow loss.",
+  "runs": [
+    {
+      "app_level_duplicates": 0,
+      "clients": 100,
+      "delivered_unique": 911,
+      "delivery_rate": 0.911,
+      "docker_stats_1.2s_into_send_phase": [
+        "an-r1 cpu=49.05% mem=69.74MiB / 9.689GiB",
+        "an-na cpu=97.38% mem=109MiB / 9.689GiB",
+        "an-nb cpu=85.39% mem=73.19MiB / 9.689GiB"
+      ],
+      "empty_bucket_poll_ms": 500,
+      "latency": {
+        "max_ms": 5490.2,
+        "n": 911,
+        "p50_ms": 191.0,
+        "p95_ms": 4996.5,
+        "p99_ms": 5142.9
+      },
+      "max_batch_in_one_poll": 6,
+      "messages_read_from_rest_caches": 1813,
+      "missing": 89,
+      "msgs_per_client": 10,
+      "other_rejections": {
+        "hpke_open": 5678
+      },
+      "per_client_pacing_ms": 20,
+      "poll_errors": 0,
+      "poll_last_error": "",
+      "poll_ms": 50,
+      "poll_nonempty": 1221,
+      "poll_polls_total": 5540,
+      "pollers": 32,
+      "publish_concurrency": 8,
+      "publish_errors": [],
+      "published_ok": 1000,
+      "rest_cache_capacity": 50,
+      "send_phase_secs": 6.251705458,
+      "sent": 1000,
+      "trial_decrypt_failures_expected_if_no_loss": 6295,
+      "trial_decrypt_failures_observed": 5678,
+      "wire_replays_rejected": 0
+    },
+    {
+      "app_level_duplicates": 0,
+      "clients": 100,
+      "delivered_unique": 679,
+      "delivery_rate": 0.679,
+      "docker_stats_1.2s_into_send_phase": [
+        "an-r1 cpu=46.13% mem=70.25MiB / 9.689GiB",
+        "an-na cpu=76.87% mem=109.4MiB / 9.689GiB",
+        "an-nb cpu=142.33% mem=72.93MiB / 9.689GiB"
+      ],
+      "empty_bucket_poll_ms": 500,
+      "latency": {
+        "max_ms": 8078.4,
+        "n": 679,
+        "p50_ms": 212.3,
+        "p95_ms": 3300.9,
+        "p99_ms": 7243.2
+      },
+      "max_batch_in_one_poll": 11,
+      "messages_read_from_rest_caches": 1489,
+      "missing": 321,
+      "msgs_per_client": 10,
+      "other_rejections": {
+        "hpke_open": 4784
+      },
+      "per_client_pacing_ms": 20,
+      "poll_errors": 0,
+      "poll_last_error": "",
+      "poll_ms": 200,
+      "poll_nonempty": 636,
+      "poll_polls_total": 2133,
+      "pollers": 32,
+      "publish_concurrency": 8,
+      "publish_errors": [],
+      "published_ok": 1000,
+      "rest_cache_capacity": 50,
+      "send_phase_secs": 6.328001292,
+      "sent": 1000,
+      "trial_decrypt_failures_expected_if_no_loss": 6360,
+      "trial_decrypt_failures_observed": 4784,
+      "wire_replays_rejected": 0
+    }
+  ]
+}

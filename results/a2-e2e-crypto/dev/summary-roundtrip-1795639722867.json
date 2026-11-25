@@ -1,0 +1,85 @@
+{
+  "note": "LOCALHOST/container-network test (amd64 nwaku image under qemu on arm64 host); synthetic identities",
+  "started_unix_ms": 1795639722867,
+  "tests": [
+    {
+      "data": {
+        "A": "an1refqbpdks4hwdmwyv5ef2ndtu5bzg2mkt6n2ujvwsiri63w7tvvyftcx7a",
+        "B": "an1t3zdyg6gju7lqrles373f5mn7zdk7krpgwpgwjfbo7qphzrrfoq2p6e3xy",
+        "messages_tracked": 200,
+        "note": "localhost/container network, amd64 nwaku image under qemu; latency = poller receive Instant - Instant before publish call (includes HTTP publish, relay hop(s) and poll interval)",
+        "poll_ms": 25,
+        "poll_stats_A": {
+          "errors": 0,
+          "last_error": "",
+          "max_batch": 3,
+          "msgs": 100,
+          "nonempty": 94,
+          "polls": 325
+        },
+        "poll_stats_B": {
+          "errors": 0,
+          "last_error": "",
+          "max_batch": 4,
+          "msgs": 100,
+          "nonempty": 89,
+          "polls": 328
+        },
+        "publish_call_ms": {
+          "max_ms": 356.6,
+          "n": 200,
+          "p50_ms": 13.1,
+          "p95_ms": 71.2,
+          "p99_ms": 236.7
+        },
+        "publish_failures": [],
+        "publish_pacing_ms": 25,
+        "results": [
+          {
+            "correlation_mismatch": 0,
+            "delivered_unique": 100,
+            "delivery_rate": 1.0,
+            "direction": "A->B",
+            "duplicates_delivered_to_app": 0,
+            "integrity_failures": 0,
+            "latency": {
+              "max_ms": 594.7,
+              "n": 100,
+              "p50_ms": 50.0,
+              "p95_ms": 291.0,
+              "p99_ms": 429.4
+            },
+            "missing_seqs": [],
+            "other_open_errors": {},
+            "sent": 100,
+            "wire_duplicates_rejected_by_dedupe": 0
+          },
+          {
+            "correlation_mismatch": 0,
+            "delivered_unique": 100,
+            "delivery_rate": 1.0,
+            "direction": "B->A",
+            "duplicates_delivered_to_app": 0,
+            "integrity_failures": 0,
+            "latency": {
+              "max_ms": 158.1,
+              "n": 100,
+              "p50_ms": 44.9,
+              "p95_ms": 103.9,
+              "p99_ms": 122.4
+            },
+            "missing_seqs": [],
+            "other_open_errors": {},
+            "sent": 100,
+            "wire_duplicates_rejected_by_dedupe": 0
+          }
+        ],
+        "topic_A": "/agentnet/1/inbox-05/proto",
+        "topic_B": "/agentnet/1/inbox-07/proto"
+      },
+      "failures": [],
+      "name": "roundtrip",
+      "pass": true
+    }
+  ]
+}

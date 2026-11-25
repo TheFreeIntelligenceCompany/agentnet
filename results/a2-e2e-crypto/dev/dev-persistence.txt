@@ -1,0 +1,33 @@
+e2e-crypto persistence started at unix_ms=1795640291550; LOCALHOST/container network; relay nodes NA=http://127.0.0.1:18641 NB=http://127.0.0.1:18642 R1=http://127.0.0.1:18640
+
+=== TEST persistence ===
+  ok: identity file mode 600 == 600
+B address an16x57ggtfmopeymf74vpqbsuqlk4ey7frdj6j3k23x4ou4o6f5j3shm7lk4 topic /agentnet/1/inbox-0d/proto identity file ../../results/a2-e2e-crypto/work/persist-1795640291551/B1/identity.json
+  ok: new process loads identity: address "an16x57ggtfmopeymf74vpqbsuqlk4ey7frdj6j3k23x4ou4o6f5j3shm7lk4" == an16x57ggtfmopeymf74vpqbsuqlk4ey7frdj6j3k23x4ou4o6f5j3shm7lk4
+  ok: identity file with mode 644 refused (exit 4: IDENTITY: refusing identity file with permissions 644 (must be 0600))
+  ok: parent acquired exclusive lock
+  ok: second instance refused while parent holds lock (exit 3: LOCKED: data dir ../../results/a2-e2e-crypto/work/persist-1795640291551/B1 is locked by another instance)
+  ok: second in-process acquire refused: Some("data dir ../../results/a2-e2e-crypto/work/persist-1795640291551/B1 is locked by another instance")
+  ok: child B refused while child A holds lock (exit 3: LOCKED: data dir ../../results/a2-e2e-crypto/work/persist-1795640291551/B1 is locked by another instance)
+  ok: holder child exited cleanly
+  ok: lock released after holder exit: new instance starts
+  mesh ready: R1 has 2 mesh peers on shard 0 after 0.19s; drained 0 stale cached messages
+  ok: docker stop an-nb: an-nb
+
+  ok: A published 20 while NB down (errors [])
+  ok: an-nb restarted, REST healthy and connected to R1 after 1.7s
+  mesh ready: R1 has 2 mesh peers on shard 0 after 62.76s; drained 20 stale cached messages
+recover#1 exit 0 out {"accepted":20,"accepted_ids":["e9d7224d-c50e-4d07-b17d-a28dd90e9b5d","bd154a63-7322-4626-9ca1-736ebb6b235b","2ce6065e-bb54-43bd-b7bc-7f21dac8aa4d","fefee941-7d04-4905-82b9-73c474d2a205","7da48ddd-2fbc-4911-ad79-bb155a8bb56c","07b673fe-a2ad-4bf8-8c1d-3eba94434899","c7ab9c51-632b-4d85-8141-2cdec8769991","288f08e8-261f-45fd-9da6-00548c181b2d","46cc820c-c069-4dcf-97dc-c5decc814af0","d35dcc35-eb8f-4beb-bc81-d2965f10a474","3375955b-6824-41c6-9489-f8dcd8f13162","5fd41321-161b-410c-a2a0-2061a6d32d65","13e995c3-e43b-4575-b239-599b2fd9e5c4","7563f9e2-a488-4373-9fa5-4f3466809568","c72018f9-cc26-409c-9793-d0d6ae76fc83","f4fc9f2e-5074-4d49-807a-68f19f5bb828","3db3b9c4-07c9-4d8e-bdfa-b2ba58e47fd7","9e63cf1e-d57b-4d8f-ab99-1ad00c662e9a","272eb130-e029-4634-b7b1-d6dabfa7a254","d840b9f2-550b-44b2-aecd-9d0d6b189039"],"address":"an16x57ggtfmopeymf74vpqbsuqlk4ey7frdj6j3k23x4ou4o6f5j3shm7lk4","dedupe_entries_loaded":0,"rejected":{},"store_entries":20} err 
+  ok: recover #1 (new process, store via NB after restart): 20/20 accepted, ids match: true
+recover#2 exit 0 out {"accepted":0,"accepted_ids":[],"address":"an16x57ggtfmopeymf74vpqbsuqlk4ey7frdj6j3k23x4ou4o6f5j3shm7lk4","dedupe_entries_loaded":20,"rejected":{"replay":20},"store_entries":20} err 
+  ok: recover #2: 0 reprocessed, 20 rejected as replay (loaded 20 dedupe entries from disk)
+  ok: identity copied (mode 600)
+  ok: migrated copy has same address
+migrated recover exit 0 out {"accepted":20,"accepted_ids":["e9d7224d-c50e-4d07-b17d-a28dd90e9b5d","bd154a63-7322-4626-9ca1-736ebb6b235b","2ce6065e-bb54-43bd-b7bc-7f21dac8aa4d","fefee941-7d04-4905-82b9-73c474d2a205","7da48ddd-2fbc-4911-ad79-bb155a8bb56c","07b673fe-a2ad-4bf8-8c1d-3eba94434899","c7ab9c51-632b-4d85-8141-2cdec8769991","288f08e8-261f-45fd-9da6-00548c181b2d","46cc820c-c069-4dcf-97dc-c5decc814af0","d35dcc35-eb8f-4beb-bc81-d2965f10a474","3375955b-6824-41c6-9489-f8dcd8f13162","5fd41321-161b-410c-a2a0-2061a6d32d65","13e995c3-e43b-4575-b239-599b2fd9e5c4","7563f9e2-a488-4373-9fa5-4f3466809568","c72018f9-cc26-409c-9793-d0d6ae76fc83","f4fc9f2e-5074-4d49-807a-68f19f5bb828","3db3b9c4-07c9-4d8e-bdfa-b2ba58e47fd7","9e63cf1e-d57b-4d8f-ab99-1ad00c662e9a","272eb130-e029-4634-b7b1-d6dabfa7a254","d840b9f2-550b-44b2-aecd-9d0d6b189039"],"address":"an16x57ggtfmopeymf74vpqbsuqlk4ey7frdj6j3k23x4ou4o6f5j3shm7lk4","dedupe_entries_loaded":0,"rejected":{},"store_entries":20} err 
+  ok: migrated identity (fresh dedupe) decrypts 20/20
+  ok: topology healthy after test, connected peers R1/NA/NB = [2, 1, 1]
+=== persistence : PASS ===
+
+SUMMARY:
+  persistence      PASS
+wrote ../../results/a2-e2e-crypto/summary-persistence-1795640291550.json and ../../results/a2-e2e-crypto/run-persistence-1795640291550.log

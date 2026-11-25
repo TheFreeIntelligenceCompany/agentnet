@@ -1,0 +1,17 @@
+e2e-crypto tamper started at unix_ms=1795641588743; LOCALHOST/container network; relay nodes NA=http://127.0.0.1:18641 NB=http://127.0.0.1:18642 R1=http://127.0.0.1:18640
+
+=== TEST tamper ===
+  ok: control: untampered frame (564 B) opens
+  ok: single-bit flips in ciphertext_body: 4096/4096 rejected
+  ok: single-bit flips in enc: 256/256 rejected
+  ok: single-bit flips in header: 32/32 rejected
+  ok: single-bit flips in tag: 128/128 rejected
+  ok: truncation to every length 0..564: 564/564 rejected
+  ok: extension by 1..=64 bytes: 64/64 rejected
+  ok: 1000 random frames: panics=0, outcomes={"bad_magic": 495, "hpke_open": 493, "short_frame": 12}
+  ok: 1000 authenticated-garbage plaintexts: panics=0, outcomes={"bad_padding": 681, "envelope_parse": 319}
+=== tamper : PASS ===
+
+SUMMARY:
+  tamper           PASS
+wrote ../../results/a2-e2e-crypto/summary-tamper-1795641588743.json and ../../results/a2-e2e-crypto/run-tamper-1795641588743.log

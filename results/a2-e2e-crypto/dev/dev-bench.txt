@@ -1,0 +1,21 @@
+e2e-crypto bench started at unix_ms=1795639579920; LOCALHOST/container network; relay nodes NA=http://127.0.0.1:18641 NB=http://127.0.0.1:18642 R1=http://127.0.0.1:18640
+
+=== TEST bench ===
+  ok: 10000/10000 trial-opens by non-recipient failed (10000)
+  ok: 10000 full opens (fresh dedupe) succeeded
+{
+  "build": "release",
+  "failed_open_non_recipient_us": 52.88031659999999,
+  "frame_len": 564,
+  "full_open_frame_incl_sig_verify_us": 99.874275,
+  "host": "macOS arm64 native (not under qemu)",
+  "n": 10000,
+  "seal_us": 91.153925,
+  "short_frame_reject_us": 0.0019958000000000003,
+  "successful_hpke_open_us": 54.34400419999999
+}
+=== bench : PASS ===
+
+SUMMARY:
+  bench            PASS
+wrote ../../results/a2-e2e-crypto/summary-bench-1795639579920.json and ../../results/a2-e2e-crypto/run-bench-1795639579920.log

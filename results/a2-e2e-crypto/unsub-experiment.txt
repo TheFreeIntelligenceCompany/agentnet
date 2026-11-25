@@ -1,0 +1,10 @@
+OK subscribed 18641
+OK subscribed 18642
+T+0 R1 mesh peers before DELETE: 2
+OK DELETE inbox-0f on NA (keeper topic still subscribed)
+after +1s more: R1 mesh peers = 1
+after +2s more: R1 mesh peers = 1
+after +3s more: R1 mesh peers = 1
+after +5s more: R1 mesh peers = 1
+after +8s more: R1 mesh peers = 1
+re-subscribed: mesh back to 2 after 0s

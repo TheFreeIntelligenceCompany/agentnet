@@ -1,0 +1,24 @@
+e2e-crypto boundaries started at unix_ms=1795639866649; LOCALHOST/container network; relay nodes NA=http://127.0.0.1:18641 NB=http://127.0.0.1:18642 R1=http://127.0.0.1:18640
+
+=== TEST boundaries ===
+  mesh ready: R1 has 2 mesh peers on shard 0 after 0.18s; drained 78 stale cached messages
+raw payload limit for topic /agentnet/1/inbox-0b/proto (26 chars): max accepted 153523 B; formula 153600-(len+51) = 153523
+  ok: measured max payload 153523 == formula 153523
+envelope JSON overhead (empty body) = 286 B; max ASCII body: pow2 = 130718 B, pow2 capped at plaintext 153471 = 153117 B
+  ok: pow2: max body 130718 B published (None)
+  ok: pow2: body 130719 rejected locally before publish: Some("local reject: frame 262196 B > node limit 153523 B")
+  ok: pow2: bypassing the local check, node refuses the 262196 B frame: Some("HTTP 400 Failed to publish: Message size exceeded maximum of 153600 bytes")
+  ok: pow2_capped: max body 153117 B published (None)
+  ok: pow2_capped: body 153118 rejected locally before publish: Some("plaintext exceeds padding policy cap")
+  ok: pow2_capped: bypassing the local check, node refuses the 262196 B frame: Some("HTTP 400 Failed to publish: Message size exceeded maximum of 153600 bytes")
+  ok: unicode envelope published
+  ok: unicode body round-trips byte-exact (String == String)
+  ok: unicode envelope bytes received == bytes sealed (signature covers exact bytes)
+  ok: max pow2 body (130718 B) decrypted at B
+  ok: max capped body (153117 B) decrypted at B
+  ok: NUL appears as \u0000 escape in the envelope JSON
+=== boundaries : PASS ===
+
+SUMMARY:
+  boundaries       PASS
+wrote ../../results/a2-e2e-crypto/summary-boundaries-1795639866649.json and ../../results/a2-e2e-crypto/run-boundaries-1795639866649.log

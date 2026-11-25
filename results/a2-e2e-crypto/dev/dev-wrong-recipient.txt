@@ -1,0 +1,15 @@
+e2e-crypto wrong-recipient started at unix_ms=1795639744984; LOCALHOST/container network; relay nodes NA=http://127.0.0.1:18641 NB=http://127.0.0.1:18642 R1=http://127.0.0.1:18640
+
+=== TEST wrong-recipient ===
+B topic /agentnet/1/inbox-06/proto; C topic /agentnet/1/inbox-06/proto (same bucket, 91 identities generated); D topic /agentnet/1/inbox-0d/proto
+  mesh ready: R1 has 2 mesh peers on shard 0 after 17.70s
+B ok 10 errs {}; C ok 0 errs {"hpke_open": 10} sample {"hpke_open": "hpke_open: Failed to open ciphertext"}
+  ok: B (intended, same bucket) opened 10/10
+  ok: C (same bucket topic, different key) opened 0 messages
+  ok: C: 10/10 rejected with HPKE open error
+  ok: D (other bucket, in-process) 10/10 hpke_open
+=== wrong-recipient : PASS ===
+
+SUMMARY:
+  wrong-recipient  PASS
+wrote ../../results/a2-e2e-crypto/summary-wrong-recipient-1795639744984.json and ../../results/a2-e2e-crypto/run-wrong-recipient-1795639744984.log

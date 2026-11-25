@@ -1,0 +1,11 @@
+{
+  "build": "release",
+  "failed_open_non_recipient_us": 116.5619125,
+  "frame_len": 564,
+  "full_open_frame_incl_sig_verify_us": 172.5287167,
+  "host": "macOS arm64 native (not under qemu)",
+  "n": 10000,
+  "seal_us": 574.0095292000001,
+  "short_frame_reject_us": 0.1941125,
+  "successful_hpke_open_us": 126.8237375
+}

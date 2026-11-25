@@ -1,0 +1,52 @@
+{
+  "note": "LOCALHOST/container-network test (amd64 nwaku image under qemu on arm64 host); synthetic identities",
+  "started_unix_ms": 1795639744984,
+  "tests": [
+    {
+      "data": {
+        "B_errs": {},
+        "B_ok": 10,
+        "C_error_sample": {
+          "hpke_open": "hpke_open: Failed to open ciphertext"
+        },
+        "C_errs": {
+          "hpke_open": 10
+        },
+        "C_ok": 0,
+        "D_in_process_results": [
+          "hpke_open",
+          "hpke_open",
+          "hpke_open",
+          "hpke_open",
+          "hpke_open",
+          "hpke_open",
+          "hpke_open",
+          "hpke_open",
+          "hpke_open",
+          "hpke_open"
+        ],
+        "note": "B reads via NB, C reads the same topic via NA; if both used one node they would race on the destructive GET (share one poller per (node,topic))",
+        "poll_stats_B": {
+          "errors": 0,
+          "last_error": "",
+          "max_batch": 2,
+          "msgs": 10,
+          "nonempty": 9,
+          "polls": 489
+        },
+        "poll_stats_C": {
+          "errors": 0,
+          "last_error": "",
+          "max_batch": 1,
+          "msgs": 10,
+          "nonempty": 10,
+          "polls": 490
+        },
+        "topic": "/agentnet/1/inbox-06/proto"
+      },
+      "failures": [],
+      "name": "wrong-recipient",
+      "pass": true
+    }
+  ]
+}

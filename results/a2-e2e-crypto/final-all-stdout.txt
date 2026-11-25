@@ -1,0 +1,259 @@
+e2e-crypto all started at unix_ms=1795640646489; LOCALHOST/container network; relay nodes NA=http://127.0.0.1:18641 NB=http://127.0.0.1:18642 R1=http://127.0.0.1:18640
+
+=== TEST roundtrip ===
+A=an1ngveu3uytmysy7qlkptvjt56suk4pr3iawidndjfbqt7yju4ls6a2kkkkq topic /agentnet/1/inbox-00/proto
+B=an1vzse7pdgy6cz7wopox6yu6fhudf4yhdgriyinutab2r6iqteiakdwml56u topic /agentnet/1/inbox-05/proto
+  canary: 5 consecutive bidirectional round trips reached after 0 failed canaries
+  mesh ready: R1 has 2 mesh peers on shard 0 after 0.81s; drained 0 stale cached messages
+A->B: sent 100 delivered_unique 100 app_dups 0 replay_rejects 0 integrity_fail 0 errs {}
+  ok: A->B: all 100 publishes accepted
+  ok: A->B: 100/100 decrypted+signature-verified+integrity ok (got 100)
+  ok: A->B: no app-level dups/integrity/correlation/sender failures
+B->A: sent 100 delivered_unique 100 app_dups 0 replay_rejects 0 integrity_fail 0 errs {}
+  ok: B->A: all 100 publishes accepted
+  ok: B->A: 100/100 decrypted+signature-verified+integrity ok (got 100)
+  ok: B->A: no app-level dups/integrity/correlation/sender failures
+  ok: no publish failures ([])
+=== roundtrip : PASS ===
+
+=== TEST wrong-recipient ===
+B topic /agentnet/1/inbox-0b/proto; C topic /agentnet/1/inbox-0b/proto (same bucket, 4 identities generated); D topic /agentnet/1/inbox-0c/proto
+  canary: 5 consecutive bidirectional round trips reached after 0 failed canaries
+  mesh ready: R1 has 2 mesh peers on shard 0 after 0.78s; drained 96 stale cached messages
+B ok 10 errs {}; C ok 0 errs {"hpke_open": 10} sample {"hpke_open": "hpke_open: Failed to open ciphertext"}
+  ok: B (intended, same bucket) opened 10/10
+  ok: C (same bucket topic, different key) opened 0 messages
+  ok: C: 10/10 rejected with HPKE open error
+  ok: D (other bucket, in-process) 10/10 hpke_open
+=== wrong-recipient : PASS ===
+
+=== TEST forgery ===
+  canary: 5 consecutive bidirectional round trips reached after 0 failed canaries
+  mesh ready: R1 has 2 mesh peers on shard 0 after 0.83s; drained 0 stale cached messages
+  ok: honest A->B published
+  ok: forged M->B (claims sender=A) published
+  ok: B opened the honest A->B message
+  ok: forwarded frame (B re-sealed A's envelope to C) published None
+B ok ["honest"] errs {"bad_signature": 1}; C ok 0 errs {"wrong_recipient": 1}
+  ok: B accepted exactly the honest message
+  ok: B rejected the forged message with bad_signature
+  ok: C rejected the forwarded message with wrong_recipient (signature itself valid: checked before recipient)
+  ok: contact case 'valid record': accepted
+  ok: contact case 'record byte tampered': rejected: record signature: signature error
+  ok: contact case 'A's record presented under B's address': rejected: record signature: signature error
+  ok: contact case 'address with altered checksum char': rejected: address: checksum mismatch
+  ok: contact case 'uppercase (non-canonical) address': rejected: address: missing an1 prefix
+  ok: contact case 'KEM-key substitution: A's pk + M's kem_pk, signed by M': rejected: record signature: signature error
+  ok: contact case 'control: A itself signs a record with a different kem_pk (legit key rotation shape)': accepted
+=== forgery : PASS ===
+
+=== TEST tamper ===
+  ok: control: untampered frame (564 B) opens
+  ok: single-bit flips in ciphertext_body: 4096/4096 rejected
+  ok: single-bit flips in enc: 256/256 rejected
+  ok: single-bit flips in header: 32/32 rejected
+  ok: single-bit flips in tag: 128/128 rejected
+  ok: truncation to every length 0..564: 564/564 rejected
+  ok: extension by 1..=64 bytes: 64/64 rejected
+  ok: 1000 random frames: panics=0, outcomes={"bad_magic": 485, "hpke_open": 487, "short_frame": 28}
+  ok: 1000 authenticated-garbage plaintexts: panics=0, outcomes={"bad_padding": 691, "envelope_parse": 309}
+=== tamper : PASS ===
+
+=== TEST replay ===
+  canary: 5 consecutive bidirectional round trips reached after 0 failed canaries
+  mesh ready: R1 has 2 mesh peers on shard 0 after 1.31s; drained 3 stale cached messages
+  ok: re-publish of identical frame accepted by node (Ok(()))
+  ok: live: exactly 1 accepted of the 2 deliveries (accepted 1)
+  ok: live: second delivery rejected as replay ({"replay": 1})
+  ok: store returned 2 entries for the topic (expect 2: original + re-publish)
+  ok: store-fetched copies all rejected as replay
+  ok: dedupe file has 1 line (one accepted message): 1
+  ok: after restart (reloaded 1 entries from file): replay still rejected -> Some("replay")
+  ok: control: fresh empty dedupe accepts the same frame (dedupe is the defence)
+=== replay : PASS ===
+
+=== TEST expiry ===
+  ok: control: valid: got OK, expected OK
+  ok: expires_at 5 min in the past (created 10 min ago): got expired, expected expired
+  ok: expires_at 60 s in the past (inside +-120 s skew): got OK, expected OK
+  ok: expires_at 130 s in the past (outside skew): got expired, expected expired
+  ok: created_at 10 min in the future: got created_in_future, expected created_in_future
+  ok: created_at 60 s in the future (inside skew): got OK, expected OK
+  ok: created_at 130 s in the future (outside skew): got created_in_future, expected created_in_future
+  ok: expires_at == created_at: got expires_before_created, expected expires_before_created
+  ok: v = 2: got unknown_envelope_version, expected unknown_envelope_version
+  ok: v = 0: got unknown_envelope_version, expected unknown_envelope_version
+  ok: message_id not a uuid v4: got bad_message_id, expected bad_message_id
+  ok: sender not an address: got bad_sender_address, expected bad_sender_address
+  ok: unknown extra JSON field (signed by sender): got OK, expected OK
+  ok: v as string "1": got envelope_parse, expected envelope_parse
+  ok: v missing: got envelope_parse, expected envelope_parse
+  ok: unknown field nested 50000 deep (skipped iteratively by serde_json; no stack overflow): got OK, expected OK
+  ok: trailing garbage after JSON: got envelope_parse, expected envelope_parse
+  ok: empty envelope bytes (inner length 64 = signature only): got bad_padding, expected bad_padding
+  ok: body field = 50000-deep array (wrong type): got envelope_parse, expected envelope_parse
+  ok: frame > 160 KiB rejected before any crypto
+=== expiry : PASS ===
+
+=== TEST boundaries ===
+  canary: 5 consecutive bidirectional round trips reached after 0 failed canaries
+  mesh ready: R1 has 2 mesh peers on shard 0 after 1.25s; drained 2 stale cached messages
+raw payload limit for topic /agentnet/1/inbox-0e/proto (26 chars): max accepted 153523 B; formula 153600-(len+51) = 153523
+  ok: measured max payload 153523 == formula 153523
+envelope JSON overhead (empty body) = 286 B; max ASCII body: pow2 = 130718 B, pow2 capped at plaintext 153471 = 153117 B
+  ok: pow2: max body 130718 B published (None)
+  ok: pow2: body 130719 rejected locally before publish: Some("local reject: frame 262196 B > node limit 153523 B")
+  ok: pow2: bypassing the local check, node refuses the 262196 B frame: Some("HTTP 400 Failed to publish: Message size exceeded maximum of 153600 bytes")
+  ok: pow2_capped: max body 153117 B published (None)
+  ok: pow2_capped: body 153118 rejected locally before publish: Some("plaintext exceeds padding policy cap")
+  ok: pow2_capped: bypassing the local check, node refuses the 262196 B frame: Some("HTTP 400 Failed to publish: Message size exceeded maximum of 153600 bytes")
+  ok: unicode envelope published
+  ok: unicode body round-trips byte-exact (String == String)
+  ok: unicode envelope bytes received == bytes sealed (signature covers exact bytes)
+  ok: max pow2 body (130718 B) decrypted at B
+  ok: max capped body (153117 B) decrypted at B
+  ok: NUL appears as \u0000 escape in the envelope JSON
+=== boundaries : PASS ===
+
+=== TEST metadata ===
+  canary: 5 consecutive bidirectional round trips reached after 0 failed canaries
+  mesh ready: R1 has 2 mesh peers on shard 0 after 2.04s; drained 14 stale cached messages
+  ok: store hash 0xec693b3d7a575ac5b2e3404534e34287f53e582253b690310268a70d8c90d793 == locally recomputed sha256(pubsub||payload||contentTopic||ts)
+  ok: store hash 0xcf4ce78da3a52218e32eeb8c6272d00e8ce7698102486678c03d64487ed6dfd7 == locally recomputed sha256(pubsub||payload||contentTopic||ts)
+  ok: store hash 0x26dbc14f68fc342b56ec5ab0ab4c01bc97d056139745e785c5d30d6eb150b2cd == locally recomputed sha256(pubsub||payload||contentTopic||ts)
+R1 store entries for topic /agentnet/1/inbox-05/proto:
+[
+  {
+    "contentTopic": "/agentnet/1/inbox-05/proto",
+    "ephemeral": false,
+    "messageHash": "0xec693b3d7a575ac5b2e3404534e34287f53e582253b690310268a70d8c90d793",
+    "meta": null,
+    "payload_bytes": 564,
+    "payload_first4_hex(cleartext header)": "414e0101",
+    "pubsubTopic": "/waku/2/rs/66/0",
+    "timestamp_ns": 1795640687084825000,
+    "version": 0
+  },
+  {
+    "contentTopic": "/agentnet/1/inbox-05/proto",
+    "ephemeral": false,
+    "messageHash": "0xcf4ce78da3a52218e32eeb8c6272d00e8ce7698102486678c03d64487ed6dfd7",
+    "meta": null,
+    "payload_bytes": 564,
+    "payload_first4_hex(cleartext header)": "414e0101",
+    "pubsubTopic": "/waku/2/rs/66/0",
+    "timestamp_ns": 1795640687236346000,
+    "version": 0
+  },
+  {
+    "contentTopic": "/agentnet/1/inbox-05/proto",
+    "ephemeral": false,
+    "messageHash": "0x26dbc14f68fc342b56ec5ab0ab4c01bc97d056139745e785c5d30d6eb150b2cd",
+    "meta": null,
+    "payload_bytes": 1076,
+    "payload_first4_hex(cleartext header)": "414e0101",
+    "pubsubTopic": "/waku/2/rs/66/0",
+    "timestamp_ns": 1795640687358597000,
+    "version": 0
+  }
+]
+  ok: R1 store holds the 3 messages (3 entries)
+  ok: store payload lengths [564, 564, 1076] == sealed frame lengths [564, 564, 1076]
+  ok: bodies of 1 B and 115 B (same 512 bucket) -> identical payload length 564
+  ok: body 166 B (next bucket) -> payload 1076 B
+  ok: B decrypted all 3
+  ok: no envelope plaintext strings found in the 3 wire payloads (leaks: [])
+=== metadata : PASS ===
+
+=== TEST bench ===
+  ok: 10000/10000 trial-opens by non-recipient failed (10000)
+  ok: 10000 full opens (fresh dedupe) succeeded
+{
+  "build": "release",
+  "failed_open_non_recipient_us": 182.9999375,
+  "frame_len": 564,
+  "full_open_frame_incl_sig_verify_us": 201.0827,
+  "host": "macOS arm64 native (not under qemu)",
+  "n": 10000,
+  "seal_us": 314.5923625,
+  "short_frame_reject_us": 0.0020375,
+  "successful_hpke_open_us": 143.5755459
+}
+=== bench : PASS ===
+
+=== TEST load ===
+run n=1 poll=50ms: 32 (node,topic) pollers for 1 clients
+  canary: 5 consecutive bidirectional round trips reached after 0 failed canaries
+  mesh ready: R1 has 2 mesh peers on shard 0 after 12.50s; drained 0 stale cached messages
+  n=1: sent 10 published_ok 10 delivered 10 missing 0 app_dups 0 replay_rejects 0 hpke_fail observed 0 expected 0 other {}
+  ok: n=1: all 10 publishes accepted ([])
+  ok: n=1: no duplicate application deliveries
+run n=10 poll=50ms: 32 (node,topic) pollers for 10 clients
+  canary: 5 consecutive bidirectional round trips reached after 0 failed canaries
+  mesh ready: R1 has 2 mesh peers on shard 0 after 2.14s; drained 0 stale cached messages
+  n=10: sent 100 published_ok 100 delivered 100 missing 0 app_dups 0 replay_rejects 0 hpke_fail observed 72 expected 72 other {"hpke_open": 72}
+  ok: n=10: all 100 publishes accepted ([])
+  ok: n=10: no duplicate application deliveries
+run n=100 poll=50ms: 32 (node,topic) pollers for 100 clients
+  canary: 5 consecutive bidirectional round trips reached after 0 failed canaries
+  mesh ready: R1 has 2 mesh peers on shard 0 after 4.67s; drained 0 stale cached messages
+  n=100: sent 1000 published_ok 1000 delivered 1000 missing 0 app_dups 0 replay_rejects 0 hpke_fail observed 6695 expected 6695 other {"hpke_open": 6695}
+  ok: n=100: all 1000 publishes accepted ([])
+  ok: n=100: no duplicate application deliveries
+run n=100 poll=200ms: 32 (node,topic) pollers for 100 clients
+  canary: 5 consecutive bidirectional round trips reached after 0 failed canaries
+  mesh ready: R1 has 2 mesh peers on shard 0 after 1.45s; drained 0 stale cached messages
+  n=100: sent 1000 published_ok 1000 delivered 995 missing 5 app_dups 0 replay_rejects 0 hpke_fail observed 5515 expected 5532 other {"hpke_open": 5515}
+  ok: n=100: all 1000 publishes accepted ([])
+  ok: n=100: no duplicate application deliveries
+run n=100 poll=1000ms: 32 (node,topic) pollers for 100 clients
+  canary: 5 consecutive bidirectional round trips reached after 0 failed canaries
+  mesh ready: R1 has 2 mesh peers on shard 0 after 2.04s; drained 0 stale cached messages
+  n=100: sent 1000 published_ok 1000 delivered 879 missing 121 app_dups 0 replay_rejects 0 hpke_fail observed 5067 expected 5801 other {"hpke_open": 5067}
+  ok: n=100: all 1000 publishes accepted ([])
+  ok: n=100: no duplicate application deliveries
+=== load : PASS ===
+
+=== TEST persistence ===
+  ok: identity file mode 600 == 600
+B address an1nktk2nyhin3blk6lts7zmw45p4i2qba637sqe6ss2r5vwohqh5bhaxk4de topic /agentnet/1/inbox-08/proto identity file ../../results/a2-e2e-crypto/work/persist-1795640885696/B1/identity.json
+  ok: new process loads identity: address "an1nktk2nyhin3blk6lts7zmw45p4i2qba637sqe6ss2r5vwohqh5bhaxk4de" == an1nktk2nyhin3blk6lts7zmw45p4i2qba637sqe6ss2r5vwohqh5bhaxk4de
+  ok: identity file with mode 644 refused (exit 4: IDENTITY: refusing identity file with permissions 644 (must be 0600))
+  ok: parent acquired exclusive lock
+  ok: second instance refused while parent holds lock (exit 3: LOCKED: data dir ../../results/a2-e2e-crypto/work/persist-1795640885696/B1 is locked by another instance)
+  ok: second in-process acquire refused: Some("data dir ../../results/a2-e2e-crypto/work/persist-1795640885696/B1 is locked by another instance")
+  ok: child B refused while child A holds lock (exit 3: LOCKED: data dir ../../results/a2-e2e-crypto/work/persist-1795640885696/B1 is locked by another instance)
+  ok: holder child exited cleanly
+  ok: lock released after holder exit: new instance starts
+  canary: 5 consecutive bidirectional round trips reached after 0 failed canaries
+  mesh ready: R1 has 2 mesh peers on shard 0 after 2.01s; drained 32 stale cached messages
+  ok: docker stop an-nb: an-nb
+
+  ok: A published 20 while NB down (errors [])
+  ok: an-nb restarted, REST healthy and connected to R1 after 4.7s
+  canary: 5 consecutive bidirectional round trips reached after 0 failed canaries
+  mesh ready: R1 has 1 mesh peers on shard 0 after 67.73s; drained 20 stale cached messages
+recover#1 exit 0 out {"accepted":20,"accepted_ids":["b3ca1211-fb19-4c5e-bc33-b9f52c1fae1f","1cc90bd2-d0c7-4989-9edb-c803ac610ada","5b47ce67-11f3-49bf-9caf-a24a2653e802","57d0b04f-6ccd-47bb-ad11-7e5aaddee2d4","5cf792a3-32da-45d5-9668-bc3a56259fb7","917785a1-e5a3-4cb7-8bd3-258d502050e3","49822e1e-9fcc-492d-9cfd-cefc852e2f09","4e49a438-e50a-4d3b-ab0a-0734e5cb7307","4613cba1-5256-45b2-9555-837da1b08fb9","bc4b17f9-dda4-496d-ac99-75b9e45b8df5","719f84ed-f56e-4285-9401-7035ab4efd34","9ae64839-0e0c-4833-93e8-bbd1912f1615","db202aa2-8e54-4929-ab6f-e3f2be9d4555","dfa575ed-bbca-46ec-ae6e-c65065d01073","8b593591-fa3a-4f1f-a1f7-50863c554997","8fc23384-2473-4705-ade5-68e9034a1bcb","7a982c27-f94d-4a43-a623-f526d0cdf5e6","15a89a7c-e81e-40cd-8ad0-1bcfee2d4090","e3611a32-6820-432f-b11d-69e4b020462a","366f5ff6-db55-43d6-b767-2c8cb715d70f"],"address":"an1nktk2nyhin3blk6lts7zmw45p4i2qba637sqe6ss2r5vwohqh5bhaxk4de","dedupe_entries_loaded":0,"rejected":{},"store_entries":20} err 
+  ok: recover #1 (new process, store via NB after restart): 20/20 accepted, ids match: true
+recover#2 exit 0 out {"accepted":0,"accepted_ids":[],"address":"an1nktk2nyhin3blk6lts7zmw45p4i2qba637sqe6ss2r5vwohqh5bhaxk4de","dedupe_entries_loaded":20,"rejected":{"replay":20},"store_entries":20} err 
+  ok: recover #2: 0 reprocessed, 20 rejected as replay (loaded 20 dedupe entries from disk)
+  ok: identity copied (mode 600)
+  ok: migrated copy has same address
+migrated recover exit 0 out {"accepted":20,"accepted_ids":["b3ca1211-fb19-4c5e-bc33-b9f52c1fae1f","1cc90bd2-d0c7-4989-9edb-c803ac610ada","5b47ce67-11f3-49bf-9caf-a24a2653e802","57d0b04f-6ccd-47bb-ad11-7e5aaddee2d4","5cf792a3-32da-45d5-9668-bc3a56259fb7","917785a1-e5a3-4cb7-8bd3-258d502050e3","49822e1e-9fcc-492d-9cfd-cefc852e2f09","4e49a438-e50a-4d3b-ab0a-0734e5cb7307","4613cba1-5256-45b2-9555-837da1b08fb9","bc4b17f9-dda4-496d-ac99-75b9e45b8df5","719f84ed-f56e-4285-9401-7035ab4efd34","9ae64839-0e0c-4833-93e8-bbd1912f1615","db202aa2-8e54-4929-ab6f-e3f2be9d4555","dfa575ed-bbca-46ec-ae6e-c65065d01073","8b593591-fa3a-4f1f-a1f7-50863c554997","8fc23384-2473-4705-ade5-68e9034a1bcb","7a982c27-f94d-4a43-a623-f526d0cdf5e6","15a89a7c-e81e-40cd-8ad0-1bcfee2d4090","e3611a32-6820-432f-b11d-69e4b020462a","366f5ff6-db55-43d6-b767-2c8cb715d70f"],"address":"an1nktk2nyhin3blk6lts7zmw45p4i2qba637sqe6ss2r5vwohqh5bhaxk4de","dedupe_entries_loaded":0,"rejected":{},"store_entries":20} err 
+  ok: migrated identity (fresh dedupe) decrypts 20/20
+  ok: topology healthy after test, connected peers R1/NA/NB = [2, 1, 1]
+=== persistence : PASS ===
+
+SUMMARY:
+  roundtrip        PASS
+  wrong-recipient  PASS
+  forgery          PASS
+  tamper           PASS
+  replay           PASS
+  expiry           PASS
+  boundaries       PASS
+  metadata         PASS
+  bench            PASS
+  load             PASS
+  persistence      PASS
+wrote ../../results/a2-e2e-crypto/summary-all-1795640646489.json and ../../results/a2-e2e-crypto/run-all-1795640646489.log

@@ -1,0 +1,86 @@
+{
+  "note": "LOCALHOST/container-network test (amd64 nwaku image under qemu on arm64 host); synthetic identities",
+  "started_unix_ms": 1795639928546,
+  "tests": [
+    {
+      "data": {
+        "NOT_visible_in_payload": [
+          "envelope.v",
+          "message_id",
+          "sender address",
+          "recipient address (only the bucket is visible)",
+          "type",
+          "conversation_id",
+          "correlation_id",
+          "created_at",
+          "expires_at",
+          "body",
+          "inner Ed25519 signature",
+          "true body length within a bucket"
+        ],
+        "body_lens": [
+          1,
+          115,
+          166
+        ],
+        "bucket_512_body_capacity": 116,
+        "envelope_overhead": 328,
+        "frame_lens": [
+          564,
+          564,
+          1076
+        ],
+        "r1_store_dump": [
+          {
+            "contentTopic": "/agentnet/1/inbox-08/proto",
+            "ephemeral": false,
+            "messageHash": "0x70bae1baf3bd9c51524cf77df4cac2c7141b1609a15e24ff0650fa674bf739b8",
+            "meta": null,
+            "payload_bytes": 564,
+            "payload_first4_hex(cleartext header)": "414e0101",
+            "pubsubTopic": "/waku/2/rs/66/0",
+            "timestamp_ns": 1795639931286046000,
+            "version": 0
+          },
+          {
+            "contentTopic": "/agentnet/1/inbox-08/proto",
+            "ephemeral": false,
+            "messageHash": "0x7766105e6edcbe6d8aba5cb40a7f0e06a06003ddde0e4121df6996e106d8116d",
+            "meta": null,
+            "payload_bytes": 564,
+            "payload_first4_hex(cleartext header)": "414e0101",
+            "pubsubTopic": "/waku/2/rs/66/0",
+            "timestamp_ns": 1795639931432749000,
+            "version": 0
+          },
+          {
+            "contentTopic": "/agentnet/1/inbox-08/proto",
+            "ephemeral": false,
+            "messageHash": "0x041186046096a955127ba66a43ef81c2f9e4d43b3a8cbbbe2800e876cd6587fc",
+            "meta": null,
+            "payload_bytes": 1076,
+            "payload_first4_hex(cleartext header)": "414e0101",
+            "pubsubTopic": "/waku/2/rs/66/0",
+            "timestamp_ns": 1795639931549832000,
+            "version": 0
+          }
+        ],
+        "recipient_topic": "/agentnet/1/inbox-08/proto",
+        "visible_to_relay_and_store": [
+          "pubsub topic (shard 66/0)",
+          "content topic = recipient's inbox bucket (stable per recipient: 1 of 16 buckets, linkable over time)",
+          "waku timestamp (publisher clock, ns)",
+          "payload length (padding bucket: 512,1024,...)",
+          "cleartext 4-byte frame header 'AN',0x01,0x01",
+          "random 32-byte HPKE enc (unlinkable per message)",
+          "waku message hash",
+          "version/meta/ephemeral fields (all default)",
+          "publisher's network address at the node it publishes through (not in store; UNTESTED beyond noting)"
+        ]
+      },
+      "failures": [],
+      "name": "metadata",
+      "pass": true
+    }
+  ]
+}

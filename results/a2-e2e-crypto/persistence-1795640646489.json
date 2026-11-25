@@ -1,0 +1,100 @@
+{
+  "b_address": "an1nktk2nyhin3blk6lts7zmw45p4i2qba637sqe6ss2r5vwohqh5bhaxk4de",
+  "b_topic": "/agentnet/1/inbox-08/proto",
+  "child_while_child_holds": {
+    "exit": 3,
+    "stderr": "LOCKED: data dir ../../results/a2-e2e-crypto/work/persist-1795640885696/B1 is locked by another instance"
+  },
+  "connected_peers_after": [
+    2,
+    1,
+    1
+  ],
+  "identity_file": "../../results/a2-e2e-crypto/work/persist-1795640885696/B1/identity.json",
+  "identity_mode_octal": "600",
+  "insecure_perms": {
+    "exit": 4,
+    "stderr": "IDENTITY: refusing identity file with permissions 644 (must be 0600)"
+  },
+  "lock_tests": {
+    "child_exit": 3,
+    "child_stderr": "LOCKED: data dir ../../results/a2-e2e-crypto/work/persist-1795640885696/B1 is locked by another instance"
+  },
+  "migrated_recover": {
+    "accepted": 20,
+    "accepted_ids": [
+      "b3ca1211-fb19-4c5e-bc33-b9f52c1fae1f",
+      "1cc90bd2-d0c7-4989-9edb-c803ac610ada",
+      "5b47ce67-11f3-49bf-9caf-a24a2653e802",
+      "57d0b04f-6ccd-47bb-ad11-7e5aaddee2d4",
+      "5cf792a3-32da-45d5-9668-bc3a56259fb7",
+      "917785a1-e5a3-4cb7-8bd3-258d502050e3",
+      "49822e1e-9fcc-492d-9cfd-cefc852e2f09",
+      "4e49a438-e50a-4d3b-ab0a-0734e5cb7307",
+      "4613cba1-5256-45b2-9555-837da1b08fb9",
+      "bc4b17f9-dda4-496d-ac99-75b9e45b8df5",
+      "719f84ed-f56e-4285-9401-7035ab4efd34",
+      "9ae64839-0e0c-4833-93e8-bbd1912f1615",
+      "db202aa2-8e54-4929-ab6f-e3f2be9d4555",
+      "dfa575ed-bbca-46ec-ae6e-c65065d01073",
+      "8b593591-fa3a-4f1f-a1f7-50863c554997",
+      "8fc23384-2473-4705-ade5-68e9034a1bcb",
+      "7a982c27-f94d-4a43-a623-f526d0cdf5e6",
+      "15a89a7c-e81e-40cd-8ad0-1bcfee2d4090",
+      "e3611a32-6820-432f-b11d-69e4b020462a",
+      "366f5ff6-db55-43d6-b767-2c8cb715d70f"
+    ],
+    "address": "an1nktk2nyhin3blk6lts7zmw45p4i2qba637sqe6ss2r5vwohqh5bhaxk4de",
+    "dedupe_entries_loaded": 0,
+    "rejected": {},
+    "store_entries": 20
+  },
+  "nb_restart": {
+    "healthy": true,
+    "secs_to_healthy_and_connected": 4.692881083
+  },
+  "recover_1": {
+    "accepted": 20,
+    "accepted_ids": [
+      "b3ca1211-fb19-4c5e-bc33-b9f52c1fae1f",
+      "1cc90bd2-d0c7-4989-9edb-c803ac610ada",
+      "5b47ce67-11f3-49bf-9caf-a24a2653e802",
+      "57d0b04f-6ccd-47bb-ad11-7e5aaddee2d4",
+      "5cf792a3-32da-45d5-9668-bc3a56259fb7",
+      "917785a1-e5a3-4cb7-8bd3-258d502050e3",
+      "49822e1e-9fcc-492d-9cfd-cefc852e2f09",
+      "4e49a438-e50a-4d3b-ab0a-0734e5cb7307",
+      "4613cba1-5256-45b2-9555-837da1b08fb9",
+      "bc4b17f9-dda4-496d-ac99-75b9e45b8df5",
+      "719f84ed-f56e-4285-9401-7035ab4efd34",
+      "9ae64839-0e0c-4833-93e8-bbd1912f1615",
+      "db202aa2-8e54-4929-ab6f-e3f2be9d4555",
+      "dfa575ed-bbca-46ec-ae6e-c65065d01073",
+      "8b593591-fa3a-4f1f-a1f7-50863c554997",
+      "8fc23384-2473-4705-ade5-68e9034a1bcb",
+      "7a982c27-f94d-4a43-a623-f526d0cdf5e6",
+      "15a89a7c-e81e-40cd-8ad0-1bcfee2d4090",
+      "e3611a32-6820-432f-b11d-69e4b020462a",
+      "366f5ff6-db55-43d6-b767-2c8cb715d70f"
+    ],
+    "address": "an1nktk2nyhin3blk6lts7zmw45p4i2qba637sqe6ss2r5vwohqh5bhaxk4de",
+    "dedupe_entries_loaded": 0,
+    "rejected": {},
+    "store_entries": 20
+  },
+  "recover_2": {
+    "accepted": 0,
+    "accepted_ids": [],
+    "address": "an1nktk2nyhin3blk6lts7zmw45p4i2qba637sqe6ss2r5vwohqh5bhaxk4de",
+    "dedupe_entries_loaded": 20,
+    "rejected": {
+      "replay": 20
+    },
+    "store_entries": 20
+  },
+  "stderr": [
+    "",
+    "",
+    ""
+  ]
+}

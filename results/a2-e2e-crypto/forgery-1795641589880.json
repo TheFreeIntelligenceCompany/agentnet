@@ -1,0 +1,63 @@
+{
+  "B_errs": {
+    "bad_signature": 1
+  },
+  "B_ok": 1,
+  "C_errs": {
+    "wrong_recipient": 1
+  },
+  "C_ok": 0,
+  "contact_cases": [
+    {
+      "case": "valid record",
+      "expected_ok": true,
+      "result": "accepted"
+    },
+    {
+      "case": "record byte tampered",
+      "expected_ok": false,
+      "result": "rejected: record signature: signature error"
+    },
+    {
+      "case": "A's record presented under B's address",
+      "expected_ok": false,
+      "result": "rejected: record signature: signature error"
+    },
+    {
+      "case": "address with altered checksum char",
+      "expected_ok": false,
+      "result": "rejected: address: checksum mismatch"
+    },
+    {
+      "case": "uppercase (non-canonical) address",
+      "expected_ok": false,
+      "result": "rejected: address: missing an1 prefix"
+    },
+    {
+      "case": "KEM-key substitution: A's pk + M's kem_pk, signed by M",
+      "expected_ok": false,
+      "result": "rejected: record signature: signature error"
+    },
+    {
+      "case": "control: A itself signs a record with a different kem_pk (legit key rotation shape)",
+      "expected_ok": true,
+      "result": "accepted"
+    }
+  ],
+  "poll_stats_B": {
+    "errors": 0,
+    "last_error": "",
+    "max_batch": 2,
+    "msgs": 2,
+    "nonempty": 1,
+    "polls": 210
+  },
+  "poll_stats_C": {
+    "errors": 0,
+    "last_error": "",
+    "max_batch": 1,
+    "msgs": 1,
+    "nonempty": 1,
+    "polls": 215
+  }
+}

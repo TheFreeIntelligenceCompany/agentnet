@@ -1,0 +1,31 @@
+{
+  "build": "release",
+  "failed_open_non_recipient_us": {
+    "mean_us": 72.86109170000002,
+    "median_batch_us": 71.175332,
+    "min_batch_us": 54.269084
+  },
+  "frame_len": 564,
+  "full_open_frame_incl_sig_verify_us": {
+    "mean_us": 116.04827519999999,
+    "median_batch_us": 111.311,
+    "min_batch_us": 97.100334
+  },
+  "host": "macOS arm64 native (not under qemu)",
+  "n": 10000,
+  "seal_us": {
+    "mean_us": 105.31666680000001,
+    "median_batch_us": 107.850584,
+    "min_batch_us": 80.78925
+  },
+  "short_frame_reject_us": {
+    "mean_us": 0.0080586,
+    "median_batch_us": 0.008834,
+    "min_batch_us": 0.003
+  },
+  "successful_hpke_open_us": {
+    "mean_us": 63.761333599999986,
+    "median_batch_us": 57.96325,
+    "min_batch_us": 52.7635
+  }
+}

@@ -1,0 +1,986 @@
+{
+  "note": "LOCALHOST/container-network test (amd64 nwaku image under qemu on arm64 host); synthetic identities",
+  "started_unix_ms": 1795640646489,
+  "tests": [
+    {
+      "data": {
+        "A": "an1ngveu3uytmysy7qlkptvjt56suk4pr3iawidndjfbqt7yju4ls6a2kkkkq",
+        "B": "an1vzse7pdgy6cz7wopox6yu6fhudf4yhdgriyinutab2r6iqteiakdwml56u",
+        "messages_tracked": 200,
+        "note": "localhost/container network, amd64 nwaku image under qemu; latency = poller receive Instant - Instant before publish call (includes HTTP publish, relay hop(s) and poll interval)",
+        "poll_ms": 25,
+        "poll_stats_A": {
+          "errors": 0,
+          "last_error": "",
+          "max_batch": 4,
+          "msgs": 100,
+          "nonempty": 90,
+          "polls": 402
+        },
+        "poll_stats_B": {
+          "errors": 0,
+          "last_error": "",
+          "max_batch": 2,
+          "msgs": 100,
+          "nonempty": 99,
+          "polls": 403
+        },
+        "publish_call_ms": {
+          "max_ms": 60.8,
+          "n": 200,
+          "p50_ms": 3.8,
+          "p95_ms": 9.8,
+          "p99_ms": 16.7
+        },
+        "publish_failures": [],
+        "publish_pacing_ms": 25,
+        "results": [
+          {
+            "correlation_mismatch": 0,
+            "delivered_unique": 100,
+            "delivery_rate": 1.0,
+            "direction": "A->B",
+            "duplicates_delivered_to_app": 0,
+            "integrity_failures": 0,
+            "latency": {
+              "max_ms": 52.1,
+              "n": 100,
+              "p50_ms": 24.6,
+              "p95_ms": 39.8,
+              "p99_ms": 50.3
+            },
+            "missing_seqs": [],
+            "other_open_errors": {},
+            "sent": 100,
+            "wire_duplicates_rejected_by_dedupe": 0
+          },
+          {
+            "correlation_mismatch": 0,
+            "delivered_unique": 100,
+            "delivery_rate": 1.0,
+            "direction": "B->A",
+            "duplicates_delivered_to_app": 0,
+            "integrity_failures": 0,
+            "latency": {
+              "max_ms": 326.7,
+              "n": 100,
+              "p50_ms": 28.0,
+              "p95_ms": 239.2,
+              "p99_ms": 325.7
+            },
+            "missing_seqs": [],
+            "other_open_errors": {},
+            "sent": 100,
+            "wire_duplicates_rejected_by_dedupe": 0
+          }
+        ],
+        "topic_A": "/agentnet/1/inbox-00/proto",
+        "topic_B": "/agentnet/1/inbox-05/proto"
+      },
+      "failures": [],
+      "name": "roundtrip",
+      "pass": true
+    },
+    {
+      "data": {
+        "B_errs": {},
+        "B_ok": 10,
+        "C_error_sample": {
+          "hpke_open": "hpke_open: Failed to open ciphertext"
+        },
+        "C_errs": {
+          "hpke_open": 10
+        },
+        "C_ok": 0,
+        "D_in_process_results": [
+          "hpke_open",
+          "hpke_open",
+          "hpke_open",
+          "hpke_open",
+          "hpke_open",
+          "hpke_open",
+          "hpke_open",
+          "hpke_open",
+          "hpke_open",
+          "hpke_open"
+        ],
+        "note": "B reads via NB, C reads the same topic via NA; if both used one node they would race on the destructive GET (share one poller per (node,topic))",
+        "poll_stats_B": {
+          "errors": 0,
+          "last_error": "",
+          "max_batch": 1,
+          "msgs": 10,
+          "nonempty": 10,
+          "polls": 132
+        },
+        "poll_stats_C": {
+          "errors": 0,
+          "last_error": "",
+          "max_batch": 1,
+          "msgs": 10,
+          "nonempty": 10,
+          "polls": 133
+        },
+        "topic": "/agentnet/1/inbox-0b/proto"
+      },
+      "failures": [],
+      "name": "wrong-recipient",
+      "pass": true
+    },
+    {
+      "data": {
+        "B_errs": {
+          "bad_signature": 1
+        },
+        "B_ok": 1,
+        "C_errs": {
+          "wrong_recipient": 1
+        },
+        "C_ok": 0,
+        "contact_cases": [
+          {
+            "case": "valid record",
+            "expected_ok": true,
+            "result": "accepted"
+          },
+          {
+            "case": "record byte tampered",
+            "expected_ok": false,
+            "result": "rejected: record signature: signature error"
+          },
+          {
+            "case": "A's record presented under B's address",
+            "expected_ok": false,
+            "result": "rejected: record signature: signature error"
+          },
+          {
+            "case": "address with altered checksum char",
+            "expected_ok": false,
+            "result": "rejected: address: checksum mismatch"
+          },
+          {
+            "case": "uppercase (non-canonical) address",
+            "expected_ok": false,
+            "result": "rejected: address: missing an1 prefix"
+          },
+          {
+            "case": "KEM-key substitution: A's pk + M's kem_pk, signed by M",
+            "expected_ok": false,
+            "result": "rejected: record signature: signature error"
+          },
+          {
+            "case": "control: A itself signs a record with a different kem_pk (legit key rotation shape)",
+            "expected_ok": true,
+            "result": "accepted"
+          }
+        ],
+        "poll_stats_B": {
+          "errors": 0,
+          "last_error": "",
+          "max_batch": 2,
+          "msgs": 2,
+          "nonempty": 1,
+          "polls": 142
+        },
+        "poll_stats_C": {
+          "errors": 0,
+          "last_error": "",
+          "max_batch": 1,
+          "msgs": 1,
+          "nonempty": 1,
+          "polls": 142
+        }
+      },
+      "failures": [],
+      "name": "forgery",
+      "pass": true
+    },
+    {
+      "data": {
+        "authenticated_garbage": {
+          "n": 1000,
+          "outcomes": {
+            "bad_padding": 691,
+            "envelope_parse": 309
+          },
+          "panics": 0
+        },
+        "bit_flip_rejection_kinds": {
+          "bad_magic": 16,
+          "bad_suite": 8,
+          "bad_version": 8,
+          "hpke_open": 4480
+        },
+        "bit_flips_by_region": {
+          "ciphertext_body": {
+            "flips": 4096,
+            "rejected": 4096
+          },
+          "enc": {
+            "flips": 256,
+            "rejected": 256
+          },
+          "header": {
+            "flips": 32,
+            "rejected": 32
+          },
+          "tag": {
+            "flips": 128,
+            "rejected": 128
+          }
+        },
+        "extensions_rejected_of_64": 64,
+        "frame_len": 564,
+        "random_frames": {
+          "n": 1000,
+          "outcomes": {
+            "bad_magic": 485,
+            "hpke_open": 487,
+            "short_frame": 28
+          },
+          "panics": 0
+        },
+        "truncations": {
+          "kinds": {
+            "hpke_open": 512,
+            "short_frame": 52
+          },
+          "lengths_tested": 564,
+          "rejected": 564
+        }
+      },
+      "failures": [],
+      "name": "tamper",
+      "pass": true
+    },
+    {
+      "data": {
+        "after_restart": "replay",
+        "dedupe_file": "../../results/a2-e2e-crypto/work/replay-dedupe-1795640668481.txt",
+        "dedupe_lines": 1,
+        "live_errs": {
+          "replay": 1
+        },
+        "store_results": [
+          {
+            "hash": "0x32fae8ed2afcc7776f099f26e50fcaeb1f2474fc02b9460ae0cafc92dc8bcccd",
+            "result": "replay",
+            "ts": 1795640670828340000
+          },
+          {
+            "hash": "0x43d597df78c4716aacc7e0ed047d40dacfb9ef703152cf42921fcf12933b46b2",
+            "result": "replay",
+            "ts": 1795640671838154000
+          }
+        ]
+      },
+      "failures": [],
+      "name": "replay",
+      "pass": true
+    },
+    {
+      "data": {
+        "cases": [
+          {
+            "case": "control: valid",
+            "expected": "OK",
+            "got": "OK"
+          },
+          {
+            "case": "expires_at 5 min in the past (created 10 min ago)",
+            "expected": "expired",
+            "got": "expired"
+          },
+          {
+            "case": "expires_at 60 s in the past (inside +-120 s skew)",
+            "expected": "OK",
+            "got": "OK"
+          },
+          {
+            "case": "expires_at 130 s in the past (outside skew)",
+            "expected": "expired",
+            "got": "expired"
+          },
+          {
+            "case": "created_at 10 min in the future",
+            "expected": "created_in_future",
+            "got": "created_in_future"
+          },
+          {
+            "case": "created_at 60 s in the future (inside skew)",
+            "expected": "OK",
+            "got": "OK"
+          },
+          {
+            "case": "created_at 130 s in the future (outside skew)",
+            "expected": "created_in_future",
+            "got": "created_in_future"
+          },
+          {
+            "case": "expires_at == created_at",
+            "expected": "expires_before_created",
+            "got": "expires_before_created"
+          },
+          {
+            "case": "v = 2",
+            "expected": "unknown_envelope_version",
+            "got": "unknown_envelope_version"
+          },
+          {
+            "case": "v = 0",
+            "expected": "unknown_envelope_version",
+            "got": "unknown_envelope_version"
+          },
+          {
+            "case": "message_id not a uuid v4",
+            "expected": "bad_message_id",
+            "got": "bad_message_id"
+          },
+          {
+            "case": "sender not an address",
+            "expected": "bad_sender_address",
+            "got": "bad_sender_address"
+          },
+          {
+            "case": "unknown extra JSON field (signed by sender)",
+            "expected": "OK",
+            "got": "OK"
+          },
+          {
+            "case": "v as string \"1\"",
+            "expected": "envelope_parse",
+            "got": "envelope_parse"
+          },
+          {
+            "case": "v missing",
+            "expected": "envelope_parse",
+            "got": "envelope_parse"
+          },
+          {
+            "case": "unknown field nested 50000 deep (skipped iteratively by serde_json; no stack overflow)",
+            "expected": "OK",
+            "got": "OK"
+          },
+          {
+            "case": "trailing garbage after JSON",
+            "expected": "envelope_parse",
+            "got": "envelope_parse"
+          },
+          {
+            "case": "empty envelope bytes (inner length 64 = signature only)",
+            "expected": "bad_padding",
+            "got": "bad_padding"
+          },
+          {
+            "case": "body field = 50000-deep array (wrong type)",
+            "expected": "envelope_parse",
+            "got": "envelope_parse"
+          }
+        ],
+        "policy": "reject only unknown envelope `v`; unknown extra JSON fields are ignored (serde default) but still covered by the signature because the exact received bytes are verified; expires_at accepted until expires_at+skew; created_at accepted up to now+skew; no max-TTL rule implemented",
+        "skew_ms": 120000
+      },
+      "failures": [],
+      "name": "expiry",
+      "pass": true
+    },
+    {
+      "data": {
+        "b_errs": {
+          "bad_magic": 11
+        },
+        "cap_plaintext_bytes": 153471,
+        "envelope_json_overhead_bytes_empty_body": 286,
+        "formula": "153600 - (topic_len + 51)",
+        "frame_overhead_bytes": "4 header + 32 enc + 16 tag = 52; plaintext = 4 len + 64 sig + envelope + padding",
+        "max_ascii_body_pow2": 130718,
+        "max_ascii_body_pow2_capped": 153117,
+        "measured_max_payload_bytes": 153523,
+        "node_limit_bytes": 153600,
+        "oversize_probe": [
+          {
+            "payload_bytes": 153524,
+            "result": "HTTP 400 Failed to publish: publish failed in relay: NoPeersToPublish"
+          },
+          {
+            "payload_bytes": 153525,
+            "result": "HTTP 400 Failed to publish: publish failed in relay: NoPeersToPublish"
+          },
+          {
+            "payload_bytes": 153543,
+            "result": "HTTP 400 Failed to publish: publish failed in relay: NoPeersToPublish"
+          },
+          {
+            "payload_bytes": 153623,
+            "result": "HTTP 400 Failed to publish: Message size exceeded maximum of 153600 bytes"
+          },
+          {
+            "payload_bytes": 200000,
+            "result": "HTTP 400 Failed to publish: Message size exceeded maximum of 153600 bytes"
+          },
+          {
+            "payload_bytes": 2000000,
+            "result": "HTTP 400 Failed to publish: Message size exceeded maximum of 153600 bytes"
+          }
+        ],
+        "relay_sends": [
+          {
+            "bypass_frame_len": 262196,
+            "bypass_node_response": "HTTP 400 Failed to publish: Message size exceeded maximum of 153600 bytes",
+            "max_body": 130718,
+            "oversize_local_reject": "local reject: frame 262196 B > node limit 153523 B",
+            "policy": "pow2",
+            "published": true
+          },
+          {
+            "bypass_frame_len": 262196,
+            "bypass_node_response": "HTTP 400 Failed to publish: Message size exceeded maximum of 153600 bytes",
+            "max_body": 153117,
+            "oversize_local_reject": "plaintext exceeds padding policy cap",
+            "policy": "pow2_capped",
+            "published": true
+          }
+        ],
+        "table": [
+          {
+            "base64_len_pow2": 752,
+            "body_len": 0,
+            "fits_capped": true,
+            "fits_pow2": true,
+            "frame_len_capped": 564,
+            "frame_len_pow2": 564
+          },
+          {
+            "base64_len_pow2": 752,
+            "body_len": 1,
+            "fits_capped": true,
+            "fits_pow2": true,
+            "frame_len_capped": 564,
+            "frame_len_pow2": 564
+          },
+          {
+            "base64_len_pow2": 752,
+            "body_len": 100,
+            "fits_capped": true,
+            "fits_pow2": true,
+            "frame_len_capped": 564,
+            "frame_len_pow2": 564
+          },
+          {
+            "base64_len_pow2": 1436,
+            "body_len": 400,
+            "fits_capped": true,
+            "fits_pow2": true,
+            "frame_len_capped": 1076,
+            "frame_len_pow2": 1076
+          },
+          {
+            "base64_len_pow2": 2800,
+            "body_len": 1000,
+            "fits_capped": true,
+            "fits_pow2": true,
+            "frame_len_capped": 2100,
+            "frame_len_pow2": 2100
+          },
+          {
+            "base64_len_pow2": 21916,
+            "body_len": 10000,
+            "fits_capped": true,
+            "fits_pow2": true,
+            "frame_len_capped": 16436,
+            "frame_len_pow2": 16436
+          },
+          {
+            "base64_len_pow2": 87452,
+            "body_len": 60000,
+            "fits_capped": true,
+            "fits_pow2": true,
+            "frame_len_capped": 65588,
+            "frame_len_pow2": 65588
+          },
+          {
+            "base64_len_pow2": 87452,
+            "body_len": 65000,
+            "fits_capped": true,
+            "fits_pow2": true,
+            "frame_len_capped": 65588,
+            "frame_len_pow2": 65588
+          },
+          {
+            "base64_len_pow2": 174832,
+            "body_len": 100000,
+            "fits_capped": true,
+            "fits_pow2": true,
+            "frame_len_capped": 131124,
+            "frame_len_pow2": 131124
+          },
+          {
+            "base64_len_pow2": 174832,
+            "body_len": 130718,
+            "fits_capped": true,
+            "fits_pow2": true,
+            "frame_len_capped": 131124,
+            "frame_len_pow2": 131124
+          },
+          {
+            "base64_len_pow2": 349596,
+            "body_len": 130719,
+            "fits_capped": true,
+            "fits_pow2": false,
+            "frame_len_capped": 153523,
+            "frame_len_pow2": 262196
+          },
+          {
+            "base64_len_pow2": 349596,
+            "body_len": 140000,
+            "fits_capped": true,
+            "fits_pow2": false,
+            "frame_len_capped": 153523,
+            "frame_len_pow2": 262196
+          },
+          {
+            "base64_len_pow2": 349596,
+            "body_len": 153117,
+            "fits_capped": true,
+            "fits_pow2": false,
+            "frame_len_capped": 153523,
+            "frame_len_pow2": 262196
+          },
+          {
+            "base64_len_pow2": 349596,
+            "body_len": 153118,
+            "fits_capped": false,
+            "fits_pow2": false,
+            "frame_len_capped": null,
+            "frame_len_pow2": 262196
+          }
+        ],
+        "topic": "/agentnet/1/inbox-0e/proto",
+        "topic_len": 26,
+        "unicode_body_utf8_len": 173
+      },
+      "failures": [],
+      "name": "boundaries",
+      "pass": true
+    },
+    {
+      "data": {
+        "NOT_visible_in_payload": [
+          "envelope.v",
+          "message_id",
+          "sender address",
+          "recipient address (only the bucket is visible)",
+          "type",
+          "conversation_id",
+          "correlation_id",
+          "created_at",
+          "expires_at",
+          "body",
+          "inner Ed25519 signature",
+          "true body length within a bucket"
+        ],
+        "body_lens": [
+          1,
+          115,
+          166
+        ],
+        "bucket_512_body_capacity": 116,
+        "envelope_overhead": 328,
+        "frame_lens": [
+          564,
+          564,
+          1076
+        ],
+        "r1_store_dump": [
+          {
+            "contentTopic": "/agentnet/1/inbox-05/proto",
+            "ephemeral": false,
+            "messageHash": "0xec693b3d7a575ac5b2e3404534e34287f53e582253b690310268a70d8c90d793",
+            "meta": null,
+            "payload_bytes": 564,
+            "payload_first4_hex(cleartext header)": "414e0101",
+            "pubsubTopic": "/waku/2/rs/66/0",
+            "timestamp_ns": 1795640687084825000,
+            "version": 0
+          },
+          {
+            "contentTopic": "/agentnet/1/inbox-05/proto",
+            "ephemeral": false,
+            "messageHash": "0xcf4ce78da3a52218e32eeb8c6272d00e8ce7698102486678c03d64487ed6dfd7",
+            "meta": null,
+            "payload_bytes": 564,
+            "payload_first4_hex(cleartext header)": "414e0101",
+            "pubsubTopic": "/waku/2/rs/66/0",
+            "timestamp_ns": 1795640687236346000,
+            "version": 0
+          },
+          {
+            "contentTopic": "/agentnet/1/inbox-05/proto",
+            "ephemeral": false,
+            "messageHash": "0x26dbc14f68fc342b56ec5ab0ab4c01bc97d056139745e785c5d30d6eb150b2cd",
+            "meta": null,
+            "payload_bytes": 1076,
+            "payload_first4_hex(cleartext header)": "414e0101",
+            "pubsubTopic": "/waku/2/rs/66/0",
+            "timestamp_ns": 1795640687358597000,
+            "version": 0
+          }
+        ],
+        "recipient_topic": "/agentnet/1/inbox-05/proto",
+        "visible_to_relay_and_store": [
+          "pubsub topic (shard 66/0)",
+          "content topic = recipient's inbox bucket (stable per recipient: 1 of 16 buckets, linkable over time)",
+          "waku timestamp (publisher clock, ns)",
+          "payload length (padding bucket: 512,1024,...)",
+          "cleartext 4-byte frame header 'AN',0x01,0x01",
+          "random 32-byte HPKE enc (unlinkable per message)",
+          "waku message hash",
+          "version/meta/ephemeral fields (all default)",
+          "publisher's network address at the node it publishes through (not in store; UNTESTED beyond noting)"
+        ]
+      },
+      "failures": [],
+      "name": "metadata",
+      "pass": true
+    },
+    {
+      "data": {
+        "build": "release",
+        "failed_open_non_recipient_us": 182.9999375,
+        "frame_len": 564,
+        "full_open_frame_incl_sig_verify_us": 201.0827,
+        "host": "macOS arm64 native (not under qemu)",
+        "n": 10000,
+        "seal_us": 314.5923625,
+        "short_frame_reject_us": 0.0020375,
+        "successful_hpke_open_us": 143.5755459
+      },
+      "failures": [],
+      "name": "bench",
+      "pass": true
+    },
+    {
+      "data": {
+        "note": "clients alternate NA/NB; each (node,topic) has ONE poller fanning out to every logical client in that bucket (GET is destructive, cache of 50 is shared by all topics on a node). n=1 sends to itself (loopback). The poll=1000ms n=100 run is a deliberate control to show cache-overflow loss.",
+        "runs": [
+          {
+            "app_level_duplicates": 0,
+            "clients": 1,
+            "delivered_unique": 10,
+            "delivery_rate": 1.0,
+            "docker_stats_1.2s_into_send_phase": [
+              "an-r1 cpu=9.97% mem=76.64MiB / 9.689GiB",
+              "an-na cpu=29.38% mem=133MiB / 9.689GiB",
+              "an-nb cpu=20.01% mem=71.35MiB / 9.689GiB"
+            ],
+            "empty_bucket_poll_ms": 500,
+            "latency": {
+              "max_ms": 240.9,
+              "n": 10,
+              "p50_ms": 112.2,
+              "p95_ms": 240.9,
+              "p99_ms": 240.9
+            },
+            "max_batch_in_one_poll": 5,
+            "messages_read_from_rest_caches": 23,
+            "missing": 0,
+            "msgs_per_client": 10,
+            "other_rejections": {},
+            "per_client_pacing_ms": 20,
+            "poll_errors": 0,
+            "poll_last_error": "",
+            "poll_ms": 50,
+            "poll_nonempty": 10,
+            "poll_polls_total": 1645,
+            "pollers": 32,
+            "publish_concurrency": 2,
+            "publish_errors": [],
+            "published_ok": 10,
+            "rest_cache_capacity": 50,
+            "send_phase_secs": 0.721789667,
+            "sent": 10,
+            "trial_decrypt_failures_expected_if_no_loss": 0,
+            "trial_decrypt_failures_observed": 0,
+            "wire_replays_rejected": 0
+          },
+          {
+            "app_level_duplicates": 0,
+            "clients": 10,
+            "delivered_unique": 100,
+            "delivery_rate": 1.0,
+            "docker_stats_1.2s_into_send_phase": [
+              "an-r1 cpu=30.04% mem=76.69MiB / 9.689GiB",
+              "an-na cpu=95.76% mem=133.3MiB / 9.689GiB",
+              "an-nb cpu=50.26% mem=71.38MiB / 9.689GiB"
+            ],
+            "empty_bucket_poll_ms": 500,
+            "latency": {
+              "max_ms": 2800.1,
+              "n": 100,
+              "p50_ms": 404.1,
+              "p95_ms": 1939.4,
+              "p99_ms": 2702.6
+            },
+            "max_batch_in_one_poll": 7,
+            "messages_read_from_rest_caches": 200,
+            "missing": 0,
+            "msgs_per_client": 10,
+            "other_rejections": {
+              "hpke_open": 72
+            },
+            "per_client_pacing_ms": 20,
+            "poll_errors": 0,
+            "poll_last_error": "",
+            "poll_ms": 50,
+            "poll_nonempty": 127,
+            "poll_polls_total": 2079,
+            "pollers": 32,
+            "publish_concurrency": 2,
+            "publish_errors": [],
+            "published_ok": 100,
+            "rest_cache_capacity": 50,
+            "send_phase_secs": 3.070773084,
+            "sent": 100,
+            "trial_decrypt_failures_expected_if_no_loss": 72,
+            "trial_decrypt_failures_observed": 72,
+            "wire_replays_rejected": 0
+          },
+          {
+            "app_level_duplicates": 0,
+            "clients": 100,
+            "delivered_unique": 1000,
+            "delivery_rate": 1.0,
+            "docker_stats_1.2s_into_send_phase": [
+              "an-r1 cpu=105.36% mem=76.78MiB / 9.689GiB",
+              "an-na cpu=125.12% mem=133.2MiB / 9.689GiB",
+              "an-nb cpu=71.98% mem=71.61MiB / 9.689GiB"
+            ],
+            "empty_bucket_poll_ms": 500,
+            "latency": {
+              "max_ms": 1045.4,
+              "n": 1000,
+              "p50_ms": 141.0,
+              "p95_ms": 468.3,
+              "p99_ms": 782.9
+            },
+            "max_batch_in_one_poll": 4,
+            "messages_read_from_rest_caches": 2000,
+            "missing": 0,
+            "msgs_per_client": 10,
+            "other_rejections": {
+              "hpke_open": 6695
+            },
+            "per_client_pacing_ms": 20,
+            "poll_errors": 0,
+            "poll_last_error": "",
+            "poll_ms": 50,
+            "poll_nonempty": 1720,
+            "poll_polls_total": 11445,
+            "pollers": 32,
+            "publish_concurrency": 2,
+            "publish_errors": [],
+            "published_ok": 1000,
+            "rest_cache_capacity": 50,
+            "send_phase_secs": 28.972364458,
+            "sent": 1000,
+            "trial_decrypt_failures_expected_if_no_loss": 6695,
+            "trial_decrypt_failures_observed": 6695,
+            "wire_replays_rejected": 0
+          },
+          {
+            "app_level_duplicates": 0,
+            "clients": 100,
+            "delivered_unique": 995,
+            "delivery_rate": 0.995,
+            "docker_stats_1.2s_into_send_phase": [
+              "an-r1 cpu=43.83% mem=77.33MiB / 9.689GiB",
+              "an-na cpu=66.68% mem=133MiB / 9.689GiB",
+              "an-nb cpu=62.12% mem=71.35MiB / 9.689GiB"
+            ],
+            "empty_bucket_poll_ms": 500,
+            "latency": {
+              "max_ms": 7265.9,
+              "n": 995,
+              "p50_ms": 343.3,
+              "p95_ms": 5984.4,
+              "p99_ms": 6831.8
+            },
+            "max_batch_in_one_poll": 7,
+            "messages_read_from_rest_caches": 1994,
+            "missing": 5,
+            "msgs_per_client": 10,
+            "other_rejections": {
+              "hpke_open": 5515
+            },
+            "per_client_pacing_ms": 20,
+            "poll_errors": 0,
+            "poll_last_error": "",
+            "poll_ms": 200,
+            "poll_nonempty": 1220,
+            "poll_polls_total": 3265,
+            "pollers": 32,
+            "publish_concurrency": 2,
+            "publish_errors": [],
+            "published_ok": 1000,
+            "rest_cache_capacity": 50,
+            "send_phase_secs": 13.910938084,
+            "sent": 1000,
+            "trial_decrypt_failures_expected_if_no_loss": 5532,
+            "trial_decrypt_failures_observed": 5515,
+            "wire_replays_rejected": 0
+          },
+          {
+            "app_level_duplicates": 0,
+            "clients": 100,
+            "delivered_unique": 879,
+            "delivery_rate": 0.879,
+            "docker_stats_1.2s_into_send_phase": [
+              "an-r1 cpu=56.18% mem=77.8MiB / 9.689GiB",
+              "an-na cpu=42.42% mem=133.2MiB / 9.689GiB",
+              "an-nb cpu=58.05% mem=71.35MiB / 9.689GiB"
+            ],
+            "empty_bucket_poll_ms": 1000,
+            "latency": {
+              "max_ms": 14266.2,
+              "n": 879,
+              "p50_ms": 963.4,
+              "p95_ms": 11777.3,
+              "p99_ms": 13700.3
+            },
+            "max_batch_in_one_poll": 10,
+            "messages_read_from_rest_caches": 1774,
+            "missing": 121,
+            "msgs_per_client": 10,
+            "other_rejections": {
+              "hpke_open": 5067
+            },
+            "per_client_pacing_ms": 20,
+            "poll_errors": 0,
+            "poll_last_error": "",
+            "poll_ms": 1000,
+            "poll_nonempty": 590,
+            "poll_polls_total": 1147,
+            "pollers": 32,
+            "publish_concurrency": 2,
+            "publish_errors": [],
+            "published_ok": 1000,
+            "rest_cache_capacity": 50,
+            "send_phase_secs": 15.837261375,
+            "sent": 1000,
+            "trial_decrypt_failures_expected_if_no_loss": 5801,
+            "trial_decrypt_failures_observed": 5067,
+            "wire_replays_rejected": 0
+          }
+        ]
+      },
+      "failures": [],
+      "name": "load",
+      "pass": true
+    },
+    {
+      "data": {
+        "b_address": "an1nktk2nyhin3blk6lts7zmw45p4i2qba637sqe6ss2r5vwohqh5bhaxk4de",
+        "b_topic": "/agentnet/1/inbox-08/proto",
+        "child_while_child_holds": {
+          "exit": 3,
+          "stderr": "LOCKED: data dir ../../results/a2-e2e-crypto/work/persist-1795640885696/B1 is locked by another instance"
+        },
+        "connected_peers_after": [
+          2,
+          1,
+          1
+        ],
+        "identity_file": "../../results/a2-e2e-crypto/work/persist-1795640885696/B1/identity.json",
+        "identity_mode_octal": "600",
+        "insecure_perms": {
+          "exit": 4,
+          "stderr": "IDENTITY: refusing identity file with permissions 644 (must be 0600)"
+        },
+        "lock_tests": {
+          "child_exit": 3,
+          "child_stderr": "LOCKED: data dir ../../results/a2-e2e-crypto/work/persist-1795640885696/B1 is locked by another instance"
+        },
+        "migrated_recover": {
+          "accepted": 20,
+          "accepted_ids": [
+            "b3ca1211-fb19-4c5e-bc33-b9f52c1fae1f",
+            "1cc90bd2-d0c7-4989-9edb-c803ac610ada",
+            "5b47ce67-11f3-49bf-9caf-a24a2653e802",
+            "57d0b04f-6ccd-47bb-ad11-7e5aaddee2d4",
+            "5cf792a3-32da-45d5-9668-bc3a56259fb7",
+            "917785a1-e5a3-4cb7-8bd3-258d502050e3",
+            "49822e1e-9fcc-492d-9cfd-cefc852e2f09",
+            "4e49a438-e50a-4d3b-ab0a-0734e5cb7307",
+            "4613cba1-5256-45b2-9555-837da1b08fb9",
+            "bc4b17f9-dda4-496d-ac99-75b9e45b8df5",
+            "719f84ed-f56e-4285-9401-7035ab4efd34",
+            "9ae64839-0e0c-4833-93e8-bbd1912f1615",
+            "db202aa2-8e54-4929-ab6f-e3f2be9d4555",
+            "dfa575ed-bbca-46ec-ae6e-c65065d01073",
+            "8b593591-fa3a-4f1f-a1f7-50863c554997",
+            "8fc23384-2473-4705-ade5-68e9034a1bcb",
+            "7a982c27-f94d-4a43-a623-f526d0cdf5e6",
+            "15a89a7c-e81e-40cd-8ad0-1bcfee2d4090",
+            "e3611a32-6820-432f-b11d-69e4b020462a",
+            "366f5ff6-db55-43d6-b767-2c8cb715d70f"
+          ],
+          "address": "an1nktk2nyhin3blk6lts7zmw45p4i2qba637sqe6ss2r5vwohqh5bhaxk4de",
+          "dedupe_entries_loaded": 0,
+          "rejected": {},
+          "store_entries": 20
+        },
+        "nb_restart": {
+          "healthy": true,
+          "secs_to_healthy_and_connected": 4.692881083
+        },
+        "recover_1": {
+          "accepted": 20,
+          "accepted_ids": [
+            "b3ca1211-fb19-4c5e-bc33-b9f52c1fae1f",
+            "1cc90bd2-d0c7-4989-9edb-c803ac610ada",
+            "5b47ce67-11f3-49bf-9caf-a24a2653e802",
+            "57d0b04f-6ccd-47bb-ad11-7e5aaddee2d4",
+            "5cf792a3-32da-45d5-9668-bc3a56259fb7",
+            "917785a1-e5a3-4cb7-8bd3-258d502050e3",
+            "49822e1e-9fcc-492d-9cfd-cefc852e2f09",
+            "4e49a438-e50a-4d3b-ab0a-0734e5cb7307",
+            "4613cba1-5256-45b2-9555-837da1b08fb9",
+            "bc4b17f9-dda4-496d-ac99-75b9e45b8df5",
+            "719f84ed-f56e-4285-9401-7035ab4efd34",
+            "9ae64839-0e0c-4833-93e8-bbd1912f1615",
+            "db202aa2-8e54-4929-ab6f-e3f2be9d4555",
+            "dfa575ed-bbca-46ec-ae6e-c65065d01073",
+            "8b593591-fa3a-4f1f-a1f7-50863c554997",
+            "8fc23384-2473-4705-ade5-68e9034a1bcb",
+            "7a982c27-f94d-4a43-a623-f526d0cdf5e6",
+            "15a89a7c-e81e-40cd-8ad0-1bcfee2d4090",
+            "e3611a32-6820-432f-b11d-69e4b020462a",
+            "366f5ff6-db55-43d6-b767-2c8cb715d70f"
+          ],
+          "address": "an1nktk2nyhin3blk6lts7zmw45p4i2qba637sqe6ss2r5vwohqh5bhaxk4de",
+          "dedupe_entries_loaded": 0,
+          "rejected": {},
+          "store_entries": 20
+        },
+        "recover_2": {
+          "accepted": 0,
+          "accepted_ids": [],
+          "address": "an1nktk2nyhin3blk6lts7zmw45p4i2qba637sqe6ss2r5vwohqh5bhaxk4de",
+          "dedupe_entries_loaded": 20,
+          "rejected": {
+            "replay": 20
+          },
+          "store_entries": 20
+        },
+        "stderr": [
+          "",
+          "",
+          ""
+        ]
+      },
+      "failures": [],
+      "name": "persistence",
+      "pass": true
+    }
+  ]
+}

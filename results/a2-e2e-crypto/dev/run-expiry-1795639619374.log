@@ -1,0 +1,28 @@
+e2e-crypto expiry started at unix_ms=1795639619374; LOCALHOST/container network; relay nodes NA=http://127.0.0.1:18641 NB=http://127.0.0.1:18642 R1=http://127.0.0.1:18640
+
+=== TEST expiry ===
+  ok: control: valid: got OK, expected OK
+  ok: expires_at 5 min in the past (created 10 min ago): got expired, expected expired
+  ok: expires_at 60 s in the past (inside +-120 s skew): got OK, expected OK
+  ok: expires_at 130 s in the past (outside skew): got expired, expected expired
+  ok: created_at 10 min in the future: got created_in_future, expected created_in_future
+  ok: created_at 60 s in the future (inside skew): got OK, expected OK
+  ok: created_at 130 s in the future (outside skew): got created_in_future, expected created_in_future
+  ok: expires_at == created_at: got expires_before_created, expected expires_before_created
+  ok: v = 2: got unknown_envelope_version, expected unknown_envelope_version
+  ok: v = 0: got unknown_envelope_version, expected unknown_envelope_version
+  ok: message_id not a uuid v4: got bad_message_id, expected bad_message_id
+  ok: sender not an address: got bad_sender_address, expected bad_sender_address
+  ok: unknown extra JSON field (signed by sender): got OK, expected OK
+  ok: v as string "1": got envelope_parse, expected envelope_parse
+  ok: v missing: got envelope_parse, expected envelope_parse
+  ok: unknown field nested 50000 deep (skipped iteratively by serde_json; no stack overflow): got OK, expected OK
+  ok: trailing garbage after JSON: got envelope_parse, expected envelope_parse
+  ok: empty envelope bytes (inner length 64 = signature only): got bad_padding, expected bad_padding
+  ok: body field = 50000-deep array (wrong type): got envelope_parse, expected envelope_parse
+  ok: frame > 160 KiB rejected before any crypto
+=== expiry : PASS ===
+
+SUMMARY:
+  expiry           PASS
+wrote ../../results/a2-e2e-crypto/summary-expiry-1795639619374.json and ../../results/a2-e2e-crypto/run-expiry-1795639619374.log

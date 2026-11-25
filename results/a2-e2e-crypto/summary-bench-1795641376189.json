@@ -1,0 +1,42 @@
+{
+  "note": "LOCALHOST/container-network test (amd64 nwaku image under qemu on arm64 host); synthetic identities",
+  "started_unix_ms": 1795641376189,
+  "tests": [
+    {
+      "data": {
+        "build": "release",
+        "failed_open_non_recipient_us": {
+          "mean_us": 181.9613042,
+          "median_batch_us": 117.05816600000001,
+          "min_batch_us": 58.71525
+        },
+        "frame_len": 564,
+        "full_open_frame_incl_sig_verify_us": {
+          "mean_us": 194.8603751,
+          "median_batch_us": 180.050168,
+          "min_batch_us": 100.96408199999999
+        },
+        "host": "macOS arm64 native (not under qemu)",
+        "n": 10000,
+        "seal_us": {
+          "mean_us": 99.3151086,
+          "median_batch_us": 97.950834,
+          "min_batch_us": 81.093916
+        },
+        "short_frame_reject_us": {
+          "mean_us": 0.0030919000000000016,
+          "median_batch_us": 0.003084,
+          "min_batch_us": 0.003
+        },
+        "successful_hpke_open_us": {
+          "mean_us": 124.52144170000001,
+          "median_batch_us": 117.943666,
+          "min_batch_us": 66.67583200000001
+        }
+      },
+      "failures": [],
+      "name": "bench",
+      "pass": true
+    }
+  ]
+}

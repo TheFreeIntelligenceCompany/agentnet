@@ -1,0 +1,75 @@
+{
+  "NOT_visible_in_payload": [
+    "envelope.v",
+    "message_id",
+    "sender address",
+    "recipient address (only the bucket is visible)",
+    "type",
+    "conversation_id",
+    "correlation_id",
+    "created_at",
+    "expires_at",
+    "body",
+    "inner Ed25519 signature",
+    "true body length within a bucket"
+  ],
+  "body_lens": [
+    1,
+    115,
+    166
+  ],
+  "bucket_512_body_capacity": 116,
+  "envelope_overhead": 328,
+  "frame_lens": [
+    564,
+    564,
+    1076
+  ],
+  "r1_store_dump": [
+    {
+      "contentTopic": "/agentnet/1/inbox-05/proto",
+      "ephemeral": false,
+      "messageHash": "0xec693b3d7a575ac5b2e3404534e34287f53e582253b690310268a70d8c90d793",
+      "meta": null,
+      "payload_bytes": 564,
+      "payload_first4_hex(cleartext header)": "414e0101",
+      "pubsubTopic": "/waku/2/rs/66/0",
+      "timestamp_ns": 1795640687084825000,
+      "version": 0
+    },
+    {
+      "contentTopic": "/agentnet/1/inbox-05/proto",
+      "ephemeral": false,
+      "messageHash": "0xcf4ce78da3a52218e32eeb8c6272d00e8ce7698102486678c03d64487ed6dfd7",
+      "meta": null,
+      "payload_bytes": 564,
+      "payload_first4_hex(cleartext header)": "414e0101",
+      "pubsubTopic": "/waku/2/rs/66/0",
+      "timestamp_ns": 1795640687236346000,
+      "version": 0
+    },
+    {
+      "contentTopic": "/agentnet/1/inbox-05/proto",
+      "ephemeral": false,
+      "messageHash": "0x26dbc14f68fc342b56ec5ab0ab4c01bc97d056139745e785c5d30d6eb150b2cd",
+      "meta": null,
+      "payload_bytes": 1076,
+      "payload_first4_hex(cleartext header)": "414e0101",
+      "pubsubTopic": "/waku/2/rs/66/0",
+      "timestamp_ns": 1795640687358597000,
+      "version": 0
+    }
+  ],
+  "recipient_topic": "/agentnet/1/inbox-05/proto",
+  "visible_to_relay_and_store": [
+    "pubsub topic (shard 66/0)",
+    "content topic = recipient's inbox bucket (stable per recipient: 1 of 16 buckets, linkable over time)",
+    "waku timestamp (publisher clock, ns)",
+    "payload length (padding bucket: 512,1024,...)",
+    "cleartext 4-byte frame header 'AN',0x01,0x01",
+    "random 32-byte HPKE enc (unlinkable per message)",
+    "waku message hash",
+    "version/meta/ephemeral fields (all default)",
+    "publisher's network address at the node it publishes through (not in store; UNTESTED beyond noting)"
+  ]
+}

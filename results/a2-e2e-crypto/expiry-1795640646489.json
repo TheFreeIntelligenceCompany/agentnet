@@ -1,0 +1,101 @@
+{
+  "cases": [
+    {
+      "case": "control: valid",
+      "expected": "OK",
+      "got": "OK"
+    },
+    {
+      "case": "expires_at 5 min in the past (created 10 min ago)",
+      "expected": "expired",
+      "got": "expired"
+    },
+    {
+      "case": "expires_at 60 s in the past (inside +-120 s skew)",
+      "expected": "OK",
+      "got": "OK"
+    },
+    {
+      "case": "expires_at 130 s in the past (outside skew)",
+      "expected": "expired",
+      "got": "expired"
+    },
+    {
+      "case": "created_at 10 min in the future",
+      "expected": "created_in_future",
+      "got": "created_in_future"
+    },
+    {
+      "case": "created_at 60 s in the future (inside skew)",
+      "expected": "OK",
+      "got": "OK"
+    },
+    {
+      "case": "created_at 130 s in the future (outside skew)",
+      "expected": "created_in_future",
+      "got": "created_in_future"
+    },
+    {
+      "case": "expires_at == created_at",
+      "expected": "expires_before_created",
+      "got": "expires_before_created"
+    },
+    {
+      "case": "v = 2",
+      "expected": "unknown_envelope_version",
+      "got": "unknown_envelope_version"
+    },
+    {
+      "case": "v = 0",
+      "expected": "unknown_envelope_version",
+      "got": "unknown_envelope_version"
+    },
+    {
+      "case": "message_id not a uuid v4",
+      "expected": "bad_message_id",
+      "got": "bad_message_id"
+    },
+    {
+      "case": "sender not an address",
+      "expected": "bad_sender_address",
+      "got": "bad_sender_address"
+    },
+    {
+      "case": "unknown extra JSON field (signed by sender)",
+      "expected": "OK",
+      "got": "OK"
+    },
+    {
+      "case": "v as string \"1\"",
+      "expected": "envelope_parse",
+      "got": "envelope_parse"
+    },
+    {
+      "case": "v missing",
+      "expected": "envelope_parse",
+      "got": "envelope_parse"
+    },
+    {
+      "case": "unknown field nested 50000 deep (skipped iteratively by serde_json; no stack overflow)",
+      "expected": "OK",
+      "got": "OK"
+    },
+    {
+      "case": "trailing garbage after JSON",
+      "expected": "envelope_parse",
+      "got": "envelope_parse"
+    },
+    {
+      "case": "empty envelope bytes (inner length 64 = signature only)",
+      "expected": "bad_padding",
+      "got": "bad_padding"
+    },
+    {
+      "case": "body field = 50000-deep array (wrong type)",
+      "expected": "envelope_parse",
+      "got": "envelope_parse"
+    }
+  ],
+  "policy": "reject only unknown envelope `v`; unknown extra JSON fields are ignored (serde default) but still covered by the signature because the exact received bytes are verified; expires_at accepted until expires_at+skew; created_at accepted up to now+skew; no max-TTL rule implemented",
+  "skew_ms": 120000
+}

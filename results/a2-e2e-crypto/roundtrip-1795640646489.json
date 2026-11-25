@@ -1,0 +1,74 @@
+{
+  "A": "an1ngveu3uytmysy7qlkptvjt56suk4pr3iawidndjfbqt7yju4ls6a2kkkkq",
+  "B": "an1vzse7pdgy6cz7wopox6yu6fhudf4yhdgriyinutab2r6iqteiakdwml56u",
+  "messages_tracked": 200,
+  "note": "localhost/container network, amd64 nwaku image under qemu; latency = poller receive Instant - Instant before publish call (includes HTTP publish, relay hop(s) and poll interval)",
+  "poll_ms": 25,
+  "poll_stats_A": {
+    "errors": 0,
+    "last_error": "",
+    "max_batch": 4,
+    "msgs": 100,
+    "nonempty": 90,
+    "polls": 402
+  },
+  "poll_stats_B": {
+    "errors": 0,
+    "last_error": "",
+    "max_batch": 2,
+    "msgs": 100,
+    "nonempty": 99,
+    "polls": 403
+  },
+  "publish_call_ms": {
+    "max_ms": 60.8,
+    "n": 200,
+    "p50_ms": 3.8,
+    "p95_ms": 9.8,
+    "p99_ms": 16.7
+  },
+  "publish_failures": [],
+  "publish_pacing_ms": 25,
+  "results": [
+    {
+      "correlation_mismatch": 0,
+      "delivered_unique": 100,
+      "delivery_rate": 1.0,
+      "direction": "A->B",
+      "duplicates_delivered_to_app": 0,
+      "integrity_failures": 0,
+      "latency": {
+        "max_ms": 52.1,
+        "n": 100,
+        "p50_ms": 24.6,
+        "p95_ms": 39.8,
+        "p99_ms": 50.3
+      },
+      "missing_seqs": [],
+      "other_open_errors": {},
+      "sent": 100,
+      "wire_duplicates_rejected_by_dedupe": 0
+    },
+    {
+      "correlation_mismatch": 0,
+      "delivered_unique": 100,
+      "delivery_rate": 1.0,
+      "direction": "B->A",
+      "duplicates_delivered_to_app": 0,
+      "integrity_failures": 0,
+      "latency": {
+        "max_ms": 326.7,
+        "n": 100,
+        "p50_ms": 28.0,
+        "p95_ms": 239.2,
+        "p99_ms": 325.7
+      },
+      "missing_seqs": [],
+      "other_open_errors": {},
+      "sent": 100,
+      "wire_duplicates_rejected_by_dedupe": 0
+    }
+  ],
+  "topic_A": "/agentnet/1/inbox-00/proto",
+  "topic_B": "/agentnet/1/inbox-05/proto"
+}

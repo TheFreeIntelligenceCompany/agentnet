@@ -1,0 +1,119 @@
+{
+  "A": "an1ltk7yv7f5hrk5pyimsfy45sx5yonucr4hvhlvab7itbmtumyi4o436upda",
+  "B": "an1bd7fwe7v3g5cxxvch7alyrht65zutvwatpgwjhdovr6bzg443wbkwzy264",
+  "messages_tracked": 200,
+  "note": "localhost/container network, amd64 nwaku image under qemu; latency = poller receive Instant - Instant before publish call (includes HTTP publish, relay hop(s) and poll interval)",
+  "poll_ms": 25,
+  "poll_stats_A": {
+    "errors": 0,
+    "last_error": "",
+    "max_batch": 2,
+    "msgs": 200,
+    "nonempty": 196,
+    "polls": 1426
+  },
+  "poll_stats_B": {
+    "errors": 0,
+    "last_error": "",
+    "max_batch": 10,
+    "msgs": 160,
+    "nonempty": 106,
+    "polls": 1421
+  },
+  "publish_call_ms": {
+    "max_ms": 282.6,
+    "n": 200,
+    "p50_ms": 8.2,
+    "p95_ms": 43.7,
+    "p99_ms": 113.7
+  },
+  "publish_failures": [],
+  "publish_pacing_ms": 25,
+  "results": [
+    {
+      "correlation_mismatch": 0,
+      "delivered_unique": 60,
+      "delivery_rate": 0.6,
+      "direction": "A->B",
+      "duplicates_delivered_to_app": 0,
+      "integrity_failures": 0,
+      "latency": {
+        "max_ms": 2999.0,
+        "n": 60,
+        "p50_ms": 820.4,
+        "p95_ms": 2795.1,
+        "p99_ms": 2999.0
+      },
+      "missing_seqs": [
+        0,
+        1,
+        2,
+        4,
+        7,
+        8,
+        10,
+        12,
+        13,
+        16,
+        20,
+        21,
+        22,
+        24,
+        25,
+        27,
+        28,
+        30,
+        31,
+        33,
+        35,
+        36,
+        37,
+        38,
+        39,
+        42,
+        44,
+        49,
+        50,
+        52,
+        53,
+        57,
+        58,
+        60,
+        61,
+        63,
+        67,
+        69,
+        73,
+        74
+      ],
+      "other_open_errors": {
+        "hpke_open": 100
+      },
+      "sent": 100,
+      "wire_duplicates_rejected_by_dedupe": 0
+    },
+    {
+      "correlation_mismatch": 0,
+      "delivered_unique": 100,
+      "delivery_rate": 1.0,
+      "direction": "B->A",
+      "duplicates_delivered_to_app": 0,
+      "integrity_failures": 0,
+      "latency": {
+        "max_ms": 365.3,
+        "n": 100,
+        "p50_ms": 33.5,
+        "p95_ms": 110.4,
+        "p99_ms": 208.9
+      },
+      "missing_seqs": [],
+      "other_open_errors": {
+        "hpke_open": 100
+      },
+      "sent": 100,
+      "wire_duplicates_rejected_by_dedupe": 0
+    }
+  ],
+  "topic_A": "/agentnet/1/inbox-07/proto",
+  "topic_B": "/agentnet/1/inbox-07/proto"
+}

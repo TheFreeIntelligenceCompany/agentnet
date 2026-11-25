@@ -1,0 +1,20 @@
+e2e-crypto roundtrip started at unix_ms=1795639722867; LOCALHOST/container network; relay nodes NA=http://127.0.0.1:18641 NB=http://127.0.0.1:18642 R1=http://127.0.0.1:18640
+
+=== TEST roundtrip ===
+A=an1refqbpdks4hwdmwyv5ef2ndtu5bzg2mkt6n2ujvwsiri63w7tvvyftcx7a topic /agentnet/1/inbox-05/proto
+B=an1t3zdyg6gju7lqrles373f5mn7zdk7krpgwpgwjfbo7qphzrrfoq2p6e3xy topic /agentnet/1/inbox-07/proto
+  mesh ready: R1 has 2 mesh peers on shard 0 after 0.04s
+A->B: sent 100 delivered_unique 100 app_dups 0 replay_rejects 0 integrity_fail 0 errs {}
+  ok: A->B: all 100 publishes accepted
+  ok: A->B: 100/100 decrypted+signature-verified+integrity ok (got 100)
+  ok: A->B: no app-level dups/integrity/correlation/sender failures
+B->A: sent 100 delivered_unique 100 app_dups 0 replay_rejects 0 integrity_fail 0 errs {}
+  ok: B->A: all 100 publishes accepted
+  ok: B->A: 100/100 decrypted+signature-verified+integrity ok (got 100)
+  ok: B->A: no app-level dups/integrity/correlation/sender failures
+  ok: no publish failures ([])
+=== roundtrip : PASS ===
+
+SUMMARY:
+  roundtrip        PASS
+wrote ../../results/a2-e2e-crypto/summary-roundtrip-1795639722867.json and ../../results/a2-e2e-crypto/run-roundtrip-1795639722867.log

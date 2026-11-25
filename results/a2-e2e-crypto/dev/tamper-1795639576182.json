@@ -1,0 +1,53 @@
+{
+  "authenticated_garbage": {
+    "n": 1000,
+    "outcomes": {
+      "bad_padding": 684,
+      "envelope_parse": 316
+    },
+    "panics": 0
+  },
+  "bit_flip_rejection_kinds": {
+    "bad_magic": 16,
+    "bad_suite": 8,
+    "bad_version": 8,
+    "hpke_open": 4480
+  },
+  "bit_flips_by_region": {
+    "ciphertext_body": {
+      "flips": 4096,
+      "rejected": 4096
+    },
+    "enc": {
+      "flips": 256,
+      "rejected": 256
+    },
+    "header": {
+      "flips": 32,
+      "rejected": 32
+    },
+    "tag": {
+      "flips": 128,
+      "rejected": 128
+    }
+  },
+  "extensions_rejected_of_64": 64,
+  "frame_len": 564,
+  "random_frames": {
+    "n": 1000,
+    "outcomes": {
+      "bad_magic": 487,
+      "hpke_open": 484,
+      "short_frame": 29
+    },
+    "panics": 0
+  },
+  "truncations": {
+    "kinds": {
+      "hpke_open": 512,
+      "short_frame": 52
+    },
+    "lengths_tested": 564,
+    "rejected": 564
+  }
+}

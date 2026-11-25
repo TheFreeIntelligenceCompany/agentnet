@@ -1,0 +1,28 @@
+e2e-crypto load started at unix_ms=1795639939898; LOCALHOST/container network; relay nodes NA=http://127.0.0.1:18641 NB=http://127.0.0.1:18642 R1=http://127.0.0.1:18640
+
+=== TEST load ===
+run n=1 poll=50ms: 32 (node,topic) pollers for 1 clients
+  mesh ready: R1 has 2 mesh peers on shard 0 after 3.01s; drained 0 stale cached messages
+  n=1: sent 10 published_ok 10 delivered 10 missing 0 app_dups 0 replay_rejects 0 hpke_fail observed 0 expected 0 other {}
+  ok: n=1: all 10 publishes accepted ([])
+  ok: n=1: no duplicate application deliveries
+run n=10 poll=50ms: 32 (node,topic) pollers for 10 clients
+  mesh ready: R1 has 2 mesh peers on shard 0 after 1.17s; drained 0 stale cached messages
+  n=10: sent 100 published_ok 100 delivered 100 missing 0 app_dups 0 replay_rejects 0 hpke_fail observed 91 expected 91 other {"hpke_open": 91}
+  ok: n=10: all 100 publishes accepted ([])
+  ok: n=10: no duplicate application deliveries
+run n=100 poll=50ms: 32 (node,topic) pollers for 100 clients
+  mesh ready: R1 has 2 mesh peers on shard 0 after 1.04s; drained 0 stale cached messages
+  n=100: sent 1000 published_ok 1000 delivered 891 missing 109 app_dups 0 replay_rejects 0 hpke_fail observed 5675 expected 6425 other {"hpke_open": 5675}
+  ok: n=100: all 1000 publishes accepted ([])
+  ok: n=100: no duplicate application deliveries
+run n=100 poll=1000ms: 32 (node,topic) pollers for 100 clients
+  mesh ready: R1 has 2 mesh peers on shard 0 after 0.41s; drained 0 stale cached messages
+  n=100: sent 1000 published_ok 1000 delivered 343 missing 657 app_dups 0 replay_rejects 0 hpke_fail observed 2583 expected 6076 other {"hpke_open": 2583}
+  ok: n=100: all 1000 publishes accepted ([])
+  ok: n=100: no duplicate application deliveries
+=== load : PASS ===
+
+SUMMARY:
+  load             PASS
+wrote ../../results/a2-e2e-crypto/summary-load-1795639939898.json and ../../results/a2-e2e-crypto/run-load-1795639939898.log

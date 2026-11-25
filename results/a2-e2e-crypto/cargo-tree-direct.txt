@@ -1,0 +1,11 @@
+e2e-crypto v0.0.1 (/Users/dennison/develop/FIC-elipsis/spike/e2e-crypto)
+├── base64 v0.22.1
+├── data-encoding v2.11.1
+├── ed25519-dalek v3.0.0
+├── getrandom v0.4.3
+├── hpke v0.15.1
+├── reqwest v0.12.28
+├── serde v1.0.229
+├── serde_json v1.0.154
+├── sha2 v0.11.2
+└── tokio v1.54.1

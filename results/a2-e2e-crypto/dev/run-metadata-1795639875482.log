@@ -1,0 +1,56 @@
+e2e-crypto metadata started at unix_ms=1795639875482; LOCALHOST/container network; relay nodes NA=http://127.0.0.1:18641 NB=http://127.0.0.1:18642 R1=http://127.0.0.1:18640
+
+=== TEST metadata ===
+  mesh ready: R1 has 2 mesh peers on shard 0 after 0.60s; drained 14 stale cached messages
+  ok: store hash 0xada2a74262d1f93e44ee7d438dba5b3ea4e85af9c1a0777a4c2c6741063feb40 == locally recomputed sha256(pubsub||payload||contentTopic||ts)
+  ok: store hash 0x236e8e2a9310604ccfc7c6e5ec3ea19e740f57dbc6ebf2524bb62db4bca2e8c3 == locally recomputed sha256(pubsub||payload||contentTopic||ts)
+  ok: store hash 0x1bfa11d95d79b0bc3ff72ad8fad67a351b49130f266092ac77482b090a9db6f6 == locally recomputed sha256(pubsub||payload||contentTopic||ts)
+R1 store entries for topic /agentnet/1/inbox-08/proto:
+[
+  {
+    "contentTopic": "/agentnet/1/inbox-08/proto",
+    "ephemeral": false,
+    "messageHash": "0xada2a74262d1f93e44ee7d438dba5b3ea4e85af9c1a0777a4c2c6741063feb40",
+    "meta": null,
+    "payload_bytes": 564,
+    "payload_first4_hex(cleartext header)": "414e0101",
+    "pubsubTopic": "/waku/2/rs/66/0",
+    "timestamp_ns": 1795639877093525000,
+    "version": 0
+  },
+  {
+    "contentTopic": "/agentnet/1/inbox-08/proto",
+    "ephemeral": false,
+    "messageHash": "0x236e8e2a9310604ccfc7c6e5ec3ea19e740f57dbc6ebf2524bb62db4bca2e8c3",
+    "meta": null,
+    "payload_bytes": 1076,
+    "payload_first4_hex(cleartext header)": "414e0101",
+    "pubsubTopic": "/waku/2/rs/66/0",
+    "timestamp_ns": 1795639877202850000,
+    "version": 0
+  },
+  {
+    "contentTopic": "/agentnet/1/inbox-08/proto",
+    "ephemeral": false,
+    "messageHash": "0x1bfa11d95d79b0bc3ff72ad8fad67a351b49130f266092ac77482b090a9db6f6",
+    "meta": null,
+    "payload_bytes": 1076,
+    "payload_first4_hex(cleartext header)": "414e0101",
+    "pubsubTopic": "/waku/2/rs/66/0",
+    "timestamp_ns": 1795639877321502000,
+    "version": 0
+  }
+]
+  ok: R1 store holds the 3 messages (3 entries)
+  ok: store payload lengths [564, 1076, 1076] == sealed frame lengths [564, 1076, 1076]
+  CHECK FAILED: bodies of 1 B and 157 B (same 512 bucket) -> identical payload length 564
+  CHECK FAILED: body 208 B (next bucket) -> payload 1076 B
+  ok: B decrypted all 3
+  ok: no envelope plaintext strings found in the 3 wire payloads (leaks: [])
+=== metadata : FAIL ===
+  failure: bodies of 1 B and 157 B (same 512 bucket) -> identical payload length 564
+  failure: body 208 B (next bucket) -> payload 1076 B
+
+SUMMARY:
+  metadata         FAIL
+wrote ../../results/a2-e2e-crypto/summary-metadata-1795639875482.json and ../../results/a2-e2e-crypto/run-metadata-1795639875482.log

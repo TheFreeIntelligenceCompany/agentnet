@@ -1,0 +1,17 @@
+e2e-crypto replay started at unix_ms=1795639776470; LOCALHOST/container network; relay nodes NA=http://127.0.0.1:18641 NB=http://127.0.0.1:18642 R1=http://127.0.0.1:18640
+
+=== TEST replay ===
+  mesh ready: R1 has 2 mesh peers on shard 0 after 8.17s
+  ok: re-publish of identical frame accepted by node (Ok(()))
+  ok: live: exactly 1 accepted of the 2 deliveries (accepted 1)
+  ok: live: second delivery rejected as replay ({"replay": 1})
+  ok: store returned 2 entries for the topic (expect 2: original + re-publish)
+  ok: store-fetched copies all rejected as replay
+  ok: dedupe file has 1 line (one accepted message): 1
+  ok: after restart (reloaded 1 entries from file): replay still rejected -> Some("replay")
+  ok: control: fresh empty dedupe accepts the same frame (dedupe is the defence)
+=== replay : PASS ===
+
+SUMMARY:
+  replay           PASS
+wrote ../../results/a2-e2e-crypto/summary-replay-1795639776470.json and ../../results/a2-e2e-crypto/run-replay-1795639776470.log
