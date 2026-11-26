@@ -262,7 +262,7 @@ Reproducible steps (to be executed and verified by whoever has the hosts):
    with state `delivered`; `tcpdump` on a client shows only tailnet-interface traffic to the service node and no traffic to `1.1.1.1` or other public hosts.
 8. Record the result in `docs/spike-report.md` section 7 (row "Tailscale").
 
-Recovery note: after a silently dropped connection the node noticed after about 48 s and took between 42 s and 16 min to reconnect even with the path restored (simulations, `docs/network-simulations.md`).
+Recovery note: after a silently dropped connection the node noticed after about 48 s and took between 42 s and 16 min to reconnect even with the path restored (simulations, `docs/network-simulations.md`). The cause is a half-open TCP socket on the relay and the mitigation is `net.ipv4.tcp_retries2=6` on the relay (`results/reconnect/20261126T065412Z/SUMMARY.md`; single-host simulation, real networks UNTESTED).
 
 ## 11. Checklist before trusting a deployment
 

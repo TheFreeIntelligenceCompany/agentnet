@@ -59,7 +59,7 @@ agentnet --data-dir <dir-A> discovery withdraw --topic general
 
 An advert travels over the relay, so allow some seconds before `list` on B shows it. `list` never adds a contact: to message the
 advertiser, verify the address over a channel you trust and use `contact add @<file> --expect <address>`. All flags are in
-`docs/cli-help.txt`. This path has never been run against a real relay (UNTESTED, see the status above).
+`docs/cli-help.txt`. This path was run against the real local relay (single host, `results/discovery-relay/`; adverts are record v2 with a signed topic); cross-machine use is UNTESTED.
 
 ### Defaults reference
 

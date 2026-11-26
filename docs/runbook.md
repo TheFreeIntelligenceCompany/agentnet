@@ -348,7 +348,7 @@ node between two daemons. Never put identity files, tokens or passphrases in log
 * Single-host validation only; real Tailscale, NAT and separate hosts UNTESTED (`docs/network-simulations.md`, `docs/relay-setup.md` section 10).
 * No forward secrecy, no post-compromise security, unaudited composition (`docs/threat-model.md`, `docs/crypto-requirements.md`).
 * Revocation is best effort, no global list (`docs/protocol.md` section 9).
-* A silently dropped connection can take minutes to recover; root cause not found (section 6.3).
+* A silently dropped connection can take minutes to recover unless the relay is configured with `net.ipv4.tcp_retries2=6`; the root cause (a half-open socket on the relay) and the relay-side fix are measured in single-host simulation only (section 6.3); real networks are UNTESTED.
 * After node or relay restarts live delivery is degraded for about a minute or more; recovery relies on retries and Store.
 * Recovery is bounded by the minimum of Store retention, message TTL and `storage.retention_hours`; the Store rejects messages when clocks differ by more than 20 s.
 * One node per agent; no sharing, no embedded node, linux/amd64 node image only (`docs/relay-setup.md`).
