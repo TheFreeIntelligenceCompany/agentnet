@@ -1,6 +1,6 @@
 # ADR 0002 — End-to-end encryption: HPKE base mode with an inner Ed25519 signature
 
-Status: accepted by the lead agent (2026-11-25); **pending the repository owner's explicit acceptance** — see "Open point for the owner". Owner: lead agent.
+Status: **accepted by the repository owner on 2026-11-25, with conditions** (see "Owner acceptance and conditions"). Owner of the code: lead agent.
 
 ## Context
 
@@ -101,15 +101,37 @@ Not provided, and stated as limitations:
   reasons in the notes (persistence burden, interactive handshakes, no sender
   authentication, AGPL).
 
-## Open point for the owner
+## Owner acceptance and conditions
 
-`goal.md` says: if libchat is unsuitable, "evaluate an established audited
-messaging library/protocol ... do not hand-roll encryption". Both candidates
-were evaluated with running code. The chosen design uses an IETF-standard
-protocol (HPKE, RFC 9180) and a standard signature scheme through maintained
-libraries, and invents no primitive; but the *composition* (signed envelope
-inside HPKE, padding, contact record) is ours and the `hpke` crate has no
-public audit. The lead's judgment is that this is the better fit for the stated
-requirements (restart- and migration-safe identity, offline recipients, no
-directory service). The human owner should confirm that trade-off, and an
-external cryptographic review is required before production use either way.
+The repository owner accepted HPKE + Ed25519 for the MVP on 2026-11-25, on the
+grounds that asynchronous communication, offline first contact, frequent
+restarts, ephemeral execution environments and identity portability are the
+primary requirements, and that stateless per-message encryption fits them
+better than a stateful ratchet at this stage. The owner explicitly accepted the
+absence of forward secrecy against recipient key compromise **for the MVP only**:
+it is a documented limitation, not a permanent assumption for every deployment.
+
+Conditions attached to the acceptance (status of each is tracked in
+`docs/crypto-requirements.md`):
+
+1. A fresh HPKE context for each message.
+2. Separate signing and encryption keys with cryptographically authenticated
+   key bindings.
+3. All security-relevant envelope metadata authenticated.
+4. Protocol versioning and domain separation.
+5. Durable replay protection, with tests for rollback, restart, migration and
+   concurrent-identity scenarios.
+6. Encryption key rotation **and revocation**.
+7. No silent cryptographic downgrade.
+8. Pinned dependency versions and tests against published cryptographic test
+   vectors.
+9. A complete threat model and list of remaining limitations.
+10. A preserved upgrade path to vodozemac, MLS or another reviewed
+    forward-secret protocol.
+11. Independent cryptographic review before production use involving sensitive
+    information.
+12. The cryptographic implementation sits behind a narrow, well-defined
+    interface so that replacing or extending the scheme requires no change to
+    the Waku transport, the MCP server or the harness integration.
+13. The implementation is never described as audited, production-secure or
+    forward-secret.
