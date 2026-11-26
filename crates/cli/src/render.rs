@@ -203,6 +203,9 @@ pub fn network(st: &NetworkStatus, daemon: Option<&Value>) -> String {
     );
     match &st.isolation_violation {
         Some(v) => s.push_str(&format!("ISOLATION VIOLATION: {}\n", clean(v))),
+        None if !st.isolation_audited => {
+            s.push_str("isolation: not audited (public mode)\n")
+        }
         None => s.push_str("isolation: ok\n"),
     }
     let q = &st.queue;
@@ -354,5 +357,47 @@ mod hint_tests {
             cmd(Path::new("/x/it's"), "serve"),
             "agentnet --data-dir '/x/it'\\''s' serve"
         );
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn st(audited: bool, violation: Option<&str>) -> NetworkStatus {
+        NetworkStatus {
+            mode: if audited { "private" } else { "public" }.into(),
+            ready: true,
+            isolation_audited: audited,
+            isolation_violation: violation.map(str::to_owned),
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn network_status_isolation_line_per_mode() {
+        let audited_ok = network(&st(true, None), None);
+        assert!(audited_ok.contains("isolation: ok\n"), "{audited_ok}");
+        let plain_public = network(&st(false, None), None);
+        assert!(
+            plain_public.contains("isolation: not audited (public mode)\n"),
+            "{plain_public}"
+        );
+        assert!(!plain_public.contains("isolation: ok"));
+        let violated = network(&st(true, Some("bad peer")), None);
+        assert!(violated.contains("ISOLATION VIOLATION: bad peer"));
+    }
+
+    #[test]
+    fn network_status_json_exposes_isolation_audited() {
+        let v = serde_json::to_value(st(false, None)).unwrap();
+        assert_eq!(v["isolation_audited"], false);
+        let v = serde_json::to_value(st(true, None)).unwrap();
+        assert_eq!(v["isolation_audited"], true);
+        // a status from a daemon that predates the field reads as not audited
+        let mut old = serde_json::to_value(st(true, None)).unwrap();
+        old.as_object_mut().unwrap().remove("isolation_audited");
+        let back: NetworkStatus = serde_json::from_value(old).unwrap();
+        assert!(!back.isolation_audited);
     }
 }

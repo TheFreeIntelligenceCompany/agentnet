@@ -421,6 +421,7 @@ impl AgentApi for FakeAgent {
             ready: true,
             connected_peers: 2,
             isolation_violation: None,
+            isolation_audited: true,
             queue: QueueHealth {
                 outbox_queued: s.outbox.len() as u64,
                 inbox_unread: s.inbox.iter().filter(|r| !r.acknowledged).count() as u64,

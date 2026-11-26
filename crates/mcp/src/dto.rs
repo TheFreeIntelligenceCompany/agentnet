@@ -670,6 +670,10 @@ pub struct NetworkStatusOutput {
     pub connected_peers: u32,
     /// Set when the private-mode isolation audit found a violation.
     pub isolation_violation: Option<String>,
+    /// False when peers are not audited (plain public mode): then a missing
+    /// `isolation_violation` does not mean the node is isolated.
+    #[serde(default)]
+    pub isolation_audited: bool,
     pub queue: QueueHealthOutput,
     pub last_live_poll_at: Option<i64>,
     pub last_history_sync_at: Option<i64>,
@@ -686,6 +690,7 @@ impl From<core::NetworkStatus> for NetworkStatusOutput {
             ready: n.ready,
             connected_peers: n.connected_peers,
             isolation_violation: n.isolation_violation,
+            isolation_audited: n.isolation_audited,
             queue: n.queue.into(),
             last_live_poll_at: n.last_live_poll_at,
             last_history_sync_at: n.last_history_sync_at,

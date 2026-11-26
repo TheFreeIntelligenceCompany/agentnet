@@ -307,6 +307,11 @@ pub struct NetworkStatus {
     pub ready: bool,
     pub connected_peers: u32,
     pub isolation_violation: Option<String>,
+    /// Whether the node's peers are audited at all (private mode, or public
+    /// mode with `enforce_peer_allowlist`). `false` means `isolation_violation`
+    /// being absent says nothing. Defaults to `false` when a peer predates the field.
+    #[serde(default)]
+    pub isolation_audited: bool,
     pub queue: QueueHealth,
     pub last_live_poll_at: Option<i64>,
     pub last_history_sync_at: Option<i64>,

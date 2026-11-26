@@ -217,6 +217,8 @@ impl DaemonConfig {
             storage: self.storage.clone(),
             discovery: self.discovery.clone(),
             network_mode: self.network.mode.as_str().to_owned(),
+            isolation_audited: self.network.mode == Mode::Private
+                || self.network.enforce_peer_allowlist,
         }
     }
 
@@ -645,6 +647,15 @@ mod tests {
         c.network.cluster_id = 66;
         c.network.peers = vec![WSS.into()];
         c
+    }
+
+    #[test]
+    fn node_config_reports_whether_isolation_is_audited() {
+        assert!(private().to_node_config().isolation_audited);
+        assert!(audited_public().to_node_config().isolation_audited);
+        let mut plain = audited_public();
+        plain.network.enforce_peer_allowlist = false;
+        assert!(!plain.to_node_config().isolation_audited);
     }
 
     #[test]
