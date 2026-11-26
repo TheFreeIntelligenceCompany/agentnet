@@ -33,7 +33,15 @@ struct State {
     /// When set, every API call fails with this error.
     failure: Option<ApiError>,
     triggers_disabled: bool,
+    discovery_disabled: bool,
+    /// Own advertisements by topic: (last seq, current info; None = withdrawn).
+    adverts: HashMap<String, (u64, Option<AdvertInfo>)>,
+    /// What "other agents" advertised (all topics, filtered by `topic` on read).
+    discovered: Vec<(String, DiscoveredAgent)>,
 }
+
+/// Topics the fake host authorizes for discovery.
+pub const DISCOVERY_TOPICS: [&str; 2] = ["general", "team-1"];
 
 pub struct FakeAgent {
     state: Mutex<State>,
@@ -101,6 +109,16 @@ impl FakeAgent {
         self.st().failure = error;
     }
 
+    /// Turn the discovery feature off (every discovery call is `policy_denied`).
+    pub fn set_discovery_disabled(&self, disabled: bool) {
+        self.st().discovery_disabled = disabled;
+    }
+
+    /// Make an advertisement from another agent visible to `discover_agents`.
+    pub fn add_discovered(&self, topic: &str, agent: DiscoveredAgent) {
+        self.st().discovered.push((topic.to_owned(), agent));
+    }
+
     pub fn set_triggers_disabled(&self, disabled: bool) {
         self.st().triggers_disabled = disabled;
     }
@@ -149,6 +167,20 @@ impl FakeAgent {
 
     pub fn inbox_len(&self) -> usize {
         self.st().inbox.len()
+    }
+
+    fn gate(s: &State, topic: &str) -> ApiResult<()> {
+        if s.discovery_disabled {
+            return Err(ApiError::policy(
+                "discovery is disabled by host policy ([discovery] enabled = false in agentnet.toml)",
+            ));
+        }
+        if !DISCOVERY_TOPICS.contains(&topic) {
+            return Err(ApiError::policy(format!(
+                "topic {topic:?} is not an authorized discovery topic (host policy: discovery.topics)"
+            )));
+        }
+        Ok(())
     }
 
     fn status_of(r: &OutboxRecord) -> MessageStatus {
@@ -525,6 +557,69 @@ impl AgentApi for FakeAgent {
 
     async fn ack_events(&self, _cursor: String) -> ApiResult<()> {
         self.check()
+    }
+
+    async fn advertise_agent(&self, req: AdvertiseRequest) -> ApiResult<AdvertInfo> {
+        self.check()?;
+        let mut s = self.st();
+        Self::gate(&s, &req.topic)?;
+        if req.capabilities.is_empty() {
+            return Err(ApiError::invalid("capabilities must not be empty"));
+        }
+        let seq = s.adverts.get(&req.topic).map_or(0, |(q, _)| *q) + 1;
+        let ttl = req.ttl_seconds.unwrap_or(3600).min(86_400) as i64 * 1000;
+        let info = AdvertInfo {
+            topic: req.topic.clone(),
+            seq,
+            issued_at: now(),
+            expires_at: now() + ttl,
+            capabilities: req.capabilities,
+        };
+        s.adverts.insert(req.topic, (seq, Some(info.clone())));
+        Ok(info)
+    }
+
+    async fn withdraw_advert(&self, topic: String) -> ApiResult<WithdrawInfo> {
+        self.check()?;
+        let mut s = self.st();
+        Self::gate(&s, &topic)?;
+        let withdrawn = match s.adverts.get_mut(&topic) {
+            Some((seq, cur @ Some(_))) => {
+                *seq += 1;
+                *cur = None;
+                true
+            }
+            _ => false,
+        };
+        Ok(WithdrawInfo { topic, withdrawn })
+    }
+
+    async fn discover_agents(&self, req: DiscoverRequest) -> ApiResult<DiscoverPage> {
+        self.check()?;
+        let s = self.st();
+        Self::gate(&s, &req.topic)?;
+        let after = parse_cursor(&req.cursor)? as usize;
+        let limit = page_limit(req.limit)?;
+        let matching: Vec<(usize, &DiscoveredAgent)> = s
+            .discovered
+            .iter()
+            .filter(|(t, _)| *t == req.topic)
+            .map(|(_, a)| a)
+            .filter(|a| {
+                req.capability
+                    .as_ref()
+                    .is_none_or(|c| a.capabilities.iter().any(|x| x.name == *c))
+            })
+            .enumerate()
+            .map(|(i, a)| (i + 1, a))
+            .filter(|(i, _)| *i > after)
+            .collect();
+        let page: Vec<&(usize, &DiscoveredAgent)> = matching.iter().take(limit).collect();
+        Ok(DiscoverPage {
+            has_more: matching.len() > page.len(),
+            next_cursor: Some(cursor(page.last().map_or(after as u64, |(i, _)| *i as u64))),
+            agents: page.iter().map(|(_, a)| (*a).clone()).collect(),
+        })
     }
 
     fn changes(&self) -> broadcast::Receiver<ChangeHint> {
