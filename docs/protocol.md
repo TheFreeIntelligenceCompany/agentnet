@@ -211,7 +211,7 @@ sees `WrongRecipient`.
 
 ### Field protection audit: field -> protected by
 
-Audited against `crypto/hpke_suite.rs`: the signature is over the exact
+Checked by the authors against `crypto/hpke_suite.rs` (this is not an independent audit): the signature is over the exact
 serialized envelope (every envelope field), and the 4-byte frame header is
 HPKE `aad`.
 

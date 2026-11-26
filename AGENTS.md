@@ -43,6 +43,49 @@ Work proceeds in two phases:
 - `core` stays independent of `rmcp` and of any harness.
 - MCP stdio: stdout carries protocol frames only; logs go to stderr.
 
+## Layout
+
+```
+crates/transport   Transport trait, MockTransport, LogosRestTransport (sidecar node over REST)
+crates/core        crypto/ (the only place hpke, ed25519-dalek and age are used),
+                   SQLite store, delivery engine (Node), triggers, events, AgentApi
+crates/mcp         rmcp server over Arc<dyn AgentApi>
+crates/daemon      config, data-dir lock, control/event socket, webhook, examples/
+crates/cli         the `agentnet` binary
+tests/acceptance   driver for scripts/acceptance.sh
+spike/             Phase A spikes (standalone crates, not workspace members) and the local relay topology
+docs/              spike report, ADRs, protocol, threat model, setup and API docs
+results/           raw evidence; every claim in docs points here
+```
+
+## Cryptography rules (owner's conditions, ADR 0002)
+
+- The owner accepted HPKE base mode + Ed25519 for the MVP with 13 conditions;
+  `docs/crypto-requirements.md` tracks each one. Keep that table true.
+- Never describe the implementation as audited, production-secure or
+  forward-secret. It is none of these.
+- All cryptography stays behind `agentnet_core::crypto` and the
+  `MessageProtection` trait. Transport, MCP and daemon socket/webhook code must
+  not import crypto crates (an architecture test enforces this).
+- Crypto dependencies are exact-pinned; published RFC vectors live in
+  `crates/core/tests/vectors.rs`. Fetch vectors from the source, never from memory.
+- Independent cryptographic review is required before production use with
+  sensitive information. That requirement cannot be closed from inside this repo.
+
+## Operational facts learned the hard way
+
+- One Logos Delivery node per agent: the node's REST receive cache is
+  destructive and shared.
+- A recreated node has no live relay for about 62 s; after a relay restart it
+  can be minutes. Delivery then depends on sender retries and Store sync.
+- Never unsubscribe a content topic (it drops the node from the mesh).
+- Node flag `--dns-addrs-name-server=127.0.0.1` is required for zero public
+  egress; with it a node never redials on its own, so the adapter redials its
+  allowlisted static peers.
+- Relay-dependent tests are `#[ignore]`d: `AGENTNET_RELAY_TESTS=1 cargo test
+  --workspace --locked -- --ignored` with the topology in `spike/relay` up.
+- The full acceptance run is `scripts/acceptance.sh` (about 50 minutes).
+
 ## Working conventions
 
 - Small commits with exact commands and outputs recorded where material.

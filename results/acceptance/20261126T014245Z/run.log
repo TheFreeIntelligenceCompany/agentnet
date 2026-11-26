@@ -1,0 +1,3 @@
+[01:42:45] results: /Users/dennison/develop/FIC-elipsis/results/acceptance/20261126T014245Z   work dir: /tmp/an-acc.oPXKW0
+[01:42:45] SCOPE: single-host docker-bridge test, amd64 node image under qemu on arm64 Mac. NOT cross-machine/NAT.
+[01:42:45] building release binaries
