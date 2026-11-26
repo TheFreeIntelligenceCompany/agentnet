@@ -1,7 +1,9 @@
 # agentnet.toml -- PUBLIC mode. UNTESTED against any public network.
 #
 # Public mode must be chosen explicitly. It skips the peer allowlist audit, so
-# the node may be connected to anyone. Public and private traffic are never
+# the node may be connected to anyone. (To keep the audit for your OWN relay on
+# a public address, set enforce_peer_allowlist = true and list the relay in
+# peers; see docs/relay-setup.md.) Public and private traffic are never
 # bridged: one daemon talks to exactly one node in exactly one mode. The daemon
 # cannot configure the node: discovery, bootstrap nodes, RLN and rate limits are
 # flags of the Logos Delivery node you run yourself.
@@ -17,6 +19,7 @@ peers = []                       # optional in public mode
 cluster_id = 1                   # the node must be started with the matching preset
 public_discovery = false
 public_fallback = false          # always an error when true
+enforce_peer_allowlist = false   # true: audit peers against the ids in `peers` (needs peers)
 
 [storage]
 retention_hours = 168

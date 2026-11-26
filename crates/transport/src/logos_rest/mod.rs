@@ -289,9 +289,10 @@ impl LogosRestTransport {
 
     /// Forces an isolation audit now. `Ok` means no violation; a violation is
     /// [`TransportError::Isolation`]; an unreachable or disabled admin API is
-    /// [`TransportError::Unavailable`]. A no-op in public mode.
+    /// [`TransportError::Unavailable`]. A no-op in plain public mode (audited
+    /// only with `enforce_peer_allowlist`).
     pub async fn audit(&self) -> Result<(), TransportError> {
-        if self.cfg.mode == NetworkMode::Public {
+        if !self.cfg.audits_peers() {
             return Ok(());
         }
         let mut st = self.audit.lock().await;
@@ -304,7 +305,7 @@ impl LogosRestTransport {
 
     /// Runs the audit if never done or older than `audit_interval`.
     async fn ensure_audit(&self) -> Result<(), TransportError> {
-        if self.cfg.mode == NetworkMode::Public {
+        if !self.cfg.audits_peers() {
             return Ok(());
         }
         let mut st = self.audit.lock().await;
@@ -523,7 +524,7 @@ impl Transport for LogosRestTransport {
                 ..
             })
         );
-        let private = self.cfg.mode == NetworkMode::Private;
+        let private = self.cfg.audits_peers();
         let (peers, violation, audit_err) = if private {
             let mut st = self.audit.lock().await;
             match self.refresh_audit(&mut st).await {
@@ -552,8 +553,12 @@ impl Transport for LogosRestTransport {
         } else if audit_err.is_some() {
             "isolation audit unavailable (admin API unreachable or disabled); failing closed"
                 .to_string()
-        } else {
+        } else if private {
             format!("node reachable; {connected_allowed} connected allowed peer(s)")
+        } else {
+            format!(
+                "node reachable; {connected_allowed} connected peer(s) (public mode: peers not audited)"
+            )
         };
         TransportStatus {
             ready,

@@ -93,7 +93,7 @@ Notes:
 * Exit 0 means no checks failed; warnings and skipped checks can still mean messaging is unavailable. For readiness use `agentnet doctor --ready`: it prints the
   same report, and additionally exits 7 (with the reasons on stderr, one line per condition and what to do next) when the daemon socket is unavailable, the node
   is unreachable, the transport is not ready, the isolation audit fails or a required check was skipped or not run (`daemon socket`, `node reachable`,
-  `isolation`, `transport ready`, `local inbox database`). Warnings such as `single instance` and `history sync` do not affect it; `--json` output is unchanged.
+  `isolation`, `transport ready`, `local inbox database`). In plain public mode (no `enforce_peer_allowlist`) `isolation` prints `[skip] not audited in public mode ...` and `peers == allowlist` is skipped; this one skip does not block `--ready` (it never claims isolation is ok), and `transport ready` does not call peers "allowed". Set `network.enforce_peer_allowlist = true` to audit your own public relay. Warnings such as `single instance` and `history sync` do not affect it; `--json` output is unchanged.
 * `doctor` exit codes: 0 no failing check (with `--ready`: and ready), 7 at least one failing check (with `--ready`: or not ready). Other exit codes (3 daemon or node unavailable, 4 invalid configuration,
   6 refused by policy) are listed in `docs/cli-help.txt`.
 * Logs go to stderr; `RUST_LOG` sets the level (default `warn`). There is no documented log file or metrics endpoint; the socket method
