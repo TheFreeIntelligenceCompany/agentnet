@@ -281,7 +281,7 @@ Recovery note: after a silently dropped connection the node noticed after about 
 
 Private mode only accepts a literal private IP. If your own relay is reached over the public internet (a public IP,
 or a name such as a TLS/WebSocket endpoint `/dns4/relay.example.org/tcp/443/wss/p2p/<id>`), use
-`mode = "public"`, `i_understand_public = true` and `enforce_peer_allowlist = true` (`docs/configuration.md`,
+`mode = "public"`, `i_understand_public = true` and `enforce_peer_allowlist = true` (`agentnet init --public-relay --peer /ip4/<relay ip>/tcp/60000/p2p/<id>` writes them; plain `init --peer` with such an address fails and points at this flag; `docs/configuration.md`,
 "Public mode with the allowlist audit kept"). The allowlist of peer ids and the periodic isolation audit are kept.
 Two recipes were run on real hosts (each a single run, one outbound-only client behind a home NAT, agent B on the relay host):
 

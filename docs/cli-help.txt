@@ -15,7 +15,8 @@ export|import|rotate-kem|revoke`).
 Usage: agentnet [OPTIONS] <COMMAND>
 
 Commands:
-  init        Create a data directory with a new identity, a private-mode config and access tokens
+  init        Create a data directory with a new identity, a private-mode config (or, with
+              --public-relay, the audited public mode) and access tokens
   serve       Run the daemon in the foreground until Ctrl-C or SIGTERM
   mcp         Serve MCP over stdio as a thin client of the running daemon
   identity    Show, export, import and rotate the identity (daemon must be stopped for all but
@@ -68,7 +69,8 @@ command output (and, for `agentnet mcp`, MCP protocol frames).
 
 ===== agentnet init --help =====
 
-Create a data directory with a new identity, a private-mode config and access tokens.
+Create a data directory with a new identity, a private-mode config (or, with --public-relay, the
+audited public mode) and access tokens.
 
 Refuses to touch an existing agent. Prints the address and the signed contact record to share with
 peers.
@@ -97,6 +99,12 @@ Options:
 
       --peer <MULTIADDR>
           Static peer multiaddr ending in /p2p/<peerId> (repeatable). Required before `serve`
+
+      --public-relay
+          Your own relay is reached over a public IP or a DNS name (e.g. a wss edge): write `mode =
+          "public"` with `i_understand_public = true` and `enforce_peer_allowlist = true` (the peer
+          ids of --peer stay the allowlist). Needs --peer. Without it a peer that private mode
+          rejects makes init fail
 
   -h, --help
           Print help (see a summary with '-h')

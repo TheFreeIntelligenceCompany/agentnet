@@ -1,7 +1,7 @@
 # Configuration (`agentnet.toml`)
 
 The file lives in the data directory (`$AGENTNET_HOME`, default `~/.agentnet`, or `--data-dir`).
-`agentnet init` writes a private-mode file. Unknown keys and unknown values are errors.
+`agentnet init` writes a private-mode file (`agentnet init --public-relay --peer <multiaddr>` writes the audited public mode below instead; `init` validates the file before writing anything and fails, naming both choices, when a `--peer` is not acceptable in private mode, e.g. a public IP or DNS name; it never switches mode silently). Unknown keys and unknown values are errors.
 
 Omitted keys use defaults, but private mode requires at least one relay address in `[network].peers`. A minimal runnable file:
 
@@ -91,7 +91,7 @@ says "not audited", it is never reported `[ok]`.
 
 For a relay that you run yourself but that is reached over a public address (a public IP, or a DNS name,
 possibly behind a TLS/WebSocket front end). Set `mode = "public"`, `i_understand_public = true` and
-`enforce_peer_allowlist = true`. Then:
+`enforce_peer_allowlist = true` (`agentnet init --public-relay --peer <multiaddr>` writes exactly this). Then:
 
 * `peers` (and `store_peer`) may be `/ip4|ip6|dns4|dns6/<host>/tcp/<port>[/tls][/ws|/wss]/p2p/<peerId>`.
   `/p2p-circuit` relay hops, `dnsaddr`, any other component and a second `/p2p/` are rejected.

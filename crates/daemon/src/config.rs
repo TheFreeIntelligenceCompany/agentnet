@@ -432,6 +432,65 @@ events = ["trigger.matched"]
     )
 }
 
+/// Render the audited public-mode config for your own relay on a public address
+/// or a wss/TLS edge (`agentnet init --public-relay`): `mode = "public"`,
+/// `i_understand_public = true`, `enforce_peer_allowlist = true`.
+pub fn render_public_relay_config(node_url: &str, peers: &[String]) -> String {
+    render_private_config(node_url, peers)
+        .replacen(
+            "# agentnet.toml -- PRIVATE mode (the default). See docs/configuration.md.",
+            "# agentnet.toml -- PUBLIC mode with the peer allowlist audit kept (own relay on a\n# public address or wss edge). See docs/configuration.md and docs/relay-setup.md.\n# The audit is detective, not preventive; the relay's firewall or edge is the access control.",
+            1,
+        )
+        .replacen(
+            "mode = \"private\"",
+            "mode = \"public\"",
+            1,
+        )
+        .replacen(
+            "i_understand_public = false",
+            "i_understand_public = true     # you chose public mode (init --public-relay)\nenforce_peer_allowlist = true  # audit the node's peers against the ids in `peers`",
+            1,
+        )
+}
+
+/// Render and validate the config `agentnet init` is about to write. With no
+/// peers the (intentionally incomplete) private file is returned unvalidated.
+/// A peer that private mode rejects fails here, before anything is written,
+/// naming both ways forward; the mode is never switched silently.
+pub fn render_init_config(
+    node_url: &str,
+    peers: &[String],
+    public_relay: bool,
+) -> Result<String, DaemonError> {
+    if public_relay {
+        if peers.is_empty() {
+            return Err(cfg_err(
+                "--public-relay needs at least one --peer (the relay's multiaddr ending in \
+                 /p2p/<peerId>): the allowlist is the peer ids of the listed peers",
+            ));
+        }
+        let text = render_public_relay_config(node_url, peers);
+        DaemonConfig::parse_validated(&text)?;
+        return Ok(text);
+    }
+    let text = render_private_config(node_url, peers);
+    if !peers.is_empty() {
+        if let Err(DaemonError::Config(why)) = DaemonConfig::parse_validated(&text) {
+            return Err(cfg_err(format!(
+                "this configuration is not acceptable in private mode ({why}). Choose one: \
+                 (1) use a relay on a private address (loopback, RFC 1918, 100.64.0.0/10, e.g. \
+                 --peer /ip4/10.0.0.5/tcp/60000/p2p/<peerId>), or (2) your relay is reached \
+                 over a public IP or DNS name: re-run with --public-relay to write the audited \
+                 public mode (mode = \"public\", i_understand_public = true, \
+                 enforce_peer_allowlist = true; docs/relay-setup.md, \"Your own relay on a \
+                 public address\")"
+            )));
+        }
+    }
+    Ok(text)
+}
+
 /// The public-mode sample (`docs/examples/public.toml`). UNTESTED against any
 /// public network.
 pub fn sample_public_config() -> String {

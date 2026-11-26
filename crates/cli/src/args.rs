@@ -47,7 +47,7 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Command {
-    /// Create a data directory with a new identity, a private-mode config and access tokens.
+    /// Create a data directory with a new identity, a private-mode config (or, with --public-relay, the audited public mode) and access tokens.
     ///
     /// Refuses to touch an existing agent. Prints the address and the signed
     /// contact record to share with peers.
@@ -61,6 +61,12 @@ pub enum Command {
         /// Static peer multiaddr ending in /p2p/<peerId> (repeatable). Required before `serve`.
         #[arg(long, value_name = "MULTIADDR")]
         peer: Vec<String>,
+        /// Your own relay is reached over a public IP or a DNS name (e.g. a wss edge): write
+        /// `mode = "public"` with `i_understand_public = true` and `enforce_peer_allowlist = true`
+        /// (the peer ids of --peer stay the allowlist). Needs --peer. Without it a peer that
+        /// private mode rejects makes init fail.
+        #[arg(long)]
+        public_relay: bool,
     },
     /// Run the daemon in the foreground until Ctrl-C or SIGTERM.
     ///

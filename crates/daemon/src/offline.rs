@@ -9,7 +9,7 @@ use agentnet_core::crypto::VerifiedRevocation;
 use agentnet_core::identity::Identity;
 use agentnet_core::{guard, Clock, SystemClock};
 
-use crate::config::{render_private_config, DaemonConfig};
+use crate::config::{render_init_config, render_private_config, DaemonConfig};
 use crate::datadir::{create_secret_file, ensure_token, DataDir};
 use crate::error::DaemonError;
 
@@ -61,16 +61,13 @@ fn refuse_existing(dir: &DataDir) -> Result<(), DaemonError> {
 
 fn write_support_files(
     dir: &DataDir,
-    node_url: &str,
-    peers: &[String],
+    config_text: &str,
+    peers_missing: bool,
 ) -> Result<bool, DaemonError> {
-    create_secret_file(
-        &dir.config(),
-        render_private_config(node_url, peers).as_bytes(),
-    )?;
+    create_secret_file(&dir.config(), config_text.as_bytes())?;
     ensure_token(&dir.control_token())?;
     ensure_token(&dir.mcp_token())?;
-    Ok(peers.is_empty())
+    Ok(peers_missing)
 }
 
 /// Create a data directory with a fresh identity, a private-mode config and
@@ -80,14 +77,17 @@ pub fn init_data_dir(
     node_url: &str,
     peers: &[String],
     inbox_buckets: u16,
+    public_relay: bool,
 ) -> Result<InitReport, DaemonError> {
+    // Validate before anything is created: a rejected peer writes nothing.
+    let config_text = render_init_config(node_url, peers, public_relay)?;
     let dir = DataDir::new(root);
     dir.create_private()?;
     let _lock = dir.acquire_lock()?;
     refuse_existing(&dir)?;
     let id = Identity::generate(inbox_buckets, SystemClock.now_ms()).map_err(ident_err)?;
     id.save(&dir.identity(), false).map_err(ident_err)?;
-    let peers_missing = write_support_files(&dir, node_url, peers)?;
+    let peers_missing = write_support_files(&dir, &config_text, peers.is_empty())?;
     Ok(InitReport {
         identity: identity_info(&id),
         peers_missing,
@@ -142,7 +142,11 @@ pub fn import_identity(
     refuse_existing(&dir)?;
     let id = Identity::import_encrypted(encrypted, passphrase).map_err(ident_err)?;
     id.save(&dir.identity(), false).map_err(ident_err)?;
-    let peers_missing = write_support_files(&dir, node_url, peers)?;
+    let peers_missing = write_support_files(
+        &dir,
+        &render_private_config(node_url, peers),
+        peers.is_empty(),
+    )?;
     if replay_guard {
         guard::mark_imported(&dir.db())
             .map_err(|e| DaemonError::io("writing the generation sidecar", e))?;

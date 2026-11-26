@@ -218,8 +218,9 @@ async fn run(cli: Cli) -> CliResult<i32> {
             inbox_buckets,
             node_url,
             peer,
+            public_relay,
         } => {
-            let rep = offline::init_data_dir(&dir, &node_url, &peer, inbox_buckets)?;
+            let rep = offline::init_data_dir(&dir, &node_url, &peer, inbox_buckets, public_relay)?;
             let out = json!({
                 "data_dir": dir,
                 "address": rep.identity.agent_id,
