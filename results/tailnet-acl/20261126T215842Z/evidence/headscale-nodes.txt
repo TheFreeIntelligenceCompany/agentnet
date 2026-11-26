@@ -1,0 +1,7 @@
+{"id":1,"name":"acl-r","ips":["<TS_IP_R>","<TS_IP6_R>"],"tags":["tag:agentnet-relay"],"online":true,"expiry":null}
+{"id":2,"name":"acl-c1","ips":["<TS_IP_C1>","<TS_IP6_C1>"],"tags":["tag:agentnet-client"],"online":true,"expiry":null}
+{"id":3,"name":"acl-c2","ips":["<TS_IP_C2>","<TS_IP6_C2>"],"tags":["tag:agentnet-guest"],"online":true,"expiry":null}
+{"id":1,"name":"agentnet"}
+{"id":1,"reusable":null,"ephemeral":null,"used":true,"acl_tags":["tag:agentnet-relay"],"expiration":{"seconds":1795741275,"nanos":11472719}}
+{"id":2,"reusable":null,"ephemeral":null,"used":true,"acl_tags":["tag:agentnet-client"],"expiration":{"seconds":1795741275,"nanos":523179668}}
+{"id":3,"reusable":null,"ephemeral":null,"used":true,"acl_tags":["tag:agentnet-guest"],"expiration":{"seconds":1795741276,"nanos":105303154}}

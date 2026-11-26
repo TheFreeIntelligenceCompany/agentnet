@@ -1,0 +1,83 @@
+# 2026-11-26T22:20:09Z box1: bash ~/h/policy-apply.sh ~/hs/policy-4-grant.hujson; date +%s.%N
+Policy is valid
+applied 2026-11-26T22:20:09.853Z sha256=e9460b5b9a777ed3
+2026-11-26T22:19:34Z INF Policy reload completed with changes policy.changed=true route.changes=0 total.changes=1
+2026-11-26T22:20:09Z INF Received SIGHUP, reloading ACL policy signal=hangup
+2026-11-26T22:20:09Z INF Policy reload completed with changes policy.changed=true route.changes=0 total.changes=1
+1795731611.863556577
+
+# 2026-11-26T22:20:12Z box3: for k in $(seq 1 25); do s=$(curl -s 127.0.0.1:18660/admin/v1/peers | jq -r ".[0].connected"); echo "$(date -u +%T.%3N) A2 peer state=$s"; [ "$s" = Connected ] && break; sleep 2; done; timeout 10 nc -z -v -w 5 <TS_IP_R> 60000 2>&1
+22:20:12.380 A2 peer state=CannotConnect
+22:20:14.388 A2 peer state=Connected
+Connection to <TS_IP_R> 60000 port [tcp/*] succeeded!
+
+# 2026-11-26T22:20:23Z box2: for i in 1 2 3; do ~/agentnet --data-dir ~/a1 --json send an1hawdrx7qaqeaayse63csqmkrqp5gvoqsbhgh46rwijmjwrfhpn6ig2vfr4 "after-grant $i" | jq -r .message_id; done; sleep 6
+48088914-a13a-43a7-aadd-4974a6b431ee
+a95c55dc-69f3-440e-8e4b-d5fda04e8f11
+deed910a-e32c-4f32-a6e5-a089119e0682
+
+# 2026-11-26T22:20:29Z box3: echo "## A2 relay cache for B inbox topic (frames seen live):"; curl -s 127.0.0.1:18660/relay/v1/auto/messages/%2Fagentnet%2F1%2Finbox-0c%2Fproto | jq -c "{n:length, sample:(.[0]|{contentTopic,payload_b64_prefix:(.payload[0:60]),payload_len:(.payload|length)})}"; echo "## A2 store query to R for B inbox topic history (before the grant: impossible)"; curl -s "127.0.0.1:18660/store/v3/messages?contentTopics=%2Fagentnet%2F1%2Finbox-0c%2Fproto&includeData=true&pageSize=50&peerAddr=%2Fip4%2F<TS_IP_R>%2Ftcp%2F60000%2Fp2p%2F16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV" | jq -c "{statusCode,statusDesc,n:(.messages|length),sample:(.messages[0].message|{contentTopic,payload_b64_prefix:(.payload[0:60])})}"; ~/agentnet --data-dir ~/a2 doctor --ready; echo rc=$?
+## A2 relay cache for B inbox topic (frames seen live):
+{"n":3,"sample":{"contentTopic":"/agentnet/1/inbox-0c/proto","payload_b64_prefix":"QU4BAS6Em1Man80BRTFRjnB+iPCMviV8Q+wg9MVLC52LA84tiI9h2Zo4fpiP","payload_len":752}}
+## A2 store query to R for B inbox topic history (before the grant: impossible)
+{"statusCode":200,"statusDesc":"OK","n":50,"sample":{"contentTopic":"/agentnet/1/inbox-0c/proto","payload_b64_prefix":"QU4BAU0dAMEwFGoxL++Io8cz0Eva2UtVR90qVxlpEDkwantQWLqZxh1DHQXx"}}
+[ok  ] data dir permissions: directory 0700, files 0600
+[ok  ] config: /data/home/a2/agentnet.toml valid (private mode, 1 peer(s))
+[ok  ] identity: address an13wun3misj44sm4wio4xml7hngqoheensbinsuv36hmixdv2l4r65cawu5a
+[ok  ] replay guard: inactive (store generation 0)
+[warn] single instance: the same identity running in two data directories cannot be detected or prevented (the data-dir lock only covers one directory); both would receive, persist and acknowledge every message independently and may both fire triggers
+       -> run each identity in exactly one place; to move it, stop the old daemon first and copy agentnet.db + agentnet.generation or use `identity export/import`
+[ok  ] daemon socket: daemon answers on agentnet.sock
+[ok  ] node reachable: http://127.0.0.1:18660 answered 200
+[ok  ] clock: within 1 s of the node's clock
+[ok  ] isolation: no isolation violation reported
+[ok  ] peers == allowlist: 1 connected, all in the allowlist
+[ok  ] history sync: last successful relay Store sync 2 s ago (interval 15 s)
+[ok  ] transport ready: node reachable; 1 connected allowed peer(s)
+[ok  ] local inbox database: inbox query works (this tests the local database, not the relay Store)
+0 failing, 1 warning(s)
+rc=0
+ready: daemon, node, isolation and transport checks are ok
+
+# 2026-11-26T22:20:30Z box1: echo "## R peers now"; curl -s 127.0.0.1:18640/admin/v1/peers | jq -c ".[]|{multiaddr,connected}"
+## R peers now
+{"multiaddr":"/ip4/172.28.66.1/tcp/55414/p2p/16Uiu2HAmC6vv8vp3FUynfwPUPpBbYfC9HJnbQWuWTiRvftd8qhps","connected":"Connected"}
+{"multiaddr":"/ip4/172.28.66.1/tcp/43026/p2p/16Uiu2HAmAKrrE3nbbubQx8ToHwm6Em4wJTbTQvUC9HZzX9SyJhWc","connected":"Connected"}
+{"multiaddr":"/ip4/172.28.66.1/tcp/43770/p2p/16Uiu2HAmGGTNKYN2QDGjGj2HK1fXFUZ4js6P5K1VmMvEofo4MfAZ","connected":"Connected"}
+
+# 2026-11-26T22:21:15Z box1: bash ~/h/policy-apply.sh ~/hs/policy-main.hujson
+Policy is valid
+applied 2026-11-26T22:21:16.257Z sha256=2ff924b4dd277604
+2026-11-26T22:20:09Z INF Policy reload completed with changes policy.changed=true route.changes=0 total.changes=1
+2026-11-26T22:21:16Z INF Received SIGHUP, reloading ACL policy signal=hangup
+2026-11-26T22:21:16Z INF Policy reload completed with changes policy.changed=true route.changes=0 total.changes=1
+
+# 2026-11-26T22:23:22Z box1: echo "## R peers after revert"; curl -s 127.0.0.1:18640/admin/v1/peers | jq -c ".[]|{multiaddr,connected}"; cd ~/hs; ./headscale -c config.yaml nodes list -o json | jq -c ".[]|{name,online}"; tailscale status; sudo conntrack -L 2>/dev/null | grep 60000 | head -n 0
+## R peers after revert
+{"multiaddr":"/ip4/172.28.66.1/tcp/55414/p2p/16Uiu2HAmC6vv8vp3FUynfwPUPpBbYfC9HJnbQWuWTiRvftd8qhps","connected":"CannotConnect"}
+{"multiaddr":"/ip4/172.28.66.1/tcp/43026/p2p/16Uiu2HAmAKrrE3nbbubQx8ToHwm6Em4wJTbTQvUC9HZzX9SyJhWc","connected":"Connected"}
+{"multiaddr":"/ip4/172.28.66.1/tcp/43770/p2p/16Uiu2HAmGGTNKYN2QDGjGj2HK1fXFUZ4js6P5K1VmMvEofo4MfAZ","connected":"Connected"}
+{"name":"acl-r","online":true}
+{"name":"acl-c1","online":true}
+{"name":"acl-c2","online":true}
+<TS_IP_R>  acl-r   tagged-devices  linux  -                                                                            
+<TS_IP_C1>  acl-c1  tagged-devices  linux  active; direct [<PUBLIC_IP6_BOX2>]:41641, tx 1244232 rx 1336784  
+
+# 2026-11-26T22:23:23Z box3: tailscale status; timeout 20 tailscale ping -c 1 --timeout 5s <TS_IP_R>; echo ping-rc=$?
+<TS_IP_C2>  acl-c2  tagged-devices  linux  -  
+ping-rc=1
+no matching peer
+
+# 2026-11-26T22:23:23Z box2: cat ~/ticker.out
+22:20:55 sent tick 1 4afa30ba-8d1c-4dc3-99fa-ea4b3717d419
+22:21:25 sent tick 2 a6727e9d-9b8d-4b6b-aad0-a136be735610
+22:21:55 sent tick 3 945a87a5-2385-4696-9b9a-26a0039be8f4
+22:22:25 sent tick 4 9e65d1db-7e85-492d-a8f1-92322f8fbbb1
+22:22:55 sent tick 5 09a44240-3473-48bb-9f9f-c1254040c32a
+
+# 2026-11-26T22:23:53Z box2: ~/agentnet --data-dir ~/a1 --json outbox --limit 200 | jq -c "[.records[]|select(.body|startswith(\"tick\"))|{body,state,delivered_at}]"
+[{"body":"tick 1","state":"delivered","delivered_at":1795731655870},{"body":"tick 2","state":"delivered","delivered_at":1795731685872},{"body":"tick 3","state":"delivered","delivered_at":1795731715871},{"body":"tick 4","state":"delivered","delivered_at":1795731745871},{"body":"tick 5","state":"delivered","delivered_at":1795731775872},{"body":"tick 6","state":"delivered","delivered_at":1795731805871}]
+
+# 2026-11-26T22:23:54Z box1: ~/agentnet --data-dir ~/b --json inbox --limit 200 | jq -c "[.records[]|select(.body|startswith(\"tick\"))|.body]"
+["tick 1","tick 2","tick 3","tick 4","tick 5","tick 6"]
+

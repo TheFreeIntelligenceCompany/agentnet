@@ -1,0 +1,29 @@
+# 2026-11-26T22:19:34Z box1: bash ~/h/policy-apply.sh ~/hs/policy-3b.hujson; cd ~/hs; ./headscale -c config.yaml policy get | jq -c .acls
+Policy is valid
+applied 2026-11-26T22:19:34.800Z sha256=8eda8ac277c4b7f2
+2026-11-26T22:19:34Z INF Received SIGHUP, reloading ACL policy signal=hangup
+2026-11-26T22:19:34Z INF Policy reload completed with changes policy.changed=true route.changes=0 total.changes=1
+jq: parse error: Invalid numeric literal at line 2, column 5
+
+# 2026-11-26T22:19:46Z box3: tailscale status; ip route get <TS_IP_R>; for p in 9999 60000 22; do timeout 10 nc -z -v -w 6 <TS_IP_R> $p 2>&1; echo "nc $p rc=$?"; done; timeout 20 tailscale ping -c 2 --timeout 5s <TS_IP_R>; echo ping-rc=$?
+<TS_IP_C2>  acl-c2  tagged-devices  linux  -                                                                   
+<TS_IP_R>  acl-r   tagged-devices  linux  active; direct [<PUBLIC_IP6_BOX1>]:41641, tx 780 rx 508  
+<TS_IP_R> dev tailscale0 table 52 src <TS_IP_C2> uid 1000 
+    cache 
+nc: connect to <TS_IP_R> port 9999 (tcp) failed: Connection refused
+nc 9999 rc=1
+nc: connect to <TS_IP_R> port 60000 (tcp) timed out: Operation now in progress
+nc 60000 rc=1
+nc: connect to <TS_IP_R> port 22 (tcp) timed out: Operation now in progress
+nc 22 rc=1
+pong from acl-r (<TS_IP_R>) via [<PUBLIC_IP6_BOX1>]:41641 in 1ms
+ping-rc=0
+
+# 2026-11-26T22:19:58Z box1: cd ~/hs; ./headscale -c config.yaml nodes list -o json | jq -c ".[]|{name,online}"
+{"name":"acl-r","online":true}
+{"name":"acl-c1","online":true}
+{"name":"acl-c2","online":true}
+
+# 2026-11-26T22:19:59Z box2: curl -s 127.0.0.1:18650/admin/v1/peers | jq -c ".[]|{connected}"
+{"connected":"Connected"}
+

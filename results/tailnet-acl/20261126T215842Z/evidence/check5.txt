@@ -1,0 +1,41 @@
+# 2026-11-26T22:13:27Z box1: sudo ss -ltnp | awk "{print \$1,\$4,\$6}"
+State Local Peer
+LISTEN 127.0.0.1:18080 users:(("python3",pid=9201,fd=6))
+LISTEN <TS_IP_R>%tailscale0:58436 users:(("tailscaled",pid=3053,fd=24))
+LISTEN 127.0.0.1:8080 users:(("headscale",pid=9169,fd=15))
+LISTEN 127.0.0.1:18642 users:(("docker-proxy",pid=11698,fd=8))
+LISTEN 127.0.0.1:18640 users:(("docker-proxy",pid=9730,fd=8))
+LISTEN <TS_IP_R>:60000 users:(("docker-proxy",pid=9743,fd=8))
+LISTEN 0.0.0.0:22 users:(("sshd",pid=1494,fd=6))
+LISTEN 127.0.0.1:9090 users:(("headscale",pid=9169,fd=16))
+LISTEN [<TS_IP6_R>]%tailscale0:59780 users:(("tailscaled",pid=3053,fd=27))
+LISTEN [::]:22 users:(("sshd",pid=1494,fd=7))
+
+# 2026-11-26T22:13:35Z box1: for p in 22 58436 60000; do timeout 6 nc -z -w 3 <TS_IP_R> $p; echo "local (box1 to its own tailnet IP) port $p rc=$?"; done
+local (box1 to its own tailnet IP) port 22 rc=0
+local (box1 to its own tailnet IP) port 58436 rc=0
+local (box1 to its own tailnet IP) port 60000 rc=0
+Connection to <TS_IP_R> 22 port [tcp/ssh] succeeded!
+Connection to <TS_IP_R> 58436 port [tcp/*] succeeded!
+Connection to <TS_IP_R> 60000 port [tcp/*] succeeded!
+
+# 2026-11-26T22:13:36Z box2: for p in 60000 22 58436 18640 18642 8645 8080 9090 80 443; do timeout 8 nc -z -w 3 <TS_IP_R> $p >/dev/null 2>&1; echo "from box2 (client) to <TS_IP_R>:$p rc=$?"; done; echo "## scan 1-1024 + 8000-9100 from box 2 (nc -z -w 1, 100 parallel): open ports"; (seq 1 1024; seq 8000 9100; seq 18000 18700; seq 58000 59000) | xargs -P 100 -I{} sh -c "nc -z -w 1 <TS_IP_R> {} >/dev/null 2>&1 && echo open {}" | sort -u; echo scan-done $(date -u +%T)
+from box2 (client) to <TS_IP_R>:60000 rc=0
+from box2 (client) to <TS_IP_R>:22 rc=1
+from box2 (client) to <TS_IP_R>:58436 rc=0
+from box2 (client) to <TS_IP_R>:18640 rc=1
+from box2 (client) to <TS_IP_R>:18642 rc=1
+from box2 (client) to <TS_IP_R>:8645 rc=1
+from box2 (client) to <TS_IP_R>:8080 rc=1
+from box2 (client) to <TS_IP_R>:9090 rc=1
+from box2 (client) to <TS_IP_R>:80 rc=1
+from box2 (client) to <TS_IP_R>:443 rc=1
+## scan 1-1024 + 8000-9100 from box 2 (nc -z -w 1, 100 parallel): open ports
+instabox: command timed out after 60s and was killed
+
+# 2026-11-26T22:18:38Z box2: cat ~/scan2.out
+scan start 22:16:19 target=<TS_IP_R>
+      1 open 58436
+      5 open 60000
+scan done 22:17:49
+

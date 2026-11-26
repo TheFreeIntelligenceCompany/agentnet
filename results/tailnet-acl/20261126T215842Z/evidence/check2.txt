@@ -1,0 +1,114 @@
+# 2026-11-26T22:09:05Z box1: cat ~/b.addr ~/a1.record | wc -c; echo "## peers node B"; curl -s 127.0.0.1:18642/admin/v1/peers; echo; echo "## peers R"; curl -s 127.0.0.1:18640/admin/v1/peers; echo; ~/agentnet --data-dir ~/b --json contact add @$HOME/a1.record --expect $(cat ~/a1.addr) --alias a1; echo rc=$?
+597
+## peers node B
+[{"multiaddr":"/ip4/<TS_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV","protocols":["/ipfs/id/1.0.0","/libp2p/autonat/1.0.0","/libp2p/circuit/relay/0.2.0/hop","/vac/waku/metadata/1.0.0","/vac/waku/store-query/3.0.0","/vac/waku/relay/2.0.0","/ipfs/ping/1.0.0","/vac/waku/lightpush/3.0.0","/vac/waku/lightpush/2.0.0-beta1","/vac/waku/filter-subscribe/2.0.0-beta1","/vac/waku/filter-push/2.0.0-beta1"],"shards":[0],"connected":"Connected","agent":"logos-delivery-\"v0.39.2\"","origin":"UnknownOrigin"}]
+## peers R
+[{"multiaddr":"/ip4/172.28.66.1/tcp/43026/p2p/16Uiu2HAmAKrrE3nbbubQx8ToHwm6Em4wJTbTQvUC9HZzX9SyJhWc","protocols":["/ipfs/id/1.0.0","/libp2p/autonat/1.0.0","/libp2p/circuit/relay/0.2.0/hop","/vac/waku/metadata/1.0.0","/vac/waku/relay/2.0.0","/ipfs/ping/1.0.0","/vac/waku/filter-push/2.0.0-beta1"],"shards":[0],"connected":"Connected","agent":"logos-delivery-\"v0.39.2\"","origin":"UnknownOrigin"},{"multiaddr":"/ip4/172.28.66.1/tcp/58768/p2p/16Uiu2HAmGGTNKYN2QDGjGj2HK1fXFUZ4js6P5K1VmMvEofo4MfAZ","protocols":["/ipfs/id/1.0.0","/libp2p/autonat/1.0.0","/libp2p/circuit/relay/0.2.0/hop","/vac/waku/metadata/1.0.0","/vac/waku/relay/2.0.0","/ipfs/ping/1.0.0","/vac/waku/filter-push/2.0.0-beta1"],"shards":[0],"connected":"Connected","agent":"logos-delivery-\"v0.39.2\"","origin":"UnknownOrigin"}]
+rc=2
+cat: /data/home/a1.addr: No such file or directory
+error: a value is required for '--expect <ADDRESS>' but none was supplied
+
+For more information, try '--help'.
+
+# 2026-11-26T22:09:06Z box2: echo "## peers node A1"; curl -s 127.0.0.1:18650/admin/v1/peers; echo; ~/agentnet --data-dir ~/a1 --json contact add @$HOME/b.record --expect $(cat ~/a1.addr) --alias b; echo "wrong-expect rc=$?"; ~/agentnet --data-dir ~/a1 --json contact add @$HOME/b.record --expect $(cat ~/b.addr 2>/dev/null || true) --alias b; echo rc=$?
+## peers node A1
+[{"multiaddr":"/ip4/<TS_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV","protocols":["/ipfs/id/1.0.0","/libp2p/autonat/1.0.0","/libp2p/circuit/relay/0.2.0/hop","/vac/waku/metadata/1.0.0","/vac/waku/store-query/3.0.0","/vac/waku/relay/2.0.0","/ipfs/ping/1.0.0","/vac/waku/lightpush/3.0.0","/vac/waku/lightpush/2.0.0-beta1","/vac/waku/filter-subscribe/2.0.0-beta1","/vac/waku/filter-push/2.0.0-beta1"],"shards":[0],"connected":"Connected","agent":"logos-delivery-\"v0.39.2\"","origin":"UnknownOrigin"}]
+{"error":{"code":"invalid_argument","message":"contact record is not for the expected address"}}
+wrong-expect rc=4
+rc=2
+error: contact record is not for the expected address
+error: a value is required for '--expect <ADDRESS>' but none was supplied
+
+For more information, try '--help'.
+
+# 2026-11-26T22:09:13Z box1: echo an1myyo23pw4yt7na6bheherbh3gulhwhvfev4am4seae5jh6ddlqnmwg5ray > ~/a1.addr; ~/agentnet --data-dir ~/b --json contact add @$HOME/a1.record --expect an1myyo23pw4yt7na6bheherbh3gulhwhvfev4am4seae5jh6ddlqnmwg5ray --alias a1; echo rc=$?
+{"address":"an1myyo23pw4yt7na6bheherbh3gulhwhvfev4am4seae5jh6ddlqnmwg5ray","alias":"a1","trust":"trusted","inbox_topic":"/agentnet/1/inbox-0d/proto","added_at":1795730953737,"kem_expires_at":null,"updated":false,"key_epoch":1,"revoked":false}
+rc=0
+
+# 2026-11-26T22:09:13Z box2: echo an1hawdrx7qaqeaayse63csqmkrqp5gvoqsbhgh46rwijmjwrfhpn6ig2vfr4 > ~/b.addr; ~/agentnet --data-dir ~/a1 --json contact add @$HOME/b.record --expect an1hawdrx7qaqeaayse63csqmkrqp5gvoqsbhgh46rwijmjwrfhpn6ig2vfr4 --alias b; echo rc=$?
+{"address":"an1hawdrx7qaqeaayse63csqmkrqp5gvoqsbhgh46rwijmjwrfhpn6ig2vfr4","alias":"b","trust":"trusted","inbox_topic":"/agentnet/1/inbox-0c/proto","added_at":1795730954306,"kem_expires_at":null,"updated":false,"key_epoch":1,"revoked":false}
+rc=0
+
+# 2026-11-26T22:09:14Z box2: ~/agentnet --data-dir ~/a1 --json send an1hawdrx7qaqeaayse63csqmkrqp5gvoqsbhgh46rwijmjwrfhpn6ig2vfr4 'hello from A1' ; sleep 6; ~/agentnet --data-dir ~/a1 --json outbox
+{"message_id":"0a05b7e8-b81b-4b2b-b24c-496c2d191c84","status":"queued","conversation_id":"223b2e37-61e5-4ba9-a84e-11265c74a56a","expires_at":1795817354879,"deduplicated":false}
+{"records":[{"cursor":"b3V0Ym94OjE","message_id":"0a05b7e8-b81b-4b2b-b24c-496c2d191c84","recipient":"an1hawdrx7qaqeaayse63csqmkrqp5gvoqsbhgh46rwijmjwrfhpn6ig2vfr4","message_type":"message","conversation_id":"223b2e37-61e5-4ba9-a84e-11265c74a56a","state":"delivered","attempts":1,"created_at":1795730954879,"expires_at":1795817354879,"last_attempt_at":1795730954880,"next_attempt_at":null,"sent_at":1795730954880,"delivered_at":1795730955121,"last_error":null,"body":"hello from A1"}],"next_cursor":"b3V0Ym94OjE","has_more":false}
+
+# 2026-11-26T22:09:21Z box1: ~/agentnet --data-dir ~/b --json inbox
+{"records":[{"cursor":"aW5ib3g6MQ","message_id":"0a05b7e8-b81b-4b2b-b24c-496c2d191c84","sender":"an1myyo23pw4yt7na6bheherbh3gulhwhvfev4am4seae5jh6ddlqnmwg5ray","sender_trust":"trusted","message_type":"message","conversation_id":"223b2e37-61e5-4ba9-a84e-11265c74a56a","correlation_id":null,"created_at":1795730954879,"expires_at":1795817354879,"received_at":1795730955074,"body":"hello from A1","acknowledged":false,"quarantined":false}],"next_cursor":"aW5ib3g6MQ","has_more":false}
+
+# 2026-11-26T22:09:28Z box1: ~/agentnet --data-dir ~/b --json send an1myyo23pw4yt7na6bheherbh3gulhwhvfev4am4seae5jh6ddlqnmwg5ray 'hello from B'; sleep 5; ~/agentnet --data-dir ~/b --json outbox | jq -c '.records[]|{state,attempts,created_at,delivered_at}'
+{"message_id":"6560d947-2774-4c09-83ad-e77116cdba47","status":"queued","conversation_id":"ff8f332a-c5e0-4655-bb76-8c0398389269","expires_at":1795817368288,"deduplicated":false}
+{"state":"delivered","attempts":1,"created_at":1795730968288,"delivered_at":1795730968573}
+
+# 2026-11-26T22:09:53Z box1: ~/agentnet --data-dir ~/b --json inbox --limit 100 | jq "[.records[].message_id]|{n:length,unique:(unique|length)}"; docker stop an-nb
+{
+  "n": 21,
+  "unique": 21
+}
+an-nb
+
+# 2026-11-26T22:09:54Z box2: rm -f ~/offA1.ids; for i in 1 2 3 4 5; do ~/agentnet --data-dir ~/a1 --json send an1hawdrx7qaqeaayse63csqmkrqp5gvoqsbhgh46rwijmjwrfhpn6ig2vfr4 "off $i" | jq -r .message_id >> ~/offA1.ids; done; sleep 10; for id in $(cat ~/offA1.ids); do ~/agentnet --data-dir ~/a1 --json status $id | jq -c '{state,attempts,last_error}'; done
+{"state":"sent","attempts":3,"last_error":null}
+{"state":"sent","attempts":3,"last_error":null}
+{"state":"sent","attempts":3,"last_error":null}
+{"state":"sent","attempts":3,"last_error":null}
+{"state":"sent","attempts":3,"last_error":null}
+
+# 2026-11-26T22:10:04Z box1: date -u +%FT%TZ; docker start an-nb; date +%s
+2026-11-26T22:10:04Z
+an-nb
+1795731005
+
+# 2026-11-26T22:10:08Z box2: for k in $(seq 1 30); do n=0; for id in $(cat ~/offA1.ids); do [ "$(~/agentnet --data-dir ~/a1 --json status $id | jq -r .state)" = delivered ] && n=$((n+1)); done; echo "$(date -u +%T) delivered=$n/5"; [ $n = 5 ] && break; sleep 3; done; for id in $(cat ~/offA1.ids); do ~/agentnet --data-dir ~/a1 --json status $id | jq -c "{state,attempts,after_B_node_restart_s:((.delivered_at/1000)-1795731005)}"; done
+22:10:09 delivered=5/5
+{"state":"delivered","attempts":4,"after_B_node_restart_s":0.3710000514984131}
+{"state":"delivered","attempts":3,"after_B_node_restart_s":0.372999906539917}
+{"state":"delivered","attempts":3,"after_B_node_restart_s":0.375}
+{"state":"delivered","attempts":3,"after_B_node_restart_s":0.37599992752075195}
+{"state":"delivered","attempts":3,"after_B_node_restart_s":0.377000093460083}
+
+# 2026-11-26T22:10:20Z box1: ~/agentnet --data-dir ~/b --json inbox --limit 100 | jq -c "{n:(.records|length),off:[.records[]|select(.body|startswith(\"off\"))|{body,received_at}]}"; docker inspect an-nb --format "{{.State.StartedAt}}"; date -u +%T; ~/agentnet --data-dir ~/b doctor --ready; echo rc=$?
+{"n":26,"off":[{"body":"off 1","received_at":1795731005328},{"body":"off 2","received_at":1795731005330},{"body":"off 3","received_at":1795731005331},{"body":"off 4","received_at":1795731005333},{"body":"off 5","received_at":1795731005335}]}
+2026-11-26T22:10:04.919475754Z
+22:10:21
+[ok  ] data dir permissions: directory 0700, files 0600
+[ok  ] config: /data/home/b/agentnet.toml valid (private mode, 1 peer(s))
+[ok  ] identity: address an1hawdrx7qaqeaayse63csqmkrqp5gvoqsbhgh46rwijmjwrfhpn6ig2vfr4
+[ok  ] replay guard: inactive (store generation 47)
+[warn] single instance: the same identity running in two data directories cannot be detected or prevented (the data-dir lock only covers one directory); both would receive, persist and acknowledge every message independently and may both fire triggers
+       -> run each identity in exactly one place; to move it, stop the old daemon first and copy agentnet.db + agentnet.generation or use `identity export/import`
+[ok  ] daemon socket: daemon answers on agentnet.sock
+[ok  ] node reachable: http://127.0.0.1:18642 answered 200
+[ok  ] clock: within 1 s of the node's clock
+[ok  ] isolation: no isolation violation reported
+[ok  ] peers == allowlist: 1 connected, all in the allowlist
+[ok  ] history sync: last successful relay Store sync 0 s ago (interval 15 s)
+[ok  ] transport ready: node reachable; 1 connected allowed peer(s)
+[ok  ] local inbox database: inbox query works (this tests the local database, not the relay Store)
+0 failing, 1 warning(s)
+rc=0
+ready: daemon, node, isolation and transport checks are ok
+
+# 2026-11-26T22:10:21Z box2: ~/agentnet --data-dir ~/a1 doctor --ready; echo rc=$?
+[ok  ] data dir permissions: directory 0700, files 0600
+[ok  ] config: /data/home/a1/agentnet.toml valid (private mode, 1 peer(s))
+[ok  ] identity: address an1myyo23pw4yt7na6bheherbh3gulhwhvfev4am4seae5jh6ddlqnmwg5ray
+[ok  ] replay guard: inactive (store generation 47)
+[warn] single instance: the same identity running in two data directories cannot be detected or prevented (the data-dir lock only covers one directory); both would receive, persist and acknowledge every message independently and may both fire triggers
+       -> run each identity in exactly one place; to move it, stop the old daemon first and copy agentnet.db + agentnet.generation or use `identity export/import`
+[ok  ] daemon socket: daemon answers on agentnet.sock
+[ok  ] node reachable: http://127.0.0.1:18650 answered 200
+[ok  ] clock: within 0 s of the node's clock
+[ok  ] isolation: no isolation violation reported
+[ok  ] peers == allowlist: 1 connected, all in the allowlist
+[ok  ] history sync: last successful relay Store sync 0 s ago (interval 15 s)
+[ok  ] transport ready: node reachable; 1 connected allowed peer(s)
+[ok  ] local inbox database: inbox query works (this tests the local database, not the relay Store)
+0 failing, 1 warning(s)
+rc=0
+ready: daemon, node, isolation and transport checks are ok
+
+# 2026-11-26T22:10:21Z box1: curl -s 127.0.0.1:18640/admin/v1/peers | jq -c ".[]|{multiaddr,connected}"; curl -s 127.0.0.1:18650/debug/v1/info 2>/dev/null; curl -s 127.0.0.1:18642/debug/v1/info
+{"multiaddr":"/ip4/172.28.66.1/tcp/43026/p2p/16Uiu2HAmAKrrE3nbbubQx8ToHwm6Em4wJTbTQvUC9HZzX9SyJhWc","connected":"Connected"}
+{"multiaddr":"/ip4/172.28.66.1/tcp/43770/p2p/16Uiu2HAmGGTNKYN2QDGjGj2HK1fXFUZ4js6P5K1VmMvEofo4MfAZ","connected":"Connected"}
+

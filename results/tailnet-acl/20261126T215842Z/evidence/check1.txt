@@ -1,0 +1,24 @@
+# 2026-11-26T22:10:30Z box1: sudo iptables -S | grep -c -i -E "60000|agentnet" ; echo "(count of rules mentioning 60000/agentnet in filter table)"; sudo iptables -t raw -S; sudo iptables -t nat -S | grep -E "60000|DOCKER " ; sudo iptables -S FORWARD; sudo iptables -S DOCKER-USER; sudo iptables -S ts-forward; sudo nft list ruleset 2>/dev/null | grep -c 60000
+1
+(count of rules mentioning 60000/agentnet in filter table)
+-P PREROUTING ACCEPT
+-P OUTPUT ACCEPT
+-A PREROUTING -d 172.28.66.10/32 ! -i br-0d3452ac91f2 -j DROP
+-A PREROUTING -d 127.0.0.1/32 ! -i lo -p tcp -m tcp --dport 18640 -j DROP
+-A PREROUTING -d 172.28.66.22/32 ! -i br-0d3452ac91f2 -j DROP
+-A PREROUTING -d 127.0.0.1/32 ! -i lo -p tcp -m tcp --dport 18642 -j DROP
+-A DOCKER -d 127.0.0.1/32 ! -i br-0d3452ac91f2 -p tcp -m tcp --dport 18640 -j DNAT --to-destination 172.28.66.10:8645
+-A DOCKER -d <TS_IP_R>/32 ! -i br-0d3452ac91f2 -p tcp -m tcp --dport 60000 -j DNAT --to-destination 172.28.66.10:60000
+-A DOCKER -d 127.0.0.1/32 ! -i br-0d3452ac91f2 -p tcp -m tcp --dport 18642 -j DNAT --to-destination 172.28.66.22:8645
+-P FORWARD DROP
+-A FORWARD -j ts-forward
+-A FORWARD -j DOCKER-USER
+-A FORWARD -j DOCKER-FORWARD
+-N DOCKER-USER
+-N ts-forward
+-A ts-forward -i tailscale0 -j MARK --set-xmark 0x40000/0xff0000
+-A ts-forward -m mark --mark 0x40000/0xff0000 -j ACCEPT
+-A ts-forward -s 100.64.0.0/10 -o tailscale0 -j DROP
+-A ts-forward -o tailscale0 -j ACCEPT
+2
+

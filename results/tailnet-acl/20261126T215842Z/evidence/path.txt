@@ -1,0 +1,15 @@
+# 2026-11-26T22:08:52Z box2: tailscale status; tailscale ping -c 5 <TS_IP_R>; tailscale netcheck 2>&1 | grep -E "Nearest|IPv4|UDP|Mapping"
+<TS_IP_C1>  acl-c1  tagged-devices  linux  -                                                                       
+<TS_IP_R>  acl-r   tagged-devices  linux  active; direct [<PUBLIC_IP6_BOX1>]:41641, tx 27892 rx 24796  
+pong from acl-r (<TS_IP_R>) via [<PUBLIC_IP6_BOX1>]:41641 in 1ms
+	* UDP: true
+	* IPv4: yes, <PUBLIC_IP4_NAT_BOX2>:47735
+	* MappingVariesByDestIP: false
+	* PortMapping: 
+	* Nearest DERP: Seattle
+
+# 2026-11-26T22:08:53Z box1: tailscale ping -c 3 <TS_IP_C1>; tailscale status
+pong from acl-c1 (<TS_IP_C1>) via [<PUBLIC_IP6_BOX2>]:41641 in 1ms
+<TS_IP_R>  acl-r   tagged-devices  linux  -                                                                        
+<TS_IP_C1>  acl-c1  tagged-devices  linux  active; direct [<PUBLIC_IP6_BOX2>]:41641, tx 26340 rx 26260  
+

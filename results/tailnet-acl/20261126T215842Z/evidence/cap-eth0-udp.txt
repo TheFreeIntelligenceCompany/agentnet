@@ -1,0 +1,4 @@
+# 155 lines captured; first 3 shown (WireGuard UDP/41641 on the primary interface, encrypted, endpoints scrubbed)
+22:18:42.014219 IP <PUBLIC_IP4_NAT_BOX2>.29362 > 172.16.0.2.41641: UDP, length 124
+22:18:42.014447 IP 172.16.0.2.41641 > <PUBLIC_IP4_NAT_BOX2>.29362: UDP, length 110
+22:18:42.017724 IP6 <PUBLIC_IP6_BOX1>.41641 > <PUBLIC_IP6_BOX2>.41641: UDP, length 124

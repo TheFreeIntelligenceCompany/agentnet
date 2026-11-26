@@ -1,0 +1,131 @@
+# 2026-11-26T22:08:52Z box1: echo "## tailscale status"; tailscale status; echo "## headscale nodes"; cd ~/hs; ./headscale -c config.yaml nodes list -o json | jq -c ".[]|{id,name,ips:.ip_addresses,tags:.tags,online}"; ./headscale version; tailscale version
+## tailscale status
+<TS_IP_R>  acl-r   tagged-devices  linux  -                                                                        
+<TS_IP_C1>  acl-c1  tagged-devices  linux  active; direct [<PUBLIC_IP6_BOX2>]:41641, tx 26340 rx 26260  
+## headscale nodes
+{"id":1,"name":"acl-r","ips":["<TS_IP_R>","<TS_IP6_R>"],"tags":["tag:agentnet-relay"],"online":true}
+{"id":2,"name":"acl-c1","ips":["<TS_IP_C1>","<TS_IP6_C1>"],"tags":["tag:agentnet-client"],"online":true}
+{"id":3,"name":"acl-c2","ips":["<TS_IP_C2>","<TS_IP6_C2>"],"tags":["tag:agentnet-guest"],"online":true}
+headscale version v0.29.7
+commit: c9cf210b8bc84d13177e18b91f555788a44b47b6
+build time: 2026-10-30T09:33:17Z
+built with: go1.27.3 linux/amd64
+
+1.104.7
+  tailscale commit: fb3b9b2964ace04490fbd65d4f26a0eaf362131f
+  long version: 1.104.7-tfb3b9b296-g0651cc45e
+  other commit: 0651cc45e79e308b0b3b808f4b42e7f3a1a8c221
+  go version: go1.27.4 (tailscale/go 1635316a95)
+
+# 2026-11-26T22:23:36Z box2: tailscale debug derp-map 2>&1 | jq -c "{regions:(.Regions|length), embedded_999:(.Regions|has(\"999\")), ids:(.Regions|keys|.[0:5])}"; tailscale status --json | jq -c "{Self:{Relay:.Self.Relay,Tags:.Self.Tags},peers:[.Peer[]|{Relay,CurAddr,Tags}]}"; tailscale version | awk "NR==1"
+{"regions":27,"embedded_999":false,"ids":["1","10","11","12","13"]}
+{"Self":{"Relay":"sea","Tags":["tag:agentnet-client"]},"peers":[{"Relay":"sea","CurAddr":"<PUBLIC_IP4_NAT_BOX1>:14358","Tags":["tag:agentnet-relay"]}]}
+1.104.7
+
+# 2026-11-26T22:23:37Z box1: cd ~/hs; grep -v "^[[:space:]]*#" config.yaml | grep -v "^[[:space:]]*$"; echo; docker inspect an-r1 --format "{{json .HostConfig.Sysctls}}"; cat policy.hujson; sha256sum ~/agentnet; ~/agentnet --version; git -C ~/an rev-parse HEAD
+---
+server_url: https://<HS_HOST>
+listen_addr: 127.0.0.1:8080
+metrics_listen_addr: 127.0.0.1:9090
+grpc_listen_addr: 127.0.0.1:50443
+grpc_allow_insecure: false
+trusted_proxies: []
+noise:
+  private_key_path: /data/home/hs/data/noise_private.key
+prefixes:
+  v4: 100.64.0.0/10
+  v6: fd7a:115c:a1e0::/48
+  allocation: sequential
+derp:
+  server:
+    enabled: false
+    region_id: 999
+    region_code: "headscale"
+    region_name: "Headscale Embedded DERP"
+    verify_clients: true
+    stun_listen_addr: "0.0.0.0:3478"
+    private_key_path: /data/home/hs/data/derp_server_private.key
+    automatically_add_embedded_derp_region: true
+  urls:
+    - https://controlplane.tailscale.com/derpmap/default
+  paths: []
+  auto_update_enabled: true
+  update_frequency: 3h
+disable_check_updates: false
+node:
+  expiry: 0
+  ephemeral:
+    inactivity_timeout: 30m
+  routes:
+    ha:
+      probe_interval: 10s
+      probe_timeout: 5s
+database:
+  type: sqlite
+  debug: false
+  gorm:
+    prepare_stmt: true
+    parameterized_queries: true
+    skip_err_record_not_found: true
+    slow_threshold: 1000
+  sqlite:
+    path: /data/home/hs/data/db.sqlite
+    write_ahead_log: true
+    wal_autocheckpoint: 1000
+acme_url: https://acme-v02.api.letsencrypt.org/directory
+acme_email: ""
+tls_letsencrypt_hostname: ""
+tls_letsencrypt_cache_dir: /data/home/hs/data/cache
+tls_letsencrypt_challenge_type: HTTP-01
+tls_letsencrypt_listen: ":http"
+tls_cert_path: ""
+tls_key_path: ""
+log:
+  level: info
+  format: text
+policy:
+  mode: file
+  path: /data/home/hs/policy.hujson
+dns:
+  magic_dns: false
+  base_domain: example.com
+  override_local_dns: false
+  nameservers:
+    global:
+      - 1.1.1.1
+      - 1.0.0.1
+      - 2606:4700:4700::1111
+      - 2606:4700:4700::1001
+    split: {}
+  search_domains: []
+  extra_records: []
+unix_socket: /data/home/hs/data/headscale.sock
+unix_socket_permission: "0770"
+logtail:
+  enabled: false
+taildrop:
+  enabled: true
+auto_update:
+  enabled: false
+
+{"net.ipv4.tcp_retries2":"6"}
+{
+  // Throwaway Headscale policy for the AgentNet tailnet-ACL test.
+  // Only tag:agentnet-client may reach tag:agentnet-relay on tcp/60000. Nothing else is allowed.
+  "tagOwners": {
+    "tag:agentnet-relay":  ["agentnet@"],
+    "tag:agentnet-client": ["agentnet@"],
+    "tag:agentnet-guest":  ["agentnet@"]
+  },
+  "acls": [
+    {
+      "action": "accept",
+      "src": ["tag:agentnet-client"],
+      "dst": ["tag:agentnet-relay:60000"]
+    }
+  ]
+}
+d1e05f944fea780a324d84888ee6cd6700a6d4f686a4b501021d932ab94ec0e4  /data/home/agentnet
+agentnet 0.1.0
+92e91ce9f3e40caf90f6e583490fadda9dbb3910
+

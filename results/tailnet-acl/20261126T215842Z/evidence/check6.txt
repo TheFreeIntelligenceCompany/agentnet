@@ -1,0 +1,24 @@
+# 2026-11-26T22:19:11Z box1: for f in tailscale0 eth0 eth0-udp; do echo "## $f: $(grep -c "IP " ~/cap-$f.txt) packets"; done; echo "## tailscale0 sample"; grep "IP " ~/cap-tailscale0.txt | awk "NR<=8"; echo "## eth0 tcp/60000 (expect none)"; cat ~/cap-eth0.txt | grep -v "^$"; echo "## eth0 udp 41641 sample"; grep "IP" ~/cap-eth0-udp.txt | awk "NR<=3"
+## tailscale0: 122 packets
+## eth0: 0 packets
+## eth0-udp: 66 packets
+## tailscale0 sample
+22:18:42.911061 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 421270162:421270832, ack 1977066017, win 170, options [nop,nop,TS val 4019038099 ecr 4215107153], length 670
+22:18:42.952873 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [.], ack 670, win 233, options [nop,nop,TS val 4215109851 ecr 4019038099], length 0
+22:18:43.077240 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 1:70, ack 670, win 233, options [nop,nop,TS val 4215109975 ecr 4019038099], length 69
+22:18:43.077323 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 70:740, ack 670, win 233, options [nop,nop,TS val 4215109975 ecr 4019038099], length 670
+22:18:43.080670 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [.], ack 70, win 170, options [nop,nop,TS val 4019038267 ecr 4215109975], length 0
+22:18:43.080687 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [.], ack 740, win 169, options [nop,nop,TS val 4019038267 ecr 4215109975], length 0
+22:18:44.918470 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 670:1340, ack 740, win 170, options [nop,nop,TS val 4019040106 ecr 4215109975], length 670
+22:18:44.918528 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [.], ack 1340, win 239, options [nop,nop,TS val 4215111816 ecr 4019040106], length 0
+## eth0 tcp/60000 (expect none)
+tcpdump: verbose output suppressed, use -v[v]... for full protocol decode
+listening on eth0, link-type EN10MB (Ethernet), snapshot length 262144 bytes
+0 packets captured
+0 packets received by filter
+0 packets dropped by kernel
+## eth0 udp 41641 sample
+22:18:42.014219 IP <PUBLIC_IP4_NAT_BOX2>.29362 > 172.16.0.2.41641: UDP, length 124
+22:18:42.014447 IP 172.16.0.2.41641 > <PUBLIC_IP4_NAT_BOX2>.29362: UDP, length 110
+22:18:42.017724 IP6 <PUBLIC_IP6_BOX1>.41641 > <PUBLIC_IP6_BOX2>.41641: UDP, length 124
+

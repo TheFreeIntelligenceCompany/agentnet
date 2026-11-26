@@ -1,0 +1,128 @@
+tcpdump: verbose output suppressed, use -v[v]... for full protocol decode
+listening on tailscale0, link-type RAW (Raw IP), snapshot length 262144 bytes
+22:18:42.911061 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 421270162:421270832, ack 1977066017, win 170, options [nop,nop,TS val 4019038099 ecr 4215107153], length 670
+22:18:42.952873 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [.], ack 670, win 233, options [nop,nop,TS val 4215109851 ecr 4019038099], length 0
+22:18:43.077240 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 1:70, ack 670, win 233, options [nop,nop,TS val 4215109975 ecr 4019038099], length 69
+22:18:43.077323 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 70:740, ack 670, win 233, options [nop,nop,TS val 4215109975 ecr 4019038099], length 670
+22:18:43.080670 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [.], ack 70, win 170, options [nop,nop,TS val 4019038267 ecr 4215109975], length 0
+22:18:43.080687 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [.], ack 740, win 169, options [nop,nop,TS val 4019038267 ecr 4215109975], length 0
+22:18:44.918470 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 670:1340, ack 740, win 170, options [nop,nop,TS val 4019040106 ecr 4215109975], length 670
+22:18:44.918528 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [.], ack 1340, win 239, options [nop,nop,TS val 4215111816 ecr 4019040106], length 0
+22:18:45.077999 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 740:809, ack 1340, win 239, options [nop,nop,TS val 4215111976 ecr 4019040106], length 69
+22:18:45.078096 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 809:1479, ack 1340, win 239, options [nop,nop,TS val 4215111976 ecr 4019040106], length 670
+22:18:45.079135 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [.], ack 809, win 170, options [nop,nop,TS val 4019040267 ecr 4215111976], length 0
+22:18:45.079155 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [.], ack 1479, win 169, options [nop,nop,TS val 4019040267 ecr 4215111976], length 0
+22:18:45.491823 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 1479:1509, ack 1340, win 239, options [nop,nop,TS val 4215112389 ecr 4019040267], length 30
+22:18:45.491858 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 1509:1559, ack 1340, win 239, options [nop,nop,TS val 4215112390 ecr 4019040267], length 50
+22:18:45.491870 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 1559:1607, ack 1340, win 239, options [nop,nop,TS val 4215112390 ecr 4019040267], length 48
+22:18:45.493082 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [.], ack 1509, win 170, options [nop,nop,TS val 4019040681 ecr 4215112389], length 0
+22:18:45.493095 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [.], ack 1559, win 170, options [nop,nop,TS val 4019040681 ecr 4215112390], length 0
+22:18:45.493129 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 1340:1370, ack 1559, win 170, options [nop,nop,TS val 4019040681 ecr 4215112390], length 30
+22:18:45.493152 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [.], ack 1370, win 239, options [nop,nop,TS val 4215112391 ecr 4019040681], length 0
+22:18:45.493407 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 1370:1420, ack 1607, win 170, options [nop,nop,TS val 4019040682 ecr 4215112390], length 50
+22:18:45.493422 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [.], ack 1420, win 239, options [nop,nop,TS val 4215112391 ecr 4019040682], length 0
+22:18:45.493426 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 1420:1468, ack 1607, win 170, options [nop,nop,TS val 4019040682 ecr 4215112390], length 48
+22:18:45.493433 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [.], ack 1468, win 239, options [nop,nop,TS val 4215112391 ecr 4019040682], length 0
+22:18:45.493498 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 1607:1669, ack 1468, win 239, options [nop,nop,TS val 4215112391 ecr 4019040682], length 62
+22:18:45.493949 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 1468:1530, ack 1669, win 170, options [nop,nop,TS val 4019040682 ecr 4215112391], length 62
+22:18:45.493993 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 1669:1699, ack 1530, win 239, options [nop,nop,TS val 4215112392 ecr 4019040682], length 30
+22:18:45.494437 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 1530:1560, ack 1699, win 170, options [nop,nop,TS val 4019040683 ecr 4215112392], length 30
+22:18:45.536869 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [.], ack 1560, win 239, options [nop,nop,TS val 4215112435 ecr 4019040683], length 0
+22:18:46.924447 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 1560:2230, ack 1699, win 170, options [nop,nop,TS val 4019042112 ecr 4215112435], length 670
+22:18:46.924518 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [.], ack 2230, win 244, options [nop,nop,TS val 4215113822 ecr 4019042112], length 0
+22:18:47.078908 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 1699:1768, ack 2230, win 244, options [nop,nop,TS val 4215113977 ecr 4019042112], length 69
+22:18:47.079041 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 1768:2438, ack 2230, win 244, options [nop,nop,TS val 4215113977 ecr 4019042112], length 670
+22:18:47.080091 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [.], ack 2438, win 170, options [nop,nop,TS val 4019042268 ecr 4215113977], length 0
+22:18:48.930432 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 2230:2900, ack 2438, win 170, options [nop,nop,TS val 4019044118 ecr 4215113977], length 670
+22:18:48.930497 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [.], ack 2900, win 250, options [nop,nop,TS val 4215115828 ecr 4019044118], length 0
+22:18:49.078359 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 2438:2507, ack 2900, win 250, options [nop,nop,TS val 4215115976 ecr 4019044118], length 69
+22:18:49.078538 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 2507:3177, ack 2900, win 250, options [nop,nop,TS val 4215115976 ecr 4019044118], length 670
+22:18:49.079527 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [.], ack 3177, win 170, options [nop,nop,TS val 4019044268 ecr 4215115976], length 0
+22:18:50.263709 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 2900:2930, ack 3177, win 170, options [nop,nop,TS val 4019045445 ecr 4215115976], length 30
+22:18:50.263799 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [.], ack 2930, win 250, options [nop,nop,TS val 4215117161 ecr 4019045445], length 0
+22:18:50.263946 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 2930:2980, ack 3177, win 170, options [nop,nop,TS val 4019045445 ecr 4215115976], length 50
+22:18:50.263959 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [.], ack 2980, win 250, options [nop,nop,TS val 4215117162 ecr 4019045445], length 0
+22:18:50.263962 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 2980:3028, ack 3177, win 170, options [nop,nop,TS val 4019045445 ecr 4215115976], length 48
+22:18:50.263968 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [.], ack 3028, win 250, options [nop,nop,TS val 4215117162 ecr 4019045445], length 0
+22:18:50.264108 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 3177:3207, ack 3028, win 250, options [nop,nop,TS val 4215117162 ecr 4019045445], length 30
+22:18:50.264190 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 3207:3257, ack 3028, win 250, options [nop,nop,TS val 4215117162 ecr 4019045445], length 50
+22:18:50.264207 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 3257:3305, ack 3028, win 250, options [nop,nop,TS val 4215117162 ecr 4019045445], length 48
+22:18:50.265021 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [.], ack 3305, win 170, options [nop,nop,TS val 4019045453 ecr 4215117162], length 0
+22:18:50.266181 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 3028:3090, ack 3305, win 170, options [nop,nop,TS val 4019045453 ecr 4215117162], length 62
+22:18:50.266308 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 3305:3367, ack 3090, win 250, options [nop,nop,TS val 4215117164 ecr 4019045453], length 62
+22:18:50.267459 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 3090:3120, ack 3367, win 170, options [nop,nop,TS val 4019045456 ecr 4215117164], length 30
+22:18:50.267642 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 3367:3397, ack 3120, win 250, options [nop,nop,TS val 4215117165 ecr 4019045456], length 30
+22:18:50.311770 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [.], ack 3397, win 170, options [nop,nop,TS val 4019045500 ecr 4215117165], length 0
+22:18:50.915584 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 3120:3150, ack 3397, win 170, options [nop,nop,TS val 4019046103 ecr 4215117165], length 30
+22:18:50.915670 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 3150:3200, ack 3397, win 170, options [nop,nop,TS val 4019046103 ecr 4215117165], length 50
+22:18:50.915676 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 3200:3259, ack 3397, win 170, options [nop,nop,TS val 4019046103 ecr 4215117165], length 59
+22:18:50.915735 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [.], ack 3259, win 250, options [nop,nop,TS val 4215117813 ecr 4019046103], length 0
+22:18:50.915831 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 3397:3427, ack 3259, win 250, options [nop,nop,TS val 4215117814 ecr 4019046103], length 30
+22:18:50.915981 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 3427:3477, ack 3259, win 250, options [nop,nop,TS val 4215117814 ecr 4019046103], length 50
+22:18:50.916003 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 3477:3536, ack 3259, win 250, options [nop,nop,TS val 4215117814 ecr 4019046103], length 59
+22:18:50.916501 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [.], ack 3427, win 170, options [nop,nop,TS val 4019046105 ecr 4215117814], length 0
+22:18:50.916512 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [.], ack 3477, win 170, options [nop,nop,TS val 4019046105 ecr 4215117814], length 0
+22:18:50.916516 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [.], ack 3536, win 170, options [nop,nop,TS val 4019046105 ecr 4215117814], length 0
+22:18:50.916963 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 3259:3368, ack 3536, win 170, options [nop,nop,TS val 4019046105 ecr 4215117814], length 109
+22:18:50.917489 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 3536:6289, ack 3368, win 250, options [nop,nop,TS val 4215117815 ecr 4019046105], length 2753
+22:18:50.917511 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 6289:6319, ack 3368, win 250, options [nop,nop,TS val 4215117815 ecr 4019046105], length 30
+22:18:50.919041 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [.], ack 6319, win 170, options [nop,nop,TS val 4019046107 ecr 4215117815], length 0
+22:18:50.919267 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 3368:3398, ack 6319, win 170, options [nop,nop,TS val 4019046107 ecr 4215117815], length 30
+22:18:50.937384 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 3398:4068, ack 6319, win 170, options [nop,nop,TS val 4019046125 ecr 4215117815], length 670
+22:18:50.937435 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [.], ack 4068, win 256, options [nop,nop,TS val 4215117835 ecr 4019046107], length 0
+22:18:51.077774 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 6319:6388, ack 4068, win 256, options [nop,nop,TS val 4215117975 ecr 4019046107], length 69
+22:18:51.078004 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 6388:7058, ack 4068, win 256, options [nop,nop,TS val 4215117976 ecr 4019046107], length 670
+22:18:51.079356 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [.], ack 7058, win 170, options [nop,nop,TS val 4019046267 ecr 4215117975], length 0
+22:18:55.494895 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 7058:7088, ack 4068, win 256, options [nop,nop,TS val 4215122393 ecr 4019046267], length 30
+22:18:55.494930 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 7088:7138, ack 4068, win 256, options [nop,nop,TS val 4215122393 ecr 4019046267], length 50
+22:18:55.494940 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 7138:7186, ack 4068, win 256, options [nop,nop,TS val 4215122393 ecr 4019046267], length 48
+22:18:55.496055 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [.], ack 7186, win 170, options [nop,nop,TS val 4019050684 ecr 4215122393], length 0
+22:18:55.496241 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 4068:4098, ack 7186, win 170, options [nop,nop,TS val 4019050684 ecr 4215122393], length 30
+22:18:55.496517 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 4098:4148, ack 7186, win 170, options [nop,nop,TS val 4019050685 ecr 4215122393], length 50
+22:18:55.496532 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 4148:4196, ack 7186, win 170, options [nop,nop,TS val 4019050685 ecr 4215122393], length 48
+22:18:55.496545 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [.], ack 4196, win 256, options [nop,nop,TS val 4215122394 ecr 4019050684], length 0
+22:18:55.496601 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 7186:7248, ack 4196, win 256, options [nop,nop,TS val 4215122394 ecr 4019050684], length 62
+22:18:55.497193 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 4196:4258, ack 7248, win 170, options [nop,nop,TS val 4019050686 ecr 4215122394], length 62
+22:18:55.497280 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 7248:7278, ack 4258, win 256, options [nop,nop,TS val 4215122395 ecr 4019050686], length 30
+22:18:55.497927 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 4258:4288, ack 7278, win 170, options [nop,nop,TS val 4019050686 ecr 4215122395], length 30
+22:18:55.540868 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [.], ack 4288, win 256, options [nop,nop,TS val 4215122439 ecr 4019050686], length 0
+22:18:59.889736 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 4288:4318, ack 7278, win 170, options [nop,nop,TS val 4019055077 ecr 4215122439], length 30
+22:18:59.889801 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [.], ack 4318, win 256, options [nop,nop,TS val 4215126787 ecr 4019055077], length 0
+22:18:59.889809 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 4318:4368, ack 7278, win 170, options [nop,nop,TS val 4019055077 ecr 4215122439], length 50
+22:18:59.889817 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [.], ack 4368, win 256, options [nop,nop,TS val 4215126787 ecr 4019055077], length 0
+22:18:59.889818 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 4368:4421, ack 7278, win 170, options [nop,nop,TS val 4019055077 ecr 4215122439], length 53
+22:18:59.889823 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [.], ack 4421, win 256, options [nop,nop,TS val 4215126787 ecr 4019055077], length 0
+22:18:59.889925 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 7278:7308, ack 4421, win 256, options [nop,nop,TS val 4215126788 ecr 4019055077], length 30
+22:18:59.890093 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 7308:7358, ack 4421, win 256, options [nop,nop,TS val 4215126788 ecr 4019055077], length 50
+22:18:59.890112 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 7358:7411, ack 4421, win 256, options [nop,nop,TS val 4215126788 ecr 4019055077], length 53
+22:18:59.890952 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [.], ack 7411, win 170, options [nop,nop,TS val 4019055079 ecr 4215126788], length 0
+22:18:59.891110 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 4421:4509, ack 7411, win 170, options [nop,nop,TS val 4019055079 ecr 4215126788], length 88
+22:18:59.892006 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 7411:7474, ack 4509, win 256, options [nop,nop,TS val 4215126790 ecr 4019055079], length 63
+22:18:59.892025 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 7474:7504, ack 4509, win 256, options [nop,nop,TS val 4215126790 ecr 4019055079], length 30
+22:18:59.893204 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 4509:4539, ack 7474, win 170, options [nop,nop,TS val 4019055081 ecr 4215126790], length 30
+22:18:59.936096 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [.], ack 7504, win 170, options [nop,nop,TS val 4019055124 ecr 4215126790], length 0
+22:18:59.936876 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [.], ack 4539, win 256, options [nop,nop,TS val 4215126835 ecr 4019055081], length 0
+22:19:00.268689 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 4539:4569, ack 7504, win 170, options [nop,nop,TS val 4019055456 ecr 4215126835], length 30
+22:19:00.268752 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [.], ack 4569, win 256, options [nop,nop,TS val 4215127166 ecr 4019055456], length 0
+22:19:00.268760 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 4569:4619, ack 7504, win 170, options [nop,nop,TS val 4019055456 ecr 4215126835], length 50
+22:19:00.268768 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [.], ack 4619, win 256, options [nop,nop,TS val 4215127166 ecr 4019055456], length 0
+22:19:00.268769 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 4619:4667, ack 7504, win 170, options [nop,nop,TS val 4019055456 ecr 4215126835], length 48
+22:19:00.268775 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [.], ack 4667, win 256, options [nop,nop,TS val 4215127166 ecr 4019055456], length 0
+22:19:00.269056 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 7504:7534, ack 4667, win 256, options [nop,nop,TS val 4215127167 ecr 4019055456], length 30
+22:19:00.269144 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 7534:7584, ack 4667, win 256, options [nop,nop,TS val 4215127167 ecr 4019055456], length 50
+22:19:00.269156 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 7584:7632, ack 4667, win 256, options [nop,nop,TS val 4215127167 ecr 4019055456], length 48
+22:19:00.269699 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [.], ack 7534, win 170, options [nop,nop,TS val 4019055458 ecr 4215127167], length 0
+22:19:00.269719 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [.], ack 7584, win 170, options [nop,nop,TS val 4019055458 ecr 4215127167], length 0
+22:19:00.269726 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [.], ack 7632, win 170, options [nop,nop,TS val 4019055458 ecr 4215127167], length 0
+22:19:00.269976 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 4667:4729, ack 7632, win 170, options [nop,nop,TS val 4019055458 ecr 4215127167], length 62
+22:19:00.270047 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 7632:7694, ack 4729, win 256, options [nop,nop,TS val 4215127168 ecr 4019055458], length 62
+22:19:00.270589 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [P.], seq 4729:4759, ack 7694, win 170, options [nop,nop,TS val 4019055459 ecr 4215127168], length 30
+22:19:00.270676 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 7694:7724, ack 4759, win 256, options [nop,nop,TS val 4215127168 ecr 4019055459], length 30
+22:19:00.311726 IP <TS_IP_C1>.43026 > <TS_IP_R>.60000: Flags [.], ack 7724, win 170, options [nop,nop,TS val 4019055500 ecr 4215127168], length 0
+22:19:05.498499 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 7724:7754, ack 4759, win 256, options [nop,nop,TS val 4215132396 ecr 4019055500], length 30
+22:19:05.498529 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 7754:7804, ack 4759, win 256, options [nop,nop,TS val 4215132396 ecr 4019055500], length 50
+22:19:05.498539 IP <TS_IP_R>.60000 > <TS_IP_C1>.43026: Flags [P.], seq 7804:7852, ack 4759, win 256, options [nop,nop,TS val 4215132396 ecr 4019055500], length 48
+
+122 packets captured
+150 packets received by filter
+0 packets dropped by kernel

@@ -1,0 +1,9 @@
+an-r1 an-nb 
+logout rc=0
+Logged out.
+an-a1 
+logout rc=0
+Logged out.
+an-a2 
+logout rc=0
+Logged out.

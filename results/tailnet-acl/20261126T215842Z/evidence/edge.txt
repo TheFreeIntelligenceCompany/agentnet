@@ -1,0 +1,16 @@
+# 2026-11-26T22:24:55Z box1: cd ~/hs; grep -c "no upgrade header" hs.log; grep -m3 "no upgrade header" hs.log; grep -m2 "Unexpected subprotocol" hs.log; grep -c "ts2021 " hs.log; grep "ts2021" hs.log | grep -c "status=101"; cat ~/shim.log | wc -l
+4
+2026-11-26T22:06:26Z WRN ../../../home/runner/work/headscale/headscale/hscontrol/noise.go:106 > no upgrade header in TS2021 request. If headscale is behind a reverse proxy, make sure it is configured to pass WebSockets through.
+2026-11-26T22:06:28Z WRN ../../../home/runner/work/headscale/headscale/hscontrol/noise.go:106 > no upgrade header in TS2021 request. If headscale is behind a reverse proxy, make sure it is configured to pass WebSockets through.
+2026-11-26T22:06:30Z WRN ../../../home/runner/work/headscale/headscale/hscontrol/noise.go:106 > no upgrade header in TS2021 request. If headscale is behind a reverse proxy, make sure it is configured to pass WebSockets through.
+4
+0
+0
+
+# 2026-11-26T22:24:55Z box2: curl -sS --http1.1 -m 10 -X POST -H "Upgrade: tailscale-control-protocol" -H "Connection: Upgrade" https://<HS_HOST>/ts2021 -o /dev/null -w "POST+Upgrade:tailscale-control-protocol via edge (HTTP/1.1): http=%{http_code}
+"; curl -sS --http1.1 -m 10 -H "Upgrade: websocket" -H "Connection: Upgrade" -H "Sec-WebSocket-Version: 13" -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" https://<HS_HOST>/ts2021 -o /dev/null -w "GET+Upgrade:websocket via edge (HTTP/1.1): http=%{http_code}
+"; curl -sS -m 10 https://<HS_HOST>/health
+POST+Upgrade:tailscale-control-protocol via edge (HTTP/1.1): http=500
+GET+Upgrade:websocket via edge (HTTP/1.1): http=101
+{"status":"pass"}
+

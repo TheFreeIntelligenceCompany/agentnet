@@ -1,0 +1,110 @@
+# 2026-11-26T22:10:47Z box3: tailscale status; tailscale ip -4; echo "## tailscale ping R (policy: guest has no rule)"; timeout 20 tailscale ping -c 2 --timeout 5s <TS_IP_R>; echo rc=$?; echo "## tailscale ping A1"; timeout 20 tailscale ping -c 2 --timeout 5s <TS_IP_C1>; echo rc=$?; echo "## nc tcp/60000 R"; date -u +%T; nc -z -v -w 8 <TS_IP_R> 60000; echo nc-rc=$?; nc -z -w 5 <TS_IP_R> 8645; echo nc8645-rc=$?; ip route get <TS_IP_R>
+<TS_IP_C2>  acl-c2  tagged-devices  linux  -  
+<TS_IP_C2>
+## tailscale ping R (policy: guest has no rule)
+rc=1
+## tailscale ping A1
+rc=1
+## nc tcp/60000 R
+22:10:47
+nc-rc=1
+nc8645-rc=1
+<TS_IP_R> via 172.16.0.1 dev eth0 src 172.16.0.2 uid 1000 
+    cache 
+no matching peer
+no matching peer
+nc: connect to <TS_IP_R> port 60000 (tcp) timed out: Operation now in progress
+
+# 2026-11-26T22:11:00Z box3: bash ~/h/client-node.sh an-a2 18660 <TS_IP_R>; date -u +%T
+an-a2 8545/tcp, 30303/tcp, 60000/tcp, 127.0.0.1:18660->8645/tcp
+22:11:03
+Unable to find image 'wakuorg/nwaku@sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73' locally
+docker.io/wakuorg/nwaku@sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73: Pulling from wakuorg/nwaku
+40e8901e3153: Pulling fs layer
+de5d8349b771: Pulling fs layer
+44cf07d57ee4: Pulling fs layer
+d5b54e6cfea5: Pulling fs layer
+a614bf0fc0ed: Pulling fs layer
+40e8901e3153: Download complete
+44cf07d57ee4: Download complete
+44cf07d57ee4: Pull complete
+d5b54e6cfea5: Download complete
+a614bf0fc0ed: Download complete
+de5d8349b771: Download complete
+de5d8349b771: Pull complete
+40e8901e3153: Pull complete
+d5b54e6cfea5: Pull complete
+a614bf0fc0ed: Pull complete
+Digest: sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73
+Status: Downloaded newer image for wakuorg/nwaku@sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73
+
+# 2026-11-26T22:11:13Z box3: chmod 700 ~/a2 2>/dev/null; mkdir -p ~/a2; chmod 700 ~/a2; bash ~/h/agent-up.sh ~/a2 18660 /ip4/<TS_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV >/dev/null; docker logs an-a2 2>&1 | grep -o '16Uiu2HA[A-Za-z0-9]*' | sort -u; date -u +%T
+16Uiu2HAmC6vv8vp3FUynfwPUPpBbYfC9HJnbQWuWTiRvftd8qhps
+22:11:18
+
+# 2026-11-26T22:12:48Z box3: date -u +%T; echo "## node A2 peers"; curl -s 127.0.0.1:18660/admin/v1/peers; echo; ~/agentnet --data-dir ~/a2 doctor --ready; echo rc=$?; docker logs an-a2 2>&1 | grep -i -E "dial|connect|fail|timeout|peer" | tail -n 12
+22:12:49
+## node A2 peers
+[{"multiaddr":"/ip4/<TS_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV","protocols":[],"shards":[],"connected":"CannotConnect","agent":"","origin":"UnknownOrigin"}]
+[ok  ] data dir permissions: directory 0700, files 0600
+[ok  ] config: /data/home/a2/agentnet.toml valid (private mode, 1 peer(s))
+[ok  ] identity: address an13wun3misj44sm4wio4xml7hngqoheensbinsuv36hmixdv2l4r65cawu5a
+[ok  ] replay guard: inactive (store generation 0)
+[warn] single instance: the same identity running in two data directories cannot be detected or prevented (the data-dir lock only covers one directory); both would receive, persist and acknowledge every message independently and may both fire triggers
+       -> run each identity in exactly one place; to move it, stop the old daemon first and copy agentnet.db + agentnet.generation or use `identity export/import`
+[ok  ] daemon socket: daemon answers on agentnet.sock
+[ok  ] node reachable: http://127.0.0.1:18660 answered 200
+[ok  ] clock: within 1 s of the node's clock
+[ok  ] isolation: no isolation violation reported
+[warn] peers == allowlist: no peer connected yet
+       -> start the relay first; the node redials with backoff
+[warn] history sync: no history sync has completed yet (just started, or the relay Store has not answered)
+       -> check the relay's Store (docs/runbook.md section 6.4): the node's /health, its store flags and the `last history sync` line of `network status`; until a pass completes, messages sent while this daemon was offline are not recovered
+[warn] transport ready: node reachable; 0 connected allowed peer(s)
+       -> messages queue locally until the node is ready
+[ok  ] local inbox database: inbox query works (this tests the local database, not the relay Store)
+0 failing, 4 warning(s)
+rc=7
+INF 2026-11-26 22:11:03.402+00:00 Configuration: Enabled protocols           topics="waku conf" tid=1 file=waku_conf.nim:201 relay=true rlnRelay=false store=false filter=false lightPush=false peerExchange=false rendezvous=false
+INF 2026-11-26 22:11:03.402+00:00 mounting waku peer exchange client         topics="waku node peerexchange api" tid=1 file=peer_exchange.nim:54
+INF 2026-11-26 22:11:03.402+00:00 Starting switch for peer                   topics="libp2p switch" tid=1 file=switch.nim:403 peerInfo="(peerId: 16Uiu2HAmC6vv8vp3FUynfwPUPpBbYfC9HJnbQWuWTiRvftd8qhps, listenAddrs: [/ip4/0.0.0.0/tcp/60000], addrs: [], protocols: [/ipfs/id/1.0.0, /libp2p/autonat/1.0.0, /libp2p/circuit/relay/0.2.0/hop, /vac/waku/metadata/1.0.0, /vac/waku/relay/2.0.0, /ipfs/ping/1.0.0, /vac/waku/filter-push/2.0.0-beta1], protoVersion: ipfs/0.1.0, agentVersion: logos-delivery-\"v0.39.2\")"
+INF 2026-11-26 22:11:03.402+00:00 Started libp2p node                        topics="libp2p switch" tid=1 file=switch.nim:446 peerId="(peerId: 16Uiu2HAmC6vv8vp3FUynfwPUPpBbYfC9HJnbQWuWTiRvftd8qhps, listenAddrs: [/ip4/0.0.0.0/tcp/60000], addrs: [/ip4/<TS_IP_C2>/tcp/60000], protocols: [/ipfs/id/1.0.0, /libp2p/autonat/1.0.0, /libp2p/circuit/relay/0.2.0/hop, /vac/waku/metadata/1.0.0, /vac/waku/relay/2.0.0, /ipfs/ping/1.0.0, /vac/waku/filter-push/2.0.0-beta1], protoVersion: ipfs/0.1.0, agentVersion: logos-delivery-\"v0.39.2\")"
+INF 2026-11-26 22:11:03.402+00:00 Relay peer connections                     topics="waku node peer_manager" tid=1 file=peer_manager.nim:975 inRelayConns=0/50 outRelayConns=0/25 totalConnections=0/150 notConnectedPeers=1 outsideBackoffPeers=0
+INF 2026-11-26 22:11:03.406+00:00 starting keepalive                         tid=1 file=node_health_monitor.nim:738 randomPeersKeepalive=10s allPeersKeepalive=2m
+NOT READY: messaging is not operational:
+  - transport ready: warning: node reachable; 0 connected allowed peer(s) -> messages queue locally until the node is ready
+
+# 2026-11-26T22:12:49Z box1: echo "## R peers"; curl -s 127.0.0.1:18640/admin/v1/peers | jq -c ".[]|{multiaddr,connected}"; docker logs an-r1 2>&1 | grep -c "16Uiu2HAm
+bash: eval: line 1: unexpected EOF while looking for matching `"'
+
+# 2026-11-26T22:12:55Z box1: echo "## R peers"; curl -s 127.0.0.1:18640/admin/v1/peers | jq -c ".[]|{multiaddr,connected}"; echo "R log lines mentioning A2 peer id (AmC6vv8vp): $(docker logs an-r1 2>&1 | grep -c AmC6vv8vp)"; echo "R log lines mentioning A1 (AmAKrr): $(docker logs an-r1 2>&1 | grep -c AmAKrr)"; echo "R log lines mentioning <TS_IP_C2>: $(docker logs an-r1 2>&1 | grep -c <TS_IP_C2>)"
+## R peers
+{"multiaddr":"/ip4/172.28.66.1/tcp/43026/p2p/16Uiu2HAmAKrrE3nbbubQx8ToHwm6Em4wJTbTQvUC9HZzX9SyJhWc","connected":"Connected"}
+{"multiaddr":"/ip4/172.28.66.1/tcp/43770/p2p/16Uiu2HAmGGTNKYN2QDGjGj2HK1fXFUZ4js6P5K1VmMvEofo4MfAZ","connected":"Connected"}
+R log lines mentioning A2 peer id (AmC6vv8vp): 0
+R log lines mentioning A1 (AmAKrr): 0
+R log lines mentioning <TS_IP_C2>: 0
+
+# 2026-11-26T22:12:55Z box3: echo "## A2 relay cache for the private topic and frames"; curl -s 127.0.0.1:18660/relay/v1/auto/messages/%2Fagentnet%2F1%2Finbox-0c%2Fproto | head -c 300; echo; docker logs an-a2 2>&1 | grep -c -i "received message\|message received\|WakuMessage"; curl -s 127.0.0.1:18660/health
+## A2 relay cache for the private topic and frames
+/agentnet/1/inbox-0c/proto
+0
+
+# 2026-11-26T22:13:06Z box3: curl -s -X POST -H "content-type: application/json" -d "[\"/agentnet/1/inbox-0c/proto\"]" -w "subscribe http=%{http_code}
+" 127.0.0.1:18660/relay/v1/auto/subscriptions
+OKsubscribe http=200
+
+# 2026-11-26T22:13:06Z box2: for i in 1 2 3; do ~/agentnet --data-dir ~/a1 --json send an1hawdrx7qaqeaayse63csqmkrqp5gvoqsbhgh46rwijmjwrfhpn6ig2vfr4 "during-denied $i" | jq -r .message_id; done; sleep 8; ~/agentnet --data-dir ~/a1 --json outbox --limit 3 | jq -c '.records[-3:][]|{state,body}'
+bef35460-e499-41a1-a015-76fa85010d21
+90d9a5a1-efc8-46ce-950e-5ef11f56f386
+f54da326-aa7d-48e2-b390-0fc870e7f298
+{"state":"delivered","body":"hello from A1"}
+{"state":"delivered","body":"a2b 0"}
+{"state":"delivered","body":"a2b 1"}
+
+# 2026-11-26T22:13:20Z box3: echo "## A2 cache for B inbox topic (expect empty):"; curl -s 127.0.0.1:18660/relay/v1/auto/messages/%2Fagentnet%2F1%2Finbox-0c%2Fproto; echo; echo "## store query to R from A2 not possible; A2 peers:"; curl -s 127.0.0.1:18660/admin/v1/peers | jq -c ".[]|{connected}"
+## A2 cache for B inbox topic (expect empty):
+[]
+## store query to R from A2 not possible; A2 peers:
+{"connected":"CannotConnect"}
+
