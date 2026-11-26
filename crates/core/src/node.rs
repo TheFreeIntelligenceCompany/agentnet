@@ -323,8 +323,7 @@ impl Node {
             Vec::new()
         };
         let advert_limits = AdvertLimits {
-            max_ttl_ms: i64::try_from(dc.max_advert_ttl_s.saturating_mul(1000))
-                .unwrap_or(i64::MAX),
+            max_ttl_ms: i64::try_from(dc.max_advert_ttl_s.saturating_mul(1000)).unwrap_or(i64::MAX),
             clock_skew_ms: open_limits.clock_skew_ms,
             max_capabilities: dc.max_capabilities,
         };

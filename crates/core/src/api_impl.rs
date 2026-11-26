@@ -5,12 +5,12 @@ use rusqlite::{params, OptionalExtension, Row};
 use tokio::sync::broadcast;
 
 use crate::api::{
-    AcknowledgeResponse, AddContactRequest, AdvertInfo, AdvertiseRequest, AgentApi, DiscoverPage,
-    DiscoverRequest, WithdrawInfo, ApiError, ApiResult, ChangeHint, ContactInfo,
-    ConversationEntry, ConversationPage, CreateTriggerRequest, DeleteTriggerResponse, Direction,
-    ErrorCode, EventPage, IdentityInfo, InboxRecord, MessageStatus, NetworkStatus, OutboxPage,
-    OutboxRecord, PageRequest, QueueHealth, ReadInboxRequest, ReadInboxResponse, ReplayGuardInfo,
-    SendMessageRequest, SendMessageResponse, TriggerInfo, Trust,
+    AcknowledgeResponse, AddContactRequest, AdvertInfo, AdvertiseRequest, AgentApi, ApiError,
+    ApiResult, ChangeHint, ContactInfo, ConversationEntry, ConversationPage, CreateTriggerRequest,
+    DeleteTriggerResponse, Direction, DiscoverPage, DiscoverRequest, ErrorCode, EventPage,
+    IdentityInfo, InboxRecord, MessageStatus, NetworkStatus, OutboxPage, OutboxRecord, PageRequest,
+    QueueHealth, ReadInboxRequest, ReadInboxResponse, ReplayGuardInfo, SendMessageRequest,
+    SendMessageResponse, TriggerInfo, Trust, WithdrawInfo,
 };
 use crate::crypto::{Address, Envelope, VerifiedContact};
 use crate::cursor::{decode_conv, decode_seq, encode_conv, encode_seq, CursorKind};

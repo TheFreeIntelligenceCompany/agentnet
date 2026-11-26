@@ -323,7 +323,10 @@ impl NodeConfig {
                 (1..=crate::crypto::advert::MAX_CAPABILITIES_HARD).contains(&c.max_capabilities),
                 "discovery.max_capabilities must be in 1..=64",
             ),
-            (c.topics.len() <= 16, "discovery.topics lists at most 16 topics"),
+            (
+                c.topics.len() <= 16,
+                "discovery.topics lists at most 16 topics",
+            ),
         ];
         for (ok, msg) in checks {
             if !ok {

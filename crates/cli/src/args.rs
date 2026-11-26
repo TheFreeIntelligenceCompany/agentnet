@@ -405,7 +405,11 @@ pub enum DiscoveryCmd {
         #[arg(long, value_name = "TOPIC")]
         topic: String,
         /// A capability as NAME or NAME:DESCRIPTION (repeatable; name is a-z 0-9 . _ -).
-        #[arg(long = "capability", value_name = "NAME[:DESCRIPTION]", required = true)]
+        #[arg(
+            long = "capability",
+            value_name = "NAME[:DESCRIPTION]",
+            required = true
+        )]
         capability: Vec<String>,
         /// Optional display name (at most 64 characters).
         #[arg(long, value_name = "NAME")]

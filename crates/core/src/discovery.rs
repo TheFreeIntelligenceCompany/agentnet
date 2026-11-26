@@ -21,8 +21,8 @@ use crate::api::{
 };
 use crate::config::valid_discovery_topic_name;
 use crate::crypto::advert::{
-    check_capabilities, decode_frame, encode_frame, error_kind, has_sealed_magic, valid_capability_name,
-    AdvertContent, Capability, SignedAdvert, VerifiedAdvert,
+    check_capabilities, decode_frame, encode_frame, error_kind, has_sealed_magic,
+    valid_capability_name, AdvertContent, Capability, SignedAdvert, VerifiedAdvert,
 };
 use crate::crypto::Address;
 use crate::cursor::{decode_seq, encode_seq, CursorKind};
@@ -438,7 +438,8 @@ impl Node {
                 return FrameOutcome::AdvertIgnored;
             }
             Err(e) => {
-                self.metrics.inc(&format!("advert.invalid.{}", error_kind(&e)));
+                self.metrics
+                    .inc(&format!("advert.invalid.{}", error_kind(&e)));
                 self.mark_transport_seen(frame);
                 return FrameOutcome::AdvertInvalid;
             }
@@ -456,7 +457,10 @@ impl Node {
         };
         self.mark_transport_seen(frame);
         match outcome {
-            Stored::Applied { replaced, withdrawal } => {
+            Stored::Applied {
+                replaced,
+                withdrawal,
+            } => {
                 self.metrics.inc("advert.applied");
                 if replaced {
                     self.metrics.inc("advert.replaced");
@@ -581,16 +585,17 @@ impl Node {
 
     /// Remove every stored advertisement of `addr` (blocked or revoked).
     pub(crate) fn purge_adverts(tx: &Transaction<'_>, addr: &Address) -> Result<usize, StoreError> {
-        Ok(tx.execute(
-            "DELETE FROM adverts WHERE address = ?1",
-            [addr.to_string()],
-        )?)
+        Ok(tx.execute("DELETE FROM adverts WHERE address = ?1", [addr.to_string()])?)
     }
 
     /// Maintenance: drop expired records (replaying an expired advertisement is
     /// rejected by its own expiry, so removal is replay-safe) and enforce
     /// `max_records` after a configuration change.
-    pub(crate) fn prune_adverts(&self, tx: &Transaction<'_>, now: i64) -> Result<usize, StoreError> {
+    pub(crate) fn prune_adverts(
+        &self,
+        tx: &Transaction<'_>,
+        now: i64,
+    ) -> Result<usize, StoreError> {
         let mut n = tx.execute("DELETE FROM adverts WHERE expires_at <= ?1", [now])?;
         n += tx.execute(
             "DELETE FROM adverts WHERE rid NOT IN

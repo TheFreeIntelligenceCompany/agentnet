@@ -29,9 +29,7 @@ pub mod protection;
 pub mod revocation;
 
 pub use address::Address;
-pub use advert::{
-    AdvertContent, AdvertLimits, Capability, SignedAdvert, VerifiedAdvert,
-};
+pub use advert::{AdvertContent, AdvertLimits, Capability, SignedAdvert, VerifiedAdvert};
 pub use contact::{SignedContactRecord, VerifiedContact};
 pub use envelope::{Envelope, OpenLimits, OpenedEnvelope, SUITE_ID as SUITE_HPKE_BASE_ED25519};
 pub use hpke_suite::HpkeBaseEd25519;

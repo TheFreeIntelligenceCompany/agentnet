@@ -65,10 +65,17 @@ async fn disabled_daemon_denies_over_the_socket_and_stays_off_the_wire() {
     for e in [
         a.remote.advertise_agent(adv()).await.unwrap_err(),
         a.remote.discover_agents(disc()).await.unwrap_err(),
-        a.remote.withdraw_advert("general".into()).await.unwrap_err(),
+        a.remote
+            .withdraw_advert("general".into())
+            .await
+            .unwrap_err(),
     ] {
         assert_eq!(e.code, ErrorCode::PolicyDenied);
-        assert!(e.message.contains("disabled by host policy"), "{}", e.message);
+        assert!(
+            e.message.contains("disabled by host policy"),
+            "{}",
+            e.message
+        );
     }
     // raw socket: malformed params are invalid_argument
     let v = a
@@ -136,12 +143,17 @@ async fn advertise_and_discover_end_to_end_through_two_daemons() {
     w.clock.advance(std::time::Duration::from_secs(2));
     wait_until("republish", || async {
         w.net.publish_count(
-            &agentnet_transport::ContentTopic::new("/agentnet/1/discovery-general/proto")
-                .unwrap(),
+            &agentnet_transport::ContentTopic::new("/agentnet/1/discovery-general/proto").unwrap(),
         ) > before
     })
     .await;
-    assert!(a.remote.withdraw_advert("general".into()).await.unwrap().withdrawn);
+    assert!(
+        a.remote
+            .withdraw_advert("general".into())
+            .await
+            .unwrap()
+            .withdrawn
+    );
     wait_until("B sees the withdrawal", || async {
         b.remote
             .discover_agents(disc())
@@ -150,5 +162,11 @@ async fn advertise_and_discover_end_to_end_through_two_daemons() {
             .unwrap_or(false)
     })
     .await;
-    assert!(!a.remote.withdraw_advert("general".into()).await.unwrap().withdrawn);
+    assert!(
+        !a.remote
+            .withdraw_advert("general".into())
+            .await
+            .unwrap()
+            .withdrawn
+    );
 }

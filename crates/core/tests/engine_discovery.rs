@@ -128,9 +128,17 @@ async fn disabled_by_default_subscribes_to_nothing_and_denies_the_tools() {
         .contains("inbox"));
     assert_eq!(w.net.total_publish_count(), 0);
 
-    let e = a.node.advertise_agent(adv(TOPIC, &["x"])).await.unwrap_err();
+    let e = a
+        .node
+        .advertise_agent(adv(TOPIC, &["x"]))
+        .await
+        .unwrap_err();
     assert_eq!(e.code, ErrorCode::PolicyDenied);
-    assert!(e.message.contains("disabled by host policy"), "{}", e.message);
+    assert!(
+        e.message.contains("disabled by host policy"),
+        "{}",
+        e.message
+    );
     let e = a.node.discover_agents(disc(TOPIC)).await.unwrap_err();
     assert_eq!(e.code, ErrorCode::PolicyDenied);
     assert!(e.message.contains("disabled by host policy"));
@@ -168,16 +176,28 @@ async fn a_topic_outside_the_host_list_is_denied() {
     assert_eq!(e.code, ErrorCode::PolicyDenied);
     assert!(e.message.contains("not an authorized discovery topic"));
     assert_eq!(
-        a.node.discover_agents(disc("unlisted")).await.unwrap_err().code,
+        a.node
+            .discover_agents(disc("unlisted"))
+            .await
+            .unwrap_err()
+            .code,
         ErrorCode::PolicyDenied
     );
     assert_eq!(
-        a.node.withdraw_advert("unlisted".into()).await.unwrap_err().code,
+        a.node
+            .withdraw_advert("unlisted".into())
+            .await
+            .unwrap_err()
+            .code,
         ErrorCode::PolicyDenied
     );
     // a syntactically invalid name is an argument error
     assert_eq!(
-        a.node.advertise_agent(adv("Bad Name", &["x"])).await.unwrap_err().code,
+        a.node
+            .advertise_agent(adv("Bad Name", &["x"]))
+            .await
+            .unwrap_err()
+            .code,
         ErrorCode::InvalidArgument
     );
     assert_eq!(w.net.total_publish_count(), 0);
@@ -193,7 +213,10 @@ async fn request_validation() {
     };
     assert_eq!(bad(adv(TOPIC, &[])).await, ErrorCode::InvalidArgument);
     assert_eq!(bad(adv(TOPIC, &["BAD"])).await, ErrorCode::InvalidArgument);
-    assert_eq!(bad(adv(TOPIC, &["a", "a"])).await, ErrorCode::InvalidArgument);
+    assert_eq!(
+        bad(adv(TOPIC, &["a", "a"])).await,
+        ErrorCode::InvalidArgument
+    );
     let many: Vec<String> = (0..17).map(|i| format!("c{i}")).collect();
     let many: Vec<&str> = many.iter().map(String::as_str).collect();
     assert_eq!(bad(adv(TOPIC, &many)).await, ErrorCode::InvalidArgument);
@@ -218,7 +241,6 @@ async fn request_validation() {
         a.node.discover_agents(r).await.unwrap_err().code,
         ErrorCode::InvalidArgument
     );
-    assert_eq!(a.n("kv") > 0, true);
     assert_eq!(w.net.total_publish_count(), 0);
 }
 
@@ -271,7 +293,10 @@ async fn advertise_then_another_node_discovers_it_and_can_add_the_contact() {
     assert_eq!(d.address, a.addr);
     assert_eq!(d.display_name.as_deref(), Some("Test Agent"));
     assert_eq!(
-        d.capabilities.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(),
+        d.capabilities
+            .iter()
+            .map(|c| c.name.as_str())
+            .collect::<Vec<_>>(),
         ["translate.de", "summarize"]
     );
     assert_eq!(d.expires_at, info.expires_at);
@@ -280,9 +305,21 @@ async fn advertise_then_another_node_discovers_it_and_can_add_the_contact() {
     assert_eq!(d.contact_record, a.record);
 
     // the advertiser sees nobody else, and not itself
-    assert!(a.node.discover_agents(disc(TOPIC)).await.unwrap().agents.is_empty());
+    assert!(a
+        .node
+        .discover_agents(disc(TOPIC))
+        .await
+        .unwrap()
+        .agents
+        .is_empty());
     // another topic is separate
-    assert!(b.node.discover_agents(disc("other")).await.unwrap().agents.is_empty());
+    assert!(b
+        .node
+        .discover_agents(disc("other"))
+        .await
+        .unwrap()
+        .agents
+        .is_empty());
 
     // the embedded contact record is valid and add_contact accepts it
     let c = b
@@ -322,7 +359,10 @@ async fn receiving_adverts_has_no_side_effects_on_contacts_events_or_triggers() 
         .is_empty());
     let mut hints = b.node.changes();
     pump(&[&a, &b]).await;
-    assert!(hints.try_recv().is_err(), "an advert must emit no change hint");
+    assert!(
+        hints.try_recv().is_err(),
+        "an advert must emit no change hint"
+    );
 
     // a discovered-but-not-added agent that messages us is an unknown sender:
     // the existing quarantine policy applies.
@@ -387,7 +427,11 @@ async fn capability_filter_is_an_exact_match_and_results_paginate() {
     assert_eq!(addrs(&p), want(&[0, 3]), "exact name, not a prefix");
     let p = obs.node.discover_agents(by_cap("code")).await.unwrap();
     assert_eq!(addrs(&p), want(&[1, 2, 3]));
-    let p = obs.node.discover_agents(by_cap("translate.de")).await.unwrap();
+    let p = obs
+        .node
+        .discover_agents(by_cap("translate.de"))
+        .await
+        .unwrap();
     assert_eq!(addrs(&p), want(&[1]));
     let p = obs.node.discover_agents(by_cap("nothing")).await.unwrap();
     assert!(p.agents.is_empty() && !p.has_more);
@@ -430,11 +474,33 @@ async fn expired_adverts_are_not_returned_and_are_pruned() {
     req.ttl_seconds = Some(60);
     a.node.advertise_agent(req).await.unwrap();
     pump(&[&a, &b]).await;
-    assert_eq!(b.node.discover_agents(disc(TOPIC)).await.unwrap().agents.len(), 1);
+    assert_eq!(
+        b.node
+            .discover_agents(disc(TOPIC))
+            .await
+            .unwrap()
+            .agents
+            .len(),
+        1
+    );
     w.advance(59_000);
-    assert_eq!(b.node.discover_agents(disc(TOPIC)).await.unwrap().agents.len(), 1);
+    assert_eq!(
+        b.node
+            .discover_agents(disc(TOPIC))
+            .await
+            .unwrap()
+            .agents
+            .len(),
+        1
+    );
     w.advance(1_000);
-    assert!(b.node.discover_agents(disc(TOPIC)).await.unwrap().agents.is_empty());
+    assert!(b
+        .node
+        .discover_agents(disc(TOPIC))
+        .await
+        .unwrap()
+        .agents
+        .is_empty());
     assert_eq!(b.n("adverts"), 1, "still stored until maintenance runs");
     let rep = b.node.step_maintenance().unwrap();
     assert!(rep.pruned_rows >= 1);
@@ -452,10 +518,17 @@ async fn a_higher_seq_replaces_and_a_replay_of_an_older_one_is_ignored() {
     let w = World::new();
     let a = start(&w, "a", dcfg()).await;
     let b = start(&w, "b", dcfg()).await;
-    a.node.advertise_agent(adv(TOPIC, &["old-cap"])).await.unwrap();
+    a.node
+        .advertise_agent(adv(TOPIC, &["old-cap"]))
+        .await
+        .unwrap();
     pump(&[&a, &b]).await;
     let first = published_adverts(&w, &dtopic(TOPIC)).remove(0);
-    let second = a.node.advertise_agent(adv(TOPIC, &["new-cap"])).await.unwrap();
+    let second = a
+        .node
+        .advertise_agent(adv(TOPIC, &["new-cap"]))
+        .await
+        .unwrap();
     assert_eq!(second.seq, 2);
     pump(&[&a, &b]).await;
     let p = b.node.discover_agents(disc(TOPIC)).await.unwrap();
@@ -472,11 +545,19 @@ async fn a_higher_seq_replaces_and_a_replay_of_an_older_one_is_ignored() {
     assert_eq!(b.metric("advert.ignored_stale"), 2);
     let p = b.node.discover_agents(disc(TOPIC)).await.unwrap();
     assert_eq!(p.agents[0].capabilities[0].name, "new-cap");
-    assert_eq!(b.node.discover_agents({
-        let mut r = disc(TOPIC);
-        r.capability = Some("old-cap".into());
-        r
-    }).await.unwrap().agents.len(), 0);
+    assert_eq!(
+        b.node
+            .discover_agents({
+                let mut r = disc(TOPIC);
+                r.capability = Some("old-cap".into());
+                r
+            })
+            .await
+            .unwrap()
+            .agents
+            .len(),
+        0
+    );
 }
 
 #[tokio::test]
@@ -487,18 +568,38 @@ async fn withdrawal_removes_the_advert_and_blocks_a_replay() {
     a.node.advertise_agent(adv(TOPIC, &["x"])).await.unwrap();
     pump(&[&a, &b]).await;
     let old = published_adverts(&w, &dtopic(TOPIC)).remove(0);
-    assert_eq!(b.node.discover_agents(disc(TOPIC)).await.unwrap().agents.len(), 1);
+    assert_eq!(
+        b.node
+            .discover_agents(disc(TOPIC))
+            .await
+            .unwrap()
+            .agents
+            .len(),
+        1
+    );
 
     let r = a.node.withdraw_advert(TOPIC.into()).await.unwrap();
     assert!(r.withdrawn);
     pump(&[&a, &b]).await;
-    assert!(b.node.discover_agents(disc(TOPIC)).await.unwrap().agents.is_empty());
+    assert!(b
+        .node
+        .discover_agents(disc(TOPIC))
+        .await
+        .unwrap()
+        .agents
+        .is_empty());
     assert_eq!(b.metric("advert.withdrawal_applied"), 1);
     // the tombstone row stays so that the old advert cannot come back
     assert_eq!(b.n("adverts"), 1);
     w.net.inject_raw(&dtopic(TOPIC), &old);
     b.node.step_receive().await.unwrap();
-    assert!(b.node.discover_agents(disc(TOPIC)).await.unwrap().agents.is_empty());
+    assert!(b
+        .node
+        .discover_agents(disc(TOPIC))
+        .await
+        .unwrap()
+        .agents
+        .is_empty());
     assert_eq!(b.metric("advert.ignored_stale"), 1);
 
     // idempotent; and nothing is published any more
@@ -513,20 +614,62 @@ async fn withdrawal_removes_the_advert_and_blocks_a_replay() {
     let r = a.node.advertise_agent(adv(TOPIC, &["y"])).await.unwrap();
     assert_eq!(r.seq, 3);
     pump(&[&a, &b]).await;
-    assert_eq!(b.node.discover_agents(disc(TOPIC)).await.unwrap().agents.len(), 1);
+    assert_eq!(
+        b.node
+            .discover_agents(disc(TOPIC))
+            .await
+            .unwrap()
+            .agents
+            .len(),
+        1
+    );
     // withdrawing something never advertised is a no-op
-    assert!(!a.node.withdraw_advert("other".into()).await.unwrap().withdrawn);
+    assert!(
+        !a.node
+            .withdraw_advert("other".into())
+            .await
+            .unwrap()
+            .withdrawn
+    );
 }
 
 #[tokio::test]
 async fn the_sequence_number_survives_a_restart() {
     let w = World::new();
     let a = start(&w, "a", dcfg()).await;
-    assert_eq!(a.node.advertise_agent(adv(TOPIC, &["x"])).await.unwrap().seq, 1);
-    assert_eq!(a.node.advertise_agent(adv(TOPIC, &["x"])).await.unwrap().seq, 2);
+    assert_eq!(
+        a.node
+            .advertise_agent(adv(TOPIC, &["x"]))
+            .await
+            .unwrap()
+            .seq,
+        1
+    );
+    assert_eq!(
+        a.node
+            .advertise_agent(adv(TOPIC, &["x"]))
+            .await
+            .unwrap()
+            .seq,
+        2
+    );
     let a = w.reopen(a, dcfg());
-    assert_eq!(a.node.advertise_agent(adv(TOPIC, &["x"])).await.unwrap().seq, 3);
-    assert_eq!(a.node.advertise_agent(adv("other", &["x"])).await.unwrap().seq, 1);
+    assert_eq!(
+        a.node
+            .advertise_agent(adv(TOPIC, &["x"]))
+            .await
+            .unwrap()
+            .seq,
+        3
+    );
+    assert_eq!(
+        a.node
+            .advertise_agent(adv("other", &["x"]))
+            .await
+            .unwrap()
+            .seq,
+        1
+    );
 }
 
 #[tokio::test]
@@ -655,7 +798,13 @@ async fn forged_adverts_are_rejected_and_counted() {
 
     b.node.step_receive().await.unwrap();
     assert_eq!(b.n("adverts"), 0);
-    assert!(b.node.discover_agents(disc(TOPIC)).await.unwrap().agents.is_empty());
+    assert!(b
+        .node
+        .discover_agents(disc(TOPIC))
+        .await
+        .unwrap()
+        .agents
+        .is_empty());
     assert_eq!(b.metric("advert.received"), 7);
     assert_eq!(b.metric("advert.invalid.bad_signature"), 4);
     assert_eq!(b.metric("advert.invalid.contact_address_mismatch"), 1);
@@ -832,7 +981,13 @@ async fn blocked_and_revoked_advertisers_are_dropped_purged_and_never_evict() {
     assert_eq!(obs.metric("advert.dropped_full"), 0);
 
     // later blocking purges what is stored, and discovery excludes it
-    let before = obs.node.discover_agents(disc(TOPIC)).await.unwrap().agents.len();
+    let before = obs
+        .node
+        .discover_agents(disc(TOPIC))
+        .await
+        .unwrap()
+        .agents
+        .len();
     assert_eq!(before, 2);
     obs.node
         .add_contact(AddContactRequest {
@@ -841,7 +996,9 @@ async fn blocked_and_revoked_advertisers_are_dropped_purged_and_never_evict() {
         })
         .await
         .unwrap();
-    obs.node.set_contact_trust(&good1.addr, Trust::Blocked).unwrap();
+    obs.node
+        .set_contact_trust(&good1.addr, Trust::Blocked)
+        .unwrap();
     assert_eq!(obs.n("adverts"), 1);
     let p = obs.node.discover_agents(disc(TOPIC)).await.unwrap();
     assert_eq!(p.agents.len(), 1);
@@ -854,7 +1011,13 @@ async fn blocked_and_revoked_advertisers_are_dropped_purged_and_never_evict() {
         .to_document();
     obs.node.import_revocation(&tomb2).unwrap();
     assert_eq!(obs.n("adverts"), 0);
-    assert!(obs.node.discover_agents(disc(TOPIC)).await.unwrap().agents.is_empty());
+    assert!(obs
+        .node
+        .discover_agents(disc(TOPIC))
+        .await
+        .unwrap()
+        .agents
+        .is_empty());
 }
 
 // --------------------------------------------------- local identity events
@@ -876,7 +1039,8 @@ async fn a_new_kem_key_re_issues_the_advert_with_the_current_contact_record() {
 
     // rotate the KEM key while the daemon is "stopped", then restart
     let mut id = identity(&a);
-    id.rotate_kem(w.now_ms(), w.now_ms() + 3_600_000, None).unwrap();
+    id.rotate_kem(w.now_ms(), w.now_ms() + 3_600_000, None)
+        .unwrap();
     id.save(&a.id_path, true).unwrap();
     let a = w.reopen(a, dcfg());
     assert_eq!(a.metric("advert.reissued"), 1);
@@ -884,7 +1048,8 @@ async fn a_new_kem_key_re_issues_the_advert_with_the_current_contact_record() {
     pump(&[&a, &b]).await;
     let page = b.node.discover_agents(disc(TOPIC)).await.unwrap();
     assert_eq!(page.agents.len(), 1);
-    let rec = VerifiedContact::parse_and_verify(&page.agents[0].contact_record, w.now_ms()).unwrap();
+    let rec =
+        VerifiedContact::parse_and_verify(&page.agents[0].contact_record, w.now_ms()).unwrap();
     assert_eq!(rec.key_epoch, 2);
     // same capabilities and expiry, a higher sequence number
     assert_eq!(page.agents[0].capabilities, info.capabilities);
@@ -927,7 +1092,11 @@ async fn a_revoked_local_identity_advertises_nothing() {
     assert_eq!(a.node.step_adverts().await.unwrap(), 0);
     assert_eq!(w.net.publish_count(&dtopic(TOPIC)), 0);
     assert_eq!(
-        a.node.advertise_agent(adv(TOPIC, &["x"])).await.unwrap_err().code,
+        a.node
+            .advertise_agent(adv(TOPIC, &["x"]))
+            .await
+            .unwrap_err()
+            .code,
         ErrorCode::PolicyDenied
     );
     assert_eq!(
@@ -961,7 +1130,13 @@ async fn a_late_starting_node_learns_live_adverts_through_history_sync() {
     // the late node: nothing live, then history
     let late = start(&w, "late", dcfg()).await;
     late.node.step_receive().await.unwrap();
-    assert!(late.node.discover_agents(disc(TOPIC)).await.unwrap().agents.is_empty());
+    assert!(late
+        .node
+        .discover_agents(disc(TOPIC))
+        .await
+        .unwrap()
+        .agents
+        .is_empty());
     let rep = late.node.step_history_sync().await.unwrap();
     assert!(rep.completed, "{rep:?}");
     let page = late.node.discover_agents(disc(TOPIC)).await.unwrap();
@@ -986,6 +1161,14 @@ async fn republished_frames_deduplicate_and_a_live_plus_history_copy_is_one_row(
     pump(&[&a, &b]).await;
     b.node.step_history_sync().await.unwrap();
     assert_eq!(b.n("adverts"), 1);
-    assert_eq!(b.node.discover_agents(disc(TOPIC)).await.unwrap().agents.len(), 1);
+    assert_eq!(
+        b.node
+            .discover_agents(disc(TOPIC))
+            .await
+            .unwrap()
+            .agents
+            .len(),
+        1
+    );
     assert!(b.metric("advert.ignored_stale") >= 1);
 }

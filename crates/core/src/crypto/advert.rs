@@ -293,8 +293,8 @@ impl VerifiedAdvert {
         if doc.len() > MAX_ADVERT_DOCUMENT_LEN {
             return Err(AdvertError::TooLarge);
         }
-        let d: Document = serde_json::from_str(doc)
-            .map_err(|e| AdvertError::Malformed(json_reason(&e)))?;
+        let d: Document =
+            serde_json::from_str(doc).map_err(|e| AdvertError::Malformed(json_reason(&e)))?;
         let record = B64
             .decode(&d.record)
             .map_err(|_| AdvertError::Malformed("record is not base64url"))?;
@@ -308,13 +308,13 @@ impl VerifiedAdvert {
             .as_slice()
             .try_into()
             .map_err(|_| AdvertError::Malformed("sig must be 64 bytes"))?;
-        let ver: VersionOnly = serde_json::from_slice(&record)
-            .map_err(|e| AdvertError::Malformed(json_reason(&e)))?;
+        let ver: VersionOnly =
+            serde_json::from_slice(&record).map_err(|e| AdvertError::Malformed(json_reason(&e)))?;
         if ver.v != ADVERT_VERSION {
             return Err(AdvertError::UnknownVersion(ver.v));
         }
-        let r: AdvertV1 = serde_json::from_slice(&record)
-            .map_err(|e| AdvertError::Malformed(json_reason(&e)))?;
+        let r: AdvertV1 =
+            serde_json::from_slice(&record).map_err(|e| AdvertError::Malformed(json_reason(&e)))?;
         let address: Address = r.address.parse().map_err(AdvertError::InvalidAddress)?;
         let mut msg = Vec::with_capacity(ADVERT_DOMAIN.len() + record.len());
         msg.extend_from_slice(ADVERT_DOMAIN);
@@ -515,9 +515,11 @@ mod tests {
         assert_eq!(v2.display_name, None);
         // withdrawal
         let w = id.create_advert(&content(&[], 4), &LIM).unwrap();
-        assert!(VerifiedAdvert::parse_and_verify(&w.to_document(), NOW, &LIM)
-            .unwrap()
-            .is_withdrawal());
+        assert!(
+            VerifiedAdvert::parse_and_verify(&w.to_document(), NOW, &LIM)
+                .unwrap()
+                .is_withdrawal()
+        );
     }
 
     #[test]
@@ -561,7 +563,10 @@ mod tests {
         // address swapped to the signer's, record names the victim
         let mut r = rec.clone();
         r["address"] = serde_json::json!(other.address().to_string());
-        assert_eq!(verify(&doc_of(&id, &r, &id)), Err(AdvertError::BadSignature));
+        assert_eq!(
+            verify(&doc_of(&id, &r, &id)),
+            Err(AdvertError::BadSignature)
+        );
         // signed by `other` for `other`'s address but embedding id's contact record
         assert_eq!(
             verify(&doc_of(&other, &r, &other)),
@@ -626,10 +631,7 @@ mod tests {
         // expired
         assert_eq!(verify(&ok, NOW + 3_600_000), Err(AdvertError::Expired));
         // issued in the future beyond skew
-        assert_eq!(
-            verify(&ok, NOW - 120_001),
-            Err(AdvertError::FromFuture)
-        );
+        assert_eq!(verify(&ok, NOW - 120_001), Err(AdvertError::FromFuture));
         assert!(verify(&ok, NOW - 120_000).is_ok());
         // ttl above the maximum
         let long = sign(&|r| r["expires_at"] = serde_json::json!(NOW + 86_400_001));
