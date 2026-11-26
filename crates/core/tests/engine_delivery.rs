@@ -1005,6 +1005,42 @@ async fn contact_management() {
     assert_eq!(idn.contact_record, a.record);
 }
 
+/// Review finding 7a: a repeated or cyclic pagination cursor is a failed pass:
+/// the watermark stays and the missed interval is queried again next time.
+#[tokio::test]
+async fn repeated_history_cursor_is_a_failed_pass_and_the_interval_is_requeried() {
+    use std::sync::atomic::Ordering;
+    for mode in [1u8, 2] {
+        let w = World::new();
+        let (b, hl) = w.agent_history_loop("b", cfg());
+        b.node.step_receive().await.unwrap();
+        assert!(b.node.step_history_sync().await.unwrap().completed);
+        let wm0 = b.node.debug_history_watermark().unwrap();
+        w.advance(120_000);
+
+        hl.mode.store(mode, Ordering::SeqCst);
+        hl.starts.lock().unwrap().clear();
+        let rep = b.node.step_history_sync().await.unwrap();
+        assert!(
+            !rep.completed,
+            "mode {mode}: a looping cursor is a failed pass"
+        );
+        assert!(rep.error.is_some());
+        assert_eq!(b.node.debug_history_watermark().unwrap(), wm0);
+        let first_start = hl.starts.lock().unwrap()[0];
+
+        hl.mode.store(0, Ordering::SeqCst);
+        hl.starts.lock().unwrap().clear();
+        assert!(b.node.step_history_sync().await.unwrap().completed);
+        assert_eq!(
+            hl.starts.lock().unwrap()[0],
+            first_start,
+            "the interval that was not fully read is queried again"
+        );
+        assert!(b.node.debug_history_watermark().unwrap() > wm0);
+    }
+}
+
 /// Review finding 4: published acks (and re-acks) are terminal and must be
 /// pruned after the retention window instead of staying `sent` forever.
 #[tokio::test]

@@ -134,6 +134,8 @@ pub struct Node {
     pub(crate) guard: Mutex<Option<GuardState>>,
     pub(crate) sidecar_path: PathBuf,
     pub(crate) published_generation: AtomicU64,
+    /// Serializes read-compare-write of the generation sidecar.
+    pub(crate) sidecar_lock: std::sync::Mutex<()>,
     pub(crate) own: Address,
     pub(crate) own_str: String,
     pub(crate) topic: ContentTopic,
@@ -343,6 +345,7 @@ impl Node {
             guard: Mutex::new(guard_state),
             sidecar_path,
             published_generation: AtomicU64::new(generation),
+            sidecar_lock: std::sync::Mutex::new(()),
             identity,
             own,
             own_str,
@@ -487,7 +490,15 @@ impl Node {
     }
 
     /// Publish the DB generation to the sidecar (after a commit that bumped it).
+    ///
+    /// The generation is read, compared and written under a lock: two threads
+    /// calling this concurrently (library users driving one [`Node`] from several
+    /// tasks) could otherwise write an older generation over a newer one.
     pub(crate) fn publish_generation(&self) {
+        let _serialized = self
+            .sidecar_lock
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         let g = match self.store.read(guard::db_generation) {
             Ok(g) => g,
             Err(_) => return,
@@ -802,6 +813,8 @@ impl Node {
             loop {
                 let we = ws.saturating_add(max_window).min(end_ns);
                 let mut cursor: Option<String> = None;
+                let mut seen_cursors: std::collections::HashSet<String> =
+                    std::collections::HashSet::new();
                 loop {
                     pages += 1;
                     if pages > MAX_HISTORY_PAGES {
@@ -835,8 +848,16 @@ impl Node {
                         }
                     }
                     match page.next_cursor {
-                        Some(c) if Some(&c) != cursor.as_ref() => cursor = Some(c),
-                        _ => break,
+                        None => break,
+                        // A cursor that was already used means the service is not
+                        // making progress: the rest of the window was not read, so
+                        // this is a failed pass (the watermark must not advance).
+                        Some(c) if !seen_cursors.insert(c.clone()) => {
+                            self.metrics.inc("history.cursor_repeated");
+                            rep.error = Some("history pagination cursor repeated".into());
+                            return Ok(rep);
+                        }
+                        Some(c) => cursor = Some(c),
                     }
                 }
                 if we >= end_ns {

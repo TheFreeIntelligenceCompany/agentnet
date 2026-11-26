@@ -542,7 +542,8 @@ start, after the transport becomes ready again, after a persistence failure, and
 every `history_sync_interval_s` (15). A pass queries
 `[max(watermark - history_overlap_s, now - retention_hours), now + clock_skew]`
 in windows of at most the transport's `max_history_window_ns`, following page
-cursors, and advances the watermark to the pass's start time only if every page
+cursors (a cursor that repeats, or cycles back to an earlier one, is a failed pass: the
+watermark stays and the same interval is read again next time), and advances the watermark to the pass's start time only if every page
 was processed without a store failure. `HistoryUnavailable`, isolation and
 other transport errors leave the watermark untouched. In `run`, a bounded
 channel (`inbound_channel_capacity`, 256) sits between the receive loop and

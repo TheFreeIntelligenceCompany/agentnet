@@ -112,6 +112,29 @@ impl World {
         (a, gate)
     }
 
+    /// An agent whose history queries can be made to paginate in a loop
+    /// (see [`HistoryLoop`]).
+    pub fn agent_history_loop(&self, name: &str, config: NodeConfig) -> (Agent, Arc<HistoryLoop>) {
+        let id = Identity::generate(16, self.now_ms()).unwrap();
+        let id_path = self.dir.path().join(format!("{name}.identity.json"));
+        id.save(&id_path, false).unwrap();
+        let transport = self.net.endpoint();
+        let hl = Arc::new(HistoryLoop::default());
+        let dynt: Arc<dyn Transport> = Arc::new(HistoryLoopTransport {
+            inner: transport.clone(),
+            ctl: hl.clone(),
+        });
+        let a = self.open_agent(
+            name,
+            config,
+            transport,
+            dynt,
+            id_path,
+            NodeOptions::default(),
+        );
+        (a, hl)
+    }
+
     fn open_agent(
         &self,
         name: &str,
@@ -300,6 +323,64 @@ impl Transport for GateTransport {
     }
     async fn history(&self, query: &HistoryQuery) -> Result<HistoryPage, TransportError> {
         self.inner.history(query).await
+    }
+    async fn status(&self) -> TransportStatus {
+        self.inner.status().await
+    }
+    fn max_payload_len(&self, topic: &ContentTopic) -> usize {
+        self.inner.max_payload_len(topic)
+    }
+    fn max_history_window_ns(&self) -> i64 {
+        self.inner.max_history_window_ns()
+    }
+}
+
+/// Controls a [`HistoryLoopTransport`]: while `mode` is non-zero every history
+/// query answers an empty page whose cursor repeats (mode 1: `x` -> `x`) or
+/// cycles (mode 2: `x` -> `y` -> `x`). `starts` records every query start.
+#[derive(Default)]
+pub struct HistoryLoop {
+    pub mode: std::sync::atomic::AtomicU8,
+    pub starts: std::sync::Mutex<Vec<i64>>,
+}
+
+pub struct HistoryLoopTransport {
+    inner: MockTransport,
+    ctl: Arc<HistoryLoop>,
+}
+
+#[async_trait]
+impl Transport for HistoryLoopTransport {
+    async fn subscribe(&self, topic: &ContentTopic) -> Result<(), TransportError> {
+        self.inner.subscribe(topic).await
+    }
+    async fn publish(
+        &self,
+        topic: &ContentTopic,
+        payload: &[u8],
+    ) -> Result<PublishReceipt, TransportError> {
+        self.inner.publish(topic, payload).await
+    }
+    async fn poll(&self, topic: &ContentTopic) -> Result<Vec<InboundFrame>, TransportError> {
+        self.inner.poll(topic).await
+    }
+    async fn history(&self, query: &HistoryQuery) -> Result<HistoryPage, TransportError> {
+        self.ctl.starts.lock().unwrap().push(query.start_ns);
+        match self.ctl.mode.load(std::sync::atomic::Ordering::SeqCst) {
+            0 => self.inner.history(query).await,
+            1 => Ok(HistoryPage {
+                frames: vec![],
+                next_cursor: Some("x".into()),
+            }),
+            _ => Ok(HistoryPage {
+                frames: vec![],
+                next_cursor: Some(if query.cursor.as_deref() == Some("x") {
+                    "y".into()
+                } else {
+                    "x".into()
+                }),
+            }),
+        }
     }
     async fn status(&self) -> TransportStatus {
         self.inner.status().await
