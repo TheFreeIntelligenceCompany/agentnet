@@ -4,8 +4,8 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use agentnet_core::api::{
-    AddContactRequest, AgentApi, ApiError, ChangeHint, CreateTriggerRequest, ErrorCode,
-    PageRequest, ReadInboxRequest, SendMessageRequest, Trust,
+    AddContactRequest, AdvertiseRequest, AgentApi, ApiError, ChangeHint, CreateTriggerRequest,
+    DiscoverRequest, ErrorCode, PageRequest, ReadInboxRequest, SendMessageRequest, Trust,
 };
 use agentnet_core::Node;
 use serde::de::DeserializeOwned;
@@ -279,6 +279,11 @@ struct DocumentParams {
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
+struct TopicParams {
+    topic: String,
+}
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
 struct MessageIdParams {
     message_id: String,
 }
@@ -367,6 +372,13 @@ async fn dispatch(ctx: &ServerCtx, method: &str, p: Value) -> Result<Value, ApiE
             to_value(n.read_conversation(a.conversation_id, page).await?)
         }
         "read_events" => to_value(n.read_events(params::<PageRequest>(p)?).await?),
+        // ---- optional discovery (policy_denied unless the host enabled it)
+        "advertise_agent" => to_value(n.advertise_agent(params::<AdvertiseRequest>(p)?).await?),
+        "withdraw_advert" => {
+            let a: TopicParams = params(p)?;
+            to_value(n.withdraw_advert(a.topic).await?)
+        }
+        "discover_agents" => to_value(n.discover_agents(params::<DiscoverRequest>(p)?).await?),
         "events.ack" | "ack_events" => {
             let a: AckParams = params(p)?;
             to_value(n.ack_events(a.cursor).await?)

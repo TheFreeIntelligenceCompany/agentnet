@@ -242,3 +242,33 @@ pub fn doctor(checks: &[Check]) -> String {
     s.push_str(&format!("{fails} failing, {warns} warning(s)"));
     s
 }
+
+/// One discovery candidate. Every remote-controlled field is neutralised and
+/// truncated: it is an untrusted claim, never an instruction.
+pub fn discovered(a: &DiscoveredAgent) -> String {
+    let mut out = format!(
+        "{} [{}]",
+        a.address,
+        if a.is_contact {
+            trust(a.trust)
+        } else {
+            "not a contact"
+        }
+    );
+    if let Some(n) = &a.display_name {
+        out.push_str(&format!(" claims name {:?}", truncate(&clean(n), 64)));
+    }
+    out.push_str(&format!("\n    expires {}", time(a.expires_at)));
+    for c in &a.capabilities {
+        out.push_str(&format!(
+            "\n    claims capability {}{}",
+            truncate(&clean(&c.name), 64),
+            if c.description.is_empty() {
+                String::new()
+            } else {
+                format!(": {}", truncate(&clean(&c.description), 256))
+            }
+        ));
+    }
+    out
+}

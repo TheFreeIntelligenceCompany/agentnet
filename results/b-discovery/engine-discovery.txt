@@ -1,0 +1,32 @@
+   Compiling agentnet-core v0.1.0 (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a483e56fc5dd60957/crates/core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.66s
+     Running tests/engine_discovery.rs (target/debug/deps/engine_discovery-72fba98053f35f38)
+
+running 24 tests
+test a_topic_outside_the_host_list_is_denied ... ok
+test a_failed_publish_is_retried_soon ... ok
+test advertise_then_another_node_discovers_it_and_can_add_the_contact ... ok
+test a_revoked_local_identity_advertises_nothing ... ok
+test a_higher_seq_replaces_and_a_replay_of_an_older_one_is_ignored ... ok
+test disabled_by_default_subscribes_to_nothing_and_denies_the_tools ... ok
+test enabled_subscribes_to_exactly_the_listed_topics ... ok
+test adverts_and_sealed_frames_never_cross_topics ... ok
+test a_new_kem_key_re_issues_the_advert_with_the_current_contact_record ... ok
+test own_publication_coming_back_is_ignored ... ok
+test expired_adverts_are_not_returned_and_are_pruned ... ok
+test republish_schedule_follows_the_interval_until_expiry ... ok
+test a_late_starting_node_learns_live_adverts_through_history_sync ... ok
+test receiving_adverts_has_no_side_effects_on_contacts_events_or_triggers ... ok
+test garbage_oversize_and_malformed_frames_do_not_panic ... ok
+test forged_adverts_are_rejected_and_counted ... ok
+test request_validation ... ok
+test republished_frames_deduplicate_and_a_live_plus_history_copy_is_one_row ... ok
+test the_sequence_number_survives_a_restart ... ok
+test ttl_is_defaulted_and_capped ... ok
+test blocked_and_revoked_advertisers_are_dropped_purged_and_never_evict ... ok
+test withdrawal_removes_the_advert_and_blocks_a_replay ... ok
+test capability_filter_is_an_exact_match_and_results_paginate ... ok
+test the_table_is_capped_by_evicting_the_soonest_expiring ... ok
+
+test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.16s
+

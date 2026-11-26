@@ -19,7 +19,7 @@ use rusqlite::{Connection, OptionalExtension, Transaction, TransactionBehavior};
 use crate::api::ApiError;
 
 /// Current schema version (`PRAGMA user_version`).
-pub const SCHEMA_VERSION: i64 = 2;
+pub const SCHEMA_VERSION: i64 = 3;
 
 /// Failure of a store operation. `Display` never contains row contents.
 #[derive(Debug, thiserror::Error)]
@@ -174,6 +174,30 @@ CREATE TABLE revocations (
 ) WITHOUT ROWID;
 ";
 
+/// v2 -> v3: received capability advertisements (optional discovery feature).
+/// `rid` orders results and serves as the pagination cursor; `cap_names` is
+/// `,name1,name2,` (empty string for a withdrawal tombstone) for exact-name search.
+const SCHEMA_V3: &str = "
+CREATE TABLE adverts (
+  rid          INTEGER PRIMARY KEY AUTOINCREMENT,
+  topic        TEXT NOT NULL,
+  address      TEXT NOT NULL,
+  document     TEXT NOT NULL,
+  contact_record TEXT NOT NULL,
+  display_name TEXT,
+  capabilities TEXT NOT NULL,
+  cap_names    TEXT NOT NULL,
+  seq          INTEGER NOT NULL,
+  issued_at    INTEGER NOT NULL,
+  expires_at   INTEGER NOT NULL,
+  kem_expires_at INTEGER,
+  received_at  INTEGER NOT NULL,
+  UNIQUE (topic, address)
+);
+CREATE INDEX adverts_expiry ON adverts (expires_at);
+CREATE INDEX adverts_address ON adverts (address);
+";
+
 /// The SQLite store.
 pub struct Store {
     conn: Mutex<Option<Connection>>,
@@ -208,6 +232,12 @@ impl Store {
             let tx = conn.transaction()?;
             tx.execute_batch(SCHEMA_V2)?;
             tx.pragma_update(None, "user_version", 2)?;
+            tx.commit()?;
+        }
+        if v < 3 {
+            let tx = conn.transaction()?;
+            tx.execute_batch(SCHEMA_V3)?;
+            tx.pragma_update(None, "user_version", 3)?;
             tx.commit()?;
         }
         Ok(Self {
@@ -334,6 +364,68 @@ mod tests {
             .unwrap();
         store.close();
         // reopening a v2 database is a no-op
+        let store = Store::open(&path).unwrap();
+        store.close();
+    }
+
+    /// A database at the previous schema version (v2, with live data) gains the
+    /// `adverts` table without touching existing rows.
+    #[test]
+    fn migrates_a_v2_database_to_v3() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("v2.sqlite");
+        {
+            let conn = Connection::open(&path).unwrap();
+            conn.execute_batch(SCHEMA_V1).unwrap();
+            conn.execute_batch(SCHEMA_V2).unwrap();
+            conn.pragma_update(None, "user_version", 2).unwrap();
+            conn.execute(
+                "INSERT INTO revocations (address, document, revoked_at, received_at, source)
+                 VALUES ('an1r','{}',1,2,'imported')",
+                [],
+            )
+            .unwrap();
+            conn.execute(
+                "INSERT INTO kv (key, value) VALUES ('own_address','an1z')",
+                [],
+            )
+            .unwrap();
+            let has: i64 = conn
+                .query_row(
+                    "SELECT COUNT(*) FROM sqlite_master WHERE name = 'adverts'",
+                    [],
+                    |r| r.get(0),
+                )
+                .unwrap();
+            assert_eq!(has, 0);
+        }
+        let store = Store::open(&path).unwrap();
+        store
+            .tx(|tx| {
+                let v: i64 = tx.query_row("PRAGMA user_version", [], |r| r.get(0))?;
+                assert_eq!(v, 3);
+                assert_eq!(kv_get(tx, "own_address")?.as_deref(), Some("an1z"));
+                let n: i64 = tx.query_row("SELECT COUNT(*) FROM revocations", [], |r| r.get(0))?;
+                assert_eq!(n, 1);
+                tx.execute(
+                    "INSERT INTO adverts (topic, address, document, contact_record, capabilities,
+                       cap_names, seq, issued_at, expires_at, received_at)
+                     VALUES ('t','an1a','d','c','[]',',x,',1,1,2,1)",
+                    [],
+                )?;
+                // (topic, address) is unique
+                assert!(tx
+                    .execute(
+                        "INSERT INTO adverts (topic, address, document, contact_record,
+                           capabilities, cap_names, seq, issued_at, expires_at, received_at)
+                         VALUES ('t','an1a','d','c','[]',',x,',1,1,2,1)",
+                        [],
+                    )
+                    .is_err());
+                Ok(())
+            })
+            .unwrap();
+        store.close();
         let store = Store::open(&path).unwrap();
         store.close();
     }

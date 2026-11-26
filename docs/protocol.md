@@ -52,6 +52,7 @@ All domain-separation strings are ASCII and are used byte-exactly:
 | `agentnet/v1/contact-record\0` | contact record signature input prefix |
 | `agentnet/v1/envelope\0` | envelope signature input prefix |
 | `agentnet/v1/identity-revocation\0` | identity-revocation tombstone signature input prefix |
+| `agentnet/v1/capability-advert\0` | capability advertisement signature input prefix (optional discovery, `docs/discovery.md`) |
 | `agentnet/v1/hpke\0` | HPKE `info` prefix |
 
 (`\0` is a single NUL byte.)
@@ -790,3 +791,23 @@ ignores the second (`ack.ignored_already_delivered`), each instance's replay
 state is independent (so a replay is accepted once per instance), and triggers
 may fire on both. `agentnet doctor` always prints this limitation. The data-dir
 lock covers only one directory on one host.
+
+## 11. Advertisement frames (optional discovery)
+
+Off by default; full description in `docs/discovery.md`. This section records only what
+touches the wire protocol.
+
+* A second frame kind exists, used **only on host-configured discovery content topics**
+  (`/agentnet/1/discovery-<name>/proto`): `b"AD" || 0x01 || document_bytes`. It is
+  PLAINTEXT. The document is `{"record": b64url, "sig": b64url}` over the record described in
+  `docs/discovery.md` section 3, signed by the address key with the domain
+  `agentnet/v1/capability-advert\0`. It embeds the advertiser's current signed contact record
+  and is accepted only when that record verifies for the same address.
+* The sealed frame (section 5) starts with `b"AN"`; the two magics differ so that a frame of one
+  kind can never parse as the other. The engine routes by topic: an `AD` frame on an inbox topic
+  and a sealed frame on a discovery topic are dropped and counted, never parsed as the other kind.
+* A higher `seq` from the same address on the same topic replaces a lower one; equal or lower is
+  ignored; an empty capability list with a higher `seq` is a withdrawal (kept as a hidden
+  tombstone until its expiry so the replaced advert cannot be replayed).
+* No new cryptographic construction: the only addition is the signing domain above (condition 4
+  of `docs/crypto-requirements.md`).

@@ -98,6 +98,25 @@ Engine tuning; defaults are in `docs/protocol.md` section 8 and `crates/core/src
 (256), `reack_min_interval_s` (30), `send_batch` (64), `transport_seen_ttl_s` (86400), `jitter_seed`
 (unset; tests only).
 
+## `[discovery]`
+
+Optional capability discovery; **off by default**. Full description: `docs/discovery.md`.
+This is not the node's peer discovery (`network.public_discovery`, which stays forbidden in
+private mode): adverts are signed statements on content topics of the same relay.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `enabled` | `false` | With `false` the daemon subscribes to nothing, publishes nothing and the discovery tools return `policy_denied` |
+| `topics` | `[]` | Authorized topic names, each `[a-z0-9-]{1,32}` (at most 16, no duplicates); required (non-empty) when `enabled`. A name maps to `/agentnet/1/discovery-<name>/proto`. Tool calls naming another topic are `policy_denied` |
+| `max_records` | `500` | Stored advertisements across all topics; when full the soonest-expiring is evicted (never for a blocked or revoked advertiser) |
+| `max_advert_ttl_s` | `86400` | Longest accepted and issued lifetime, 1..=604800 |
+| `default_advert_ttl_s` | `3600` | Lifetime when a request gives none; `<= max_advert_ttl_s` |
+| `republish_interval_s` | `900` | How often our own advertisement is published again |
+| `max_capabilities` | `16` | Per advertisement, issued and accepted; 1..=64 |
+
+Advertisements are PLAINTEXT and readable by every node on the relay. In private mode they stay on the same
+private node and relay; nothing new is contacted.
+
 ## `[mcp_http]`
 
 | Key | Default | Meaning |
@@ -129,6 +148,7 @@ Protocol, signature scheme and receiver duties: `docs/host-integration.md`.
 | `mode = "public"` without `i_understand_public` | error |
 | `public_fallback = true` (any mode) | error |
 | `public_discovery = true` in private mode | error |
+| `discovery.enabled = true` without `topics`; invalid or duplicate topic name; `default_advert_ttl_s > max_advert_ttl_s`; `max_capabilities` outside 1..=64 | error (`engine: ...`) |
 | `node_url` public host, preset `cluster_id`, public/invalid peer multiaddr | error from the transport validation (`network: ...`) |
 | `mcp_http.bind` not loopback / not an `IP:port` | error |
 | webhook URL public, hostname, link-local, metadata, multicast, unspecified, credentials, non-http(s) | error (hostnames and public IPs allowed only with `allow_remote`; link-local etc. never) |

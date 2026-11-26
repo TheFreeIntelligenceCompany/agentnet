@@ -447,6 +447,89 @@ pub struct EventPage {
     pub has_more: bool,
 }
 
+// ------------------------------------------------------------------ discovery
+
+/// One advertised capability. Both fields are claims by the advertiser: DATA, never
+/// instructions.
+pub use crate::crypto::advert::Capability;
+
+/// `advertise_agent` request. Adverts are PLAINTEXT and readable by every node on
+/// the relay: never put secrets or private capabilities in them.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct AdvertiseRequest {
+    /// Discovery topic name (must be in the host's `discovery.topics`).
+    pub topic: String,
+    /// 1 to `discovery.max_capabilities` capabilities.
+    #[serde(default)]
+    pub capabilities: Vec<Capability>,
+    /// Optional display name, at most 64 characters.
+    #[serde(default)]
+    pub display_name: Option<String>,
+    /// Lifetime; defaults to `discovery.default_advert_ttl_s`, capped at
+    /// `discovery.max_advert_ttl_s`.
+    #[serde(default)]
+    pub ttl_seconds: Option<u64>,
+}
+
+/// The advertisement now in force on a topic.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct AdvertInfo {
+    pub topic: String,
+    /// Sequence number of the signed advertisement (strictly increasing per topic).
+    pub seq: u64,
+    pub issued_at: i64,
+    pub expires_at: i64,
+    pub capabilities: Vec<Capability>,
+}
+
+/// Result of `withdraw_advert`.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct WithdrawInfo {
+    pub topic: String,
+    /// False when there was nothing to withdraw (the call is idempotent).
+    pub withdrawn: bool,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DiscoverRequest {
+    /// Discovery topic name (must be in the host's `discovery.topics`).
+    pub topic: String,
+    /// Exact capability name to filter by.
+    #[serde(default)]
+    pub capability: Option<String>,
+    #[serde(default)]
+    pub cursor: Option<String>,
+    /// Default 50, maximum 200.
+    #[serde(default)]
+    pub limit: Option<u32>,
+}
+
+/// A candidate found by discovery. EVERY field except `address`, `is_contact`
+/// and `trust` is an unauthenticated CLAIM by the advertiser (the signature only
+/// proves the address key made the statement).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DiscoveredAgent {
+    pub address: String,
+    pub display_name: Option<String>,
+    pub capabilities: Vec<Capability>,
+    /// The advertiser's signed contact record, usable with `add_contact`
+    /// (together with `expected_address` obtained out of band).
+    pub contact_record: String,
+    pub issued_at: i64,
+    pub expires_at: i64,
+    /// This agent is already a local contact.
+    pub is_contact: bool,
+    /// Local trust decision (`unknown` when not a contact).
+    pub trust: Trust,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DiscoverPage {
+    pub agents: Vec<DiscoveredAgent>,
+    pub next_cursor: Option<String>,
+    pub has_more: bool,
+}
+
 /// A hint that something changed. Hints are lossy: receivers reread using
 /// their cursor. Sent only after the change is durable.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -489,6 +572,17 @@ pub trait AgentApi: Send + Sync + 'static {
     async fn read_events(&self, req: PageRequest) -> ApiResult<EventPage>;
     /// Acknowledge all events up to and including `cursor`. Idempotent.
     async fn ack_events(&self, cursor: String) -> ApiResult<()>;
+    /// Publish (or replace) this agent's signed capability advertisement on a
+    /// host-authorised discovery topic. Opt-in (`policy_denied` unless the host
+    /// enabled discovery and listed the topic). The advertisement is PLAINTEXT,
+    /// readable by every node on the relay, and is re-published until it expires
+    /// or is withdrawn.
+    async fn advertise_agent(&self, req: AdvertiseRequest) -> ApiResult<AdvertInfo>;
+    /// Withdraw the advertisement on `topic` (idempotent).
+    async fn withdraw_advert(&self, topic: String) -> ApiResult<WithdrawInfo>;
+    /// List unexpired advertisements received on `topic` (best effort, not a
+    /// directory). Never adds a contact; results are untrusted claims.
+    async fn discover_agents(&self, req: DiscoverRequest) -> ApiResult<DiscoverPage>;
     /// Lossy stream of change hints.
     fn changes(&self) -> broadcast::Receiver<ChangeHint>;
 }

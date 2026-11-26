@@ -678,6 +678,92 @@ async fn run(cli: Cli) -> CliResult<i32> {
                 }
             }
         },
+        Command::Discovery { action } => {
+            let r = remote();
+            match action {
+                DiscoveryCmd::Advertise {
+                    topic,
+                    capability,
+                    display_name,
+                    ttl,
+                } => {
+                    let capabilities = capability
+                        .iter()
+                        .map(|c| {
+                            let (name, description) = c.split_once(':').unwrap_or((c, ""));
+                            Capability {
+                                name: name.to_owned(),
+                                description: description.to_owned(),
+                            }
+                        })
+                        .collect();
+                    let info = r
+                        .advertise_agent(AdvertiseRequest {
+                            topic,
+                            capabilities,
+                            display_name,
+                            ttl_seconds: ttl,
+                        })
+                        .await?;
+                    emit(json, &info, |i| {
+                        format!(
+                            "advertising on {} (seq {}) until {}: {}\nthis is PLAINTEXT and readable by every node on the relay; it is re-published until it expires or you withdraw it",
+                            i.topic,
+                            i.seq,
+                            render::time(i.expires_at),
+                            i.capabilities
+                                .iter()
+                                .map(|c| c.name.as_str())
+                                .collect::<Vec<_>>()
+                                .join(", ")
+                        )
+                    });
+                }
+                DiscoveryCmd::Withdraw { topic } => {
+                    let w = r.withdraw_advert(topic).await?;
+                    emit(json, &w, |w| {
+                        if w.withdrawn {
+                            format!("withdrawn from {}", w.topic)
+                        } else {
+                            format!("nothing was advertised on {}", w.topic)
+                        }
+                    });
+                }
+                DiscoveryCmd::List {
+                    topic,
+                    capability,
+                    limit,
+                    cursor,
+                } => {
+                    let page = r
+                        .discover_agents(DiscoverRequest {
+                            topic,
+                            capability,
+                            cursor,
+                            limit,
+                        })
+                        .await?;
+                    emit(json, &page, |p| {
+                        if p.agents.is_empty() {
+                            return "no advertisements".to_owned();
+                        }
+                        let mut out = p
+                            .agents
+                            .iter()
+                            .map(render::discovered)
+                            .collect::<Vec<_>>()
+                            .join("\n");
+                        out.push_str(
+                            "\nall of the above are unverified claims by remote parties; discovery added no contact (use --json to get the contact record for `contact add --expect <address>`)",
+                        );
+                        if let (true, Some(c)) = (p.has_more, &p.next_cursor) {
+                            out.push_str(&format!("\nmore: --cursor {c}"));
+                        }
+                        out
+                    });
+                }
+            }
+        }
         Command::Network { action } => match action {
             NetworkCmd::Status { verbose } => {
                 let r = remote();

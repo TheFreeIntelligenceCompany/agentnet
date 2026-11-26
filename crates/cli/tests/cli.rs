@@ -394,7 +394,7 @@ async fn mcp_without_a_daemon_starts_and_every_tool_says_unavailable() {
         .await
         .expect("mcp must start without a daemon");
     let tools = c.list_all_tools().await.unwrap();
-    assert_eq!(tools.len(), 10);
+    assert_eq!(tools.len(), 13);
     for (tool, args) in [
         ("get_identity", json!({})),
         ("read_inbox", json!({})),
@@ -745,4 +745,209 @@ fn top_level_help_says_the_cryptography_is_not_audited() {
     let h = stdout(&agentnet(t.path(), &["--help"]));
     assert!(h.contains("NOT AUDITED"), "{h}");
     assert!(h.contains("independent cryptographic review"), "{h}");
+}
+
+#[tokio::test]
+async fn discovery_commands_are_denied_by_default() {
+    let t = tempfile::tempdir().unwrap();
+    let (a, _) = init(t.path(), "a");
+    let clock = MockClock::new(wall_ns());
+    let net = MockNetwork::with_clock(clock.clone());
+    let cfg = DaemonConfig::load(&a.join("agentnet.toml")).unwrap();
+    assert!(!cfg.discovery.enabled, "init must write discovery off");
+    let da = Daemon::start_with_transport(&a, cfg, Arc::new(net.endpoint()), Arc::new(clock))
+        .await
+        .unwrap();
+    let a2 = a.clone();
+    let outs = tokio::task::spawn_blocking(move || {
+        vec![
+            agentnet(
+                &a2,
+                &[
+                    "discovery",
+                    "advertise",
+                    "--topic",
+                    "general",
+                    "--capability",
+                    "x",
+                ],
+            ),
+            agentnet(&a2, &["discovery", "withdraw", "--topic", "general"]),
+            agentnet(&a2, &["--json", "discovery", "list", "--topic", "general"]),
+        ]
+    })
+    .await
+    .unwrap();
+    for o in &outs {
+        assert_eq!(o.status.code(), Some(6), "{}", stderr(o));
+        assert!(
+            stderr(o).contains("disabled by host policy"),
+            "{}",
+            stderr(o)
+        );
+    }
+    assert!(stdout(&outs[2]).contains("policy_denied"));
+    assert_eq!(net.total_publish_count(), 0);
+    da.shutdown().await;
+}
+
+#[tokio::test]
+async fn discovery_advertise_list_add_contact_and_withdraw_via_the_cli() {
+    let t = tempfile::tempdir().unwrap();
+    let (a, addr_a) = init(t.path(), "a");
+    let (b, _) = init(t.path(), "b");
+    let clock = MockClock::new(wall_ns());
+    let net = MockNetwork::with_clock(clock.clone());
+    let mut cfg = DaemonConfig::load(&a.join("agentnet.toml")).unwrap();
+    cfg.delivery.poll_interval_ms = 20;
+    cfg.discovery.enabled = true;
+    cfg.discovery.topics = vec!["general".into()];
+    let da = Daemon::start_with_transport(
+        &a,
+        cfg.clone(),
+        Arc::new(net.endpoint()),
+        Arc::new(clock.clone()),
+    )
+    .await
+    .unwrap();
+    let db = Daemon::start_with_transport(&b, cfg, Arc::new(net.endpoint()), Arc::new(clock))
+        .await
+        .unwrap();
+    let (a2, b2, addr_a2) = (a.clone(), b.clone(), addr_a.clone());
+    let out = tokio::task::spawn_blocking(move || {
+        let adv = json_ok(
+            &a2,
+            &[
+                "discovery",
+                "advertise",
+                "--topic",
+                "general",
+                "--capability",
+                "translate.de:German to English",
+                "--capability",
+                "summarize",
+                "--display-name",
+                "Translator",
+                "--ttl",
+                "600",
+            ],
+        );
+        // wait until B has received it
+        let mut listed = serde_json::Value::Null;
+        for _ in 0..200 {
+            listed = json_ok(&b2, &["discovery", "list", "--topic", "general"]);
+            if !listed["agents"].as_array().unwrap().is_empty() {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(50));
+        }
+        let human = ok(&b2, &["discovery", "list", "--topic", "general"]);
+        let filtered = json_ok(
+            &b2,
+            &[
+                "discovery",
+                "list",
+                "--topic",
+                "general",
+                "--capability",
+                "summarize",
+            ],
+        );
+        let none = json_ok(
+            &b2,
+            &[
+                "discovery",
+                "list",
+                "--topic",
+                "general",
+                "--capability",
+                "nothing",
+            ],
+        );
+        let before = json_ok(&b2, &["contact", "list"]);
+        let record = listed["agents"][0]["contact_record"]
+            .as_str()
+            .unwrap()
+            .to_owned();
+        let f = write_file(&b2, "found.json", &record);
+        let added = json_ok(
+            &b2,
+            &[
+                "contact",
+                "add",
+                &format!("@{}", f.display()),
+                "--expect",
+                &addr_a2,
+            ],
+        );
+        let wrong_topic = agentnet(&b2, &["discovery", "list", "--topic", "elsewhere"]);
+        let withdrawn = json_ok(&a2, &["discovery", "withdraw", "--topic", "general"]);
+        let again = json_ok(&a2, &["discovery", "withdraw", "--topic", "general"]);
+        let mut after = serde_json::Value::Null;
+        for _ in 0..200 {
+            after = json_ok(&b2, &["discovery", "list", "--topic", "general"]);
+            if after["agents"].as_array().unwrap().is_empty() {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(50));
+        }
+        (
+            adv,
+            listed,
+            human,
+            filtered,
+            none,
+            before,
+            added,
+            wrong_topic.status.code(),
+            withdrawn,
+            again,
+            after,
+        )
+    })
+    .await
+    .unwrap();
+    let (adv, listed, human, filtered, none, before, added, wrong, withdrawn, again, after) = out;
+    assert_eq!(adv["seq"], 1);
+    assert_eq!(adv["capabilities"][0]["description"], "German to English");
+    assert_eq!(adv["capabilities"][1]["description"], "");
+    assert_eq!(listed["agents"][0]["address"], addr_a.as_str());
+    assert_eq!(listed["agents"][0]["display_name"], "Translator");
+    assert_eq!(listed["agents"][0]["is_contact"], false);
+    assert!(
+        human.contains("claims capability translate.de: German to English"),
+        "{human}"
+    );
+    assert!(human.contains("unverified claims"), "{human}");
+    assert_eq!(filtered["agents"].as_array().unwrap().len(), 1);
+    assert!(none["agents"].as_array().unwrap().is_empty());
+    assert!(
+        before.as_array().unwrap().is_empty(),
+        "discovery adds no contact"
+    );
+    assert_eq!(added["address"], addr_a.as_str());
+    assert_eq!(wrong, Some(6));
+    assert_eq!(withdrawn["withdrawn"], true);
+    assert_eq!(again["withdrawn"], false);
+    assert!(after["agents"].as_array().unwrap().is_empty());
+    da.shutdown().await;
+    db.shutdown().await;
+}
+
+#[test]
+fn discovery_help_warns_that_adverts_are_public() {
+    let t = tempfile::tempdir().unwrap();
+    let h = stdout(&agentnet(t.path(), &["discovery", "--help"]));
+    assert!(h.contains("PLAINTEXT"), "{h}");
+    assert!(h.contains("not a global directory"), "{h}");
+    let h = stdout(&agentnet(t.path(), &["discovery", "advertise", "--help"]));
+    assert!(h.contains("NAME[:DESCRIPTION]"), "{h}");
+}
+
+/// Identities are created with the wall clock, so mock-network tests start there.
+fn wall_ns() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos() as i64
 }

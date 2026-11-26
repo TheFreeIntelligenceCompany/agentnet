@@ -2,7 +2,9 @@
 #
 # Private mode fails closed: the Logos Delivery node must be on a loopback or
 # private address, connected only to the peers listed here, and on a private
-# cluster id. Discovery and public fallback do not exist.
+# cluster id. Public peer discovery and public fallback do not exist. (The
+# optional [discovery] section below is something else: it lists capability
+# adverts on YOUR relay, off by default.)
 
 [network]
 mode = "private"
@@ -29,6 +31,19 @@ max_active = 32
 max_matches_per_minute = 60
 default_lifetime_s = 3600
 max_lifetime_hours = 24
+
+# Optional capability discovery (docs/discovery.md). OFF by default: nothing is
+# subscribed or published and the discovery tools return policy_denied.
+# Advertisements are PLAINTEXT: every node on your relay can read them. Only
+# the topic names listed here can be used; the topics exist only on this relay.
+[discovery]
+enabled = false
+topics = []                      # e.g. ["general"]; names are [a-z0-9-]{1,32}
+max_records = 500
+max_advert_ttl_s = 86400
+default_advert_ttl_s = 3600
+republish_interval_s = 900
+max_capabilities = 16
 
 [mcp_http]
 enabled = false

@@ -30,6 +30,16 @@ pub const MAX_CONTACT_RECORD_BYTES: usize = 16_384;
 pub const MAX_ALIAS_CHARS: usize = 64;
 /// Maximum `target_session` length in bytes.
 pub const MAX_SESSION_LEN: usize = 256;
+/// Discovery topic name length bounds (`[a-z0-9-]{1,32}`).
+pub const MAX_TOPIC_LEN: usize = 32;
+/// Capability name length bound (`[a-z0-9._-]{1,64}`).
+pub const MAX_CAPABILITY_NAME_LEN: usize = 64;
+/// Capability description bound in characters.
+pub const MAX_CAPABILITY_DESCRIPTION_CHARS: usize = 256;
+/// Display name bound in characters.
+pub const MAX_DISPLAY_NAME_CHARS: usize = 64;
+/// Most capabilities one `advertise_agent` call may carry (the host may allow fewer).
+pub const MAX_CAPABILITIES: usize = 64;
 /// Maximum size of an HTTP request body accepted by the Streamable HTTP endpoint.
 pub const MAX_HTTP_BODY_BYTES: usize = 1_048_576;
 
@@ -37,6 +47,10 @@ pub const MAX_HTTP_BODY_BYTES: usize = 1_048_576;
 /// idempotency key). Unreserved URI characters only, so an id can be embedded in
 /// an `agentnet://conversations/{id}` URI without percent-encoding.
 pub const ID_PATTERN: &str = "^[A-Za-z0-9._~-]{1,128}$";
+/// JSON Schema `pattern` for discovery topic names.
+pub const TOPIC_PATTERN: &str = "^[a-z0-9-]{1,32}$";
+/// JSON Schema `pattern` for capability names.
+pub const CAPABILITY_NAME_PATTERN: &str = "^[a-z0-9._-]{1,64}$";
 /// JSON Schema `pattern` for agent addresses (loose; the engine validates the checksum).
 pub const ADDRESS_PATTERN: &str = "^an1[a-z2-7]{1,125}$";
 
@@ -59,4 +73,20 @@ pub fn is_valid_address(s: &str) -> bool {
 /// True if `s` is a plausible opaque cursor: 1..=512 visible ASCII bytes.
 pub fn is_valid_cursor(s: &str) -> bool {
     !s.is_empty() && s.len() <= MAX_CURSOR_LEN && s.bytes().all(|b| (0x21..=0x7e).contains(&b))
+}
+
+/// True if `s` is a valid discovery topic name (see [`TOPIC_PATTERN`]).
+pub fn is_valid_topic(s: &str) -> bool {
+    !s.is_empty()
+        && s.len() <= MAX_TOPIC_LEN
+        && s.bytes()
+            .all(|b| matches!(b, b'a'..=b'z' | b'0'..=b'9' | b'-'))
+}
+
+/// True if `s` is a valid capability name (see [`CAPABILITY_NAME_PATTERN`]).
+pub fn is_valid_capability_name(s: &str) -> bool {
+    !s.is_empty()
+        && s.len() <= MAX_CAPABILITY_NAME_LEN
+        && s.bytes()
+            .all(|b| matches!(b, b'a'..=b'z' | b'0'..=b'9' | b'.' | b'_' | b'-'))
 }

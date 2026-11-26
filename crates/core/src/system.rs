@@ -257,6 +257,8 @@ impl Node {
         source: &str,
         now: i64,
     ) -> Result<(bool, usize), StoreError> {
+        // A revoked identity's advertisements are removed and refused from now on.
+        Self::purge_adverts(tx, &rev.address)?;
         let n = tx.execute(
             "INSERT OR IGNORE INTO revocations (address, document, revoked_at, received_at, source)
              VALUES (?1, ?2, ?3, ?4, ?5)",

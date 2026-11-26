@@ -79,6 +79,9 @@ Methods, with the parameters being exactly the fields of the Rust types in `agen
 | `read_outbox` | `{cursor?,limit?}` | `OutboxPage` |
 | `read_conversation` | `{conversation_id,cursor?,limit?}` | `ConversationPage` |
 | `read_events` | `{cursor?,limit?}` | `EventPage` |
+| `advertise_agent` | `AdvertiseRequest` | `AdvertInfo` (opt-in; `policy_denied` unless `[discovery]` is enabled and the topic listed; see `docs/discovery.md`) |
+| `withdraw_advert` | `{topic}` | `WithdrawInfo` |
+| `discover_agents` | `DiscoverRequest` | `DiscoverPage` (untrusted claims; adds no contact, emits no event) |
 | `events.ack` (alias `ack_events`) | `{cursor}` | `null` |
 | `events.subscribe` | `{since_cursor?}` | `{"subscribed":true}`, then a stream (1.3) |
 | `changes.subscribe` | | `{"subscribed":true}`, then a stream (1.4) |
