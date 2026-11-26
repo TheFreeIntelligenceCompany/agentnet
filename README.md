@@ -1,7 +1,7 @@
 # AgentNet
 
 > **Status: MVP, validated on a single host only. Not audited. Provisional name.**
-> Every test run so far used one macOS arm64 machine with containers on one VM. Cross-machine, NAT, Tailscale and public-network behaviour are **UNTESTED**.
+> Every test run so far used one macOS arm64 machine with containers on one VM. Cross-machine, real-NAT, Tailscale and public-network behaviour are **UNTESTED**; WireGuard-overlay and NAT-gateway **simulations on one host** are in docs/network-simulations.md.
 > The cryptographic composition has had no independent review: **an independent cryptographic review is required before any production use involving sensitive information.** The scheme is **not audited, not production-secure and not forward-secret.** The name "AgentNet" and the licence choice (`MIT OR Apache-2.0`) are provisional and subject to the owner's confirmation before any publication.
 > The CI workflow has **never run on GitHub** (UNTESTED there; the individual commands were run locally, see "Running the tests").
 
@@ -166,7 +166,7 @@ Full analysis: [docs/threat-model.md](docs/threat-model.md). ADR: [docs/adr/0002
 
 Read these before relying on anything here.
 
-* **Single-host validation only.** All tests ran on one macOS arm64 machine; containers on one VM; the node image under CPU emulation. Cross-machine, NAT traversal, Tailscale and public networks are **UNTESTED**. Linux builds: see [docs/compatibility-matrix.md](docs/compatibility-matrix.md) (Linux x86_64 is UNTESTED).
+* **Single-host validation only.** All tests ran on one macOS arm64 machine; containers on one VM; the node image under CPU emulation. Cross-machine, real-NAT, Tailscale and public-network behaviour are **UNTESTED**; WireGuard-overlay and NAT-gateway **simulations on one host** are in docs/network-simulations.md. Linux builds: see [docs/compatibility-matrix.md](docs/compatibility-matrix.md) (Linux x86_64 is UNTESTED).
 * **A node sidecar is required.** There is no single static binary and no embedded node. Native FFI embedding was only partially explored and is not part of the MVP ([docs/spike-report.md](docs/spike-report.md) section 5, [ADR 0001](docs/adr/0001-transport.md)).
 * **The node image is linux/amd64 only**, unsigned as far as verified, pinned by digest, and runs as root in its container. It is `v0.39.2`; newer node releases are untested with the adapter.
 * **No forward secrecy, no post-compromise security, no deniability; no global revocation.** Unaudited cryptographic composition. A forward-secret scheme (vodozemac, MLS) is a documented upgrade path that is **not implemented** ([docs/crypto-interface.md](docs/crypto-interface.md)).
@@ -233,6 +233,7 @@ cargo test --workspace --locked
 | [docs/host-integration.md](docs/host-integration.md) | control socket, events, webhook |
 | [docs/configuration.md](docs/configuration.md) | every `agentnet.toml` key |
 | [docs/discovery.md](docs/discovery.md) | optional capability discovery: design, wire format, what relays see, limits, non-goals |
+| [docs/network-simulations.md](docs/network-simulations.md) | WireGuard-overlay and NAT simulations (single host), results, UNTESTED real-run steps |
 | [docs/relay-setup.md](docs/relay-setup.md) | running your own relay, Store and client nodes; Tailscale (UNTESTED) |
 | [docs/cli-help.txt](docs/cli-help.txt) | generated CLI help |
 | [docs/adr/](docs/adr/) | decisions: [0001 transport](docs/adr/0001-transport.md), 0002 encryption, 0003 MCP SDK and version |

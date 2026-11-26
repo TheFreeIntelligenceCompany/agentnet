@@ -1,0 +1,10 @@
+interface: wg0
+  public key: o5Ldk/h0kROw31IM3rY00EXGaFFwjEapEUDBMVNkhDY=
+  private key: (hidden)
+  listening port: 51820
+
+peer: MlgNW6zMHfe5DiyZ+jcVes2rPrDYcggjSws8n84cQAc=
+  endpoint: 172.29.70.21:41449
+  allowed ips: 10.66.0.2/32
+  latest handshake: 1 minute, 50 seconds ago
+  transfer: 134.18 KiB received, 243.84 KiB sent

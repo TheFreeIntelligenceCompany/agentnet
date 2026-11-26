@@ -1,0 +1,205 @@
+# Experiment N: outbound-only clients behind (simulated) NAT. SIMULATION on ONE host: network namespaces / docker bridges,
+# iptables MASQUERADE gateways. NOT real NAT/CGNAT behaviour, NOT separate physical hosts. See README.md.
+#
+# public (172.30.80.0/24): relay R + the public side of two NAT gateways (the "internet" between them).
+# lan-a (192.168.101.0/24): gateway gw-a (.2, the clients' default route) + client A. lan-b (192.168.102.0/24): same for B.
+# The client nodes publish NO libp2p port and have no route from the public network or from the other LAN. Run through ./run.sh.
+name: an-nat
+
+x-image: &node-image wakuorg/nwaku@sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73  # tag v0.39.2, amd64 (qemu)
+
+services:
+  node-r:
+    image: *node-image
+    platform: linux/amd64
+    container_name: an-nat-r
+    command:
+      - --nodekey=${R_KEY}
+      - --nat=extip:172.30.80.10                # R announces its PUBLIC-network address
+      - --relay=true
+      - --store=true
+      - --store-message-db-url=sqlite:///data/store.sqlite3
+      - --store-message-retention-policy=time:3600;capacity:5000
+      - --filter=true
+      - --lightpush=true
+      - --rest=true
+      - --rest-address=0.0.0.0
+      - --rest-port=8645
+      - --rest-admin=true
+      - --rest-relay-cache-capacity=1000
+      - --rest-messaging-cache-capacity=1000
+      - --max-msg-size=150KiB
+      - --cluster-id=66
+      - --num-shards-in-network=1
+      - --shard=0
+      - --discv5-discovery=false
+      - --peer-exchange=false
+      - --relay-peer-exchange=false
+      - --rendezvous=false
+      - --enable-kad-discovery=false
+      - --quic-support=false
+      - --mix=false
+      - --rln-relay=false
+      - --listen-address=0.0.0.0
+      - --dns-addrs-name-server=127.0.0.1
+      - --tcp-port=60000
+      - --metrics-server=false
+      - --peer-persistence=false
+      - --local-storage-path=/data
+      - --log-level=INFO
+    ports: ["127.0.0.1:18660:8645"]             # operator diagnostics on the docker host only
+    volumes: ["rdata:/data"]
+    networks: {public: {ipv4_address: 172.30.80.10}}
+
+  gw-a:
+    image: an-net-tools:local
+    container_name: an-nat-gw-a
+    cap_add: [NET_ADMIN]
+    command: ["sh", "/scripts/gw-entry.sh", "192.168.101.0/24"]
+    sysctls:
+      - net.ipv4.ip_forward=1
+      - net.netfilter.nf_conntrack_tcp_timeout_established=${CT_EST:-432000}   # run.sh lowers it to 120 for the idle test
+    volumes: ["./scripts:/scripts:ro"]
+    healthcheck: {test: ["CMD-SHELL", "test -f /tmp/ready"], interval: 2s, timeout: 2s, retries: 60}
+    networks:
+      lan-a: {ipv4_address: 192.168.101.2}
+      public: {ipv4_address: 172.30.80.21}
+
+  gw-b:
+    image: an-net-tools:local
+    container_name: an-nat-gw-b
+    cap_add: [NET_ADMIN]
+    command: ["sh", "/scripts/gw-entry.sh", "192.168.102.0/24"]
+    sysctls:
+      - net.ipv4.ip_forward=1
+      - net.netfilter.nf_conntrack_tcp_timeout_established=${CT_EST:-432000}   # run.sh lowers it to 120 for the idle test
+    volumes: ["./scripts:/scripts:ro"]
+    healthcheck: {test: ["CMD-SHELL", "test -f /tmp/ready"], interval: 2s, timeout: 2s, retries: 60}
+    networks:
+      lan-b: {ipv4_address: 192.168.102.2}
+      public: {ipv4_address: 172.30.80.22}
+
+  client-a:
+    image: an-net-tools:local
+    container_name: an-nat-a-net
+    cap_add: [NET_ADMIN]
+    # the LAN host: its default route is the NAT gateway, not the docker bridge. REST published for the agent on the host.
+    command: ["sh", "-c", "ip route replace default via 192.168.101.2 && touch /tmp/ready && exec sleep infinity"]
+    healthcheck: {test: ["CMD-SHELL", "test -f /tmp/ready"], interval: 2s, timeout: 2s, retries: 60}
+    ports: ["127.0.0.1:18661:8645"]
+    networks: {lan-a: {ipv4_address: 192.168.101.10}}
+    depends_on: {gw-a: {condition: service_healthy}}
+
+  node-a:
+    image: *node-image
+    platform: linux/amd64
+    container_name: an-nat-a-node
+    network_mode: "service:client-a"
+    depends_on: {client-a: {condition: service_healthy}}
+    command:
+      - --nodekey=${A_KEY}
+      - --nat=none                             # a LAN client does not announce any address: nothing to dial
+      - --relay=true
+      - --store=false
+      - --filter=false
+      - --lightpush=false
+      - --staticnode=/ip4/172.30.80.10/tcp/60000/p2p/${R_PEER_ID}
+      - --storenode=/ip4/172.30.80.10/tcp/60000/p2p/${R_PEER_ID}
+      - --filternode=/ip4/172.30.80.10/tcp/60000/p2p/${R_PEER_ID}
+      - --lightpushnode=/ip4/172.30.80.10/tcp/60000/p2p/${R_PEER_ID}
+      - --rest=true
+      - --rest-address=0.0.0.0
+      - --rest-port=8645
+      - --rest-admin=true
+      - --rest-relay-cache-capacity=1000
+      - --rest-messaging-cache-capacity=1000
+      - --max-msg-size=150KiB
+      - --cluster-id=66
+      - --num-shards-in-network=1
+      - --shard=0
+      - --discv5-discovery=false
+      - --peer-exchange=false
+      - --relay-peer-exchange=false
+      - --rendezvous=false
+      - --enable-kad-discovery=false
+      - --quic-support=false
+      - --mix=false
+      - --rln-relay=false
+      - --listen-address=0.0.0.0
+      - --dns-addrs-name-server=127.0.0.1
+      - --tcp-port=60000
+      - --metrics-server=false
+      - --peer-persistence=false
+      - --local-storage-path=/data
+      - --log-level=INFO
+
+  client-b:
+    image: an-net-tools:local
+    container_name: an-nat-b-net
+    cap_add: [NET_ADMIN]
+    # the LAN host: its default route is the NAT gateway, not the docker bridge. REST published for the agent on the host.
+    command: ["sh", "-c", "ip route replace default via 192.168.102.2 && touch /tmp/ready && exec sleep infinity"]
+    healthcheck: {test: ["CMD-SHELL", "test -f /tmp/ready"], interval: 2s, timeout: 2s, retries: 60}
+    ports: ["127.0.0.1:18662:8645"]
+    networks: {lan-b: {ipv4_address: 192.168.102.10}}
+    depends_on: {gw-b: {condition: service_healthy}}
+
+  node-b:
+    image: *node-image
+    platform: linux/amd64
+    container_name: an-nat-b-node
+    network_mode: "service:client-b"
+    depends_on: {client-b: {condition: service_healthy}}
+    command:
+      - --nodekey=${B_KEY}
+      - --nat=none                             # a LAN client does not announce any address: nothing to dial
+      - --relay=true
+      - --store=false
+      - --filter=false
+      - --lightpush=false
+      - --staticnode=/ip4/172.30.80.10/tcp/60000/p2p/${R_PEER_ID}
+      - --storenode=/ip4/172.30.80.10/tcp/60000/p2p/${R_PEER_ID}
+      - --filternode=/ip4/172.30.80.10/tcp/60000/p2p/${R_PEER_ID}
+      - --lightpushnode=/ip4/172.30.80.10/tcp/60000/p2p/${R_PEER_ID}
+      - --rest=true
+      - --rest-address=0.0.0.0
+      - --rest-port=8645
+      - --rest-admin=true
+      - --rest-relay-cache-capacity=1000
+      - --rest-messaging-cache-capacity=1000
+      - --max-msg-size=150KiB
+      - --cluster-id=66
+      - --num-shards-in-network=1
+      - --shard=0
+      - --discv5-discovery=false
+      - --peer-exchange=false
+      - --relay-peer-exchange=false
+      - --rendezvous=false
+      - --enable-kad-discovery=false
+      - --quic-support=false
+      - --mix=false
+      - --rln-relay=false
+      - --listen-address=0.0.0.0
+      - --dns-addrs-name-server=127.0.0.1
+      - --tcp-port=60000
+      - --metrics-server=false
+      - --peer-persistence=false
+      - --local-storage-path=/data
+      - --log-level=INFO
+
+volumes:
+  rdata:
+
+networks:
+  public:
+    driver: bridge
+    driver_opts: {com.docker.network.bridge.name: an-nat-pub}
+    ipam: {config: [{subnet: 172.30.80.0/24, gateway: 172.30.80.1}]}
+  lan-a:
+    driver: bridge
+    driver_opts: {com.docker.network.bridge.name: an-nat-lana}
+    ipam: {config: [{subnet: 192.168.101.0/24, gateway: 192.168.101.1}]}
+  lan-b:
+    driver: bridge
+    driver_opts: {com.docker.network.bridge.name: an-nat-lanb}
+    ipam: {config: [{subnet: 192.168.102.0/24, gateway: 192.168.102.1}]}

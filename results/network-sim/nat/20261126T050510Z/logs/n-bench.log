@@ -1,0 +1,88 @@
+$ /private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/net/src/target/release/agentnet-acceptance bench --a /tmp/an-net.4kSmbg/a --b /tmp/an-net.4kSmbg/b --a-addr an1v2fkagwmutxe6kl6n6rs4jywynrpmuihtn53zczpcgic6iycex2ugbzyey --b-addr an12cl75r35vvdd72iawkpb5mqna4lllthza2yudqlqug4tx6ev5mdneborm4 --n 20 --timeout 600 --pace-ms 400 --tag n --out /Users/dennison/develop/FIC-elipsis/results/network-sim/nat/20261126T050510Z/evidence/bench.json
+{
+  "a_to_b": {
+    "delivered": 20,
+    "latency_ms_send_to_delivered": {
+      "definition": "delivered_at - created_at from the sender's own outbox row (same host clock)",
+      "max": 507,
+      "min": 273,
+      "p50": 401,
+      "p95": 506,
+      "p99": 507,
+      "samples": 20
+    },
+    "not_delivered_at_timeout": 0,
+    "raw_latencies_ms": [
+      273,
+      298,
+      309,
+      315,
+      316,
+      318,
+      348,
+      370,
+      397,
+      401,
+      405,
+      407,
+      415,
+      425,
+      446,
+      464,
+      465,
+      473,
+      506,
+      507
+    ],
+    "send_failures": 0,
+    "send_phase_ms": 8207,
+    "sent": 20,
+    "tag": "n-a2b",
+    "terminal_other": {},
+    "total_ms": 8464
+  },
+  "b_to_a": {
+    "delivered": 20,
+    "latency_ms_send_to_delivered": {
+      "definition": "delivered_at - created_at from the sender's own outbox row (same host clock)",
+      "max": 502,
+      "min": 271,
+      "p50": 382,
+      "p95": 499,
+      "p99": 502,
+      "samples": 20
+    },
+    "not_delivered_at_timeout": 0,
+    "raw_latencies_ms": [
+      271,
+      289,
+      291,
+      308,
+      328,
+      331,
+      343,
+      353,
+      376,
+      382,
+      387,
+      408,
+      417,
+      425,
+      430,
+      450,
+      475,
+      479,
+      499,
+      502
+    ],
+    "send_failures": 0,
+    "send_phase_ms": 8102,
+    "sent": 20,
+    "tag": "n-b2a",
+    "terminal_other": {},
+    "total_ms": 8117
+  },
+  "direction_mode": "both directions concurrently, 400 ms pacing",
+  "n_per_direction": 20
+}
+[exit 0]

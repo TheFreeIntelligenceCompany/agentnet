@@ -1,0 +1,1 @@
+04:14:37.750935 IP 192.168.101.10.44530 > 172.30.80.10.60000: Flags [S], seq 4286724642, win 64240, options [mss 1460,sackOK,TS val 4240944157 ecr 0,nop,wscale 7], length 0

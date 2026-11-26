@@ -1,0 +1,1 @@
+{"trial":"s3c-gw-restart","ms_until_A_node_stops_listing_R_connected":47837,"ms_until_A_daemon_not_ready":47837,"ms_until_A_node_lists_R_connected_again":66562,"ms_until_A_daemon_ready_again":66562,"ms_until_A_to_B_message_delivered":81069,"ms_until_B_to_A_message_delivered":74869,"window_s":1500,"minus_one_means":"never within the window"}

@@ -1,0 +1,1 @@
+{"trial":"s3a-flush","ms_until_A_node_stops_listing_R_connected":48150,"ms_until_A_daemon_not_ready":48150,"ms_until_A_node_lists_R_connected_again":654833,"ms_until_A_daemon_ready_again":654833,"ms_until_A_to_B_message_delivered":835880,"ms_until_B_to_A_message_delivered":658971,"window_s":1500,"minus_one_means":"never within the window"}

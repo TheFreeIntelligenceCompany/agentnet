@@ -1,0 +1,6 @@
+$ /private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/net/src/target/release/agentnet --json --data-dir /tmp/an-net.aAMbvy/a contact add @/tmp/an-net.aAMbvy/b.record --expect an1jcribd6ual524zrpiu3dzndda3ro2tdonwhopjibg3i4bg5ugff2te2wzi --alias b
+{"address":"an1jcribd6ual524zrpiu3dzndda3ro2tdonwhopjibg3i4bg5ugff2te2wzi","alias":"b","trust":"trusted","inbox_topic":"/agentnet/1/inbox-08/proto","added_at":1795664127929,"kem_expires_at":null,"updated":false,"key_epoch":1,"revoked":false}
+[exit 0]
+$ /private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/net/src/target/release/agentnet --json --data-dir /tmp/an-net.aAMbvy/b contact add @/tmp/an-net.aAMbvy/a.record --expect an15rx5lfgy5s5mjts32ds4ohgzukbqikan64yo4wt63fb3uem4srshkfveci --alias a
+{"address":"an15rx5lfgy5s5mjts32ds4ohgzukbqikan64yo4wt63fb3uem4srshkfveci","alias":"a","trust":"trusted","inbox_topic":"/agentnet/1/inbox-0f/proto","added_at":1795664127943,"kem_expires_at":null,"updated":false,"key_epoch":1,"revoked":false}
+[exit 0]

@@ -1,0 +1,10 @@
+an-nat-a-node	cb4d14a22b8c	Up 8 seconds	
+an-nat-b-node	cb4d14a22b8c	Up 8 seconds	
+an-nat-a-net	an-net-tools:local	Up 11 seconds (healthy)	127.0.0.1:18661->8645/tcp
+an-nat-b-net	an-net-tools:local	Up 12 seconds (healthy)	127.0.0.1:18662->8645/tcp
+an-nat-cap-main-an-nat-lanb	an-net-tools:local	Up 21 seconds	
+an-nat-cap-main-an-nat-lana	an-net-tools:local	Up 22 seconds	
+an-nat-cap-main-an-nat-pub	an-net-tools:local	Up 23 seconds	
+an-nat-gw-b	an-net-tools:local	Up 15 seconds (healthy)	
+an-nat-gw-a	an-net-tools:local	Up 14 seconds (healthy)	
+an-nat-r	cb4d14a22b8c	Up 17 seconds	8545/tcp, 30303/tcp, 60000/tcp, 127.0.0.1:18660->8645/tcp

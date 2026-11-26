@@ -1,0 +1,11 @@
+agentnet 0.1.0
+Docker version 29.8.1, build 4a63305d74
+Docker Compose version 5.6.0
+Darwin MacBookPro 25.6.0 Darwin Kernel Version 25.6.0: Fri Jul 31 19:18:49 PDT 2026; root:xnu-12377.161.14~5/RELEASE_ARM64_T6000 arm64
+jq-1.8.1
+wireguard-tools v1.0.20210914 - https://git.zx2c4.com/wireguard-tools/
+iptables v1.8.10 (nf_tables)
+tcpdump version 4.99.4
+libpcap version 1.10.4 (with TPACKET_V3)
+OpenSSL 3.3.7 7 Apr 2026
+conntrack v1.4.8 (conntrack-tools)

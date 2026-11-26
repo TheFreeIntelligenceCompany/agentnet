@@ -17,6 +17,7 @@ Cell vocabulary: **OK** = run and the cited log shows success; **FAILED** = run 
 | **rmcp 3.11.0 + `agentnet-mcp`** | **OK**: spike 14 tests, MVP 62 tests (`results/a3-mcp/cargo-test.log`, `results/b-mcp/cargo-test.log`) | **OK**: part of the workspace tests above (`agentnet-mcp` suites included) | **UNTESTED** |
 | **SQLite (bundled, `rusqlite` 0.42.0 / `libsqlite3-sys` 0.40.0)** | **OK** (part of the workspace build) | **OK**: bundled SQLite compiled by the container's gcc 12.2.0 (part of the build above) | **UNTESTED** |
 | **`cargo deny check`** | not run on the host (cargo-deny not installed; not installed on purpose) | **run in an arm64 Linux container**: `advisories ok, bans ok, licenses ok, sources ok` after one documented advisory ignore (RUSTSEC-2026-0387, see `docs/dependency-audit.md`) (`results/audit/cargo-deny.log`) | **UNTESTED** |
+| **Network simulations (single host)** | WireGuard overlay (kernel module, colima VM) and iptables-MASQUERADE LANs, 2 runs each, all checks PASS: `docs/network-simulations.md`. Tailscale, real NAT/CGNAT and separate hosts: **UNTESTED** | same VM (the simulations run there) | **UNTESTED** |
 | Docker/compose helper scripts (`spike/relay/scripts/up.sh` etc.) | **OK** with standalone `docker-compose` v5.6.0; the `docker compose` plugin form failed on this host | n/a | **UNTESTED** |
 
 Other platforms: Windows is not supported (Unix sockets and file modes; `docs/threat-model.md`). Intel macOS: **UNTESTED**.

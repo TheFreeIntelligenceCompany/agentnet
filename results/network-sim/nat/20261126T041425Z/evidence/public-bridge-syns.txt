@@ -1,0 +1,2 @@
+04:14:37.751220 IP 172.30.80.21.44530 > 172.30.80.10.60000: Flags [S], seq 4286724642, win 64240, options [mss 1460,sackOK,TS val 4240944157 ecr 0,nop,wscale 7], length 0
+04:14:37.838920 IP 172.30.80.22.40346 > 172.30.80.10.60000: Flags [S], seq 416379094, win 64240, options [mss 1460,sackOK,TS val 2616117120 ecr 0,nop,wscale 7], length 0

@@ -1,0 +1,2 @@
+gateway up: pub=eth0 lan=eth1 lan_net=192.168.101.0/24 est-timeout=432000
+gateway up: pub=eth0 lan=eth1 lan_net=192.168.101.0/24 est-timeout=432000

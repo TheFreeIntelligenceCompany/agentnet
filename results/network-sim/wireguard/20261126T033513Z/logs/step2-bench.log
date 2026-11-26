@@ -1,0 +1,88 @@
+$ /private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/net/src/target/release/agentnet-acceptance bench --a /tmp/an-net.aAMbvy/a --b /tmp/an-net.aAMbvy/b --a-addr an15rx5lfgy5s5mjts32ds4ohgzukbqikan64yo4wt63fb3uem4srshkfveci --b-addr an1jcribd6ual524zrpiu3dzndda3ro2tdonwhopjibg3i4bg5ugff2te2wzi --n 20 --timeout 600 --pace-ms 400 --tag w --out /Users/dennison/develop/FIC-elipsis/results/network-sim/wireguard/20261126T033513Z/evidence/bench.json
+{
+  "a_to_b": {
+    "delivered": 20,
+    "latency_ms_send_to_delivered": {
+      "definition": "delivered_at - created_at from the sender's own outbox row (same host clock)",
+      "max": 608,
+      "min": 283,
+      "p50": 391,
+      "p95": 518,
+      "p99": 608,
+      "samples": 20
+    },
+    "not_delivered_at_timeout": 0,
+    "raw_latencies_ms": [
+      283,
+      294,
+      298,
+      322,
+      336,
+      340,
+      361,
+      383,
+      391,
+      391,
+      423,
+      437,
+      452,
+      453,
+      453,
+      474,
+      489,
+      489,
+      518,
+      608
+    ],
+    "send_failures": 0,
+    "send_phase_ms": 8106,
+    "sent": 20,
+    "tag": "w-a2b",
+    "terminal_other": {},
+    "total_ms": 8359
+  },
+  "b_to_a": {
+    "delivered": 20,
+    "latency_ms_send_to_delivered": {
+      "definition": "delivered_at - created_at from the sender's own outbox row (same host clock)",
+      "max": 615,
+      "min": 289,
+      "p50": 406,
+      "p95": 533,
+      "p99": 615,
+      "samples": 20
+    },
+    "not_delivered_at_timeout": 0,
+    "raw_latencies_ms": [
+      289,
+      294,
+      311,
+      325,
+      349,
+      372,
+      377,
+      390,
+      402,
+      406,
+      425,
+      443,
+      452,
+      457,
+      469,
+      475,
+      487,
+      504,
+      533,
+      615
+    ],
+    "send_failures": 0,
+    "send_phase_ms": 8106,
+    "sent": 20,
+    "tag": "w-b2a",
+    "terminal_other": {},
+    "total_ms": 8359
+  },
+  "direction_mode": "both directions concurrently, 400 ms pacing",
+  "n_per_direction": 20
+}
+[exit 0]

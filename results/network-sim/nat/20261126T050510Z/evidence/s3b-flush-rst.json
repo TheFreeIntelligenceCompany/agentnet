@@ -1,0 +1,1 @@
+{"trial":"s3b-flush-rst","ms_until_A_node_stops_listing_R_connected":860,"ms_until_A_daemon_not_ready":860,"ms_until_A_node_lists_R_connected_again":42031,"ms_until_A_daemon_ready_again":963638,"ms_until_A_to_B_message_delivered":1096211,"ms_until_B_to_A_message_delivered":972780,"window_s":1500,"minus_one_means":"never within the window"}

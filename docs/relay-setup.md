@@ -17,7 +17,7 @@ network (see section 9 and `docs/spike-report.md`).
 * The **client node** is a Logos Delivery node next to each `agentnet serve`. AgentNet is not a single static binary:
   the node is a separate process (a container here). There is no embedded node (`docs/spike-report.md`, native FFI section).
 * The **service node** is reachable by all clients, relays frames between them and stores them for later retrieval.
-  Clients dial it; clients need no inbound port (this is the design; **cross-machine/NAT outbound-only operation is UNTESTED**).
+  Clients dial it; clients need no inbound port (this is the design; **cross-machine/NAT outbound-only operation is UNTESTED** (simulated on one host: `docs/network-simulations.md`)).
 * AgentNet talks only to the **client** node's REST API (`network.node_url`), never to the service node.
 * **Hard rule: one Logos Delivery client node per agent (one `agentnet serve` per node). Sharing a node between agents is unsupported.**
   The node's REST receive path is a single in-memory cache per node and `GET` is destructive (returns *and deletes*). Two daemons
@@ -192,7 +192,7 @@ With every discovery option disabled the node still resolves `one.one.one.one` v
 
 | Port | Where | Rule |
 |---|---|---|
-| tcp/60000 (libp2p) | service node | Allow **only from the known client addresses**. Cluster/shard ids are **not access control**: anyone who can reach this port and knows cluster 66 / shard 0 can join the mesh, subscribe to every bucket topic and publish (`docs/threat-model.md` T13). |
+| tcp/60000 (libp2p) | service node | Allow **only from the known client addresses**. Cluster/shard ids are **not access control**: anyone who can reach this port and knows cluster 66 / shard 0 can join the mesh, subscribe to every bucket topic and publish (`docs/threat-model.md` T13). Verified in the WireGuard simulation: with the rule in place a key-less peer on the same network could not connect; with it removed the same peer joined the mesh and read ciphertext frames and Store history. |
 | tcp/60000 | client node | No inbound rule is needed for the design (clients dial out). The compose snippet publishes `60000` only for the service node. |
 | REST (8645 in container) | every node | **Never expose.** Publish only on host loopback (`127.0.0.1:<port>:8645`). No authentication; `--rest-admin=true` allows dialling arbitrary peers. |
 | udp (QUIC), 9000, 30303, websockets | all | Not used; `--quic-support=false`, discovery off. |
@@ -212,7 +212,7 @@ drill. Not tested: more than two service nodes, partitions between them.
 
 ## 10. Tailscale deployment: UNTESTED
 
-**Everything in this section is UNTESTED.** No tailnet, no second host and no real Tailscale client was available; none of these steps was run. The text below is
+**Everything in this section is UNTESTED with Tailscale itself. A WireGuard-overlay simulation of the same firewall and static-peer configuration (one host, kernel WireGuard) passed 2 of 2 runs; see `docs/network-simulations.md`.** No tailnet, no second host and no real Tailscale client was available; none of these steps was run. The text below is
 what `agentnet relay print-config` prints, expanded with what the code accepts (`100.64.0.0/10` passes the private-address check: `docs/configuration.md`).
 
 What Tailscale does and does not provide:
@@ -243,6 +243,8 @@ Reproducible steps (to be executed and verified by whoever has the hosts):
    `agentnet doctor` is all `[ok]`; `agentnet network status --verbose` lists exactly the service node's peer id; an exchange between agents on two different hosts completes
    with state `delivered`; `tcpdump` on a client shows only tailnet-interface traffic to the service node and no traffic to `1.1.1.1` or other public hosts.
 8. Record the result in `docs/spike-report.md` section 7 (row "Tailscale").
+
+Recovery note: after a silently dropped connection the node noticed after about 48 s and took between 42 s and 16 min to reconnect even with the path restored (simulations, `docs/network-simulations.md`).
 
 ## 11. Checklist before trusting a deployment
 

@@ -85,6 +85,8 @@ results/           raw evidence; every claim in docs points here
 - Node flag `--dns-addrs-name-server=127.0.0.1` is required for zero public
   egress; with it a node never redials on its own, so the adapter redials its
   allowlisted static peers.
+- After a silently dropped connection a node notices after about 48 s and can
+  take from under a minute to 16 minutes to reconnect (`docs/network-simulations.md`).
 - Relay-dependent tests are `#[ignore]`d: `AGENTNET_RELAY_TESTS=1 cargo test
   --workspace --locked -- --ignored` with the topology in `spike/relay` up.
 - The full acceptance run is `scripts/acceptance.sh` (about 50 minutes).

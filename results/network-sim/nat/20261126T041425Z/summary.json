@@ -1,0 +1,147 @@
+{
+  "run_timestamp": "20261126T041425Z",
+  "environment": {
+    "host": "Darwin 25.6.0 arm64",
+    "colima_vm_kernel": "6.8.0-117-generic",
+    "agentnet": "agentnet 0.1.0",
+    "nat": "iptables MASQUERADE in containers (Linux conntrack), simulated",
+    "node_image": "wakuorg/nwaku@sha256:cb4d14a2... v0.39.2 linux/amd64 under qemu",
+    "topology": "public 172.30.80.0/24 (R .10, gw-a .21, gw-b .22); LAN-A 192.168.101.0/24 (gw .2, client .10); LAN-B 192.168.102.0/24; agents on the host via 127.0.0.1 REST ports"
+  },
+  "steps": [
+    {
+      "step": "1",
+      "status": "PASS",
+      "checks": [
+        {
+          "id": "1.topology",
+          "status": "PASS",
+          "detail": "R (public 172.30.80.10), gw-a (LAN-A .2 / public 172.30.80.21), gw-b, client nodes A (192.168.101.10) and B (192.168.102.10) behind them; each client node lists exactly one peer, R (172.30.80.10:60000) (connected after 32 / 36 ms); client containers publish only REST on host 127.0.0.1 (evidence/published-ports.txt), no 60000",
+          "command": "docker-compose up (spike/relay-nat/docker-compose.yml); curl http://127.0.0.1:18661/admin/v1/peers ; docker port an-nat-a-net",
+          "at": "2026-11-26T04:14:43Z"
+        },
+        {
+          "id": "1.r_view",
+          "status": "PASS",
+          "detail": "R's /admin/v1/peers lists exactly two Connected peers, at the GATEWAY public addresses: A as /ip4/172.30.80.21/tcp/44530/p2p/16Uiu2HAm668bdXVpb5D28uRCKD7EADfMhZoefDboVgxCRq3VKjqJ, B as /ip4/172.30.80.22/tcp/40346/p2p/16Uiu2HAmRZ5TDTncxdTFtPm1YsWCSRpVnHuCUfrHJbgunhLhTWm2 (source NAT visible; neither LAN address appears). tcpdump: on LAN-A the client sends from 192.168.101.10 (60 packets to R:60000), on the public bridge the same flow comes from 172.30.80.21 (53 packets), and 0 packets on the public bridge carry any 192.168.x.x address. conntrack on gw-a: tcp 6 431998 ESTABLISHED src=192.168.101.10 dst=172.30.80.10 sport=44530 dport=60000 src=172.30.80.10 dst=172.30.80.21 sport=60000 dport=44530 [ASSURED] mark=0 use=1",
+          "command": "curl http://127.0.0.1:18660/admin/v1/peers ; tcpdump on an-nat-pub and an-nat-lana ; docker exec an-nat-gw-a conntrack -L",
+          "at": "2026-11-26T04:14:51Z"
+        },
+        {
+          "id": "1.matrix",
+          "status": "PASS",
+          "detail": "outbound-only proven: A and B reach R:60000; R, the other LAN and the other gateway cannot reach either client's tcp/60000 (LAN address or gateway public address) although the client node DOES listen on its LAN (gw-a reaches it from the LAN side). 8 of 11 probes failed as expected (failure mode of each in the table). Full table: evidence/reachability-matrix.txt. NOTE: the 'no route' part rests on docker's isolation between user-defined bridges plus the gateways' stateful forwarding; it is a property of this simulation",
+          "command": "docker run --rm --net container:<vantage> an-net-tools nc -zv -w 4 <host> <port>",
+          "at": "2026-11-26T04:15:27Z"
+        }
+      ]
+    },
+    {
+      "step": "2",
+      "status": "PASS",
+      "checks": [
+        {
+          "id": "2.serve",
+          "status": "PASS",
+          "detail": "two release-mode 'agentnet serve' (A -> http://127.0.0.1:18661 behind NAT-A, B -> http://127.0.0.1:18662 behind NAT-B), private mode, static peer /ip4/172.30.80.10/tcp/60000/p2p/16Uiu2HAkzkHv4d3b5qKLVDGb6CymaJt4yECHdqoYn83w5a2Ab2Vy; A=an1io4cyco3x6uarepyph7xx2soyxpgpgufuztycpmukec5637wi6t7fg5toi B=an1a67lzc64ergl6xsqwojdiz74jcvf6gvwdddp76fr3izjyoosu6mduw5xqa",
+          "command": "agentnet --data-dir $A init --node-url http://127.0.0.1:18661 --peer /ip4/172.30.80.10/tcp/60000/p2p/16Uiu2HAkzkHv4d3b5qKLVDGb6CymaJt4yECHdqoYn83w5a2Ab2Vy; agentnet serve (x2)",
+          "at": "2026-11-26T04:15:33Z"
+        },
+        {
+          "id": "2.contacts",
+          "status": "PASS",
+          "detail": "contact records exchanged with --expect, both ways",
+          "command": "agentnet contact add @record --expect <address>",
+          "at": "2026-11-26T04:15:34Z"
+        },
+        {
+          "id": "2.first",
+          "status": "PASS",
+          "detail": "first A -> B message delivered (authenticated receipt) after 558 ms on a fresh topology",
+          "command": "agentnet send; agentnet status",
+          "at": "2026-11-26T04:15:34Z"
+        },
+        {
+          "id": "2.bench.a_to_b",
+          "status": "PASS",
+          "detail": "a -> b: delivered 20/20 with authenticated receipts, send->receipt p50/p95/p99 = 383/489/491 ms (min 258, max 491), paced 400 ms, both directions concurrently; both clients behind NAT",
+          "command": "agentnet-acceptance bench --n 20 --pace-ms 400 --tag n",
+          "at": "2026-11-26T04:15:51Z"
+        },
+        {
+          "id": "2.bench.b_to_a",
+          "status": "PASS",
+          "detail": "b -> a: delivered 20/20 with authenticated receipts, send->receipt p50/p95/p99 = 402/506/536 ms (min 268, max 536), paced 400 ms, both directions concurrently; both clients behind NAT",
+          "command": "agentnet-acceptance bench --n 20 --pace-ms 400 --tag n",
+          "at": "2026-11-26T04:15:51Z"
+        },
+        {
+          "id": "2.duplicates",
+          "status": "PASS",
+          "detail": "receiver rows A->B 20 (unique 20), B->A 20 (unique 20); duplicate message.received events: 0",
+          "command": "agentnet-acceptance dump",
+          "at": "2026-11-26T04:15:51Z"
+        },
+        {
+          "id": "2.offline",
+          "status": "PASS",
+          "detail": "B's node and daemon stopped, A sent 5 (A states while B down: sent=5 ); B restarted: inbox complete (5 rows, 5 unique) 600 ms after the daemon start, A's 5 receipts (delivered) 660 ms after it; recovered via the relay's Store and/or sender retries (not instrumented which)",
+          "command": "docker stop an-nat-b-node; agentnet send x5; docker start an-nat-b-node; agentnet serve (B)",
+          "at": "2026-11-26T04:16:04Z"
+        }
+      ]
+    },
+    {
+      "step": "3",
+      "status": "PASS",
+      "checks": [
+        {
+          "id": "3.flush",
+          "status": "PASS",
+          "detail": "conntrack -F on gw-a at T0 (mid-stream packets then dropped silently, like a router that lost its state; R's peer entries before/after: evidence/s3a-r-peers-*.txt): A's node noticed after 48150 ms (-1 = never), A's daemon not-ready after 48150 ms, A's node connected again after 654833 ms, daemon ready again after 654833 ms; the A->B message sent right after the disruption was delivered after 835880 ms and a B->A message after 658971 ms (timeline: evidence/s3a-flush-timeline.tsv)",
+          "command": "docker exec an-nat-gw-a conntrack -F ; agentnet send (A->B and B->A) ; poll node peers / daemon status / message status every 2 s",
+          "at": "2026-11-26T04:30:03Z"
+        },
+        {
+          "id": "3.flush_rst",
+          "status": "PASS",
+          "detail": "same flush, but gw-a now answers mid-stream packets with a TCP RST (some real devices do): A's node noticed after 65 ms (-1 = never), A's daemon not-ready after 65 ms, A's node connected again after 466478 ms, daemon ready again after 397312 ms; the A->B message sent right after the disruption was delivered after 684196 ms and a B->A message after 474784 ms (timeline: evidence/s3b-flush-rst-timeline.tsv)",
+          "command": "iptables -I FORWARD 1 ... -j REJECT --reject-with tcp-reset ; docker exec an-nat-gw-a conntrack -F",
+          "at": "2026-11-26T04:41:35Z"
+        },
+        {
+          "id": "3.gw_restart",
+          "status": "PASS",
+          "detail": "docker restart an-nat-gw-a at T0 (fresh conntrack, rules re-applied, same addresses; mid-stream packets dropped silently): A's node noticed after 47837 ms (-1 = never), A's daemon not-ready after 47837 ms, A's node connected again after 66562 ms, daemon ready again after 66562 ms; the A->B message sent right after the disruption was delivered after 81069 ms and a B->A message after 74869 ms (timeline: evidence/s3c-gw-restart-timeline.tsv)",
+          "command": "docker restart an-nat-gw-a ; agentnet send ; poll",
+          "at": "2026-11-26T04:43:14Z"
+        }
+      ]
+    },
+    {
+      "step": "4",
+      "status": "PASS",
+      "checks": [
+        {
+          "id": "4.idle_with_daemons",
+          "status": "PASS",
+          "detail": "both sides idle 600s (daemons running, conntrack established timeout 120s on both gateways): nodes still Connected to R after idle=1, R's peer entries (incl. translated source ports) unchanged=1; flow gw-a<->R packet gaps: {\"packets\": 2276, \"max_gap_s\": 5.21, \"gaps_over_60s\": 0, \"gaps_over_100s\": 0}; then one message each way delivered with receipts after 16366 ms (A->B) and 16423 ms (B->A, measured from the same start)",
+          "command": "set nf_conntrack_tcp_timeout_established=120 on gw-a/gw-b; no traffic for 600s; agentnet send (each way)",
+          "at": "2026-11-26T04:53:43Z"
+        },
+        {
+          "id": "4.idle_nodes_only",
+          "status": "PASS",
+          "detail": "daemons stopped (no Store sync), nodes idle 600s with conntrack established timeout 120s: before restarting the daemons the nodes were still Connected to R: A=1 B=1, R's peer entries unchanged=1; flow gw-a<->R packet gaps: {\"packets\": 2389, \"max_gap_s\": 6.0, \"gaps_over_60s\": 0, \"gaps_over_100s\": 0}. After restarting the daemons one message each way: delivered after 30633 ms (A->B) / 30696 ms (B->A) counted from the daemon restart",
+          "command": "stop both daemons; no traffic 600s; start daemons; agentnet send (each way)",
+          "at": "2026-11-26T05:04:39Z"
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "PASS": 15,
+    "FAIL": 0,
+    "UNTESTED": 0
+  }
+}

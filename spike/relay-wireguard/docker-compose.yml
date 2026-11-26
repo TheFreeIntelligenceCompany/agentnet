@@ -1,0 +1,224 @@
+# Experiment W: relay reachable ONLY over WireGuard. SIMULATION on ONE host (containers on a colima VM, kernel WireGuard).
+# NOT Tailscale, NOT NAT traversal, NOT separate physical hosts. See README.md.
+#
+# Three "machines" (r = relay, a, b = clients). Each machine = a WireGuard sidecar container that owns the network namespace
+# (and the firewall) + a Logos Delivery node that shares that namespace (network_mode: service:<sidecar>). The only network
+# the machines share is the docker bridge "underlay" (stands in for the internet). Run through ./run.sh (it generates the keys
+# into .run/ and passes --env-file .run/env); do not `docker-compose up` this file by hand without them.
+name: an-wg
+
+x-image: &node-image wakuorg/nwaku@sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73  # tag v0.39.2, amd64 (qemu)
+x-wg: &wg
+  image: an-net-tools:local
+  cap_add: [NET_ADMIN]
+  sysctls: {net.ipv4.ip_forward: "0"}
+  volumes: ["./.run:/cfg:ro", "./scripts:/scripts:ro"]
+  healthcheck: {test: ["CMD-SHELL", "test -f /tmp/ready"], interval: 2s, timeout: 2s, retries: 60}
+
+services:
+  wg-r:
+    <<: *wg
+    container_name: an-wg-r
+    command: ["sh", "/scripts/wg-entry.sh", "r"]
+    ports: ["127.0.0.1:18650:8645"]          # operator diagnostics only (R's REST); the firewall admits it only from the docker host gateway
+    networks: {underlay: {ipv4_address: 172.29.70.10}}
+
+  wg-a:
+    <<: *wg
+    container_name: an-wg-a
+    command: ["sh", "/scripts/wg-entry.sh", "a"]
+    ports: ["127.0.0.1:18651:8645"]          # A's node REST for the agent on the host (a real agent runs next to its own node)
+    networks: {underlay: {ipv4_address: 172.29.70.21}}
+
+  wg-b:
+    <<: *wg
+    container_name: an-wg-b
+    command: ["sh", "/scripts/wg-entry.sh", "b"]
+    ports: ["127.0.0.1:18652:8645"]
+    networks: {underlay: {ipv4_address: 172.29.70.22}}
+
+  node-r:
+    image: *node-image
+    platform: linux/amd64
+    container_name: an-wg-r-node
+    network_mode: "service:wg-r"
+    depends_on: {wg-r: {condition: service_healthy}}
+    command:
+      - --nodekey=${R_KEY}
+      - --nat=extip:10.66.0.1                 # the OVERLAY address: what clients are told to dial
+      - --relay=true
+      - --store=true
+      - --store-message-db-url=sqlite:///data/store.sqlite3
+      - --store-message-retention-policy=time:3600;capacity:5000
+      - --filter=true
+      - --lightpush=true
+      - --rest=true
+      - --rest-address=0.0.0.0
+      - --rest-port=8645
+      - --rest-admin=true
+      - --rest-relay-cache-capacity=1000
+      - --rest-messaging-cache-capacity=1000
+      - --max-msg-size=150KiB
+      - --cluster-id=66
+      - --num-shards-in-network=1
+      - --shard=0
+      - --discv5-discovery=false
+      - --peer-exchange=false
+      - --relay-peer-exchange=false
+      - --rendezvous=false
+      - --enable-kad-discovery=false
+      - --quic-support=false
+      - --mix=false
+      - --rln-relay=false
+      - --listen-address=0.0.0.0              # listens on eth0 AND wg0 on purpose: the firewall, not the bind address, is under test
+      - --dns-addrs-name-server=127.0.0.1
+      - --tcp-port=60000
+      - --metrics-server=false
+      - --peer-persistence=false
+      - --local-storage-path=/data
+      - --log-level=INFO
+    volumes: ["rdata:/data"]
+
+  node-a:
+    image: *node-image
+    platform: linux/amd64
+    container_name: an-wg-a-node
+    network_mode: "service:wg-a"
+    depends_on: {wg-a: {condition: service_healthy}}
+    command:
+      - --nodekey=${A_KEY}
+      - --nat=extip:10.66.0.2
+      - --relay=true
+      - --store=false
+      - --filter=false
+      - --lightpush=false
+      - --staticnode=/ip4/10.66.0.1/tcp/60000/p2p/${R_PEER_ID}
+      - --storenode=/ip4/10.66.0.1/tcp/60000/p2p/${R_PEER_ID}
+      - --filternode=/ip4/10.66.0.1/tcp/60000/p2p/${R_PEER_ID}
+      - --lightpushnode=/ip4/10.66.0.1/tcp/60000/p2p/${R_PEER_ID}
+      - --rest=true
+      - --rest-address=0.0.0.0
+      - --rest-port=8645
+      - --rest-admin=true
+      - --rest-relay-cache-capacity=1000
+      - --rest-messaging-cache-capacity=1000
+      - --max-msg-size=150KiB
+      - --cluster-id=66
+      - --num-shards-in-network=1
+      - --shard=0
+      - --discv5-discovery=false
+      - --peer-exchange=false
+      - --relay-peer-exchange=false
+      - --rendezvous=false
+      - --enable-kad-discovery=false
+      - --quic-support=false
+      - --mix=false
+      - --rln-relay=false
+      - --listen-address=0.0.0.0
+      - --dns-addrs-name-server=127.0.0.1
+      - --tcp-port=60000
+      - --metrics-server=false
+      - --peer-persistence=false
+      - --local-storage-path=/data
+      - --log-level=INFO
+
+  node-b:
+    image: *node-image
+    platform: linux/amd64
+    container_name: an-wg-b-node
+    network_mode: "service:wg-b"
+    depends_on: {wg-b: {condition: service_healthy}}
+    command:
+      - --nodekey=${B_KEY}
+      - --nat=extip:10.66.0.3
+      - --relay=true
+      - --store=false
+      - --filter=false
+      - --lightpush=false
+      - --staticnode=/ip4/10.66.0.1/tcp/60000/p2p/${R_PEER_ID}
+      - --storenode=/ip4/10.66.0.1/tcp/60000/p2p/${R_PEER_ID}
+      - --filternode=/ip4/10.66.0.1/tcp/60000/p2p/${R_PEER_ID}
+      - --lightpushnode=/ip4/10.66.0.1/tcp/60000/p2p/${R_PEER_ID}
+      - --rest=true
+      - --rest-address=0.0.0.0
+      - --rest-port=8645
+      - --rest-admin=true
+      - --rest-relay-cache-capacity=1000
+      - --rest-messaging-cache-capacity=1000
+      - --max-msg-size=150KiB
+      - --cluster-id=66
+      - --num-shards-in-network=1
+      - --shard=0
+      - --discv5-discovery=false
+      - --peer-exchange=false
+      - --relay-peer-exchange=false
+      - --rendezvous=false
+      - --enable-kad-discovery=false
+      - --quic-support=false
+      - --mix=false
+      - --rln-relay=false
+      - --listen-address=0.0.0.0
+      - --dns-addrs-name-server=127.0.0.1
+      - --tcp-port=60000
+      - --metrics-server=false
+      - --peer-persistence=false
+      - --local-storage-path=/data
+      - --log-level=INFO
+
+  # ---- the intruder (profile "intruder"): on the underlay, NO WireGuard key. Started by run.sh only for experiment 4.
+  intruder:
+    profiles: [intruder]
+    image: an-net-tools:local
+    container_name: an-wg-intruder
+    command: ["sleep", "infinity"]
+    ports: ["127.0.0.1:18653:8645"]
+    networks: {underlay: {ipv4_address: 172.29.70.66}}
+
+  intruder-node:
+    profiles: [intruder]
+    image: *node-image
+    platform: linux/amd64
+    container_name: an-wg-intruder-node
+    network_mode: "service:intruder"
+    command:
+      - --nodekey=${I_KEY}
+      - --nat=extip:172.29.70.66
+      - --relay=true
+      - --store=false
+      - --filter=false
+      - --lightpush=false
+      - --staticnode=/ip4/172.29.70.10/tcp/60000/p2p/${R_PEER_ID}   # R's UNDERLAY address, right cluster id
+      - --storenode=/ip4/172.29.70.10/tcp/60000/p2p/${R_PEER_ID}
+      - --rest=true
+      - --rest-address=0.0.0.0
+      - --rest-port=8645
+      - --rest-admin=true
+      - --rest-relay-cache-capacity=1000
+      - --max-msg-size=150KiB
+      - --cluster-id=66
+      - --num-shards-in-network=1
+      - --shard=0
+      - --discv5-discovery=false
+      - --peer-exchange=false
+      - --relay-peer-exchange=false
+      - --rendezvous=false
+      - --enable-kad-discovery=false
+      - --quic-support=false
+      - --mix=false
+      - --rln-relay=false
+      - --listen-address=0.0.0.0
+      - --dns-addrs-name-server=127.0.0.1
+      - --tcp-port=60000
+      - --metrics-server=false
+      - --peer-persistence=false
+      - --local-storage-path=/data
+      - --log-level=INFO
+
+volumes:
+  rdata:
+
+networks:
+  underlay:
+    driver: bridge
+    driver_opts: {com.docker.network.bridge.name: an-wg-br0}
+    ipam: {config: [{subnet: 172.29.70.0/24, gateway: 172.29.70.1}]}

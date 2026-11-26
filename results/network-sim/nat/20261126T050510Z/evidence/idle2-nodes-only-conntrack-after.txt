@@ -1,0 +1,6 @@
+### gw-a conntrack -L after idle
+tcp      6 118 ESTABLISHED src=192.168.101.10 dst=172.30.80.10 sport=52700 dport=60000 src=172.30.80.10 dst=172.30.80.21 sport=60000 dport=52700 [ASSURED] mark=0 use=1
+conntrack v1.4.8 (conntrack-tools): 1 flow entries have been shown.
+### gw-b
+conntrack v1.4.8 (conntrack-tools): tcp      6 113 ESTABLISHED src=192.168.102.10 dst=172.30.80.10 sport=43140 dport=60000 src=172.30.80.10 dst=172.30.80.22 sport=60000 dport=43140 [ASSURED] mark=0 use=1
+1 flow entries have been shown.

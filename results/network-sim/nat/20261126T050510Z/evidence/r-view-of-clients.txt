@@ -1,0 +1,4 @@
+### R /admin/v1/peers
+{"multiaddr":"/ip4/172.30.80.22/tcp/56754/p2p/16Uiu2HAmGEWUVPGaZZQcoBZSQbdfj8keefjpP6Zbmd7rXxGg7JaF","protocols":["/ipfs/id/1.0.0","/libp2p/autonat/1.0.0","/libp2p/circuit/relay/0.2.0/hop","/vac/waku/metadata/1.0.0","/vac/waku/relay/2.0.0","/ipfs/ping/1.0.0","/vac/waku/filter-push/2.0.0-beta1"],"shards":[0],"connected":"Connected","agent":"logos-delivery-\"v0.39.2\"","origin":"UnknownOrigin"}
+{"multiaddr":"/ip4/172.30.80.21/tcp/42252/p2p/16Uiu2HAkuphLW4nxq7bQSa26uu5g98FBpVUdyyib9oNB33waFd3g","protocols":["/ipfs/id/1.0.0","/libp2p/autonat/1.0.0","/libp2p/circuit/relay/0.2.0/hop","/vac/waku/metadata/1.0.0","/vac/waku/relay/2.0.0","/ipfs/ping/1.0.0","/vac/waku/filter-push/2.0.0-beta1"],"shards":[0],"connected":"Connected","agent":"logos-delivery-\"v0.39.2\"","origin":"UnknownOrigin"}
+### R node log lines mentioning a remote address (grep 172.30.80.2 / 192.168)

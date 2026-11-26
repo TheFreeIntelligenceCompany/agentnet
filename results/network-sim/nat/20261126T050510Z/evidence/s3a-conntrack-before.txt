@@ -1,0 +1,8 @@
+### before flush
+conntrack v1.4.8 (conntrack-tools): 5 flow entries have been shown.
+tcp      6 29 TIME_WAIT src=192.168.101.10 dst=172.30.80.10 sport=51740 dport=60000 src=172.30.80.10 dst=172.30.80.21 sport=60000 dport=51740 [ASSURED] mark=0 use=1
+tcp      6 431998 ESTABLISHED src=192.168.101.10 dst=172.30.80.10 sport=42252 dport=60000 src=172.30.80.10 dst=172.30.80.21 sport=60000 dport=42252 [ASSURED] mark=0 use=1
+tcp      6 59 SYN_SENT src=192.168.101.10 dst=192.168.102.10 sport=34984 dport=60000 [UNREPLIED] src=192.168.102.10 dst=172.30.80.21 sport=60000 dport=34984 mark=0 use=1
+tcp      6 30 TIME_WAIT src=192.168.101.2 dst=192.168.101.10 sport=57124 dport=60000 src=192.168.101.10 dst=192.168.101.2 sport=60000 dport=57124 [ASSURED] mark=0 use=1
+tcp      6 68 SYN_SENT src=172.30.80.21 dst=192.168.102.10 sport=58406 dport=60000 [UNREPLIED] src=192.168.102.10 dst=172.30.80.21 sport=60000 dport=58406 mark=0 use=1
+conntrack v1.4.8 (conntrack-tools): connection tracking table has been emptied.

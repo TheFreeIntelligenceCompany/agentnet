@@ -1,0 +1,11 @@
+interface: wg0
+  public key: IoUfydAvsZdVyD0JlmBvm98XeSWAN8bMTT3eAwR5DlA=
+  private key: (hidden)
+  listening port: 33429
+
+peer: ksTFNIkOX8quC8e7RkHd8QfPrFoqfISWBoJX5M+hjiI=
+  endpoint: 172.29.70.10:51820
+  allowed ips: 10.66.0.1/32
+  latest handshake: 3 minutes, 1 second ago
+  transfer: 237.85 KiB received, 137.52 KiB sent
+  persistent keepalive: every 25 seconds

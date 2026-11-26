@@ -1,0 +1,115 @@
+couldn't find env file: /Users/dennison/develop/FIC-elipsis/spike/relay-nat/.run/env
+ Network an-nat_lan-a Creating 
+ Volume an-nat_rdata Creating 
+ Volume an-nat_rdata Creating 
+ Network an-nat_public Creating 
+ Network an-nat_lan-a Creating 
+ Network an-nat_public Creating 
+ Network an-nat_lan-b Creating 
+ Network an-nat_lan-b Creating 
+ Volume an-nat_rdata Created 
+ Volume an-nat_rdata Created 
+ Network an-nat_public Created 
+ Network an-nat_public Created 
+ Container an-nat-r Creating 
+ Network an-nat_lan-b Created 
+ Network an-nat_lan-b Created 
+ Container an-nat-gw-b Creating 
+ Network an-nat_lan-a Created 
+ Network an-nat_lan-a Created 
+ Container an-nat-gw-a Creating 
+ Container an-nat-r Created 
+ Container an-nat-gw-b Created 
+ Container an-nat-gw-a Created 
+bb3aafe02f15ecbbba0fd261c49242f207a4c70b2441ff6d5694f6ab2869ca8e
+3099695767d41c362bc05b9d6c2e802034ac273f9cf16ad88da154c5d6f965ea
+f350c3555ccfa38bd391aed41266f40499e8523cd29ab5f74c6286790698f2b8
+ Container an-nat-r Starting 
+ Container an-nat-r Started 
+ Container an-nat-a-net Creating 
+ Container an-nat-b-net Creating 
+ Container an-nat-b-net Created 
+ Container an-nat-b-node Creating 
+ Container an-nat-a-net Created 
+ Container an-nat-a-node Creating 
+ Container an-nat-a-node Created 
+ Container an-nat-b-node Created 
+ Container an-nat-gw-a Starting 
+ Container an-nat-gw-b Starting 
+ Container an-nat-gw-a Started 
+ Container an-nat-gw-a Waiting 
+ Container an-nat-gw-b Started 
+ Container an-nat-gw-b Waiting 
+ Container an-nat-gw-a Healthy 
+ Container an-nat-a-net Starting 
+ Container an-nat-a-net Started 
+ Container an-nat-a-net Waiting 
+ Container an-nat-gw-b Healthy 
+ Container an-nat-b-net Starting 
+ Container an-nat-b-net Started 
+ Container an-nat-b-net Waiting 
+ Container an-nat-a-net Healthy 
+ Container an-nat-a-node Starting 
+ Container an-nat-a-node Started 
+ Container an-nat-b-net Healthy 
+ Container an-nat-b-node Starting 
+ Container an-nat-b-node Started 
+an-nat-cap-main-an-nat-pub
+an-nat-cap-main-an-nat-lana
+an-nat-cap-main-an-nat-lanb
+abe949405d171b6bbb87210d79b3478de201a2831919aac91402966f410475cf
+cef720c44c845c8e7a1261960cd6678eef3c0b3be20f57a8513f22db9b220ad6
+de06e59bdcba66518635c182dfe40dcf1c9b179f1edfa28b7ebc66bc4a2c0df3
+an-nat-cap-matrix-an-nat-pub
+an-nat-cap-matrix-an-nat-lana
+an-nat-cap-matrix-an-nat-lanb
+an-nat-b-node
+an-nat-b-node
+75b6ba655085ee052dfa3a130d89e54efb728ef921d631e39ea1ff561b8e42a3
+an-nat-cap-s3a-an-nat-pub
+iptables: Bad rule (does a matching rule exist in that chain?).
+67bf1a40cd2273bd1a94d734529cc72c069e8449f0cdab6065fdeb335eed639e
+an-nat-cap-s3b-an-nat-pub
+ea88d61878515ee43f16b9af02c261bc2cfa0b58bb8a458fbd4d0c48fe51a9b1
+an-nat-gw-a
+an-nat-cap-s3c-an-nat-pub
+b81c094395a09bb0350118ea6837f40cc226a36f1fcbdae1248c22ca1198a784
+an-nat-cap-idle1-with-daemons-an-nat-pub
+64439e515c3c1e332b3c6146ee5c692ee29b0d90563bee79a71b1218c2184b1a
+an-nat-cap-idle2-nodes-only-an-nat-pub
+ Container an-nat-b-node Stopping 
+ Container an-nat-r Stopping 
+ Container an-nat-a-node Stopping 
+ Container an-nat-b-node Stopped 
+ Container an-nat-b-node Removing 
+ Container an-nat-a-node Stopped 
+ Container an-nat-a-node Removing 
+ Container an-nat-b-node Removed 
+ Container an-nat-b-net Stopping 
+ Container an-nat-a-node Removed 
+ Container an-nat-a-net Stopping 
+ Container an-nat-r Stopped 
+ Container an-nat-r Removing 
+ Container an-nat-r Removed 
+ Container an-nat-b-net Stopped 
+ Container an-nat-b-net Removing 
+ Container an-nat-b-net Removed 
+ Container an-nat-gw-b Stopping 
+ Container an-nat-a-net Stopped 
+ Container an-nat-a-net Removing 
+ Container an-nat-a-net Removed 
+ Container an-nat-gw-a Stopping 
+ Container an-nat-gw-b Stopped 
+ Container an-nat-gw-b Removing 
+ Container an-nat-gw-a Stopped 
+ Container an-nat-gw-a Removing 
+ Container an-nat-gw-b Removed 
+ Container an-nat-gw-a Removed 
+ Network an-nat_lan-a Removing 
+ Volume an-nat_rdata Removing 
+ Network an-nat_lan-b Removing 
+ Network an-nat_public Removing 
+ Volume an-nat_rdata Removed 
+ Network an-nat_lan-b Removed 
+ Network an-nat_lan-a Removed 
+ Network an-nat_public Removed 
