@@ -1,0 +1,4 @@
+vodozemac-eval v0.0.1 (/Users/dennison/develop/FIC-elipsis/spike/vodozemac-eval)
+serde v1.0.229
+serde_json v1.0.154
+vodozemac v0.11.2

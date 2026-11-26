@@ -1,0 +1,87 @@
+syn v2.0.119
+├── matrix-pickle-derive v0.2.3 (proc-macro)
+│   └── matrix-pickle v0.2.3
+│       └── vodozemac v0.11.2
+│           └── vodozemac-eval v0.0.1 (/Users/dennison/develop/FIC-elipsis/spike/vodozemac-eval)
+├── prost-derive v0.14.6 (proc-macro)
+│   └── prost v0.14.6
+│       └── vodozemac v0.11.2 (*)
+└── zeroize_derive v1.5.0 (proc-macro)
+    └── zeroize v1.9.2
+        ├── aes v0.9.4
+        │   └── vodozemac v0.11.2 (*)
+        ├── block-buffer v0.12.1
+        │   ├── cipher v0.5.2
+        │   │   ├── aes v0.9.4 (*)
+        │   │   ├── cbc v0.2.1
+        │   │   │   └── vodozemac v0.11.2 (*)
+        │   │   ├── chacha20 v0.10.2
+        │   │   │   ├── chacha20poly1305 v0.11.0
+        │   │   │   │   ├── hpke v0.14.1
+        │   │   │   │   │   └── vodozemac v0.11.2 (*)
+        │   │   │   │   └── vodozemac v0.11.2 (*)
+        │   │   │   └── rand v0.10.4
+        │   │   │       └── vodozemac v0.11.2 (*)
+        │   │   ├── chacha20poly1305 v0.11.0 (*)
+        │   │   └── vodozemac v0.11.2 (*)
+        │   └── digest v0.11.3
+        │       ├── curve25519-dalek v5.0.0
+        │       │   ├── ed25519-dalek v3.0.0
+        │       │   │   └── vodozemac v0.11.2 (*)
+        │       │   ├── vodozemac v0.11.2 (*)
+        │       │   └── x25519-dalek v3.0.0
+        │       │       ├── hpke v0.14.1 (*)
+        │       │       └── vodozemac v0.11.2 (*)
+        │       ├── hmac v0.13.0
+        │       │   ├── hkdf v0.13.0
+        │       │   │   ├── hpke v0.14.1 (*)
+        │       │   │   └── vodozemac v0.11.2 (*)
+        │       │   └── vodozemac v0.11.2 (*)
+        │       └── sha2 v0.11.2
+        │           ├── ed25519-dalek v3.0.0 (*)
+        │           ├── hpke v0.14.1 (*)
+        │           └── vodozemac v0.11.2 (*)
+        ├── chacha20 v0.10.2 (*)
+        ├── chacha20poly1305 v0.11.0 (*)
+        ├── cipher v0.5.2 (*)
+        ├── curve25519-dalek v5.0.0 (*)
+        ├── digest v0.11.3 (*)
+        ├── ed25519-dalek v3.0.0 (*)
+        ├── hpke v0.14.1 (*)
+        ├── hybrid-array v0.4.15
+        │   ├── block-buffer v0.12.1 (*)
+        │   ├── block-padding v0.4.2
+        │   │   └── inout v0.2.6
+        │   │       ├── aead v0.6.1
+        │   │       │   ├── chacha20poly1305 v0.11.0 (*)
+        │   │       │   └── hpke v0.14.1 (*)
+        │   │       └── cipher v0.5.2 (*)
+        │   ├── crypto-common v0.2.2
+        │   │   ├── aead v0.6.1 (*)
+        │   │   ├── cipher v0.5.2 (*)
+        │   │   ├── digest v0.11.3 (*)
+        │   │   └── universal-hash v0.6.1
+        │   │       └── poly1305 v0.9.1
+        │   │           └── chacha20poly1305 v0.11.0 (*)
+        │   ├── hpke v0.14.1 (*)
+        │   └── inout v0.2.6 (*)
+        ├── vodozemac v0.11.2 (*)
+        └── x25519-dalek v3.0.0 (*)
+
+syn v3.0.10
+├── serde_derive v1.0.229 (proc-macro)
+│   └── serde v1.0.229
+│       ├── arrayvec v0.7.8
+│       │   └── vodozemac v0.11.2 (*)
+│       ├── curve25519-dalek v5.0.0 (*)
+│       ├── ed25519-dalek v3.0.0 (*)
+│       ├── serdect v0.4.3
+│       │   └── ed25519 v3.0.0
+│       │       └── ed25519-dalek v3.0.0 (*)
+│       ├── vodozemac v0.11.2 (*)
+│       ├── vodozemac-eval v0.0.1 (/Users/dennison/develop/FIC-elipsis/spike/vodozemac-eval)
+│       └── x25519-dalek v3.0.0 (*)
+└── thiserror-impl v2.0.21 (proc-macro)
+    └── thiserror v2.0.21
+        ├── matrix-pickle v0.2.3 (*)
+        └── vodozemac v0.11.2 (*)

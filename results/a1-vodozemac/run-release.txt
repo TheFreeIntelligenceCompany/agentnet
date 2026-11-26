@@ -1,0 +1,191 @@
+   Compiling vodozemac-eval v0.0.1 (/Users/dennison/develop/FIC-elipsis/spike/vodozemac-eval)
+    Finished `release` profile [optimized] target(s) in 2.63s
+     Running `target/release/vodozemac-eval`
+vodozemac-eval: vodozemac =0.11.2, Olm session config version 1 (MAC truncated to 8 bytes)
+
+=== T1: Identity = Olm Account; signed key bundle; what the app must add
+   . Account::new(); identity_keys(): curve25519=YWl9bQdP6YK+r7k9ssQKhHlbtO0p3cZmVWs01CyHHyE ed25519=JbQcF+e+kjGoa/Y4F6upOXmw3j7FZOTodXUdXcTcQ6U
+   . bundle JSON (991 bytes) with 4 OTKs + 1 fallback key
+   . after mark_keys_as_published(): one_time_keys().len()=0 fallback_key().len()=0 stored_one_time_key_count()=4 (the Account no longer lists published public keys; the app must keep its own copy)
+  [FAIL] account no longer exposes published OTK public keys: one_time_keys()/fallback_key() return only UNPUBLISHED keys; the app must store the public keys it published (needed to rebuild a static contact record)
+  [PASS] valid bundle verifies (identity self-signature + each OTK + fallback, verify_strict): 4 OTK signatures + fallback signature + identity binding verified
+  [PASS] substituted OTK rejected: Some("otk signature invalid: The signature was invalid: signature error")
+  [PASS] substituted identity Curve25519 key rejected (identity signature binds curve25519 to ed25519): Some("identity signature invalid: The signature was invalid: signature error")
+  [PASS] attacker's own self-signed bundle rejected by the address pin: without a pinned key the attacker bundle verifies=true (signatures alone prove nothing about WHO); with the expected Ed25519 key pinned: Some("ed25519 key does not match the pinned/expected key for this address")
+   . What vodozemac provides: Account::sign / Ed25519PublicKey::verify and key generation. What it does NOT provide: a bundle format, binding of the Ed25519 key to an AgentNet address, contact verification, key expiry/revocation, one-time-key directory. In AgentNet the address is the signing key, so the pin check is 'bundle.ed25519 == address key'; the identity self-signature (domain-separated, ours) is what ties the Curve25519 identity key to that address.
+
+=== T2: Offline establishment, 3 pre-key messages, reply, binary payloads
+   . B generated+published bundle, pickled itself (encrypted) and was dropped: offline
+  [PASS] A sends 3 pre-key messages (all type 0) without B being touched: types=[0, 0, 0] wire sizes=[168, 1194, 102572]
+  [PASS] B restored from encrypted pickle has same identity: ok
+  [PASS] B inbound session from first pre-key message decrypts all 3, byte-exact (0 B, 1 KiB, 100 KiB): session_id equal=true
+  [PASS] B reply (3 messages, same sizes) decrypted by A byte-exact: reply wire types=[1, 1, 1] (1 = normal message)
+  [PASS] after A receives a reply, A's next message is a normal message (not pre-key): type=1
+
+=== T3: One-time key exhaustion and fallback key
+   . B stored_one_time_key_count before = 2
+   . B stored_one_time_key_count after 4 inbound = 0
+   . sender 0: OK (13 bytes plaintext)
+   . sender 1: OK (13 bytes plaintext)
+   . sender 2: OK (13 bytes plaintext)
+   . sender 3: OK (13 bytes plaintext)
+  [PASS] third and fourth sender can still establish via the fallback key (fallback is reusable): OTK1->s0, OTK2->s1, fallback->s2 and s3
+   . sender 0: later state cannot re-establish: The pre-key message contained an unknown one-time key: aHVDy//8COdVP6hKjRNoWEgYCfMQh17ZkqNjUeX2BFA [MissingOneTimeKey("curve25519:aHVDy//8COdVP6hKjRNoWEgYCfMQh17ZkqNjUeX2BFA")]
+   . sender 1: later state cannot re-establish: The pre-key message contained an unknown one-time key: 8ddEh5DzmEw5Jv2Q/H2JO6Fuv8imGz/+N+o50ralIAk [MissingOneTimeKey("curve25519:8ddEh5DzmEw5Jv2Q/H2JO6Fuv8imGz/+N+o50ralIAk")]
+   . sender 2: pre-key message STILL establishes a session from the later account state
+   . sender 3: pre-key message STILL establishes a session from the later account state
+  [PASS] OTK-established sessions cannot be re-derived from a later account state: OTK private key deleted on use
+  [FAIL] fallback-established first flight is NOT re-derivable from a later account state (forward secrecy of the first flight): the fallback private key stays in the account (current + previous) and is not removed on use; a replayed pre-key message to it also creates a duplicate session
+   . static bundle, no fallback, two senders use the same OTK: first=true second=The pre-key message contained an unknown one-time key: ansZ13MQr8757YV2E5Er/FL+xO7ZQoVh1PVLybLsuxk [MissingOneTimeKey("curve25519:ansZ13MQr8757YV2E5Er/FL+xO7ZQoVh1PVLybLsuxk")]
+  [FAIL] static bundle without fallback: two senders using the same OTK both establish: error on 2nd sender: The pre-key message contained an unknown one-time key: ansZ13MQr8757YV2E5Er/FL+xO7ZQoVh1PVLybLsuxk [MissingOneTimeKey("curve25519:ansZ13MQr8757YV2E5Er/FL+xO7ZQoVh1PVLybLsuxk")] (no 'out of keys' signal at the sender: the sender cannot know the OTK was consumed)
+   . after 1 fallback rotation(s): old-fallback first flight still accepted
+   . after 2 fallback rotation(s): rejected: The pre-key message contained an unknown one-time key: AojrQuKF7Hu3UWuPfNuohdrZ34yHyGtNQr8STFjggxk [MissingOneTimeKey("curve25519:AojrQuKF7Hu3UWuPfNuohdrZ34yHyGtNQr8STFjggxk")]
+   . after 3 fallback rotation(s): rejected: The pre-key message contained an unknown one-time key: AojrQuKF7Hu3UWuPfNuohdrZ34yHyGtNQr8STFjggxk [MissingOneTimeKey("curve25519:AojrQuKF7Hu3UWuPfNuohdrZ34yHyGtNQr8STFjggxk")]
+  [PASS] fallback rotation: the account keeps current+previous fallback keys only (a contact record older than one rotation stops working): after 1 fallback rotation(s): old-fallback first flight still accepted | after 2 fallback rotation(s): rejected: The pre-key message contained an unknown one-time key: AojrQuKF7Hu3UWuPfNuohdrZ34yHyGtNQr8STFjggxk [MissingOneTimeKey("curve25519:AojrQuKF7Hu3UWuPfNuohdrZ34yHyGtNQr8STFjggxk")] | after 3 fallback rotation(s): rejected: The pre-key message contained an unknown one-time key: AojrQuKF7Hu3UWuPfNuohdrZ34yHyGtNQr8STFjggxk [MissingOneTimeKey("curve25519:AojrQuKF7Hu3UWuPfNuohdrZ34yHyGtNQr8STFjggxk")]
+   . limits: Account::max_number_of_one_time_keys()=50 (keys the app should keep published); internal store cap 5000 (oldest silently dropped, reported in OneTimeKeyGenerationResult::removed)
+
+=== T4: Persistence and crash safety
+   . encrypted pickle sizes (base64 chars): account A=608 B=2230, session A=2848 B=2912
+  [PASS] pickle with wrong key / corrupted body is rejected: wrong key: Some("The pickle couldn't be decrypted: The MAC of the ciphertext didn't pass validation MAC tag mismatch"); corrupted: Some("The pickle couldn't be decrypted: The MAC of the ciphertext didn't pass validation MAC tag mismatch")
+  [PASS] drop everything, unpickle accounts+sessions, conversation continues in both directions: a->b, b->a, then another ratchet turn
+   . C1: ratchet_key=06674611e186c3df chain_index=1; C2 (after reload): ratchet_key=06674611e186c3df chain_index=1
+  [FAIL] send-side rollback is harmless: no ratchet key / chain index / message key reuse: same ratchet key=true same index=true; the two ciphertexts share a 32-byte identical prefix (plaintexts share a 32-byte prefix) => same AES key and IV were used twice
+  [FAIL] send-side rollback: the re-encrypted message C2 is accepted by the peer: B decrypt(C1)=Ok(38), decrypt(C2)=The message key with the given key can't be created, message index: 1 [MissingMessageKey(1)]
+   . next message C3 from the reloaded A (chain_index 2): accepted by B: the session is NOT desynchronised, exactly one message was lost
+  [FAIL] send-side rollback: no message is lost (session survives, but C2 was lost and key material was reused): this is the cost of violating 'persist before release'
+   . if C2 arrives first: B accepts Ok("-SECOND"), then C1 -> The message key with the given key can't be created, message index: 1 [MissingMessageKey(1)]
+   . so which of two authentic messages is delivered depends on arrival order; the sender cannot tell
+  [PASS] persist-before-release: crash after persist, next message uses a fresh key and is accepted (C1 undelivered is simply skipped): Ok(39)
+  [FAIL] receive-side rollback: replay of an already-decrypted message is rejected after reloading the old pickle: first=true again-after-reload=Ok(23)
+  [PASS] receive-side with persisted state: the same ciphertext is rejected: The message key with the given key can't be created, message index: 1 [MissingMessageKey(1)]
+   . converse hazard: if the ratchet state is persisted but the process dies before the plaintext is stored/acked, redelivery of the ciphertext is rejected (the message key is gone) and the message content is lost; ratchet state and the received message must be committed in ONE atomic transaction
+   . RULE (sender): encrypt -> persist session pickle (fsync/atomic rename) -> only then release ciphertext to the transport. RULE (receiver): decrypt -> in one atomic commit persist {new session pickle, plaintext/inbox record, dedupe id} -> only then ack. Violation costs: send side = lost message + AES key/IV reuse; receive side = duplicate delivery (rollback) or permanent message loss (state ahead of data).
+
+=== T5: Replay and ordering
+  [PASS] same ciphertext twice, no persistence between: second rejected: first=true second=The message key with the given key can't be created, message index: 0 [MissingMessageKey(0)]
+  [PASS] same ciphertext twice, with pickle/unpickle between: second rejected: The message key with the given key can't be created, message index: 0 [MissingMessageKey(0)]
+  [PASS] first pre-key message redelivered to the existing session: rejected: The message key with the given key can't be created, message index: 0 [MissingMessageKey(0)]
+  [PASS] first pre-key message redelivered as a NEW inbound session (OTK already consumed): rejected: The pre-key message contained an unknown one-time key: lsFOtOWDlyWD1RKfKyjXGFmPCss4BU1tj+JahfbfxgQ [MissingOneTimeKey("curve25519:lsFOtOWDlyWD1RKfKyjXGFmPCss4BU1tj+JahfbfxgQ")]
+  [PASS] out-of-order delivery 5,3,4,1,2 within a chain: all decrypt: [Ok("m5"), Ok("m3"), Ok("m4"), Ok("m1"), Ok("m2")]
+   . (i) 2499 messages delivered in order, the FIRST one last: last result = #0: OK(0)
+  [PASS] 2500 sent, #1..#2499 delivered in order then #0 last: #0 still decrypts (its skipped key was kept: only 1 key was ever skipped): #0: OK(0)
+   . (ii) last message first: #2499: ERR The message gap was too big, got 2499, max allowed 2000 [TooBigMessageGap(2499, 2000)] ; then first message: #0: OK(0)
+  [PASS] 2500 sent, newest (#2499) delivered first: rejected with exact error; state untouched afterwards (#0 still OK): #2499: ERR The message gap was too big, got 2499, max allowed 2000 [TooBigMessageGap(2499, 2000)] | #0: OK(0)
+   . (iii) #2000 first (gap 2000) then #0, #1999, #1960, #1959: ["#2000: OK(2000)", "#0: ERR The message key with the given key can't be created, message index: 0 [MissingMessageKey(0)]", "#1999: OK(1999)", "#1960: OK(1960)", "#1959: ERR The message key with the given key can't be created, message index: 1959 [MissingMessageKey(1959)]"]
+  [PASS] gap of exactly 2000 accepted; but only the last 40 skipped keys are kept (#0 and #1959 are lost, #1960 and #1999 decrypt): ["#2000: OK(2000)", "#0: ERR The message key with the given key can't be created, message index: 0 [MissingMessageKey(0)]", "#1999: OK(1999)", "#1960: OK(1960)", "#1959: ERR The message key with the given key can't be created, message index: 1959 [MissingMessageKey(1959)]"]
+   . (iv) #2001 first: #2001: ERR The message gap was too big, got 2001, max allowed 2000 [TooBigMessageGap(2001, 2000)]
+  [PASS] gap 2001 rejected: #2001: ERR The message gap was too big, got 2001, max allowed 2000 [TooBigMessageGap(2001, 2000)]
+  [PASS] reorder window: #40 first then #0 works; #41 first evicts #0 (but #1 works): ["#40: OK(40)", "#0: OK(0)"] ["#41: OK(41)", "#0: ERR The message key with the given key can't be created, message index: 0 [MissingMessageKey(0)]", "#1: OK(1)"]
+   . delayed message vs ping-pong turns: first failure at k=Some(6)
+   . 0 round trips later: OK
+   . 1 round trips later: OK
+   . 2 round trips later: OK
+   . 3 round trips later: OK
+   . 4 round trips later: OK
+   . 5 round trips later: OK
+   . 6 round trips later: Failed decrypting Olm message, invalid MAC: MAC tag mismatch [InvalidMAC(MacError)]
+   . 7 round trips later: Failed decrypting Olm message, invalid MAC: MAC tag mismatch [InvalidMAC(MacError)]
+   . 8 round trips later: Failed decrypting Olm message, invalid MAC: MAC tag mismatch [InvalidMAC(MacError)]
+   . 9 round trips later: Failed decrypting Olm message, invalid MAC: MAC tag mismatch [InvalidMAC(MacError)]
+  [PASS] a delayed message survives at most N ratchet turns (receiver keeps 5 receiving chains): first failing k=Some(6)
+
+=== T6: Wrong recipient, tampering, and the libchat failure mode
+  [PASS] pre-key message for B offered to C: C cannot create a session: The pre-key message contained an unknown one-time key: +rgjWR7O29fYcn/sXDmSytswKsjKaLzMwuSwMJ69BjU [MissingOneTimeKey("curve25519:+rgjWR7O29fYcn/sXDmSytswKsjKaLzMwuSwMJ69BjU")]
+  [PASS] normal message for B offered to an unrelated session of C: not decryptable: Failed decrypting Olm message, invalid MAC: MAC tag mismatch [InvalidMAC(MacError)]
+   . normal message (95 bytes): 760 single-bit flips -> rejected {"DecodeError": 43, "InvalidMAC": 714}; accepted with IDENTICAL plaintext=3 (bit indexes [283, 285, 286], byte offsets [35, 35, 35]); accepted with DIFFERENT plaintext=0
+  [PASS] no single-bit flip of a normal message yields a different plaintext: 0 accepted with different plaintext
+  [FAIL] wire encoding is non-malleable: every single-bit flip of a normal message is rejected: 3 flips are accepted and decrypt to the IDENTICAL plaintext (the MAC covers the re-encoded protobuf fields, not the received bytes); dedupe must key on the plaintext message id, never on ciphertext bytes/hash
+  [PASS] after every REJECTED tampered/truncated copy was fed to the live session, the genuine message still decrypts (libchat T3b failure mode): 757 rejected tampered copies + all truncations fed to the same Session object; truncations accepted=0; +8 trailing bytes: rejected at decode; genuine=OK
+   . malleable variant (bit 283) delivered first -> Ok(true); then the genuine bytes -> The message key with the given key can't be created, message index: 0 [MissingMessageKey(0)]
+   . effect: the content is delivered exactly once and is correct; the genuine copy is later rejected as a replay. A relay can therefore mint distinct byte strings for one message but cannot change what it decrypts to.
+   . pre-key message (184 bytes): 1472 single-bit flips -> {"DecodeError": 115, "Decryption": 1096, "MissingOneTimeKey": 255}; accepted with identical plaintext=6 (byte offsets [34, 68, 102, 140, 140, 140]); accepted with different plaintext=0
+  [PASS] no single-bit flip of a pre-key message yields a different plaintext: 0
+  [FAIL] wire encoding is non-malleable: every single-bit flip of a pre-key message is rejected: 6 flips accepted with identical plaintext (same cause as above)
+  [PASS] after every REJECTED tampered pre-key message hit the live account, the genuine pre-key message still establishes (OTK not burned by failed attempts): 1351 rejected tampered pre-key messages fed to one live Account; genuine=OK
+   . mechanism: Session::decrypt only commits chain/ratchet state after the MAC verifies; Account::create_inbound_session only removes the OTK after the inner message decrypts (audit Issue G). Caveat: MAC is truncated to 8 bytes (audit Issue J, unresolved; SessionConfig::version_1 is the only non-experimental config in 0.11.2).
+
+=== T7: Sender authentication semantics
+   . PreKeyMessage exposes: identity_key (Curve25519) = G0KPwsI/ZtwaXyPw8ZqOdv2tdcH0QyxYy1lLAO0PQmk ; base_key ; one_time_key. No Ed25519 key, no address, no signature.
+  [PASS] recipient learns the sender's Curve25519 identity key (and nothing else) from a pre-key message: pre_key_message.identity_key() == A's identity key; Session::session_keys().identity_key stored in the session
+  [PASS] session's peer key is stored in the session: session_keys().identity_key
+   . A Normal message has only {ratchet key, chain index, ciphertext, MAC}; the receiver identifies the sender by trying its sessions (MAC failure on the wrong ones). Cost measured in T10.
+   . after the failed forged attempt, the OTK it referenced is intact: M's own genuine pre-key message -> OK
+  [PASS] M's pre-key message with the identity-key field rewritten to A's key does not create a session: (M's key found 1 time(s) in the encoding) result: The message that was used to establish the Session couldn't be decrypted [Decryption(InvalidMAC(MacError))]
+   . why: the 3DH shared secret includes DH(IK_sender_secret, OTK_b); without A's identity secret M derives a different root key and the MAC of the embedded message fails.
+  [PASS] constructive: sender puts its signed bundle in the first flight; recipient binds session identity key == bundle.curve25519 and bundle.ed25519 == address: this is the application-level step that turns 'holder of Curve25519 key K' into 'holder of address X'
+  [PASS] M embedding A's genuine bundle in her own flight: session key != bundle key, application check rejects: the library alone would accept M's session (it IS a valid session with M); only the app-level comparison catches the mismatch
+  [NOT EXPRESSIBLE] key-compromise impersonation (attacker holding B's secrets forges 'A -> B'): forging requires computing the 3DH secret from B's secret keys and A's PUBLIC identity key, which the public API does not offer (no Account import of secrets/Session from raw 3DH inputs without the low-level-api feature); by protocol design (3DH with only DH-based authentication, no signatures) it is possible: Olm is deniable and offers no KCI resistance. Not exercised.
+   . Contrast with the current design: HPKE-base + Ed25519 signature gives a transferable, non-repudiable statement 'address X wrote this to Y'; Olm gives deniable, session-bound authentication only.
+
+=== T8: Forward secrecy and post-compromise security
+   . later-state attacker on captured ciphertexts: ["secret-1: The message key with the given key can't be created, message index: 0 [MissingMessageKey(0)]", "secret-2: The message key with the given key can't be created, message index: 1 [MissingMessageKey(1)]", "secret-3: The message key with the given key can't be created, message index: 2 [MissingMessageKey(2)]"]; on B's own reply: Failed decrypting Olm message, invalid MAC: MAC tag mismatch [InvalidMAC(MacError)]
+  [PASS] old ciphertexts (decrypted and ratcheted past) cannot be decrypted from a later stolen state: ["secret-1: The message key with the given key can't be created, message index: 0 [MissingMessageKey(0)]", "secret-2: The message key with the given key can't be created, message index: 1 [MissingMessageKey(1)]", "secret-3: The message key with the given key can't be created, message index: 2 [MissingMessageKey(2)]"]
+  [PASS] B's own earlier outgoing message cannot be decrypted from the stolen state: Failed decrypting Olm message, invalid MAC: MAC tag mismatch [InvalidMAC(MacError)]
+  [PASS] the original pre-key message cannot re-establish the session from the later account state (OTK consumed): The pre-key message contained an unknown one-time key: 2Hk3fbbDPU42Sl17mm6v0/Bhi9f9dvbTqi78ib8y4Tg [MissingOneTimeKey("curve25519:2Hk3fbbDPU42Sl17mm6v0/Bhi9f9dvbTqi78ib8y4Tg")]
+  [FAIL] messages SKIPPED (not yet delivered) when the state is stolen remain decryptable from it (up to 40 skipped keys per chain, 5 chains): DECRYPTED "secret-5-never-delivered-yet"
+   . round 1: legit B decrypts=true; attacker (stolen state at T, passive) decrypts=true
+   . round 2: legit B decrypts=true; attacker (stolen state at T, passive) decrypts=false
+   . round 3: legit B decrypts=true; attacker (stolen state at T, passive) decrypts=false
+   . round 4: legit B decrypts=true; attacker (stolen state at T, passive) decrypts=false
+   . round 5: legit B decrypts=true; attacker (stolen state at T, passive) decrypts=false
+  [PASS] post-compromise security: a passive attacker with a stolen state is locked out after the peers complete fresh DH ratchet turns: ["round 1: legit B decrypts=true; attacker (stolen state at T, passive) decrypts=true", "round 2: legit B decrypts=true; attacker (stolen state at T, passive) decrypts=false", "round 3: legit B decrypts=true; attacker (stolen state at T, passive) decrypts=false", "round 4: legit B decrypts=true; attacker (stolen state at T, passive) decrypts=false", "round 5: legit B decrypts=true; attacker (stolen state at T, passive) decrypts=false"]
+   . Contrast (HPKE base mode as in ADR 0002): ciphertexts are sealed to a long-term recipient KEM key; anyone who later obtains that private key (or a retained previous key) decrypts EVERY recorded frame sealed to it. Olm bounds the exposure to the not-yet-ratcheted window plus stored skipped keys.
+
+=== T9: Migration / two live instances of the same state
+   . B1 sends: ratchet=335f8450919dfcb3 idx=1; B2 sends: ratchet=335f8450919dfcb3 idx=1
+  [FAIL] two instances sending from the same chain position are both accepted by the peer: A decrypt(B1)=OK, decrypt(B2)=The message key with the given key can't be created, message index: 1 [MissingMessageKey(1)]
+   . the loser's message is silently lost; both used the same message key for different plaintexts (key reuse)
+  [FAIL] only one instance can decrypt a given message (no duplicate delivery): B1=true B2=true
+   . after a DH step each instance picked its own fresh ratchet key: B1=7dabc6658a1f92f0 B2=064d205e52ac13f0 (different=true)
+   . A decrypts B1 reply: Ok("B1 reply"); B2 reply: Err("Failed decrypting Olm message, invalid MAC: MAC tag mismatch [InvalidMAC(MacError)]") (A follows whichever reply arrives first: its root key has already advanced, so the other instance's reply fails the MAC)
+  [FAIL] A's next message is readable by BOTH instances (no split brain): B1: Ok("OK"); B2: Err("Failed decrypting Olm message, invalid MAC: MAC tag mismatch [InvalidMAC(MacError)]")
+  [FAIL] the instance that lost the race recovers on its own: it keeps failing for subsequent messages as long as the peer follows the other instance (3 further rounds tried)
+  [FAIL] two Account copies: the second rejects a pre-key message whose OTK the first already consumed: inst1=true inst2=true
+   . safe migration = quiesce the old instance (final persist), copy the pickles, start the new instance, never run both; the library has no fencing, epoch or lease mechanism, and a pickle contains no 'owner' marker. A restored BACKUP behaves exactly like the rollback cases in T4.
+
+=== T10: Costs
+   . {"normal_base64":84,"normal_bytes":63,"normal_overhead":63,"plaintext":0,"prekey_base64":224,"prekey_bytes":168,"prekey_overhead":168}
+   . {"normal_base64":84,"normal_bytes":63,"normal_overhead":62,"plaintext":1,"prekey_base64":224,"prekey_bytes":168,"prekey_overhead":167}
+   . {"normal_base64":106,"normal_bytes":79,"normal_overhead":63,"plaintext":16,"prekey_base64":246,"prekey_bytes":184,"prekey_overhead":168}
+   . {"normal_base64":212,"normal_bytes":159,"normal_overhead":59,"plaintext":100,"prekey_base64":354,"prekey_bytes":265,"prekey_overhead":165}
+   . {"normal_base64":1451,"normal_bytes":1088,"normal_overhead":64,"plaintext":1024,"prekey_base64":1592,"prekey_bytes":1194,"prekey_overhead":170}
+   . {"normal_base64":13739,"normal_bytes":10304,"normal_overhead":64,"plaintext":10240,"prekey_base64":13880,"prekey_bytes":10410,"prekey_overhead":170}
+   . {"normal_base64":136620,"normal_bytes":102465,"normal_overhead":65,"plaintext":102400,"prekey_base64":136763,"prekey_bytes":102572,"prekey_overhead":172}
+   . pickles: {"account_2otk_fallback":1419,"account_50otk_fallback":16907,"account_fresh":587,"session_established_a":1568,"session_established_b":1931,"session_with_40_skipped_keys":9227,"unit":"base64 characters of the encrypted pickle string"}
+   . 100 B payload, 10000 iterations (normal messages, one chain): encrypt 14.28 us, decrypt 1.89 us
+   . 1024 B payload, 10000 iterations (normal messages, one chain): encrypt 16.24 us, decrypt 2.71 us
+   . ping-pong (every message triggers a DH ratchet step): 90.14 us per message (encrypt+decrypt)
+   . session creation (1000 iterations): outbound 122.39 us, inbound 109.88 us
+   . failed trial decrypt on a non-matching session (new ratchet key => DH then MAC fail): 37.62 us
+   . timing is wall-clock on the host in a release build, single thread, includes Wire to_parts/from_parts copies; informational only
+  [PASS] costs measured: see evidence; dependency count / build time / MSRV recorded by the shell wrapper in results/a1-vodozemac
+
+=== SUMMARY
+T1  FAIL             Identity = Olm Account; signed key bundle; what the app must add
+      [FAIL] account no longer exposes published OTK public keys
+T2  PASS             Offline establishment, 3 pre-key messages, reply, binary payloads
+T3  FAIL             One-time key exhaustion and fallback key
+      [FAIL] fallback-established first flight is NOT re-derivable from a later account state (forward secrecy of the first flight)
+      [FAIL] static bundle without fallback: two senders using the same OTK both establish
+T4  FAIL             Persistence and crash safety
+      [FAIL] send-side rollback is harmless: no ratchet key / chain index / message key reuse
+      [FAIL] send-side rollback: the re-encrypted message C2 is accepted by the peer
+      [FAIL] send-side rollback: no message is lost (session survives, but C2 was lost and key material was reused)
+      [FAIL] receive-side rollback: replay of an already-decrypted message is rejected after reloading the old pickle
+T5  PASS             Replay and ordering
+T6  FAIL             Wrong recipient, tampering, and the libchat failure mode
+      [FAIL] wire encoding is non-malleable: every single-bit flip of a normal message is rejected
+      [FAIL] wire encoding is non-malleable: every single-bit flip of a pre-key message is rejected
+T7  PASS             Sender authentication semantics
+      [NOT EXPRESSIBLE] key-compromise impersonation (attacker holding B's secrets forges 'A -> B')
+T8  FAIL             Forward secrecy and post-compromise security
+      [FAIL] messages SKIPPED (not yet delivered) when the state is stolen remain decryptable from it (up to 40 skipped keys per chain, 5 chains)
+T9  FAIL             Migration / two live instances of the same state
+      [FAIL] two instances sending from the same chain position are both accepted by the peer
+      [FAIL] only one instance can decrypt a given message (no duplicate delivery)
+      [FAIL] A's next message is readable by BOTH instances (no split brain)
+      [FAIL] the instance that lost the race recovers on its own
+      [FAIL] two Account copies: the second rejects a pre-key message whose OTK the first already consumed
+T10 PASS             Costs
+
+wrote /Users/dennison/develop/FIC-elipsis/spike/vodozemac-eval/../../results/a1-vodozemac/results.json

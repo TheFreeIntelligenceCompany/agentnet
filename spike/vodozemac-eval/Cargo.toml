@@ -1,0 +1,17 @@
+[package]
+name = "vodozemac-eval"
+version = "0.0.1"
+edition = "2021"
+publish = false
+description = "Spike A1 (fallback): in-process runtime evaluation of vodozemac (Olm) for AgentNet. Disposable. No network use."
+
+# Standalone crate: keep it out of any parent workspace.
+[workspace]
+
+[dependencies]
+vodozemac = "=0.11.2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+opt-level = 3

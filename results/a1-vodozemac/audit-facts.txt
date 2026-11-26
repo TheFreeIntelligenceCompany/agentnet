@@ -1,0 +1,25 @@
+Least Authority audit of vodozemac - facts verified by fetching the PDF (2026-11-25)
+
+Link (from vodozemac-0.11.2/README.md "Security notes"):
+  https://matrix.org/media/Least%20Authority%20-%20Matrix%20vodozemac%20Final%20Audit%20Report.pdf
+Retrieved: HTTP 200, application/pdf, 274277 bytes, sha256 6d4bb5167a0fd51874d8e2fb22223d06b2ce22d219b6236bd65c7a225cacba98
+PDF metadata title: "220330_Matrix_Vodozemac_Final Audit Report"; 22 pages (pdfinfo)
+Cover page: "vodozemac Security Audit Report / Matrix / Final Audit Report: 30 March 2022" (Least Authority TFA GmbH)
+Project dates (report p.3): code review 20 Dec - 25 Jan; initial report 28 Jan; verification 28-29 Mar; final report 30 Mar (2022)
+Review team: Anna Kaplan, Ann-Christine Kycler, Denis Kolegov, Jan Winkelmann, Rai Yang
+Scope: https://github.com/matrix-org/vodozemac
+  initial review revision  7c11a501bc316a0bf92a5fe06fee8582aad24897
+  verification revision    57d8d87a747653d6d7b7a53acb9a8d8f8de48285 (GitHub API: committed 2022-03-02)
+  GitHub compare API (2026-11-25): tag 0.11.2 is "ahead" of the verification revision by 530 commits
+Out of scope (report p.3, p.7): bindings (Android/Java, Python, JavaScript), dependencies and third-party code, interaction with
+  higher-level applications (e.g. Matrix), and the cryptographic DESIGN of Olm and Megolm ("presumed to function as intended";
+  the report recommends a separate analysis of the designs by an independent team).
+Findings (report status table, p.7-8 and detail sections): Issues A-J, Suggestions 1-8.
+  Resolved: A, B, C, D, E, F, G (invalid inbound session could burn a one-time key), H, Suggestions 1-7.
+  Unresolved at verification: Issue I (keys in memory not protected against swap/side channels),
+                              Issue J (HMAC-SHA256 tag truncated to 8 bytes; inherited from libolm, needs Matrix-protocol change),
+                              Suggestion 8 (make number of chain/message keys configurable; Matrix declined).
+README of vodozemac 0.11.2: "This crate has received one security audit by Least Authority, with no significant findings."
+  (the report itself lists 10 issues; grep of the extracted text finds no severity ratings and the phrase "no significant findings" does not appear in it, so that wording is the README's summary, not the report's)
+Present in 0.11.2: SessionConfig::version_1() (8-byte truncated MAC) is the only non-experimental session config
+  (version_2 with a full MAC is behind the `experimental-session-config` feature).

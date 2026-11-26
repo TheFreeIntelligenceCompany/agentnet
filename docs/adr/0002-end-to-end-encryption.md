@@ -1,6 +1,6 @@
 # ADR 0002 — End-to-end encryption: HPKE base mode with an inner Ed25519 signature
 
-Status: accepted (2026-11-25). Owner: lead agent.
+Status: accepted by the lead agent (2026-11-25); **pending the repository owner's explicit acceptance** — see "Open point for the owner". Owner: lead agent.
 
 ## Context
 
@@ -69,14 +69,47 @@ Not provided, and stated as limitations:
 
 ## Alternatives
 
-* `vodozemac` 0.11.2 (Olm; Apache-2.0; Least Authority audit): gives forward
-  secrecy and post-compromise security, at the price of per-message mutable
-  ratchet state that must be persisted before ciphertext release and a
-  single-writer rule. Kept as the documented upgrade path. Compiles on the host
-  (`results/a1-libchat/fallback-probe-build.txt`); never exercised at runtime —
-  UNTESTED.
+* `vodozemac` 0.11.2 (Olm; Apache-2.0) — **evaluated at runtime** after the
+  first version of this ADR (`docs/spike/notes-vodozemac.md`,
+  `spike/vodozemac-eval/`, `results/a1-vodozemac/`; lead re-ran the spike):
+  * It works as documented: offline establishment from a signed key bundle,
+    byte-exact payloads up to 100 KiB, replay rejected, out-of-order delivery
+    within limits, wrong recipient and tampered copies rejected, and a rejected
+    tampered copy does **not** poison the genuine message (the libchat failure).
+    Old ciphertexts are not decryptable from a later stolen state (forward
+    secrecy), and a passive attacker is locked out after a ratchet round trip.
+  * Costs confirmed by experiment: a send after a state rollback reuses the
+    same message key (one message lost, key/IV reuse); a receive without
+    persisting accepts the replay again; two live copies of one state diverge
+    permanently with no fencing. The application must persist before releasing
+    ciphertext, commit receives atomically and enforce a single writer.
+  * AgentNet has no directory to publish one-time keys to. With contact records
+    exchanged out of band, first messages would ride a reusable fallback key,
+    which loses forward secrecy for the first flight; two senders using the
+    same static bundle collide on a one-time key.
+  * The Least Authority audit (final report 30 March 2022) covers revisions
+    530 commits behind 0.11.2, excludes the Olm design and dependencies, and
+    left the 8-byte MAC truncation unresolved (still present in the v1 session
+    config). It also pulls its own `hpke` 0.14.1.
+  * Conclusion: "audited" is weaker than it sounds for the version on
+    crates.io, and the stateful design trades restart/migration safety — a
+    stated requirement — for forward secrecy. Kept as the upgrade path if
+    forward secrecy becomes a requirement.
 * libchat: revisit when MLS storage (#112) and one-time key packages (#169)
   land and a tagged release exists.
 * OpenMLS, Noise (`snow`), `crypto_box`, `age`, libsignal: rejected for the
   reasons in the notes (persistence burden, interactive handshakes, no sender
   authentication, AGPL).
+
+## Open point for the owner
+
+`goal.md` says: if libchat is unsuitable, "evaluate an established audited
+messaging library/protocol ... do not hand-roll encryption". Both candidates
+were evaluated with running code. The chosen design uses an IETF-standard
+protocol (HPKE, RFC 9180) and a standard signature scheme through maintained
+libraries, and invents no primitive; but the *composition* (signed envelope
+inside HPKE, padding, contact record) is ours and the `hpke` crate has no
+public audit. The lead's judgment is that this is the better fit for the stated
+requirements (restart- and migration-safe identity, offline recipients, no
+directory service). The human owner should confirm that trade-off, and an
+external cryptographic review is required before production use either way.
