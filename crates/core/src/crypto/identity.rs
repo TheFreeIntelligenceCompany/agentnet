@@ -212,6 +212,33 @@ impl Identity {
         })
     }
 
+    /// Deterministic identity from fixed seeds, for frozen known-answer tests
+    /// only (never use fixed seeds for a real identity).
+    #[cfg(any(test, feature = "test-support"))]
+    #[doc(hidden)]
+    pub fn from_seeds_for_tests(
+        signing_seed: [u8; 32],
+        kem_seed: [u8; 32],
+        inbox_buckets: u16,
+        now_ms: i64,
+    ) -> Result<Self, IdentityError> {
+        check_buckets(inbox_buckets)?;
+        let signing = SigningKey::from_bytes(&signing_seed);
+        let address = Address::from_verifying_key(&signing.verifying_key())
+            .map_err(|_| IdentityError::Malformed("signing key is weak"))?;
+        Ok(Self {
+            signing,
+            address,
+            kem: KemKeypair::from_secret(Zeroizing::new(kem_seed), now_ms, 1)?,
+            previous: Vec::new(),
+            inbox_buckets,
+            created_at: now_ms,
+            kem_expires_at: None,
+            min_valid_epoch: 1,
+            advertised_suites: vec![super::envelope::SUITE_ID],
+        })
+    }
+
     /// Generate with the default bucket count (16).
     pub fn generate_default(now_ms: i64) -> Result<Self, IdentityError> {
         Self::generate(DEFAULT_INBOX_BUCKETS, now_ms)

@@ -1,0 +1,35 @@
+{
+  "source": "https://www.rfc-editor.org/rfc/rfc4648.txt",
+  "section": "10. Test Vectors (BASE32)",
+  "retrieved": "2026-11-26",
+  "vectors": [
+    {
+      "plain": "",
+      "base32": ""
+    },
+    {
+      "plain": "f",
+      "base32": "MY======"
+    },
+    {
+      "plain": "fo",
+      "base32": "MZXQ===="
+    },
+    {
+      "plain": "foo",
+      "base32": "MZXW6==="
+    },
+    {
+      "plain": "foob",
+      "base32": "MZXW6YQ="
+    },
+    {
+      "plain": "fooba",
+      "base32": "MZXW6YTB"
+    },
+    {
+      "plain": "foobar",
+      "base32": "MZXW6YTBOI======"
+    }
+  ]
+}
