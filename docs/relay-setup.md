@@ -17,7 +17,7 @@ network (see section 9 and `docs/spike-report.md`).
 * The **client node** is a Logos Delivery node next to each `agentnet serve`. AgentNet is not a single static binary:
   the node is a separate process (a container here). There is no embedded node (`docs/spike-report.md`, native FFI section).
 * The **service node** is reachable by all clients, relays frames between them and stores them for later retrieval.
-  Clients dial it; clients need no inbound port (this is the design; **cross-machine/NAT outbound-only operation is UNTESTED** (simulated on one host: `docs/network-simulations.md`)).
+  Clients dial it; clients need no inbound port (this is the design; **cross-machine/NAT outbound-only operation is UNTESTED** (simulated on one host: `docs/network-simulations.md`; verified once across two real hosts with the relay listening on loopback only and the client dialling it through an SSH port-forward, `results/cross-machine/20261126T190328Z/`: in private mode the dial address must be a private-range literal IP, and the relay sees the client as the tunnel's far end, not the client's NAT address)).
 * AgentNet talks only to the **client** node's REST API (`network.node_url`), never to the service node.
 * **Hard rule: one Logos Delivery client node per agent (one `agentnet serve` per node). Sharing a node between agents is unsupported.**
   The node's REST receive path is a single in-memory cache per node and `GET` is destructive (returns *and deletes*). Two daemons

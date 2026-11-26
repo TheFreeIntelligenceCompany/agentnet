@@ -1,0 +1,7 @@
+map[net.ipv4.tcp_retries2:6]
+15
+Linux 6.18.60-instabox x86_64
+Docker version 29.8.2, build 7fc2dff
+agentnet 0.1.0
+5f004d8
+amd64

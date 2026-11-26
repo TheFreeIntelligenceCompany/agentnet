@@ -1,0 +1,12 @@
+19:06:25 before A_connected_peers=1 R_sees_A_and_est_counts=["Connected"] 2 2 
+killing port-forward at 19:06:25
+19:06:34 t+10s A_connected_peers=0 R_sees_A_and_est_counts=["CanConnect"] 1 1 
+queued message fa7ffabb-9cb4-43f5-a933-f68673c0ef44 at 19:06:34
+19:07:05 t+40s A_connected_peers=0 R_sees_A_and_est_counts=["CanConnect"] 1 1 
+19:07:36 t+70s A_connected_peers=0 R_sees_A_and_est_counts=["CanConnect"] 1 1 
+19:08:06 t+100s A_connected_peers=0 R_sees_A_and_est_counts=["CannotConnect"] 1 1 
+state at +111 s: {"state":"queued","attempts":0,"last_error":"transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just"}
+19:08:17 t+treat-before-restore A_connected_peers=0 R_sees_A_and_est_counts=["CannotConnect"] 1 1 
+port-forward restored at 19:08:28 (tunnel down ~19:08:28)
+A lists R Connected after 4172 ms
+queued message delivered (receipt) after 49451 ms

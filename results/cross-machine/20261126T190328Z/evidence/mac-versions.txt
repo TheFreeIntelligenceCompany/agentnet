@@ -1,0 +1,7 @@
+Darwin 25.6.0 arm64
+Docker version 29.8.1, build 4a63305d74
+agentnet 0.1.0
+5f004d8
+instabox 0.8.394+d48d8ea09
+instabox 0.8.394+d48d8ea09 is outdated (latest 0.8.407): run instabox update
+map[8645/tcp:[{127.0.0.1 18650}]] wakuorg/nwaku@sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73 running

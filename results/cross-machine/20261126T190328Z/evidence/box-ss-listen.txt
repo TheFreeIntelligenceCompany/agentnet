@@ -1,0 +1,14 @@
+State  Recv-Q Send-Q Local Address:Port  Peer Address:PortProcess
+LISTEN 0      4096       127.0.0.1:18642      0.0.0.0:*          
+LISTEN 0      4096       127.0.0.1:18640      0.0.0.0:*          
+LISTEN 0      128          0.0.0.0:22         0.0.0.0:*          
+LISTEN 0      4096       127.0.0.1:60000      0.0.0.0:*          
+LISTEN 0      128             [::]:22            [::]:*          
+---
+an-nb	8545/tcp, 30303/tcp, 60000/tcp, 127.0.0.1:18642->8645/tcp
+an-r1	8545/tcp, 30303/tcp, 127.0.0.1:60000->60000/tcp, 127.0.0.1:18640->8645/tcp
+---
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+3: eth0    inet 172.16.0.2/30 brd 172.16.0.3 scope global eth0\       valid_lft forever preferred_lft forever
+4: docker0    inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0\       valid_lft forever preferred_lft forever
+5: br-cccded8dd035    inet 172.28.66.1/24 brd 172.28.66.255 scope global br-cccded8dd035\       valid_lft forever preferred_lft forever

@@ -1,0 +1,17 @@
+[ok  ] data dir permissions: directory 0700, files 0600
+[ok  ] config: /data/home/b/agentnet.toml valid (private mode, 1 peer(s))
+[ok  ] identity: address an1zltyidr4wk4sezsl3jfk6pwb4k66ykrafn3jg5gru4q4nsrklybaudhp7q
+[ok  ] replay guard: inactive (store generation 0)
+[warn] single instance: the same identity running in two data directories cannot be detected or prevented (the data-dir lock only covers one directory); both would receive, persist and acknowledge every message independently and may both fire triggers
+       -> run each identity in exactly one place; to move it, stop the old daemon first and copy agentnet.db + agentnet.generation or use `identity export/import`
+[ok  ] daemon socket: daemon answers on agentnet.sock
+[ok  ] node reachable: http://127.0.0.1:18642 answered 200
+[ok  ] clock: within 0 s of the node's clock
+[ok  ] isolation: no isolation violation reported
+[ok  ] peers == allowlist: 1 connected, all in the allowlist
+[ok  ] history sync: last successful relay Store sync 4 s ago (interval 15 s)
+[ok  ] transport ready: node reachable; 1 connected allowed peer(s)
+[ok  ] local inbox database: inbox query works (this tests the local database, not the relay Store)
+0 failing, 1 warning(s)
+exit 0
+ready: daemon, node, isolation and transport checks are ok

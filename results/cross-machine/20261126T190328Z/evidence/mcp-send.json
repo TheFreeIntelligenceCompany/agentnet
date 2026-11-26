@@ -1,0 +1,19 @@
+{
+  "elapsed_ms": 23,
+  "is_error": false,
+  "protocol": {
+    "negotiated_protocol_version": "2026-07-28",
+    "server_info": {
+      "name": "agentnet",
+      "version": "0.1.0"
+    }
+  },
+  "result": {
+    "conversation_id": "x-mcp",
+    "deduplicated": false,
+    "expires_at": 1795806221059,
+    "message_id": "f002192b-3f24-42a4-b96e-739a050451b4",
+    "status": "queued"
+  },
+  "tool": "send_message"
+}

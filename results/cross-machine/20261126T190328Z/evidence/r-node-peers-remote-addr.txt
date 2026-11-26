@@ -1,0 +1,2 @@
+{"multiaddr":"/ip4/172.28.66.1/tcp/53320/p2p/16Uiu2HAm1N4XD7fSWLmsU6kG1sDNeW5cRHgfMB87Uw3yFD3qkeLj","connected":"Connected"}
+{"multiaddr":"/ip4/172.28.66.22/tcp/51700/p2p/16Uiu2HAmGGTNKYN2QDGjGj2HK1fXFUZ4js6P5K1VmMvEofo4MfAZ","connected":"Connected"}

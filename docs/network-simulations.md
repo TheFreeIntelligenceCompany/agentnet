@@ -17,6 +17,8 @@ Reproduce: `spike/relay-wireguard/run.sh` and `spike/relay-nat/run.sh` (READMEs 
 (`cargo build --release --locked -p agentnet-cli -p agentnet-acceptance`, or `BIN_DIR=`). The binaries used for every run below were built
 from a pristine `git archive HEAD` export (HEAD `1b77240`), independent of the working tree.
 
+> **Real two-host run (2026-11-26):** besides the simulations below, one run used two real hosts (`results/cross-machine/20261126T190328Z/`): a Mac behind a home NAT and a cloud VM, joined by an SSH port-forward. Killing an SSH forward closes the connection cleanly, so the relay noticed within 10 s and held no stale socket; `tcp_retries2` was not exercised. After a 123 s outage the client re-listed the relay Connected in 4.2 s and a queued message was delivered in 49.5 s (single trial). A silent packet blackhole across real hosts was not tested.
+
 ## Experiment W: relay reachable only over WireGuard
 
 Topology (`spike/relay-wireguard/README.md`): underlay docker bridge `172.29.70.0/24` (the only thing the three "machines" share); WireGuard

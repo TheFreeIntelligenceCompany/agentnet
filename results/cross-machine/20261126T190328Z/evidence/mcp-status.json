@@ -1,0 +1,27 @@
+{
+  "elapsed_ms": 7,
+  "is_error": false,
+  "protocol": {
+    "negotiated_protocol_version": "2026-07-28",
+    "server_info": {
+      "name": "agentnet",
+      "version": "0.1.0"
+    }
+  },
+  "result": {
+    "attempts": 1,
+    "conversation_id": "x-mcp",
+    "created_at": 1795719821059,
+    "delivered_at": 1795719821456,
+    "expires_at": 1795806221059,
+    "last_attempt_at": 1795719821060,
+    "last_error": null,
+    "message_id": "f002192b-3f24-42a4-b96e-739a050451b4",
+    "message_type": "message",
+    "next_attempt_at": null,
+    "recipient": "an1zltyidr4wk4sezsl3jfk6pwb4k66ykrafn3jg5gru4q4nsrklybaudhp7q",
+    "sent_at": 1795719821060,
+    "state": "delivered"
+  },
+  "tool": "get_message_status"
+}
