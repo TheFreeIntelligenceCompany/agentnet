@@ -1,0 +1,5 @@
+COMMAND     PID     USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+Python     8875 <user>    7u  IPv4 0xefe923c73fd2a593      0t0  TCP <TS_IP>:60000-><TS_IP>:63204 (ESTABLISHED)
+Python     8875 <user>    9u  IPv4  0xe27671105bbb473      0t0  TCP <TS_IP>:60000-><TS_IP>:63218 (ESTABLISHED)
+limactl   75784 <user>   16u  IPv4  0xf1698a0293173d8      0t0  TCP <TS_IP>:63204-><TS_IP>:60000 (ESTABLISHED)
+limactl   75784 <user>   17u  IPv4 0x4ff1600b86c4955b      0t0  TCP <TS_IP>:63218-><TS_IP>:60000 (ESTABLISHED)

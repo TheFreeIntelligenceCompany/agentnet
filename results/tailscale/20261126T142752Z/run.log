@@ -1,0 +1,33 @@
+[14:27:52] results: /Users/<user>/develop/FIC-elipsis/results/tailscale/20261126T142752Z   work dir: /tmp/an-net.SkjMXY
+[14:27:53] SCOPE: ONE HOST with a real tailnet address. NOT cross-machine, NOT ACLs, NOT DERP, NOT NAT traversal.
+[14:27:53] === STEP 1: bind, bring up
+[14:27:55] CHECK 1.bind_tailnet_ip_in_vm PASS - docker (inside the colima VM) CANNOT publish a port on the host's tailnet IPv4: 'failed to bind host port <TS_IP>:60999/tcp: cannot assign requested address'. The VM's own addresses (evidence/colima-vm-addresses.txt) do not include the tailnet address; docker binds in the VM, not on the macOS host. Workaround used (no colima restart or reconfiguration): R's port is published on the VM loopback, colima forwards it to host 127.0.0.1:61000, and spike/relay-tailscale/tcp-forward.py listens ONLY on <TS_IP>:60000 and forwards to it.
+[14:28:06] CHECK 1.nodes_connected PASS - A's node lists exactly one peer, R, as /ip4/<TS_IP>/tcp/60000 (connected after 50 ms from the wait start); B's node likewise (62 ms). R's node lists: [{"multiaddr":"/ip4/172.19.0.1/tcp/48010/p2p/16Uiu2HAmS42wRSBMbvtgNznedfCn86mM6GmCpLyKGLZgNRx33bSJ","connected":"Connected"},{"multiaddr":"/ip4/172.19.0.1/tcp/48018/p2p/16Uiu2HAkzTjXgTfsBcK1g6KV8qHZZVbpj5DrYYcP7qTvqL83yw4M","connected":"Connected"}]
+[14:28:06] === STEP 2: agents, contacts, messaging
+[14:28:07] agent a: an1h6q62o7kogx2oqvo32l5ygnqytdh3llleim7ynmkdyxbgk57fg3zveypom node=http://127.0.0.1:18672 inbox_topic=/agentnet/1/inbox-0b/proto
+[14:28:07] agent b: an1lx5csmd5anhif543bzybdp2w3axvmcwjv3xk7mmpzuiavu3c4zbookk7fy node=http://127.0.0.1:18673 inbox_topic=/agentnet/1/inbox-03/proto
+[14:28:07] CHECK 2.serve PASS - two release-mode 'agentnet serve' (A -> http://127.0.0.1:18672, B -> http://127.0.0.1:18673), private mode, peer allowlist = R only (/ip4/<TS_IP>/tcp/60000/p2p/16Uiu2HAmTbwAkPeWE5fXqBcyKYifdKauFHZzCmCxzq9SbhVaQTpT), cluster 66; A=an1h6q62o7kogx2oqvo32l5ygnqytdh3llleim7ynmkdyxbgk57fg3zveypom B=an1lx5csmd5anhif543bzybdp2w3axvmcwjv3xk7mmpzuiavu3c4zbookk7fy; ready after A 189 ms / B 292 ms (qemu nodes, concurrent docker load)
+[14:28:07] CHECK 2.contacts PASS - contact records exchanged with 'contact add @record --expect <address>' both ways
+[14:28:07] CHECK 2.netstatus.a PASS - agentnet doctor exit 0 (clean); network status: private, ready, no isolation violation, exactly one peer = R (16Uiu2HAmTbwAkPeWE5fXqBcyKYifdKauFHZzCmCxzq9SbhVaQTpT)
+[14:28:08] CHECK 2.netstatus.b PASS - agentnet doctor exit 0 (clean); network status: private, ready, no isolation violation, exactly one peer = R (16Uiu2HAmTbwAkPeWE5fXqBcyKYifdKauFHZzCmCxzq9SbhVaQTpT)
+[14:28:08] CHECK 2.cli_send PASS - A -> B via 'agentnet send': delivered (authenticated receipt) after 584 ms (FIRST message on a fresh topology: includes relay-mesh warm-up, not a typical latency)
+[14:28:08] CHECK 2.inbox_auth PASS - B's inbox holds the message, sender authenticated as A (an1h6q62o7kogx2oqvo32l5ygnqytdh3llleim7ynmkdyxbgk57fg3zveypom), body intact
+[14:28:09] CHECK 2.reply PASS - B -> A reply delivered (receipt after 631 ms) and present in A's inbox
+[14:28:10] CHECK 2.mcp PASS - A -> B via MCP send_message (rmcp over stdio, negotiated 2026-07-28): B's subscriptions/listen notified after 143 ms, B read_inbox at +424 ms, A status delivered at +422 ms
+[14:28:26] CHECK 2.bench.a_to_b PASS - a -> b: delivered 20/20 (authenticated receipts), send->receipt latency p50/p95/p99 = 443/638/647 ms (min 321, max 647), paced 400 ms, both directions concurrently; qemu nodes, other docker work running concurrently
+[14:28:27] CHECK 2.bench.b_to_a PASS - b -> a: delivered 20/20 (authenticated receipts), send->receipt latency p50/p95/p99 = 474/647/675 ms (min 318, max 675), paced 400 ms, both directions concurrently; qemu nodes, other docker work running concurrently
+[14:28:27] CHECK 2.duplicates PASS - receiver inbox rows A->B 20 (unique 20), B->A 20 (unique 20); duplicate message.received events: 0
+[14:28:27] === STEP 3: reachability matrix
+[14:28:27] CHECK 3.reachability PASS - tcp/60000: answers on <TS_IP> ONLY; no answer on 127.0.0.1 nor on the host's LAN IPv4(s) (matrix: 127.0.0.1:60000 no answer (nc exit 1: );<LAN_IP>:60000 no answer (nc exit 1: );<TS_IP>:60000 answers;127.0.0.1:60000 no answer (nc exit 1: ) (loopback checked explicitly);127.0.0.1:61000 answers (colima's forward of the VM-loopback publish; loopback only; see README);<LAN_IP>:61000 no answer (nc exit 1: );<LAN_IP>:18671 (R REST) no answer (nc exit 1: );<TS_IP>:18671 (R REST) no answer (nc exit 1: );). Listener on 60000 per lsof: [exit  ;Python <TS_IP>:60000 (LISTEN);. Residual: colima's forwarder listens on 127.0.0.1:61000 (loopback only).
+[14:28:27] CHECK 3.listener PASS - lsof shows the only listener on tcp/60000 is bound to <TS_IP>:60000 (no wildcard, no loopback, no LAN)
+[14:28:27] === STEP 4: tailnet status (read-only)
+[14:28:28] CHECK 4.tailnet_up PASS - tailscale status lists this host and 7 other device(s) (not stopped / not logged out); this host's tailnet IPv4 is <TS_IP> (evidence/tailscale-status.txt, scrubbed: device names -> <host-*>, logins -> <user>). Read-only commands only: 'tailscale status', 'tailscale ip -4'.
+[14:28:28] === STEP 5: path honesty
+[14:28:41] CHECK 5.path_recorded PASS - recorded, NOT claimed as a tunnel proof: route to <TS_IP> uses interface utun4 (LOCAL host route); utun4 idle 10 s delta 148099 bytes vs 21168 bytes (packets in +38 / out +38) around 3 delivered messages. Connections to <TS_IP>:60000 are host-local (lsof: both ends <TS_IP>). Same-host delivery: no WireGuard tunnel to another machine was crossed.
+[14:28:41] CHECK 5.cross_machine UNTESTED - client on a DIFFERENT tailnet machine reaching R over WireGuard: not run (needs a second machine; kit is spike/relay-tailscale/remote-client.sh + remote-check.sh)
+[14:28:41] CHECK 5.acl UNTESTED - Tailscale ACL / grants restricting tcp/60000 to tagged clients: not run; no policy was read or changed
+[14:28:41] CHECK 5.derp_nat UNTESTED - DERP relayed path, NAT traversal / hole punching, tailscale ping path type: not run
+[14:28:41] CHECK 5.key_expiry UNTESTED - node key expiry or ACL change effect on a live connection: not run
+[14:28:41] done; results in /Users/<user>/develop/FIC-elipsis/results/tailscale/20261126T142752Z
+[14:28:41] cleanup (exit status of script body: 0)
+[14:28:45] scrub verification: clean

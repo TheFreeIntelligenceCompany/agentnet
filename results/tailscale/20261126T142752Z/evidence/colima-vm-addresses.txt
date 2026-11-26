@@ -1,0 +1,5 @@
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+2: eth0    inet 192.168.5.1/24 metric 200 brd 192.168.5.255 scope global dynamic eth0\       valid_lft 3097sec preferred_lft 3097sec
+3: docker0    inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0\       valid_lft forever preferred_lft forever
+5: br-a76221d1ea39    inet 172.18.0.1/16 brd 172.18.255.255 scope global br-a76221d1ea39\       valid_lft forever preferred_lft forever
+7: an-wg-br0    inet 172.29.70.1/24 brd 172.29.70.255 scope global an-wg-br0\       valid_lft forever preferred_lft forever

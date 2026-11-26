@@ -1,0 +1,9 @@
+<TS_IP>   <host-a>  <user>@  macOS  -                           
+<peer-ip>   <host-b>          <user>@  macOS  -                           
+<peer-ip>     <host-c>        <user>@  macOS  -                           
+<peer-ip>     <host-d>               <user>@  iOS    -                           
+<peer-ip>    <host-e>            <user>@  macOS  -                           
+<peer-ip>  <host-f>      <user>@  macOS  offline, last seen 35d ago  
+<peer-ip>   <host-g>      <user>@  macOS  offline, last seen 72d ago  
+<peer-ip>  <host-h>               <user>@  linux  -                           
+[exit 0]

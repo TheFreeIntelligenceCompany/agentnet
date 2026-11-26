@@ -1,0 +1,12 @@
+### idle 10 s: start
+Name       Mtu   Network       Address            Ipkts Ierrs     Ibytes    Opkts Oerrs     Obytes  Coll
+utun4      1280  <Link#22>                         4771     0     908881     4788     0     722859     0
+### idle 10 s: end
+Name       Mtu   Network       Address            Ipkts Ierrs     Ibytes    Opkts Oerrs     Obytes  Coll
+utun4      1280  <Link#22>                         4995     0     982678     5012     0     797161     0
+### before 3 messages
+Name       Mtu   Network       Address            Ipkts Ierrs     Ibytes    Opkts Oerrs     Obytes  Coll
+utun4      1280  <Link#22>                         5019     0     984806     5036     0     799385     0
+### after 3 messages
+Name       Mtu   Network       Address            Ipkts Ierrs     Ibytes    Opkts Oerrs     Obytes  Coll
+utun4      1280  <Link#22>                         5057     0     995336     5074     0     810023     0

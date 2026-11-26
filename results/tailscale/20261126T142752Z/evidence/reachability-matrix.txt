@@ -1,0 +1,8 @@
+127.0.0.1:60000 no answer (nc exit 1: )
+<LAN_IP>:60000 no answer (nc exit 1: )
+<TS_IP>:60000 answers
+127.0.0.1:60000 no answer (nc exit 1: ) (loopback checked explicitly)
+127.0.0.1:61000 answers (colima's forward of the VM-loopback publish; loopback only; see README)
+<LAN_IP>:61000 no answer (nc exit 1: )
+<LAN_IP>:18671 (R REST) no answer (nc exit 1: )
+<TS_IP>:18671 (R REST) no answer (nc exit 1: )

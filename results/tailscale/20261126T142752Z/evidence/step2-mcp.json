@@ -1,0 +1,84 @@
+{
+  "A_final_status": {
+    "attempts": 1,
+    "conversation_id": "acc-step2",
+    "created_at": 1795703289742,
+    "delivered_at": 1795703290133,
+    "expires_at": 1795789689742,
+    "last_attempt_at": 1795703289743,
+    "last_error": null,
+    "message_id": "6b679bfe-176b-4646-9780-767b69678081",
+    "message_type": "message",
+    "next_attempt_at": null,
+    "recipient": "an1lx5csmd5anhif543bzybdp2w3axvmcwjv3xk7mmpzuiavu3c4zbookk7fy",
+    "sent_at": 1795703289743,
+    "state": "delivered"
+  },
+  "A_status_timeline": [
+    {
+      "source": "send_message response",
+      "state": "queued",
+      "t_ms": 1
+    },
+    {
+      "attempts": 0,
+      "source": "get_message_status",
+      "state": "queued",
+      "t_ms": 2
+    },
+    {
+      "attempts": 1,
+      "source": "get_message_status",
+      "state": "sent",
+      "t_ms": 44
+    },
+    {
+      "attempts": 1,
+      "source": "get_message_status",
+      "state": "delivered",
+      "t_ms": 422
+    }
+  ],
+  "B_inbox_record": {
+    "acknowledged": false,
+    "body": "ACCEPTANCE-STEP2-PLAINTEXT-MARKER-1795703289742",
+    "conversation_id": "acc-step2",
+    "correlation_id": null,
+    "created_at": 1795703289742,
+    "cursor": "aW5ib3g6Mg",
+    "expires_at": 1795789689742,
+    "message_id": "6b679bfe-176b-4646-9780-767b69678081",
+    "message_type": "message",
+    "quarantined": false,
+    "received_at": 1795703289861,
+    "sender": "an1h6q62o7kogx2oqvo32l5ygnqytdh3llleim7ynmkdyxbgk57fg3zveypom",
+    "sender_trust": "trusted"
+  },
+  "a_addr": "an1h6q62o7kogx2oqvo32l5ygnqytdh3llleim7ynmkdyxbgk57fg3zveypom",
+  "b_addr": "an1lx5csmd5anhif543bzybdp2w3axvmcwjv3xk7mmpzuiavu3c4zbookk7fy",
+  "body_marker": "ACCEPTANCE-STEP2-PLAINTEXT-MARKER-1795703289742",
+  "latency_ms": {
+    "A_status_delivered": 422,
+    "B_read_inbox_returned": 424,
+    "B_resource_notification": 143,
+    "send_message_returned": 1
+  },
+  "message_id": "6b679bfe-176b-4646-9780-767b69678081",
+  "notification": "Some(ResourceUpdatedNotification(Notification { method: ResourceUpdatedNotificationMethod, params: ResourceUpdatedNotificationParam { uri: \"agentnet://inbox\", meta: None }, extensions: Extensions }))",
+  "ok": true,
+  "protocol_client_A": {
+    "negotiated_protocol_version": "2026-07-28",
+    "server_info": {
+      "name": "agentnet",
+      "version": "0.1.0"
+    }
+  },
+  "protocol_client_B": {
+    "negotiated_protocol_version": "2026-07-28",
+    "server_info": {
+      "name": "agentnet",
+      "version": "0.1.0"
+    }
+  },
+  "send_wall_clock_ms": 1795703289742
+}

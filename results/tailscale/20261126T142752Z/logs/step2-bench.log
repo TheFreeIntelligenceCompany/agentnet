@@ -1,0 +1,88 @@
+$ /Users/<user>/develop/FIC-elipsis/target/release/agentnet-acceptance bench --a /tmp/an-net.SkjMXY/a --b /tmp/an-net.SkjMXY/b --a-addr an1h6q62o7kogx2oqvo32l5ygnqytdh3llleim7ynmkdyxbgk57fg3zveypom --b-addr an1lx5csmd5anhif543bzybdp2w3axvmcwjv3xk7mmpzuiavu3c4zbookk7fy --n 20 --timeout 600 --pace-ms 400 --tag t --out /Users/<user>/develop/FIC-elipsis/results/tailscale/20261126T142752Z/evidence/bench.json
+{
+  "a_to_b": {
+    "delivered": 20,
+    "latency_ms_send_to_delivered": {
+      "definition": "delivered_at - created_at from the sender's own outbox row (same host clock)",
+      "max": 647,
+      "min": 321,
+      "p50": 443,
+      "p95": 638,
+      "p99": 647,
+      "samples": 20
+    },
+    "not_delivered_at_timeout": 0,
+    "raw_latencies_ms": [
+      321,
+      342,
+      355,
+      365,
+      372,
+      404,
+      409,
+      416,
+      422,
+      443,
+      453,
+      469,
+      484,
+      505,
+      512,
+      517,
+      530,
+      572,
+      638,
+      647
+    ],
+    "send_failures": 0,
+    "send_phase_ms": 8182,
+    "sent": 20,
+    "tag": "t-a2b",
+    "terminal_other": {},
+    "total_ms": 8476
+  },
+  "b_to_a": {
+    "delivered": 20,
+    "latency_ms_send_to_delivered": {
+      "definition": "delivered_at - created_at from the sender's own outbox row (same host clock)",
+      "max": 675,
+      "min": 318,
+      "p50": 474,
+      "p95": 647,
+      "p99": 675,
+      "samples": 20
+    },
+    "not_delivered_at_timeout": 0,
+    "raw_latencies_ms": [
+      318,
+      327,
+      344,
+      377,
+      394,
+      406,
+      412,
+      439,
+      444,
+      474,
+      485,
+      486,
+      487,
+      503,
+      521,
+      522,
+      585,
+      595,
+      647,
+      675
+    ],
+    "send_failures": 0,
+    "send_phase_ms": 8186,
+    "sent": 20,
+    "tag": "t-b2a",
+    "terminal_other": {},
+    "total_ms": 8476
+  },
+  "direction_mode": "both directions concurrently, 400 ms pacing",
+  "n_per_direction": 20
+}
+[exit 0]

@@ -1,0 +1,194 @@
+{
+  "run_timestamp": "20261126T142752Z",
+  "environment": {
+    "host": "Darwin 25.6.0 arm64",
+    "agentnet": "agentnet 0.1.0",
+    "node_image": "wakuorg/nwaku@sha256:cb4d14a2... v0.39.2 linux/amd64 under qemu in colima (linux/arm64 VM)",
+    "topology": "R + A + B nodes in colima; R announces and is dialled on the host tailnet IPv4 <TS_IP>:60000 (host forwarder bound to that address only); agents on the host via 127.0.0.1 REST ports 18671-18673",
+    "caveat": "other docker work (an-wg*, rust build) was running concurrently on the same VM: latencies are not clean"
+  },
+  "steps": [
+    {
+      "step": "1",
+      "status": "PASS",
+      "checks": [
+        {
+          "id": "1.bind_tailnet_ip_in_vm",
+          "status": "PASS",
+          "detail": "docker (inside the colima VM) CANNOT publish a port on the host's tailnet IPv4: 'failed to bind host port <TS_IP>:60999/tcp: cannot assign requested address'. The VM's own addresses (evidence/colima-vm-addresses.txt) do not include the tailnet address; docker binds in the VM, not on the macOS host. Workaround used (no colima restart or reconfiguration): R's port is published on the VM loopback, colima forwards it to host 127.0.0.1:61000, and spike/relay-tailscale/tcp-forward.py listens ONLY on <TS_IP>:60000 and forwards to it.",
+          "command": "docker run -p <TS_IP>:60999:60999 an-net-tools:local ; colima ssh -- ip -4 -o addr",
+          "at": "2026-11-26T14:27:55Z"
+        },
+        {
+          "id": "1.nodes_connected",
+          "status": "PASS",
+          "detail": "A's node lists exactly one peer, R, as /ip4/<TS_IP>/tcp/60000 (connected after 50 ms from the wait start); B's node likewise (62 ms). R's node lists: [{\"multiaddr\":\"/ip4/172.19.0.1/tcp/48010/p2p/16Uiu2HAmS42wRSBMbvtgNznedfCn86mM6GmCpLyKGLZgNRx33bSJ\",\"connected\":\"Connected\"},{\"multiaddr\":\"/ip4/172.19.0.1/tcp/48018/p2p/16Uiu2HAkzTjXgTfsBcK1g6KV8qHZZVbpj5DrYYcP7qTvqL83yw4M\",\"connected\":\"Connected\"}]",
+          "command": "curl http://127.0.0.1:18672/admin/v1/peers ; :18673 ; :18671",
+          "at": "2026-11-26T14:28:06Z"
+        }
+      ]
+    },
+    {
+      "step": "2",
+      "status": "PASS",
+      "checks": [
+        {
+          "id": "2.serve",
+          "status": "PASS",
+          "detail": "two release-mode 'agentnet serve' (A -> http://127.0.0.1:18672, B -> http://127.0.0.1:18673), private mode, peer allowlist = R only (/ip4/<TS_IP>/tcp/60000/p2p/16Uiu2HAmTbwAkPeWE5fXqBcyKYifdKauFHZzCmCxzq9SbhVaQTpT), cluster 66; A=an1h6q62o7kogx2oqvo32l5ygnqytdh3llleim7ynmkdyxbgk57fg3zveypom B=an1lx5csmd5anhif543bzybdp2w3axvmcwjv3xk7mmpzuiavu3c4zbookk7fy; ready after A 189 ms / B 292 ms (qemu nodes, concurrent docker load)",
+          "command": "agentnet --data-dir $A init --node-url http://127.0.0.1:18672 --peer /ip4/<TS_IP>/tcp/60000/p2p/16Uiu2HAmTbwAkPeWE5fXqBcyKYifdKauFHZzCmCxzq9SbhVaQTpT; agentnet --data-dir $B init --node-url http://127.0.0.1:18673 --peer /ip4/<TS_IP>/tcp/60000/p2p/16Uiu2HAmTbwAkPeWE5fXqBcyKYifdKauFHZzCmCxzq9SbhVaQTpT; agentnet serve (x2)",
+          "at": "2026-11-26T14:28:07Z"
+        },
+        {
+          "id": "2.contacts",
+          "status": "PASS",
+          "detail": "contact records exchanged with 'contact add @record --expect <address>' both ways",
+          "command": "agentnet contact add @b.record --expect <B>; agentnet contact add @a.record --expect <A>",
+          "at": "2026-11-26T14:28:07Z"
+        },
+        {
+          "id": "2.netstatus.a",
+          "status": "PASS",
+          "detail": "agentnet doctor exit 0 (clean); network status: private, ready, no isolation violation, exactly one peer = R (16Uiu2HAmTbwAkPeWE5fXqBcyKYifdKauFHZzCmCxzq9SbhVaQTpT)",
+          "command": "agentnet doctor; agentnet --json network status --verbose",
+          "at": "2026-11-26T14:28:07Z"
+        },
+        {
+          "id": "2.netstatus.b",
+          "status": "PASS",
+          "detail": "agentnet doctor exit 0 (clean); network status: private, ready, no isolation violation, exactly one peer = R (16Uiu2HAmTbwAkPeWE5fXqBcyKYifdKauFHZzCmCxzq9SbhVaQTpT)",
+          "command": "agentnet doctor; agentnet --json network status --verbose",
+          "at": "2026-11-26T14:28:08Z"
+        },
+        {
+          "id": "2.cli_send",
+          "status": "PASS",
+          "detail": "A -> B via 'agentnet send': delivered (authenticated receipt) after 584 ms (FIRST message on a fresh topology: includes relay-mesh warm-up, not a typical latency)",
+          "command": "agentnet --json send <B> t-first-cli; agentnet --json status <id>",
+          "at": "2026-11-26T14:28:08Z"
+        },
+        {
+          "id": "2.inbox_auth",
+          "status": "PASS",
+          "detail": "B's inbox holds the message, sender authenticated as A (an1h6q62o7kogx2oqvo32l5ygnqytdh3llleim7ynmkdyxbgk57fg3zveypom), body intact",
+          "command": "agentnet --json inbox --conversation t-first",
+          "at": "2026-11-26T14:28:08Z"
+        },
+        {
+          "id": "2.reply",
+          "status": "PASS",
+          "detail": "B -> A reply delivered (receipt after 631 ms) and present in A's inbox",
+          "command": "agentnet send <A> t-reply-cli (from B)",
+          "at": "2026-11-26T14:28:09Z"
+        },
+        {
+          "id": "2.mcp",
+          "status": "PASS",
+          "detail": "A -> B via MCP send_message (rmcp over stdio, negotiated 2026-07-28): B's subscriptions/listen notified after 143 ms, B read_inbox at +424 ms, A status delivered at +422 ms",
+          "command": "agentnet-acceptance step2 --bin agentnet --a $A --b $B --b-addr <B>",
+          "at": "2026-11-26T14:28:10Z"
+        },
+        {
+          "id": "2.bench.a_to_b",
+          "status": "PASS",
+          "detail": "a -> b: delivered 20/20 (authenticated receipts), send->receipt latency p50/p95/p99 = 443/638/647 ms (min 321, max 647), paced 400 ms, both directions concurrently; qemu nodes, other docker work running concurrently",
+          "command": "agentnet-acceptance bench --n 20 --pace-ms 400 --tag t",
+          "at": "2026-11-26T14:28:26Z"
+        },
+        {
+          "id": "2.bench.b_to_a",
+          "status": "PASS",
+          "detail": "b -> a: delivered 20/20 (authenticated receipts), send->receipt latency p50/p95/p99 = 474/647/675 ms (min 318, max 675), paced 400 ms, both directions concurrently; qemu nodes, other docker work running concurrently",
+          "command": "agentnet-acceptance bench --n 20 --pace-ms 400 --tag t",
+          "at": "2026-11-26T14:28:27Z"
+        },
+        {
+          "id": "2.duplicates",
+          "status": "PASS",
+          "detail": "receiver inbox rows A->B 20 (unique 20), B->A 20 (unique 20); duplicate message.received events: 0",
+          "command": "agentnet-acceptance dump --data-dir $B / $A",
+          "at": "2026-11-26T14:28:27Z"
+        }
+      ]
+    },
+    {
+      "step": "3",
+      "status": "PASS",
+      "checks": [
+        {
+          "id": "3.reachability",
+          "status": "PASS",
+          "detail": "tcp/60000: answers on <TS_IP> ONLY; no answer on 127.0.0.1 nor on the host's LAN IPv4(s) (matrix: 127.0.0.1:60000 no answer (nc exit 1: );<LAN_IP>:60000 no answer (nc exit 1: );<TS_IP>:60000 answers;127.0.0.1:60000 no answer (nc exit 1: ) (loopback checked explicitly);127.0.0.1:61000 answers (colima's forward of the VM-loopback publish; loopback only; see README);<LAN_IP>:61000 no answer (nc exit 1: );<LAN_IP>:18671 (R REST) no answer (nc exit 1: );<TS_IP>:18671 (R REST) no answer (nc exit 1: );). Listener on 60000 per lsof: [exit  ;Python <TS_IP>:60000 (LISTEN);. Residual: colima's forwarder listens on 127.0.0.1:61000 (loopback only).",
+          "command": "lsof -nP -iTCP:60000 -sTCP:LISTEN ; nc -z -w 3 <each host IPv4> 60000 ; nc -z 127.0.0.1 60000",
+          "at": "2026-11-26T14:28:27Z"
+        },
+        {
+          "id": "3.listener",
+          "status": "PASS",
+          "detail": "lsof shows the only listener on tcp/60000 is bound to <TS_IP>:60000 (no wildcard, no loopback, no LAN)",
+          "command": "lsof -nP -iTCP:60000 -sTCP:LISTEN",
+          "at": "2026-11-26T14:28:27Z"
+        }
+      ]
+    },
+    {
+      "step": "4",
+      "status": "PASS",
+      "checks": [
+        {
+          "id": "4.tailnet_up",
+          "status": "PASS",
+          "detail": "tailscale status lists this host and 7 other device(s) (not stopped / not logged out); this host's tailnet IPv4 is <TS_IP> (evidence/tailscale-status.txt, scrubbed: device names -> <host-*>, logins -> <user>). Read-only commands only: 'tailscale status', 'tailscale ip -4'.",
+          "command": "tailscale status ; tailscale ip -4",
+          "at": "2026-11-26T14:28:28Z"
+        }
+      ]
+    },
+    {
+      "step": "5",
+      "status": "PASS",
+      "checks": [
+        {
+          "id": "5.path_recorded",
+          "status": "PASS",
+          "detail": "recorded, NOT claimed as a tunnel proof: route to <TS_IP> uses interface utun4 (LOCAL host route); utun4 idle 10 s delta 148099 bytes vs 21168 bytes (packets in +38 / out +38) around 3 delivered messages. Connections to <TS_IP>:60000 are host-local (lsof: both ends <TS_IP>). Same-host delivery: no WireGuard tunnel to another machine was crossed.",
+          "command": "route -n get <TS_IP> ; netstat -I utun4 -b (idle, before, after) ; lsof -nP -iTCP -sTCP:ESTABLISHED",
+          "at": "2026-11-26T14:28:41Z"
+        },
+        {
+          "id": "5.cross_machine",
+          "status": "UNTESTED",
+          "detail": "client on a DIFFERENT tailnet machine reaching R over WireGuard: not run (needs a second machine; kit is spike/relay-tailscale/remote-client.sh + remote-check.sh)",
+          "command": "",
+          "at": "2026-11-26T14:28:41Z"
+        },
+        {
+          "id": "5.acl",
+          "status": "UNTESTED",
+          "detail": "Tailscale ACL / grants restricting tcp/60000 to tagged clients: not run; no policy was read or changed",
+          "command": "",
+          "at": "2026-11-26T14:28:41Z"
+        },
+        {
+          "id": "5.derp_nat",
+          "status": "UNTESTED",
+          "detail": "DERP relayed path, NAT traversal / hole punching, tailscale ping path type: not run",
+          "command": "",
+          "at": "2026-11-26T14:28:41Z"
+        },
+        {
+          "id": "5.key_expiry",
+          "status": "UNTESTED",
+          "detail": "node key expiry or ACL change effect on a live connection: not run",
+          "command": "",
+          "at": "2026-11-26T14:28:41Z"
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "PASS": 17,
+    "FAIL": 0,
+    "UNTESTED": 4
+  }
+}

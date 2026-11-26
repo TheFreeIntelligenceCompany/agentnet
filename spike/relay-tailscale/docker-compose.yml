@@ -1,0 +1,142 @@
+# Single-host run with the relay announced and dialled on this host's REAL tailnet address. See README.md.
+# SINGLE HOST: proves configuration + binding to the tailnet interface only. NOT cross-machine, NOT ACLs, NOT DERP, NOT NAT traversal.
+# Run through ./run.sh (it generates disposable keys into .run/ and passes --env-file .run/env).
+#
+# Binding note (measured, see README "Binding findings"): docker runs inside the colima VM, which has no tailnet address, so
+# `ports: ["<tailnet-ip>:60000:60000"]` fails with "cannot assign requested address". R's libp2p port is therefore published on the
+# VM's loopback (host 127.0.0.1:${RELAY_FWD_PORT} through colima's port forwarder) and run.sh starts a small host-side forwarder that
+# listens ONLY on <tailnet-ip>:60000. Clients dial <tailnet-ip>:60000 and R announces --nat=extip:<tailnet-ip>.
+name: an-ts
+
+x-image: &node-image wakuorg/nwaku@sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73  # tag v0.39.2, amd64 (qemu)
+
+services:
+  node-r:
+    image: *node-image
+    platform: linux/amd64
+    container_name: an-ts-r-node
+    command:
+      - --nodekey=${R_KEY}
+      - --nat=extip:${TS_IP}
+      - --store=true
+      - --store-message-db-url=sqlite:///data/store.sqlite3
+      - --store-message-retention-policy=time:3600;capacity:5000
+      - --filter=true
+      - --lightpush=true
+      - --relay=true
+      - --rest=true
+      - --rest-address=0.0.0.0
+      - --rest-port=8645
+      - --rest-admin=true
+      - --rest-relay-cache-capacity=1000
+      - --rest-messaging-cache-capacity=1000
+      - --max-msg-size=150KiB
+      - --cluster-id=66
+      - --num-shards-in-network=1
+      - --shard=0
+      - --discv5-discovery=false
+      - --peer-exchange=false
+      - --relay-peer-exchange=false
+      - --rendezvous=false
+      - --enable-kad-discovery=false
+      - --quic-support=false
+      - --mix=false
+      - --rln-relay=false
+      - --listen-address=0.0.0.0
+      - --dns-addrs-name-server=127.0.0.1
+      - --tcp-port=60000
+      - --metrics-server=false
+      - --peer-persistence=false
+      - --local-storage-path=/data
+      - --log-level=INFO
+    ports:
+      - "127.0.0.1:${RELAY_FWD_PORT}:60000"     # VM loopback only; run.sh's host forwarder re-exposes it on the tailnet address only
+      - "127.0.0.1:18671:8645"                  # R's REST, diagnostics
+    volumes: ["rdata:/data"]
+
+  node-a:
+    image: *node-image
+    platform: linux/amd64
+    container_name: an-ts-a-node
+    command:
+      - --nodekey=${A_KEY}
+      - --nat=none
+      - --store=false
+      - --filter=false
+      - --lightpush=false
+      - --staticnode=/ip4/${TS_IP}/tcp/60000/p2p/${R_PEER_ID}
+      - --storenode=/ip4/${TS_IP}/tcp/60000/p2p/${R_PEER_ID}
+      - --filternode=/ip4/${TS_IP}/tcp/60000/p2p/${R_PEER_ID}
+      - --lightpushnode=/ip4/${TS_IP}/tcp/60000/p2p/${R_PEER_ID}
+      - --relay=true
+      - --rest=true
+      - --rest-address=0.0.0.0
+      - --rest-port=8645
+      - --rest-admin=true
+      - --rest-relay-cache-capacity=1000
+      - --rest-messaging-cache-capacity=1000
+      - --max-msg-size=150KiB
+      - --cluster-id=66
+      - --num-shards-in-network=1
+      - --shard=0
+      - --discv5-discovery=false
+      - --peer-exchange=false
+      - --relay-peer-exchange=false
+      - --rendezvous=false
+      - --enable-kad-discovery=false
+      - --quic-support=false
+      - --mix=false
+      - --rln-relay=false
+      - --listen-address=0.0.0.0
+      - --dns-addrs-name-server=127.0.0.1
+      - --tcp-port=60000
+      - --metrics-server=false
+      - --peer-persistence=false
+      - --local-storage-path=/data
+      - --log-level=INFO
+    ports: ["127.0.0.1:18672:8645"]
+
+  node-b:
+    image: *node-image
+    platform: linux/amd64
+    container_name: an-ts-b-node
+    command:
+      - --nodekey=${B_KEY}
+      - --nat=none
+      - --store=false
+      - --filter=false
+      - --lightpush=false
+      - --staticnode=/ip4/${TS_IP}/tcp/60000/p2p/${R_PEER_ID}
+      - --storenode=/ip4/${TS_IP}/tcp/60000/p2p/${R_PEER_ID}
+      - --filternode=/ip4/${TS_IP}/tcp/60000/p2p/${R_PEER_ID}
+      - --lightpushnode=/ip4/${TS_IP}/tcp/60000/p2p/${R_PEER_ID}
+      - --relay=true
+      - --rest=true
+      - --rest-address=0.0.0.0
+      - --rest-port=8645
+      - --rest-admin=true
+      - --rest-relay-cache-capacity=1000
+      - --rest-messaging-cache-capacity=1000
+      - --max-msg-size=150KiB
+      - --cluster-id=66
+      - --num-shards-in-network=1
+      - --shard=0
+      - --discv5-discovery=false
+      - --peer-exchange=false
+      - --relay-peer-exchange=false
+      - --rendezvous=false
+      - --enable-kad-discovery=false
+      - --quic-support=false
+      - --mix=false
+      - --rln-relay=false
+      - --listen-address=0.0.0.0
+      - --dns-addrs-name-server=127.0.0.1
+      - --tcp-port=60000
+      - --metrics-server=false
+      - --peer-persistence=false
+      - --local-storage-path=/data
+      - --log-level=INFO
+    ports: ["127.0.0.1:18673:8645"]
+
+volumes:
+  rdata:

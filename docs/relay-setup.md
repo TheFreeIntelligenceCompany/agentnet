@@ -212,7 +212,7 @@ drill. Not tested: more than two service nodes, partitions between them.
 
 ## 10. Tailscale deployment: UNTESTED
 
-**Everything in this section is UNTESTED with Tailscale itself. A WireGuard-overlay simulation of the same firewall and static-peer configuration (one host, kernel WireGuard) passed 2 of 2 runs; see `docs/network-simulations.md`.** No tailnet, no second host and no real Tailscale client was available; none of these steps was run. The text below is
+**Everything in this section is UNTESTED with Tailscale itself. A WireGuard-overlay simulation of the same firewall and static-peer configuration (one host, kernel WireGuard) passed 2 of 2 runs; see `docs/network-simulations.md`. A single-host run with the relay on a real tailnet address also passed (`spike/relay-tailscale`, `results/tailscale/20261126T142752Z`): it shows the `--nat=extip:<tailnet ip>` and `--staticnode=/ip4/<tailnet ip>/...` configuration working and the port bound to the tailnet address only, but no traffic crossed a tunnel to another machine. Under colima (macOS) docker cannot publish on the host's tailnet IP; bind it on the host (forwarder) or use a Linux host. The second-host kit (`remote-client.sh`, `remote-check.sh`) and the ACL snippet in `spike/relay-tailscale/README.md` are UNTESTED.** No tailnet, no second host and no real Tailscale client was available; none of these steps was run. The text below is
 what `agentnet relay print-config` prints, expanded with what the code accepts (`100.64.0.0/10` passes the private-address check: `docs/configuration.md`).
 
 What Tailscale does and does not provide:

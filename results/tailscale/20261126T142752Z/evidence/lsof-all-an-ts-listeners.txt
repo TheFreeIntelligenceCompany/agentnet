@@ -1,0 +1,6 @@
+COMMAND     PID     USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+Python     8875 <user>    6u  IPv4 0x7a24e29217be07e6      0t0  TCP <TS_IP>:60000 (LISTEN)
+ssh       76192 <user>   14u  IPv4 0xa1bc113cf1001a32      0t0  TCP 127.0.0.1:18671 (LISTEN)
+ssh       76192 <user>   18u  IPv4 0x946c3e8c303d90f7      0t0  TCP 127.0.0.1:61000 (LISTEN)
+ssh       76192 <user>   20u  IPv4 0x91bb5db6390f045d      0t0  TCP 127.0.0.1:18673 (LISTEN)
+ssh       76192 <user>   21u  IPv4 0x34317a2720ded51c      0t0  TCP 127.0.0.1:18672 (LISTEN)
