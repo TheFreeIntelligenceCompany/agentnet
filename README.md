@@ -242,7 +242,7 @@ cargo test --workspace --locked
 
 ## Licence
 
-`MIT OR Apache-2.0` ([LICENSE-MIT](LICENSE-MIT), [LICENSE-APACHE](LICENSE-APACHE)), as declared in `Cargo.toml`. The licence choice and the provisional name "AgentNet" are subject to the owner's confirmation before publication.
+MIT ([LICENSE](LICENSE)), as declared in `Cargo.toml`. The owner chose MIT and open-source publication on 2026-11-26. No trademark search was done for the name "AgentNet".
 Name availability facts (crates.io and GitHub) are in [docs/spike-report.md](docs/spike-report.md) section 14; no legal conclusion is drawn there.
 Third-party licences: [docs/dependency-audit.md](docs/dependency-audit.md).
 

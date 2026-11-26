@@ -56,7 +56,7 @@ Resolved version, licence as declared in the crate's metadata (SPDX-like strings
 | `uuid` | 1.29.3 | Apache-2.0 OR MIT | 1.89.0 | core (normal) |
 | `zeroize` | 1.9.2 | Apache-2.0 OR MIT | 1.85 | core (normal) |
 
-Workspace crates themselves: `agentnet-core`, `agentnet-transport`, `agentnet-mcp`, `agentnet-daemon`, `agentnet-cli`, all `0.1.0`, licence `MIT OR Apache-2.0`, `publish = false`, `unsafe_code = "forbid"` (`Cargo.toml` `workspace.lints.rust`).
+Workspace crates themselves: `agentnet-core`, `agentnet-transport`, `agentnet-mcp`, `agentnet-daemon`, `agentnet-cli`, all `0.1.0`, licence `MIT`, `publish = false`, `unsafe_code = "forbid"` (`Cargo.toml` `workspace.lints.rust`).
 Cryptography in the workspace: `hpke =0.15.1` (features `alloc, getrandom, x25519, chacha` only), `ed25519-dalek 3.0.0`, `sha2 0.10.9`, `hmac 0.12.1` (webhook), `subtle 2.6.1`, `age 0.12.1` (export file), `zeroize 1.9.2`, `getrandom 0.4.3`. No OpenSSL: `openssl`, `openssl-sys` and `native-tls` are **absent** from the dependency graph (`cargo tree -i` answers "did not match any packages"; `results/audit/cargo-tree-inverse.txt`), and `deny.toml` bans them.
 
 ## 3. Licences
