@@ -1,0 +1,9 @@
+$ /Users/dennison/develop/FIC-elipsis/target/release/agentnet --json --data-dir /tmp/an-acc.UoQWZU/m identity export --out /tmp/an-acc.UoQWZU/m.export --passphrase-file /tmp/an-acc.UoQWZU/pass.txt
+{"address":"an1hnommysofsyvhz6lpnxhqhy7pi2sgvf4rdqktpd3yylhtbc5mobvwtfyzq","file":"/tmp/an-acc.UoQWZU/m.export"}
+[exit 0]
+$ /Users/dennison/develop/FIC-elipsis/target/release/agentnet --json --data-dir /tmp/an-acc.UoQWZU/m2 identity import --in /tmp/an-acc.UoQWZU/m.export --passphrase-file /tmp/an-acc.UoQWZU/pass.txt --node-url http://127.0.0.1:18642 --peer /ip4/172.28.66.10/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV
+{"address":"an1hnommysofsyvhz6lpnxhqhy7pi2sgvf4rdqktpd3yylhtbc5mobvwtfyzq","data_dir":"/tmp/an-acc.UoQWZU/m2","peers_configured":true,"replay_guard":true}
+[exit 0]
+$ /Users/dennison/develop/FIC-elipsis/target/release/agentnet --json --data-dir /tmp/an-acc.UoQWZU/m2 contact add @/tmp/an-acc.UoQWZU/a.record --expect an1ohmmbinqqo5ecyj3d6hehbkj2m4ot4l7uzg7msodhzgm42c6aefl3c75nu --alias a
+{"address":"an1ohmmbinqqo5ecyj3d6hehbkj2m4ot4l7uzg7msodhzgm42c6aefl3c75nu","alias":"a","trust":"trusted","inbox_topic":"/agentnet/1/inbox-09/proto","added_at":1795716819534,"kem_expires_at":null,"updated":false,"key_epoch":1,"revoked":false}
+[exit 0]

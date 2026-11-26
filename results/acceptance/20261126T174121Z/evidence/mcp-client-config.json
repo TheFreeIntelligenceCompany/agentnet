@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "agentnet": {
+      "command": "/Users/dennison/develop/FIC-elipsis/target/release/agentnet",
+      "args": [
+        "mcp",
+        "--data-dir",
+        "/tmp/an-acc.avJgzY/a"
+      ]
+    }
+  }
+}

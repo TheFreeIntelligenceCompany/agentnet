@@ -1,0 +1,1 @@
+{"r1_frames_stored_before_outage":2,"b_network_ready_while_r1_down":false,"b_inbox_rows_while_r1_down":"0","ms_after_r1_health_until_b_ready":6182,"ms_after_r1_health_until_b_has_both":10284,"ms_after_r1_health_until_a_delivered":10312,"a_states_at_end":"delivered=2 "}

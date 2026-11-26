@@ -197,7 +197,7 @@ inbox_count() { # dir conversation
 state_is() { [ "$(mstate "$1" "$2")" = "$3" ]; }
 inbox_is() { [ "$(inbox_count "$1" "$2")" = "$3" ]; }
 lines_ge() { [ -f "$1" ] && [ "$(wc -l < "$1" | tr -d ' ')" -ge "$2" ]; }
-quar_has() { [ "$(anj "$1" quarantine list | jq --arg m "$2" '[.[]|select(.message_id==$m)]|length')" = 1 ]; }
+quar_has() { [ "$(anj "$1" quarantine list | jq --arg m "$2" '[.records[]|select(.message_id==$m)]|length')" = 1 ]; }
 inbox_any_q() { [ "$(anj "$1" inbox --include-quarantined --conversation "$2" --limit 50 | jq '.records|length')" -ge 1 ]; }
 mcp() { # dir tool [args-json]
   "$DRV" mcp-call --bin "$BIN" --data-dir "$WORK/$1" --tool "$2" --args "${3:-{\}}"
@@ -767,7 +767,7 @@ step4() {
   local mc; mc="$(send c b "unknown-sender-should-not-wake" --conversation s4c)"
   wait_for 120 "B quarantined C's message" quar_has b "$mc" || true
   sleep 15
-  local quar inbox_vis nt2 cstate; quar="$(anj b quarantine list | jq --arg m "$mc" '[.[]|select(.message_id==$m)]|length')"
+  local quar inbox_vis nt2 cstate; quar="$(anj b quarantine list | jq --arg m "$mc" '[.records[]|select(.message_id==$m)]|length')"
   inbox_vis="$(anj b inbox --conversation s4c --limit 50 | jq '.records|length')"
   nt2="$(turns "$out")"; cstate="$(mstate c "$mc")"
   local wstate; wstate="$(mcp b list_triggers '{}' | jq -r --arg t "$wtrig" '.result.triggers[]|select(.trigger_id==$t)|.state')"

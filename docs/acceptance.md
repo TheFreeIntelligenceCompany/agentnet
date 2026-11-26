@@ -11,7 +11,13 @@ Everything is produced by one script, `scripts/acceptance.sh`, plus the Rust dri
 
 ## Latest result
 
-Run 4 (`results/acceptance/20261126T014245Z/SUMMARY.md`), executed by the lead on the merged code: steps 1 to 6 and the
+Run 7 (`results/acceptance/20261126T180008Z/SUMMARY.md`), executed by the lead on the final tree (git `0d3258f` plus the
+script fix described under run 5: both external reviews' fixes, signed advert topics, relay `tcp_retries2=6`),
+`FRESH_TOPOLOGY=1`: **52 PASS, 0 FAIL, 1 UNTESTED (Tailscale: this script only looks for a local `tailscale` CLI; the
+single-host tailnet-address run is separate, `results/tailscale/20261126T142752Z`).** The figures quoted below are from run 4;
+run 7's own numbers are in its SUMMARY.md.
+
+Run 4 (`results/acceptance/20261126T014245Z/SUMMARY.md`), executed by the lead on the merged code at that time: steps 1 to 6 and the
 extras PASS (52 checks), Tailscale UNTESTED (not installed, no second host). Selected numbers from that run: 100 messages
 each direction at 25 ms pacing were all delivered with 0 duplicate rows or events, send-to-receipt p50/p95/p99 =
 12.7 / 13.8 / 13.8 s (A to B) and 5.4 / 11.6 / 13.3 s (B to A); paced at 400 ms: 0.78 / 1.28 / 2.13 s and 0.85 / 1.35 / 1.52 s.
@@ -67,7 +73,10 @@ containers running. Exit status is 1 if any check FAILs (UNTESTED does not fail 
 | 1 | `results/acceptance/20261125T232522Z` | `FRESH_TOPOLOGY=1`. All steps PASS except 6.embed (FAIL, flaky example) |
 | 2 | `results/acceptance/20261125T235510Z` | Re-run on the same topology without a reset. **Steps 1 and 6 FAIL** (see "Flakiness") |
 | 3 | `results/acceptance/20261126T001904Z` | `FRESH_TOPOLOGY=1`, after a script fix. Final run, table below. Only 6.embed FAIL and the optional Tailscale UNTESTED |
-| 4 | `results/acceptance/20261126T014245Z` | **Latest; run by the lead** on the merged tree (git `7b74ba4`: crypto hardening, retry floor, 15 s history sync, fixed `embed`), `FRESH_TOPOLOGY=1`. **52 PASS, 0 FAIL, 1 UNTESTED (Tailscale).** Step 6 including `embed` (5/5) passes. The per-check table below is still run 3; run 4's own table is its `SUMMARY.md`. |
+| 4 | `results/acceptance/20261126T014245Z` | Run by the lead on the merged tree (git `7b74ba4`: crypto hardening, retry floor, 15 s history sync, fixed `embed`), `FRESH_TOPOLOGY=1`. **52 PASS, 0 FAIL, 1 UNTESTED (Tailscale).** Step 6 including `embed` (5/5) passes. The per-check table below is still run 3; run 4's own table is its `SUMMARY.md`. |
+| 5 | `results/acceptance/20261126T174121Z` | Final tree, `FRESH_TOPOLOGY=1`. 51 PASS, **1 FAIL (4.unknown)**, 1 UNTESTED. The failure was in the script: it parsed `quarantine list --json` as a bare array, and the review fix made that output a paged object (`records`, `next_cursor`). The product behaved correctly (not in the default inbox, harness not woken, no receipt for the sender) |
+| 6 | `results/acceptance/20261126T175828Z` | `STEPS="1 4"` after fixing the script: 17 PASS, 0 FAIL |
+| 7 | `results/acceptance/20261126T180008Z` | **Latest; run by the lead** on the final tree, `FRESH_TOPOLOGY=1`: **52 PASS, 0 FAIL, 1 UNTESTED (Tailscale)** |
 
 (Three runs rather than two: run 2 exposed a test-hygiene problem in my own script, fixed before run 3. The failing log of run 2 is kept.)
 

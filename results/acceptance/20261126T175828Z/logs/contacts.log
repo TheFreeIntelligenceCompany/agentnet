@@ -1,0 +1,9 @@
+$ /Users/dennison/develop/FIC-elipsis/target/release/agentnet --json --data-dir /tmp/an-acc.ldm6oH/a contact add @/tmp/an-acc.ldm6oH/b.record --expect an1g3lvjuofemuwqfukxmgozwpy4eq6gltku7coz4tb7icwynlbrjysdscr6e --alias b
+{"address":"an1g3lvjuofemuwqfukxmgozwpy4eq6gltku7coz4tb7icwynlbrjysdscr6e","alias":"b","trust":"trusted","inbox_topic":"/agentnet/1/inbox-0b/proto","added_at":1795715911973,"kem_expires_at":null,"updated":false,"key_epoch":1,"revoked":false}
+[exit 0]
+$ /Users/dennison/develop/FIC-elipsis/target/release/agentnet --json --data-dir /tmp/an-acc.ldm6oH/b contact add @/tmp/an-acc.ldm6oH/a.record --expect an1qy5hvyaicvltpllirthzvlj4mo3swwzdzxvjs53s5qo6mezo4m4sasmnya --alias a
+{"address":"an1qy5hvyaicvltpllirthzvlj4mo3swwzdzxvjs53s5qo6mezo4m4sasmnya","alias":"a","trust":"trusted","inbox_topic":"/agentnet/1/inbox-09/proto","added_at":1795715911998,"kem_expires_at":null,"updated":false,"key_epoch":1,"revoked":false}
+[exit 0]
+$ /Users/dennison/develop/FIC-elipsis/target/release/agentnet --json --data-dir /tmp/an-acc.ldm6oH/c contact add @/tmp/an-acc.ldm6oH/b.record --expect an1g3lvjuofemuwqfukxmgozwpy4eq6gltku7coz4tb7icwynlbrjysdscr6e --alias b
+{"address":"an1g3lvjuofemuwqfukxmgozwpy4eq6gltku7coz4tb7icwynlbrjysdscr6e","alias":"b","trust":"trusted","inbox_topic":"/agentnet/1/inbox-0b/proto","added_at":1795715960626,"kem_expires_at":null,"updated":false,"key_epoch":1,"revoked":false}
+[exit 0]

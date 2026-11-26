@@ -1,0 +1,30 @@
+[17:58:28] results: /Users/dennison/develop/FIC-elipsis/results/acceptance/20261126T175828Z   work dir: /tmp/an-acc.ldm6oH
+[17:58:28] SCOPE: single-host docker-bridge test, amd64 node image under qemu on arm64 Mac. NOT cross-machine/NAT.
+[17:58:28] building release binaries
+[17:58:31] === STEP 1: relay + two instances, identities, contacts
+[17:58:31] CHECK 1.topology PASS - R1 (an-r1), NA (an-na), NB (an-nb) healthy; NA and NB connected to R1 only; compose project agentnet-relay, DNS_NS=127.0.0.1
+[17:58:31] agent a: an1qy5hvyaicvltpllirthzvlj4mo3swwzdzxvjs53s5qo6mezo4m4sasmnya node=http://127.0.0.1:18641 topic=/agentnet/1/inbox-09/proto (init attempts: 1)
+[17:58:31] agent b: an1g3lvjuofemuwqfukxmgozwpy4eq6gltku7coz4tb7icwynlbrjysdscr6e node=http://127.0.0.1:18642 topic=/agentnet/1/inbox-0b/proto (init attempts: 1)
+[17:58:31] CHECK 1.serve PASS - two release-mode 'agentnet serve' processes (A -> NA http://127.0.0.1:18641, B -> NB http://127.0.0.1:18642), private mode, static peer R1, cluster 66; A=an1qy5hvyaicvltpllirthzvlj4mo3swwzdzxvjs53s5qo6mezo4m4sasmnya B=an1g3lvjuofemuwqfukxmgozwpy4eq6gltku7coz4tb7icwynlbrjysdscr6e
+[17:58:32] CHECK 1.contacts PASS - contact records exchanged with 'contact add @record --expect <address>' in both directions
+[17:58:32] CHECK 1.doctor.a PASS - agentnet doctor exit 0 (see logs/step1-doctor-a.log)
+[17:58:32] CHECK 1.netstatus.a PASS - network status --verbose: private, ready, no isolation violation, exactly one peer = R1 (16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV)
+[17:58:32] CHECK 1.doctor.b PASS - agentnet doctor exit 0 (see logs/step1-doctor-b.log)
+[17:58:32] CHECK 1.netstatus.b PASS - network status --verbose: private, ready, no isolation violation, exactly one peer = R1 (16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV)
+[17:58:32] CHECK 1.neg.tamper PASS - tampered contact record rejected, exit 4: error: invalid contact record: contact record signature does not verify; contact list unchanged
+[17:58:32] CHECK 1.neg.expect PASS - genuine record presented with the wrong --expect address rejected, exit 4: error: contact record is not for the expected address; contact list unchanged
+[17:58:32] === STEP 4: triggers
+[17:58:32] CHECK 4.policy.disabled PASS - create_trigger on A (policy.auto_trigger=false): isError, code policy_denied: triggers are disabled by host policy (policy.auto_trigger = false)
+[17:58:33] CHECK 4.policy.allowlist PASS - create_trigger on B for a non-allowlisted session: isError, policy_denied: target_session is not allowlisted by host policy
+[17:58:34] CHECK 4.create PASS - B create_trigger via MCP: trigger fd23765b-fda6-4f8b-b09f-89d672ccd07e (sender A, session demo-session, once=true, state active); negotiated protocol 2026-07-28
+[17:58:34] first turn recorded after 599 ms
+[17:59:03] CHECK 4.one_shot PASS - exactly ONE simulated turn (harness out file: 1 line) and one trigger.matched event, one inbox row, after 3 republish rounds (each stored frame re-published with fresh timestamps, 5 rounds-of-frames total) and a harness restart mid-way; first turn 599 ms after send
+[17:59:20] CHECK 4.consumed PASS - second matching message (73049283-5229-4b78-8e8b-d8b733d5810f) arrived and is in B's inbox, but the consumed trigger did not fire: turns=1, trigger.matched=1, trigger state consumed
+[17:59:20] agent c: an1pfjopei2wznrzbm6texrfr5okylwsekwvskgo4jhvjtdbctbmnh4vxlyca node=http://127.0.0.1:18641 topic=/agentnet/1/inbox-06/proto (init attempts: 1)
+[17:59:36] CHECK 4.unknown PASS - message from unknown identity C (an1pfjopei2wznrzbm6texrfr5okylwsekwvskgo4jhvjtdbctbmnh4vxlyca) is quarantined on B (not in the default inbox), no ack (C's state: sent), harness turns still 1, and a wildcard trigger (no sender filter) stayed active
+[17:59:54] CHECK 4.since_cursor PASS - reply persisted BEFORE the trigger existed; trigger created with since_cursor fired exactly once (harness turns 1 -> 2, trigger.matched events for it: 1), also after a duplicate republish
+[17:59:55] --- webhook mode
+[18:00:01] CHECK 4.webhook PASS - signed delivery from the daemon verified and recorded (1 turn); wrong-secret request -> HTTP 401; stale-timestamp request -> 401; validly signed replay of the delivered event -> 200 with no second turn (1)
+[18:00:03] done; results in /Users/dennison/develop/FIC-elipsis/results/acceptance/20261126T175828Z
+[18:00:03] cleanup (exit status of script body: 0)
+[18:00:03] topology healthy at exit

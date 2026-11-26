@@ -1,0 +1,2 @@
+70877  10256   6.4 10:19 /Users/dennison/develop/FIC-elipsis/target/release/agentnet --data-dir /tmp/an-acc.avJgzY/a serve
+94630   9584   1.1 05:24 /Users/dennison/develop/FIC-elipsis/target/release/agentnet --data-dir /tmp/an-acc.avJgzY/b serve

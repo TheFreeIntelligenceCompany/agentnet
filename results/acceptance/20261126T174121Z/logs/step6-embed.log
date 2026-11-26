@@ -1,0 +1,25 @@
+$ /Users/dennison/develop/FIC-elipsis/target/release/examples/embed
+alice queued 3ea6a4f1-ffb9-4c8a-ab85-591d351ceb1f (Queued)
+bob received "hello from an embedded engine" from an1bbgthrtcqdkdqcfcbhkbisqsimqkvvolxyfdkgkmxqkef7sqbwhf77zoz4
+alice's status is now Delivered (authenticated ack)
+[exit 0]
+$ /Users/dennison/develop/FIC-elipsis/target/release/examples/embed
+alice queued d6f56af4-ffaa-45f6-8151-cea4858ce27e (Queued)
+bob received "hello from an embedded engine" from an1e2457ni526urbzv43cvnl32rtigckb3gvjxbtprln5lklksfnrzbgbjryq
+alice's status is now Delivered (authenticated ack)
+[exit 0]
+$ /Users/dennison/develop/FIC-elipsis/target/release/examples/embed
+alice queued 8b8aa699-dd32-4d53-b15e-69b1e88d3f94 (Queued)
+bob received "hello from an embedded engine" from an1zhlndgbill552o3xddmubowll3nas7pj3vnizusocv4p7zpidncq36uiea
+alice's status is now Delivered (authenticated ack)
+[exit 0]
+$ /Users/dennison/develop/FIC-elipsis/target/release/examples/embed
+alice queued 49a75432-8001-4486-92f9-09e7f63f46b4 (Queued)
+bob received "hello from an embedded engine" from an17ebcsz7n25q6et7vxmafvq55zairqlcxoojoeofy4b4y5efh7jail7empm
+alice's status is now Delivered (authenticated ack)
+[exit 0]
+$ /Users/dennison/develop/FIC-elipsis/target/release/examples/embed
+alice queued f5f1cbec-f53c-4491-9be3-ddd4b4aa090b (Queued)
+bob received "hello from an embedded engine" from an1ipdjjijwvbs764qvoy24pm6tqg5v453c7ec2qjbppjn3mdwp6nzf4rwy5i
+alice's status is now Delivered (authenticated ack)
+[exit 0]

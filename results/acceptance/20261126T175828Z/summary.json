@@ -1,0 +1,170 @@
+{
+  "run_timestamp": "20261126T175828Z",
+  "environment": {
+    "host": "Darwin 25.6.0 arm64",
+    "git": "0d3258f",
+    "rustc": "rustc 1.92.0 (ded5c06cf 2025-12-08)",
+    "node_image": "wakuorg/nwaku@sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73 (v0.39.2, linux/amd64 under qemu)",
+    "topology": "single host, docker bridge 172.28.66.0/24, R1 + NA + NB containers, agents on the host via 127.0.0.1 REST ports",
+    "scope": "SINGLE-HOST DOCKER-BRIDGE TEST (amd64 node image under qemu on an arm64 Mac). NOT a cross-machine / NAT / Tailscale test."
+  },
+  "steps_requested": [
+    "1",
+    "4"
+  ],
+  "steps": [
+    {
+      "step": "1",
+      "status": "PASS",
+      "checks": [
+        {
+          "id": "1.topology",
+          "status": "PASS",
+          "detail": "R1 (an-r1), NA (an-na), NB (an-nb) healthy; NA and NB connected to R1 only; compose project agentnet-relay, DNS_NS=127.0.0.1",
+          "command": "cd spike/relay && DNS_NS=127.0.0.1 ./scripts/up.sh   # R1 first, then na+nb",
+          "optional": false,
+          "at": "2026-11-26T17:58:31Z"
+        },
+        {
+          "id": "1.serve",
+          "status": "PASS",
+          "detail": "two release-mode 'agentnet serve' processes (A -> NA http://127.0.0.1:18641, B -> NB http://127.0.0.1:18642), private mode, static peer R1, cluster 66; A=an1qy5hvyaicvltpllirthzvlj4mo3swwzdzxvjs53s5qo6mezo4m4sasmnya B=an1g3lvjuofemuwqfukxmgozwpy4eq6gltku7coz4tb7icwynlbrjysdscr6e",
+          "command": "agentnet --data-dir $A init --node-url http://127.0.0.1:18641 --peer /ip4/172.28.66.10/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV; agentnet --data-dir $B init --node-url http://127.0.0.1:18642 --peer /ip4/172.28.66.10/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV; agentnet --data-dir $X serve",
+          "optional": false,
+          "at": "2026-11-26T17:58:31Z"
+        },
+        {
+          "id": "1.contacts",
+          "status": "PASS",
+          "detail": "contact records exchanged with 'contact add @record --expect <address>' in both directions",
+          "command": "agentnet --data-dir $A contact add @b.record --expect an1g3lvjuofemuwqfukxmgozwpy4eq6gltku7coz4tb7icwynlbrjysdscr6e; agentnet --data-dir $B contact add @a.record --expect an1qy5hvyaicvltpllirthzvlj4mo3swwzdzxvjs53s5qo6mezo4m4sasmnya",
+          "optional": false,
+          "at": "2026-11-26T17:58:32Z"
+        },
+        {
+          "id": "1.doctor.a",
+          "status": "PASS",
+          "detail": "agentnet doctor exit 0 (see logs/step1-doctor-a.log)",
+          "command": "agentnet --data-dir $A doctor",
+          "optional": false,
+          "at": "2026-11-26T17:58:32Z"
+        },
+        {
+          "id": "1.netstatus.a",
+          "status": "PASS",
+          "detail": "network status --verbose: private, ready, no isolation violation, exactly one peer = R1 (16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV)",
+          "command": "agentnet --json --data-dir $X network status --verbose",
+          "optional": false,
+          "at": "2026-11-26T17:58:32Z"
+        },
+        {
+          "id": "1.doctor.b",
+          "status": "PASS",
+          "detail": "agentnet doctor exit 0 (see logs/step1-doctor-b.log)",
+          "command": "agentnet --data-dir $B doctor",
+          "optional": false,
+          "at": "2026-11-26T17:58:32Z"
+        },
+        {
+          "id": "1.netstatus.b",
+          "status": "PASS",
+          "detail": "network status --verbose: private, ready, no isolation violation, exactly one peer = R1 (16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV)",
+          "command": "agentnet --json --data-dir $X network status --verbose",
+          "optional": false,
+          "at": "2026-11-26T17:58:32Z"
+        },
+        {
+          "id": "1.neg.tamper",
+          "status": "PASS",
+          "detail": "tampered contact record rejected, exit 4: error: invalid contact record: contact record signature does not verify; contact list unchanged",
+          "command": "agentnet contact add @tampered.json --expect <B>",
+          "optional": false,
+          "at": "2026-11-26T17:58:32Z"
+        },
+        {
+          "id": "1.neg.expect",
+          "status": "PASS",
+          "detail": "genuine record presented with the wrong --expect address rejected, exit 4: error: contact record is not for the expected address; contact list unchanged",
+          "command": "agentnet contact add @b.record --expect <A's address>",
+          "optional": false,
+          "at": "2026-11-26T17:58:32Z"
+        }
+      ]
+    },
+    {
+      "step": "4",
+      "status": "PASS",
+      "checks": [
+        {
+          "id": "4.policy.disabled",
+          "status": "PASS",
+          "detail": "create_trigger on A (policy.auto_trigger=false): isError, code policy_denied: triggers are disabled by host policy (policy.auto_trigger = false)",
+          "command": "agentnet-acceptance mcp-call --data-dir $A --tool create_trigger --args '{\"target_session\":\"demo-session\"}'",
+          "optional": false,
+          "at": "2026-11-26T17:58:32Z"
+        },
+        {
+          "id": "4.policy.allowlist",
+          "status": "PASS",
+          "detail": "create_trigger on B for a non-allowlisted session: isError, policy_denied: target_session is not allowlisted by host policy",
+          "command": "agentnet-acceptance mcp-call --data-dir $B --tool create_trigger --args '{\"target_session\":\"not-allowed-session\",...}'",
+          "optional": false,
+          "at": "2026-11-26T17:58:33Z"
+        },
+        {
+          "id": "4.create",
+          "status": "PASS",
+          "detail": "B create_trigger via MCP: trigger fd23765b-fda6-4f8b-b09f-89d672ccd07e (sender A, session demo-session, once=true, state active); negotiated protocol 2026-07-28",
+          "command": "agentnet-acceptance mcp-call --data-dir $B --tool create_trigger --args '{\"target_session\":\"demo-session\",\"sender\":\"<A>\"}'",
+          "optional": false,
+          "at": "2026-11-26T17:58:34Z"
+        },
+        {
+          "id": "4.one_shot",
+          "status": "PASS",
+          "detail": "exactly ONE simulated turn (harness out file: 1 line) and one trigger.matched event, one inbox row, after 3 republish rounds (each stored frame re-published with fresh timestamps, 5 rounds-of-frames total) and a harness restart mid-way; first turn 599 ms after send",
+          "command": "mock_harness --data-dir $B --out turns.jsonl --state state.json; agentnet send <B>; curl store + POST relay (x5); kill+restart mock_harness",
+          "optional": false,
+          "at": "2026-11-26T17:59:03Z"
+        },
+        {
+          "id": "4.consumed",
+          "status": "PASS",
+          "detail": "second matching message (73049283-5229-4b78-8e8b-d8b733d5810f) arrived and is in B's inbox, but the consumed trigger did not fire: turns=1, trigger.matched=1, trigger state consumed",
+          "command": "agentnet send <B> trigger-test-2; mcp list_triggers",
+          "optional": false,
+          "at": "2026-11-26T17:59:20Z"
+        },
+        {
+          "id": "4.unknown",
+          "status": "PASS",
+          "detail": "message from unknown identity C (an1pfjopei2wznrzbm6texrfr5okylwsekwvskgo4jhvjtdbctbmnh4vxlyca) is quarantined on B (not in the default inbox), no ack (C's state: sent), harness turns still 1, and a wildcard trigger (no sender filter) stayed active",
+          "command": "agentnet send <B> (from C, not in B's contacts); agentnet quarantine list; mcp list_triggers",
+          "optional": false,
+          "at": "2026-11-26T17:59:36Z"
+        },
+        {
+          "id": "4.since_cursor",
+          "status": "PASS",
+          "detail": "reply persisted BEFORE the trigger existed; trigger created with since_cursor fired exactly once (harness turns 1 -> 2, trigger.matched events for it: 1), also after a duplicate republish",
+          "command": "agentnet send <B>; mcp create_trigger {...,\"since_cursor\":\"<cursor before send>\"}",
+          "optional": false,
+          "at": "2026-11-26T17:59:54Z"
+        },
+        {
+          "id": "4.webhook",
+          "status": "PASS",
+          "detail": "signed delivery from the daemon verified and recorded (1 turn); wrong-secret request -> HTTP 401; stale-timestamp request -> 401; validly signed replay of the delivered event -> 200 with no second turn (1)",
+          "command": "mock_harness --webhook 127.0.0.1:19090 --secret-file S; agentnet serve with [webhook] enabled; curl -X POST with X-AgentNet-Signature variants",
+          "optional": false,
+          "at": "2026-11-26T18:00:01Z"
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "PASS": 17,
+    "FAIL": 0,
+    "UNTESTED": 0
+  }
+}

@@ -1,0 +1,8 @@
+Why the selected adapter cannot be fully embedded (ADR 0001, docs/architecture.md section 1):
+the transport is an adapter to a separately running Logos Delivery (nwaku) node over its local REST API.
+That node is a Nim program shipped as a separate executable/container: a sidecar that must run next to
+the harness. The Rust engine (identity, envelopes, SQLite inbox/outbox, retries, triggers, events,
+the AgentApi trait) CAN be embedded in a Rust harness, and the embed example does exactly that on the
+deterministic in-memory MockNetwork; swapping in LogosRestTransport is a two-line change but still needs the
+sidecar node. Embedding the node itself needs native FFI bindings (waku-sys), which is a future option
+behind the same Transport trait and was not selected.

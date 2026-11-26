@@ -4,4 +4,4 @@
    Compiling agentnet-daemon v0.1.0 (/Users/dennison/develop/FIC-elipsis/crates/daemon)
    Compiling agentnet-cli v0.1.0 (/Users/dennison/develop/FIC-elipsis/crates/cli)
    Compiling agentnet-acceptance v0.1.0 (/Users/dennison/develop/FIC-elipsis/tests/acceptance)
-    Finished `release` profile [optimized] target(s) in 3m 09s
+    Finished `release` profile [optimized] target(s) in 58.70s
