@@ -115,7 +115,7 @@ agentnet --data-dir $B ack $MID         # local "processed" mark; sends nothing
 }
 ```
 
-Ten tools (`get_identity`, `send_message`, `read_inbox`, `acknowledge_message`, `get_message_status`, `add_contact`, `network_status`, `create_trigger`, `list_triggers`, `delete_trigger`) and five resources; see [docs/mcp-api.md](docs/mcp-api.md).
+Thirteen tools (`get_identity`, `send_message`, `read_inbox`, `acknowledge_message`, `get_message_status`, `add_contact`, `network_status`, `create_trigger`, `list_triggers`, `delete_trigger`, and the opt-in `advertise_agent`, `withdraw_advert`, `discover_agents`) and five resources; see [docs/mcp-api.md](docs/mcp-api.md).
 Only the `rmcp` test client was used against it; **third-party MCP hosts are UNTESTED**. Loopback HTTP MCP (`[mcp_http] enabled = true`) uses a static bearer token, which is **not** the MCP OAuth profile.
 
 **8. Triggers and the mock harness.** Triggers are off by default. Enable them for one allow-listed session on agent B, restart B, create a one-shot trigger, run the mock harness (it records a simulated turn; there is no model), and have A send a matching message.
@@ -141,7 +141,7 @@ Verification status of this quickstart: see "Quickstart verification" in the las
 ## Private mode and public mode
 
 * **private** (default, the only mode that was tested). `agentnet.toml` must name your own static peers (`/ip4/<private ip>/tcp/60000/p2p/<peerId>`), a private `cluster_id` (not 1, 2, 3 or 16, which select public presets), and a local or private `node_url`.
-  Discovery and public fallback do not exist (`public_fallback = true` is always an error). At runtime the daemon audits the node's peer list every 15 s and **refuses to send or receive** if the node is connected to any peer outside the allowlist.
+  Public peer discovery and public fallback do not exist (`public_fallback = true` is always an error). At runtime the daemon audits the node's peer list every 15 s and **refuses to send or receive** if the node is connected to any peer outside the allowlist.
   The daemon cannot set the node's own flags: whether the node itself contacts public infrastructure depends on how you start it ([docs/relay-setup.md](docs/relay-setup.md)). Cluster and shard ids are not access control.
 * **public** requires `mode = "public"` and `i_understand_public = true`, skips the peer audit, and is **UNTESTED against any public network**. The REST adapter supports only single-shard networks, which the shared public networks are not. No bridging between modes: one daemon talks to one node in one mode.
 
@@ -172,7 +172,7 @@ Read these before relying on anything here.
 * **No forward secrecy, no post-compromise security, no deniability; no global revocation.** Unaudited cryptographic composition. A forward-secret scheme (vodozemac, MLS) is a documented upgrade path that is **not implemented** ([docs/crypto-interface.md](docs/crypto-interface.md)).
 * **Revocation is best effort.** KEM rotation/revocation and identity tombstones reach only contacts that are reachable within the TTL/retry limits or receive the document out of band; messages sealed to a destroyed KEM key are lost unless re-sealed by their senders. A thief of the signing key can impersonate the owner until peers learn of the tombstone and can issue the tombstone itself.
 * **Restoring an old database or importing an identity into a new data directory starts the replay guard**: older messages are held until `max_ttl + clock_skew` has passed or `agentnet doctor --accept-rollback` is run; messages received between the restored copy and the rollback are lost.
-* **No groups, no multi-device, no discovery or advertisement, no task-delegation tools.** One data directory is one identity; the same identity in two places is not detected and would split state.
+* **No groups, no multi-device, no task-delegation tools. Capability discovery is optional and public.** `[discovery]` is off by default; when enabled, agents publish signed capability adverts as **plaintext readable by every node on the relay** on host-authorized topics (best effort, not a global directory, no reputation, results are unverified claims and never add contacts); see [docs/discovery.md](docs/discovery.md). Untested on a real relay. One data directory is one identity; the same identity in two places is not detected and would split state.
 * **Recovery is bounded** by the relay's Store retention (the verified relay flags keep **1 hour**; the client's 168 h does not extend it), by the message TTL (default 24 h, max 7 d) and by a 20 s clock-skew rule in the Store. After a relay restart live delivery degraded for about 9 minutes in the one observation; recovery then relies on Store catch-up.
 * **REST cache polling model.** The node's relay cache holds 50 messages shared across topics and is read destructively; the daemon polls every 250 ms and loses live frames if it cannot keep up (Store catch-up then recovers within retention). Observed delivery in a 100-client single-process load test ranged from 40.8 % to 100 % depending on poll interval and publish concurrency.
 * **Privacy**: relays and observers see the bucket, timing, size, and publisher/subscriber network identity. A bucket's anonymity set is the number of agents sharing it in your deployment.
@@ -232,6 +232,7 @@ cargo test --workspace --locked
 | [docs/mcp-api.md](docs/mcp-api.md) | MCP tools, resources, versions, limits |
 | [docs/host-integration.md](docs/host-integration.md) | control socket, events, webhook |
 | [docs/configuration.md](docs/configuration.md) | every `agentnet.toml` key |
+| [docs/discovery.md](docs/discovery.md) | optional capability discovery: design, wire format, what relays see, limits, non-goals |
 | [docs/relay-setup.md](docs/relay-setup.md) | running your own relay, Store and client nodes; Tailscale (UNTESTED) |
 | [docs/cli-help.txt](docs/cli-help.txt) | generated CLI help |
 | [docs/adr/](docs/adr/) | decisions: [0001 transport](docs/adr/0001-transport.md), 0002 encryption, 0003 MCP SDK and version |

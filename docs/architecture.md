@@ -206,7 +206,8 @@ exactly one node and one mode.
 
 Tools: `get_identity`, `send_message`, `read_inbox`, `acknowledge_message`,
 `get_message_status`, `add_contact`, `network_status`, `create_trigger`,
-`list_triggers`, `delete_trigger`. Resources: `agentnet://identity`,
+`list_triggers`, `delete_trigger`, and the optional, opt-in `advertise_agent`, `withdraw_advert`,
+`discover_agents` (`docs/discovery.md`). Resources: `agentnet://identity`,
 `agentnet://inbox`, `agentnet://outbox`, `agentnet://conversations/{id}`
 (template), `agentnet://triggers`. Updates are sent only to listeners that asked
 for the URI, only after persistence. stdio first; Streamable HTTP on loopback
@@ -216,6 +217,7 @@ and refused by config.
 
 ## 9. Explicit non-goals for the MVP
 
-Groups, multi-device, forward secrecy, discovery/advertisement, task delegation
+Groups, multi-device, forward secrecy, a global directory or reputation (capability
+discovery on the local relay exists only as the opt-in feature in `docs/discovery.md`), task delegation
 tools, hybrid public/private gateways, a single static binary including the
 node, Windows.
