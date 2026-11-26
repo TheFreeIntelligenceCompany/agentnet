@@ -369,6 +369,9 @@ mod tests {
         for (field, newval) in [
             ("inbox_buckets", serde_json::json!(32)),
             ("created_at", serde_json::json!(NOW + 1)),
+            ("key_epoch", serde_json::json!(2)),
+            ("revoked_kem_epochs_below", serde_json::json!(1)),
+            ("suites", serde_json::json!([1, 2])),
             ("kem_expires_at", serde_json::json!(NOW + 100_000)),
             (
                 "kem_pk",
@@ -497,6 +500,46 @@ mod tests {
                 "negative",
                 Box::new(|v| v["created_at"] = serde_json::json!(-1)),
                 ContactError::InvalidTimestamp,
+            ),
+            (
+                "epoch 0",
+                Box::new(|v| v["key_epoch"] = serde_json::json!(0)),
+                ContactError::InvalidKeyEpoch,
+            ),
+            (
+                "floor 0",
+                Box::new(|v| v["revoked_kem_epochs_below"] = serde_json::json!(0)),
+                ContactError::InvalidKeyEpoch,
+            ),
+            (
+                "floor above epoch",
+                Box::new(|v| v["revoked_kem_epochs_below"] = serde_json::json!(2)),
+                ContactError::InvalidKeyEpoch,
+            ),
+            (
+                "no suites",
+                Box::new(|v| v["suites"] = serde_json::json!([])),
+                ContactError::InvalidSuites,
+            ),
+            (
+                "unsorted suites",
+                Box::new(|v| v["suites"] = serde_json::json!([2, 1])),
+                ContactError::InvalidSuites,
+            ),
+            (
+                "duplicate suites",
+                Box::new(|v| v["suites"] = serde_json::json!([1, 1])),
+                ContactError::InvalidSuites,
+            ),
+            (
+                "suite zero",
+                Box::new(|v| v["suites"] = serde_json::json!([0, 1])),
+                ContactError::InvalidSuites,
+            ),
+            (
+                "suite out of range",
+                Box::new(|v| v["suites"] = serde_json::json!([1, 256])),
+                ContactError::MalformedRecord("invalid field value or type"),
             ),
             (
                 "float time",

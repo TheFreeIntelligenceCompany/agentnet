@@ -1,0 +1,50 @@
+   Compiling agentnet-core v0.1.0 (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a47fc99d044526c73/crates/core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.10s
+     Running tests/crypto.rs (target/debug/deps/crypto-0c0b57fb5a6396ca)
+
+running 42 tests
+test constants_match_spec ... ok
+test equal_frame_length_within_a_bucket ... ok
+test contact_record_round_trip_and_tampering ... ok
+test envelope_parsing_is_strict ... ok
+test forged_sender_is_bad_signature ... ok
+test files::save_into_missing_directory_fails_cleanly ... ok
+test files::debug_output_has_no_key_material ... ok
+test frame_layout_offsets ... ok
+test hardening::an_old_recipient_key_cannot_rewrap_a_message_into_a_newer_epoch ... ok
+test files::load_rejects_bad_files ... ok
+test hardening::frame_version_and_suite_bytes_are_authenticated_as_aad ... ok
+test hardening::receiver_rejects_frames_for_suites_it_does_not_advertise ... ok
+test hardening::registry_negotiates_the_highest_common_suite_and_never_falls_back_silently ... ok
+test hardening::identity_files_without_epochs_load_with_defaults ... ok
+test files::save_load_permissions_and_atomicity ... ok
+test header_errors_are_distinct ... ok
+test hardening::signed_suite_and_key_epoch_must_match_the_frame_and_the_decrypting_key ... ok
+test inbox_buckets_in_contact_and_topic ... ok
+test kem_rotation_keeps_old_key_until_retire_time ... ok
+test nonzero_padding_is_rejected ... ok
+test prop_address_parse_total ... ok
+test bucket_boundaries_are_exact ... ok
+test hardening::two_seals_of_the_same_envelope_use_fresh_hpke_contexts ... ok
+test max_frame_len_cap_and_too_large ... ok
+test prop_contact_parse_total ... ok
+test seal_refuses_expired_recipient_key ... ok
+test seal_rejects_mismatches ... ok
+test signature_over_other_domain_is_rejected ... ok
+test round_trip_all_message_types ... ok
+test surreptitious_forwarding_is_wrong_recipient ... ok
+test prop_open_never_panics_on_arbitrary_bytes ... ok
+test time_checks_and_exact_boundaries ... ok
+test unicode_bodies_are_byte_exact ... ok
+test wrong_recipient_field_after_valid_signature ... ok
+test wrong_recipient_is_not_for_us ... ok
+test prop_authentic_garbage_envelope_never_panics ... ok
+test truncation_at_every_length_is_rejected ... ok
+test prop_round_trip ... ok
+test hardening::kem_rotation_with_revoke_destroys_old_keys_and_signs_the_floor ... ok
+test every_single_bit_flip_is_rejected ... ok
+test ten_thousand_random_frames_never_panic ... ok
+test encrypted_export_import ... ok
+
+test result: ok. 42 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.96s
+

@@ -283,6 +283,11 @@ pub mod testing {
     use super::super::hpke_suite::{self, BuildError};
     use super::*;
 
+    /// True if `frame` decrypts for `recipient` with the given HPKE `aad`.
+    pub fn decrypts_with_aad(recipient: &Identity, frame: &[u8], aad: &[u8], now_ms: i64) -> bool {
+        hpke_suite::decrypts_with_aad(recipient, frame, aad, now_ms)
+    }
+
     /// Sign arbitrary envelope bytes as `signer` (domain-separated like `seal`).
     pub fn sign_envelope_bytes(signer: &Identity, env_bytes: &[u8]) -> [u8; 64] {
         hpke_suite::sign_envelope_bytes(signer, env_bytes)

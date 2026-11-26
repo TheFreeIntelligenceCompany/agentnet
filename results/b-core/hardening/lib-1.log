@@ -1,0 +1,42 @@
+   Compiling agentnet-core v0.1.0 (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a47fc99d044526c73/crates/core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.68s
+     Running unittests src/lib.rs (target/debug/deps/agentnet_core-8d510d4f526784f0)
+
+running 34 tests
+test config::tests::defaults_are_valid_and_match_the_documented_values ... ok
+test config::tests::partial_toml_like_json_and_unknown_keys ... ok
+test crypto::address::tests::strictness ... ok
+test crypto::address::tests::known_vector ... ok
+test crypto::address::tests::rejects_weak_keys ... ok
+test crypto::address::tests::trailing_bits_must_be_zero ... ok
+test crypto::address::tests::ordering_and_hash ... ok
+test crypto::address::tests::rejects_non_canonical_point_encoding ... ok
+test crypto::contact::tests::record_layout_is_as_specified ... ok
+test crypto::contact::tests::document_shape_errors ... ok
+test crypto::contact::tests::duplicate_keys_rejected ... ok
+test crypto::contact::tests::swapped_kem_key_from_other_identity ... ok
+test crypto::address::tests::topic_vector_and_all_buckets_valid ... ok
+test crypto::envelope::tests::padding_rule ... ok
+test crypto::contact::tests::roundtrip ... ok
+test crypto::envelope::tests::field_rules ... ok
+test crypto::envelope::tests::uuid_validation ... ok
+test crypto::identity::tests::debug_has_no_secrets ... ok
+test crypto::address::tests::roundtrip_and_serde ... ok
+test crypto::contact::tests::kem_expiry ... ok
+test crypto::contact::tests::tampered_fields_rejected ... ok
+test crypto::identity::tests::file_validation ... ok
+test crypto::identity::tests::generate_validates_buckets ... ok
+test crypto::identity::tests::rotation_and_prune ... ok
+test cursor::tests::roundtrip_and_kind_checks ... ok
+test crypto::identity::tests::file_roundtrip_in_memory ... ok
+test crypto::envelope::tests::serde_rejects_duplicates_and_unknown_fields ... ok
+test crypto::envelope::tests::roundtrip_and_layout ... ok
+test crypto::revocation::tests::roundtrip_and_tamper ... ok
+test store::tests::refuses_a_newer_database ... ok
+test crypto::contact::tests::low_order_kem_keys_rejected ... ok
+test crypto::identity::tests::previous_keys_are_capped ... ok
+test store::tests::migrates_a_v1_database ... ok
+test crypto::contact::tests::strict_record_validation ... ok
+
+test result: ok. 34 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+

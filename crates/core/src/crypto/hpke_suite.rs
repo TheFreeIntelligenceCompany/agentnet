@@ -93,6 +93,39 @@ pub(crate) fn sign_envelope_bytes(signer: &Identity, env_bytes: &[u8]) -> [u8; 6
     signer.sign(ENVELOPE_DOMAIN, env_bytes)
 }
 
+/// Test support: does `frame` decrypt for `recipient` when the HPKE `aad` is
+/// `aad` instead of the real header? (Proves the header is authenticated.)
+#[cfg(any(test, feature = "test-support"))]
+pub(crate) fn decrypts_with_aad(
+    recipient: &Identity,
+    frame: &[u8],
+    aad: &[u8],
+    now_ms: i64,
+) -> bool {
+    let Some(rest) = frame.get(HEADER_LEN..) else {
+        return false;
+    };
+    let Some((enc_b, ct)) = rest.split_at_checked(ENC_LEN) else {
+        return false;
+    };
+    let Ok(enc) = KemEncapped::from_bytes(enc_b) else {
+        return false;
+    };
+    recipient.decryption_keys(now_ms).any(|key| {
+        key.private_key().is_some_and(|sk| {
+            hpke::single_shot_open::<ChaCha20Poly1305, HkdfSha256, Kem>(
+                &OpModeR::Base,
+                &sk,
+                &enc,
+                &hpke_info(key.public_key()),
+                ct,
+                aad,
+            )
+            .is_ok()
+        })
+    })
+}
+
 #[derive(Deserialize)]
 struct VersionOnly {
     v: u64,
