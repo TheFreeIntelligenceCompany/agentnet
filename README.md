@@ -233,6 +233,7 @@ cargo test --workspace --locked
 | [docs/host-integration.md](docs/host-integration.md) | control socket, events, webhook |
 | [docs/configuration.md](docs/configuration.md) | every `agentnet.toml` key |
 | [docs/discovery.md](docs/discovery.md) | optional capability discovery: design, wire format, what relays see, limits, non-goals |
+| [docs/runbook.md](docs/runbook.md) | Operations runbook: routine checks, restarts, incident playbooks, backup |
 | [docs/network-simulations.md](docs/network-simulations.md) | WireGuard-overlay and NAT simulations (single host), results, UNTESTED real-run steps |
 | [docs/relay-setup.md](docs/relay-setup.md) | running your own relay, Store and client nodes; Tailscale (UNTESTED) |
 | [docs/cli-help.txt](docs/cli-help.txt) | generated CLI help |
