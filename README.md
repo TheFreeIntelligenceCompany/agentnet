@@ -231,7 +231,7 @@ cargo test --workspace --locked
   container-restarting ones additionally need `AGENTNET_RELAY_DISRUPTIVE=1 cargo test -p agentnet-transport --features disruptive-tests --test logos_rest_relay -- --ignored --test-threads=1`).
   Run the disruptive ones last; they restart `an-na` and stop `an-r1`.
   Note: the topology is shared state; do not run them while something else uses the same containers.
-* The acceptance script (`scripts/acceptance.sh`) and its results are documented in [docs/acceptance.md](docs/acceptance.md) ("see acceptance results"). (At the time of writing `docs/acceptance.md` did not exist yet; it is written by the acceptance run.)
+* The acceptance script (`scripts/acceptance.sh`) and its results are documented in [docs/acceptance.md](docs/acceptance.md) ("see acceptance results").
 * CI: [.github/workflows/ci.yml](.github/workflows/ci.yml) (format, clippy, tests, MSRV 1.89 build, `cargo deny`; plus a manual relay-gated job that has not been run on GitHub). The workflow ran on GitHub Actions (`ubuntu-latest`, x86_64) and passed for commit `76e797d`: [run 45845088419](https://github.com/TheFreeIntelligenceCompany/agentnet/actions/runs/45845088419). `cargo deny` was also run in a container and results are in [docs/dependency-audit.md](docs/dependency-audit.md).
 
 ## Repository layout
