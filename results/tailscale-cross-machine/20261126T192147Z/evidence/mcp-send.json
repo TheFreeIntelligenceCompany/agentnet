@@ -1,0 +1,19 @@
+{
+  "elapsed_ms": 15,
+  "is_error": false,
+  "protocol": {
+    "negotiated_protocol_version": "2026-07-28",
+    "server_info": {
+      "name": "agentnet",
+      "version": "0.1.0"
+    }
+  },
+  "result": {
+    "conversation_id": "842603f9-b21f-4a8f-a84e-b1f09d3771e7",
+    "deduplicated": false,
+    "expires_at": 1795807596102,
+    "message_id": "de9201d5-38fd-4019-9926-59b8d430bf24",
+    "status": "queued"
+  },
+  "tool": "send_message"
+}

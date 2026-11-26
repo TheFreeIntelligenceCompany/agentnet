@@ -1,0 +1,26 @@
+# At 2026-11-26T19:21:55Z: DOCKER-USER rule DROPs the Mac's tailnet IP (and nothing else matches earlier), yet the Mac still connects and node A stays Connected
+# Mac: nc -z <TS_IP_B> 60000 -> succeeded
+Chain PREROUTING (policy ACCEPT 914 packets, 129373 bytes)
+num      pkts      bytes target     prot opt in     out     source               destination         
+1           0        0 DROP       all  --  !br-0aca6c2b64c5 *       0.0.0.0/0            172.28.66.10        
+2           0        0 DROP       tcp  --  !lo    *       0.0.0.0/0            127.0.0.1            tcp dpt:18640
+3           0        0 DROP       all  --  !br-0aca6c2b64c5 *       0.0.0.0/0            172.28.66.22        
+4           0        0 DROP       tcp  --  !lo    *       0.0.0.0/0            127.0.0.1            tcp dpt:18642
+Chain DOCKER-USER (1 references)
+num      pkts      bytes target     prot opt in     out     source               destination         
+1           0        0 DROP       tcp  --  *      *       <TS_IP_A>       172.28.66.10         tcp dpt:60000 /* an-ts */
+2           0        0 ACCEPT     tcp  --  *      *       <TS_IP_B>        172.28.66.10         tcp dpt:60000 /* an-ts */
+3           0        0 DROP       tcp  --  *      *       0.0.0.0/0            172.28.66.10         tcp dpt:60000 /* an-ts */
+Chain FORWARD (policy DROP 0 packets, 0 bytes)
+num      pkts      bytes target     prot opt in     out     source               destination         
+1         319    25466 ts-forward  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+2           0        0 DOCKER-USER  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+3           0        0 DOCKER-FORWARD  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+-N ts-forward
+-A ts-forward -i tailscale0 -j MARK --set-xmark 0x40000/0xff0000
+-A ts-forward -m mark --mark 0x40000/0xff0000 -j ACCEPT
+-A ts-forward -s 100.64.0.0/10 -o tailscale0 -j DROP
+-A ts-forward -o tailscale0 -j ACCEPT
+-N ts-postrouting
+-A ts-postrouting -m mark --mark 0x40000/0xff0000 -j MASQUERADE
+instabox 0.8.394+d48d8ea09 is outdated (latest 0.8.407): run instabox update

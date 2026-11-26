@@ -19,6 +19,8 @@ from a pristine `git archive HEAD` export (HEAD `1b77240`), independent of the w
 
 > **Real two-host run (2026-11-26):** besides the simulations below, one run used two real hosts (`results/cross-machine/20261126T190328Z/`): a Mac behind a home NAT and a cloud VM, joined by an SSH port-forward. Killing an SSH forward closes the connection cleanly, so the relay noticed within 10 s and held no stale socket; `tcp_retries2` was not exercised. After a 123 s outage the client re-listed the relay Connected in 4.2 s and a queued message was delivered in 49.5 s (single trial). A silent packet blackhole across real hosts was not tested.
 
+> **Real Tailscale run (2026-11-26):** `results/tailscale-cross-machine/20261126T192147Z/` repeated the path-loss experiment on two real hosts over a real tailnet (one trial): with a 120 s silent drop the client noticed after 47.4 s, the relay's half-open socket ended about 48 s into the drop with `tcp_retries2=6`, the client was Connected 3.5 s after the path returned and the queued message was delivered after 33.4 s. **A second, accidental 82 s block showed a case the setting does not fix:** the relay was left with an *idle* stale socket (nothing to retransmit, so `tcp_retries2` never applies), closed every new connection from the client, and the client could not reconnect for 7 min 25 s; the stale socket disappeared 8 min after the client closed (cause UNTESTED). No fix for the idle case has been tested.
+
 ## Experiment W: relay reachable only over WireGuard
 
 Topology (`spike/relay-wireguard/README.md`): underlay docker bridge `172.29.70.0/24` (the only thing the three "machines" share); WireGuard

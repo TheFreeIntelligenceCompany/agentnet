@@ -1,0 +1,57 @@
+# 2026-11-26T19:30:56Z (a) from the Mac: nc -z -w 5 <TS_IP_B> 60000
+Connection to <TS_IP_B> port 60000 [tcp/*] succeeded!
+rc=0
+# (a') from the Mac to the box's public addresses = from the open Internet side (expected: no answer)
+./acc.sh: line 3: 85139 Alarm clock: 14         perl -e 'alarm shift; exec @ARGV' "$@"
+public-ipv4 60000 rc=142
+./acc.sh: line 3: 85732 Alarm clock: 14         perl -e 'alarm shift; exec @ARGV' "$@"
+public-ipv6 60000 rc=142
+# (b) on the box
+## ss -ltnp (all TCP listeners)
+State  Recv-Q Send-Q                          Local Address:Port  Peer Address:PortProcess                                 
+LISTEN 0      4096                            <TS_IP_B>:60000      0.0.0.0:*    users:(("docker-proxy",pid=6921,fd=8)) 
+LISTEN 0      4096                                127.0.0.1:18640      0.0.0.0:*    users:(("docker-proxy",pid=6908,fd=8)) 
+LISTEN 0      4096                                127.0.0.1:18642      0.0.0.0:*    users:(("docker-proxy",pid=10766,fd=8))
+LISTEN 0      128                                   0.0.0.0:22         0.0.0.0:*    users:(("sshd",pid=1490,fd=6))         
+LISTEN 0      4096                 <TS_IP_B>%tailscale0:58703      0.0.0.0:*    users:(("tailscaled",pid=2805,fd=24))  
+LISTEN 0      4096   [<TS_IPV6_B>]%tailscale0:53864         [::]:*    users:(("tailscaled",pid=2805,fd=27))  
+LISTEN 0      128                                      [::]:22            [::]:*    users:(("sshd",pid=1490,fd=7))         
+## docker port an-r1
+8645/tcp -> 127.0.0.1:18640
+60000/tcp -> <TS_IP_B>:60000
+## docker ps
+an-nb  8545/tcp, 30303/tcp, 60000/tcp, 127.0.0.1:18642->8645/tcp
+an-r1  8545/tcp, 30303/tcp, <TS_IP_B>:60000->60000/tcp, 127.0.0.1:18640->8645/tcp
+## addresses
+lo               UNKNOWN        127.0.0.1/8 ::1/128 
+dummy0           DOWN           
+eth0             UP             172.16.0.2/30 <box-public-ipv6>/128 fe80::400:acff:fe10:2/64 
+docker0          DOWN           172.17.0.1/16 
+tailscale0       UNKNOWN        <TS_IP_B>/32 <TS_IPV6_B>/128 fe80::9189:afb5:d17d:84db/64 
+br-0aca6c2b64c5  UP             172.28.66.1/24 fe80::2c1e:58ff:fe18:f852/64 
+vethXXXX@if2  UP             fe80::8cdb:7bff:fe43:2f0e/64 
+vethXXXX@if2  UP             fe80::ccdd:edff:fe74:c5e4/64 
+nc -z <TS_IP_B> 60000 rc=0
+nc -z 127.0.0.1 60000 rc=1
+nc -z 172.16.0.2 60000 rc=1
+nc -z 172.28.66.1 60000 rc=1
+nc -z 172.17.0.1 60000 rc=1
+nc -z <box-public-ipv6> 60000 rc=1
+## throw-away container on R network with a non-allowed source ip (172.28.66.99)
+rc=1
+## raw PREROUTING counters
+Chain PREROUTING (policy ACCEPT 37031 packets, 4034959 bytes)
+num      pkts      bytes target     prot opt in     out     source               destination         
+1        1502   150799 ACCEPT     tcp  --  *      *       <TS_IP_A>       <TS_IP_B>        tcp dpt:60000 /* an-ts */
+2           0        0 ACCEPT     tcp  --  *      *       <TS_IP_B>        <TS_IP_B>        tcp dpt:60000 /* an-ts */
+3          31     2103 ACCEPT     tcp  --  *      *       172.28.66.22         <TS_IP_B>        tcp dpt:60000 /* an-ts */
+4           8      494 DROP       tcp  --  *      *       0.0.0.0/0            <TS_IP_B>        tcp dpt:60000 /* an-ts */
+5           0        0 DROP       all  --  !br-0aca6c2b64c5 *       0.0.0.0/0            172.28.66.10        
+6           0        0 DROP       tcp  --  !lo    *       0.0.0.0/0            127.0.0.1            tcp dpt:18640
+7           0        0 DROP       all  --  !br-0aca6c2b64c5 *       0.0.0.0/0            172.28.66.22        
+8           0        0 DROP       tcp  --  !lo    *       0.0.0.0/0            127.0.0.1            tcp dpt:18642
+# (e) instabox port ls
+{
+  "enabled": true,
+  "ports": []
+}

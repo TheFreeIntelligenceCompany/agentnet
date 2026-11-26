@@ -25,7 +25,7 @@ chk() { jq -nc --arg id "$1" --arg s "$2" --arg d "$3" '{id:$id,status:$s,detail
 wait_state() { local id=$1 want=$2 secs=$3 t0; t0=$(now_ms); while [ $(( $(now_ms) - t0 )) -lt $((secs*1000)) ]; do
   [ "$(an status "$id" | jq -r .state)" = "$want" ] && { WAITED=$(( $(now_ms) - t0 )); return 0; }; sleep 1; done; WAITED=$(( $(now_ms) - t0 )); return 1; }
 pause() { echo; echo ">>> ON THE SECOND MACHINE: $1"; read -r -p "    press Enter when done " _; }
-AADDR="$(an identity show | jq -r .address)"
+AADDR="$(an --json identity show | jq -r .agent_id)"
 
 # x1
 nc -z -w 5 "$RIP" 60000 && chk x0.relay_tailnet "PASS" "relay answers on its tailnet address from host A" || chk x0.relay_tailnet "FAIL" "relay does not answer"

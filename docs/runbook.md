@@ -199,6 +199,8 @@ stop the daemon, replace the binary, start the daemon, then run `agentnet doctor
   (every message was delivered once in the simulations). Restarting the **relay's** node closes its stale sockets at once; restarting the client's
   node does not (the stale socket is on the relay). Real Tailscale and real NAT behaviour are UNTESTED.
 
+**Limit of this setting (measured once on real hosts, `results/tailscale-cross-machine/20261126T192147Z/`):** it only ends a stale socket the relay is still retransmitting on. If the relay's stale socket is idle, nothing is retransmitted, the setting never applies, and the client was refused for 7 min 25 s until the socket expired by itself. No fix for the idle case has been tested; restarting the relay node is the untested fallback.
+
 ### 6.4 Relay restarted or relay Store unavailable
 
 * **Symptom.** `ready` false while the relay is down; after it returns, delivery is late; offline messages do not appear.

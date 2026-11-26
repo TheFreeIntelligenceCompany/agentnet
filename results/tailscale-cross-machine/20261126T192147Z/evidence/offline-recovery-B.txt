@@ -1,0 +1,14 @@
+# offline B: 2026-11-26T19:31:42Z stop agent B and node B
+stopped 19:31:44.511
+sent 5 at 19:31:44.3N:  68431932-1e61-4722-9664-7465e13c9868 a61eb820-4d4c-4d34-8225-ca689b8f5b83 4f7627ae-4893-4c92-a3db-1836d859cbfd 7e6d3d2c-ddd0-47b5-a926-cd0391de665e 226026e4-25cb-4e6e-8b2a-9a862aa074a4
+error: no such outbound message
+{"state":null,"attempts":null,"last_error":null}
+# restart B at 19:31:56.3N
+started 19:31:57.225
+--- B-side detail (A's status of the 5 messages, seconds after B restart at T0=1795721516):
+{"state":"delivered","attempts":5,"delivered_s_after_B_restart":10.573999881744385}
+{"state":"delivered","attempts":4,"delivered_s_after_B_restart":2.578000068664551}
+{"state":"delivered","attempts":4,"delivered_s_after_B_restart":2.566999912261963}
+{"state":"delivered","attempts":4,"delivered_s_after_B_restart":2.5889999866485596}
+{"state":"delivered","attempts":5,"delivered_s_after_B_restart":12.598000049591064}
+B inbox offB bodies: offB 1..5 present, inbox total 38 unique 38

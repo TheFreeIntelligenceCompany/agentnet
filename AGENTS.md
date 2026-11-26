@@ -88,7 +88,8 @@ results/           raw evidence; every claim in docs points here
 - After a silently dropped path a client node notices after about 48 s, but the
   relay can keep a half-open socket for 15+ minutes and refuse the client's
   redials meanwhile. Relays set `net.ipv4.tcp_retries2=6` (compose `sysctls`,
-  `agentnet relay print-config`); no client-side fix exists
+  `agentnet relay print-config`); this does not help when the stale socket is idle
+  (7 min 25 s outage measured on real hosts); no client-side fix exists
   (`results/reconnect/20261126T065412Z/SUMMARY.md`, `docs/runbook.md` 6.3).
 - Parallel cargo builds in separate worktrees filled the disk once: share one
   `CARGO_TARGET_DIR` between worktrees and delete merged worktrees promptly.

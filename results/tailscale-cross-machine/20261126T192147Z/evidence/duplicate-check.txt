@@ -1,0 +1,5 @@
+A inbox:
+{"total":20,"unique":20}
+B inbox:
+{"total":23,"unique":23}
+(inboxA/inboxB snapshots taken after the 20+20 message benches and 4 extra messages; later totals A=25, B=38 incl. offline tests)

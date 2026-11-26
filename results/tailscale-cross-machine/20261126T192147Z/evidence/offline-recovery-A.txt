@@ -1,0 +1,27 @@
+# 2026-11-26T19:34:32Z stop agent A and node A (Mac)
+# B sends 5 messages to A while A is offline
+{"state":"sent","attempts":4,"last_error":null}
+{"state":"sent","attempts":3,"last_error":null}
+{"state":"sent","attempts":4,"last_error":null}
+{"state":"sent","attempts":4,"last_error":null}
+{"state":"sent","attempts":4,"last_error":null}
+# 2026-11-26T19:34:47Z restart node A + agent A (T0=1795721687)
+19:34:48 delivered=0/5
+19:34:50 delivered=0/5
+19:34:52 delivered=0/5
+19:34:54 delivered=0/5
+19:34:56 delivered=0/5
+19:34:58 delivered=0/5
+19:35:00 delivered=0/5
+19:35:02 delivered=0/5
+19:35:04 delivered=0/5
+19:35:06 delivered=0/5
+19:35:08 delivered=0/5
+19:35:10 delivered=0/5
+19:35:12 delivered=5/5
+{"state":"delivered","attempts":5,"delivered_s_after_A_restart":25.32200002670288}
+{"state":"delivered","attempts":5,"delivered_s_after_A_restart":25.323999881744385}
+{"state":"delivered","attempts":5,"delivered_s_after_A_restart":25.325000047683716}
+{"state":"delivered","attempts":5,"delivered_s_after_A_restart":25.325999975204468}
+{"state":"delivered","attempts":5,"delivered_s_after_A_restart":25.32800006866455}
+A inbox: total 25 unique 25, offA 1..5 present

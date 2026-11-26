@@ -53,7 +53,7 @@ case "$cmd" in
     curl -s -m 5 "http://127.0.0.1:$REST/admin/v1/peers" | jq -r '.[]|"\(.multiaddr) \(.connected)"'
     [ -f "$DIR/config.toml" ] || "$AGENTNET" --json --data-dir "$DIR" init --node-url "http://127.0.0.1:$REST" --peer "$PEER" > "$DIR/init.json" || exit 1
     an --json identity show | jq -r .contact_record > "$DIR/contact.record"
-    an --json identity show | jq -r .address > "$DIR/address.txt"
+    an --json identity show | jq -r .agent_id > "$DIR/address.txt"
     nohup "$AGENTNET" --data-dir "$DIR" serve >/dev/null 2> "$DIR/serve.stderr" & echo $! > "$DIR/serve.pid"
     sleep 3
     an doctor

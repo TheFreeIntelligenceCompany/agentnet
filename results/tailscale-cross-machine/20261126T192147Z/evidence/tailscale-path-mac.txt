@@ -1,0 +1,43 @@
+# 2026-11-26T19:25:15Z Mac: tailscale status (only the two devices in this test; other tailnet devices omitted)
+<TS_IP_A>   <host-a>  <user>@  macOS  -                                                                        
+<TS_IP_B>    agentnet-ts-test            <user>@  linux  active; direct [<box-public-ipv6>]:41641, tx 79060 rx 63892  
+
+# Mac: tailscale ping -c 8 <TS_IP_B>
+pong from agentnet-ts-test (<TS_IP_B>) via [<box-public-ipv6>]:41641 in 72ms
+
+# Mac: ping -c 10 <TS_IP_B> (ICMP through the tailnet)
+PING <TS_IP_B> (<TS_IP_B>): 56 data bytes
+64 bytes from <TS_IP_B>: icmp_seq=0 ttl=64 time=116.647 ms
+64 bytes from <TS_IP_B>: icmp_seq=1 ttl=64 time=72.579 ms
+64 bytes from <TS_IP_B>: icmp_seq=2 ttl=64 time=72.207 ms
+64 bytes from <TS_IP_B>: icmp_seq=3 ttl=64 time=90.220 ms
+64 bytes from <TS_IP_B>: icmp_seq=4 ttl=64 time=73.113 ms
+64 bytes from <TS_IP_B>: icmp_seq=5 ttl=64 time=74.709 ms
+64 bytes from <TS_IP_B>: icmp_seq=6 ttl=64 time=73.688 ms
+64 bytes from <TS_IP_B>: icmp_seq=7 ttl=64 time=75.684 ms
+64 bytes from <TS_IP_B>: icmp_seq=8 ttl=64 time=72.414 ms
+64 bytes from <TS_IP_B>: icmp_seq=9 ttl=64 time=73.271 ms
+
+--- <TS_IP_B> ping statistics ---
+10 packets transmitted, 10 packets received, 0.0% packet loss
+round-trip min/avg/max/stddev = 72.207/79.453/116.647/13.405 ms
+
+# Mac: tailscale status --json, Peer entry for the box
+{
+  "Online": true,
+  "Active": true,
+  "CurAddr": "[<box-public-ipv6>]:41641",
+  "Relay": "sea",
+  "OS": "linux"
+}
+# Mac: tailscale netcheck (summary lines)
+	* UDP: true
+	* IPv4: yes, <mac-public-ipv4>:51882
+	* IPv6: yes, [<mac-public-ipv6>]:52484
+	* MappingVariesByDestIP: false
+	* PortMapping: NAT-PMP
+	* Nearest DERP: New York City
+	* DERP latency:
+		- nyc: 11.7ms  (New York City)
+		- iad: 17.1ms  (Ashburn)
+		- sea: 72.8ms  (Seattle)

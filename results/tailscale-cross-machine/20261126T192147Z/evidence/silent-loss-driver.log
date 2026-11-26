@@ -1,0 +1,13 @@
+19:35:42.421Z start samplers (420 s)
+19:35:57.958Z BLOCK (raw PREROUTING DROP for Mac tailnet IP -> tcp/60000), 120 s
+       0        0 DROP       tcp  --  *      *       <TS_IP_A>       <TS_IP_B>        tcp dpt:60000 /* an-ts */
+       0        0 ACCEPT     tcp  --  *      *       <TS_IP_B>        <TS_IP_B>        tcp dpt:60000 /* an-ts */
+       0        0 ACCEPT     tcp  --  *      *       172.28.66.22         <TS_IP_B>        tcp dpt:60000 /* an-ts */
+19:36:08.767Z message queued during the blackhole: 018bf15e-c66c-47ec-b670-1251db4e9a05
+       0        0 ACCEPT     tcp  --  *      *       <TS_IP_A>       <TS_IP_B>        tcp dpt:60000 /* an-ts */
+       0        0 ACCEPT     tcp  --  *      *       <TS_IP_B>        <TS_IP_B>        tcp dpt:60000 /* an-ts */
+       0        0 ACCEPT     tcp  --  *      *       172.28.66.22         <TS_IP_B>        tcp dpt:60000 /* an-ts */
+19:37:59.117Z RESTORED
+19:38:33.512Z message delivered
+19:38:33.562Z done waiting
+./drop.sh: line 15: 41617 Terminated: 15          python3 -I sampler-mac.py 420 $AN $A drop-msg.id > sampler-mac.jsonl 2>&1

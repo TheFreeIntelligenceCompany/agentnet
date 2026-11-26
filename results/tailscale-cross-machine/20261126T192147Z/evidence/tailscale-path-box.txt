@@ -1,0 +1,18 @@
+# box: tailscale status (this device + the Mac only)
+<TS_IP_B>    agentnet-ts-test            <user>@  linux  -                                                                                 
+<TS_IP_A>   <host-a>  <user>@  macOS  active; direct [<mac-public-ipv6>]:41641, tx 73308 rx 79804  
+
+# box: tailscale ping to the Mac
+pong from <host-a> (<TS_IP_A>) via [<mac-public-ipv6>]:41641 in 73ms
+{
+  "Online": true,
+  "Active": true,
+  "CurAddr": "[<mac-public-ipv6>]:41641",
+  "Relay": "nyc"
+}
+	* UDP: true
+	* IPv4: yes, <box-public-ipv4>:32972
+	* IPv6: yes, [<box-public-ipv6>]:39876
+	* MappingVariesByDestIP: false
+	* Nearest DERP: Seattle
+instabox 0.8.394+d48d8ea09 is outdated (latest 0.8.407): run instabox update

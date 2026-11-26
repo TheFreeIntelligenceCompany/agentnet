@@ -1,0 +1,76 @@
+# tcpdump -ni tailscale0 "tcp port 60000" -c 40 (box)
+tcpdump: verbose output suppressed, use -v[v]... for full protocol decode
+listening on tailscale0, link-type RAW (Raw IP), snapshot length 262144 bytes
+19:27:45.119172 IP <TS_IP_A>.53628 > <TS_IP_B>.60000: Flags [P.], seq 918850194:918850224, ack 2002943596, win 2048, options [nop,nop,TS val 1315238072 ecr 2884459980], length 30
+19:27:45.119250 IP <TS_IP_B>.60000 > <TS_IP_A>.53628: Flags [.], ack 30, win 201, options [nop,nop,TS val 2884463938 ecr 1315238072], length 0
+19:27:45.119386 IP <TS_IP_B>.60000 > <TS_IP_A>.53628: Flags [P.], seq 1:31, ack 30, win 201, options [nop,nop,TS val 2884463938 ecr 1315238072], length 30
+19:27:45.123102 IP <TS_IP_A>.53628 > <TS_IP_B>.60000: Flags [P.], seq 30:80, ack 1, win 2048, options [nop,nop,TS val 1315238072 ecr 2884459980], length 50
+19:27:45.123134 IP <TS_IP_A>.53628 > <TS_IP_B>.60000: Flags [P.], seq 80:128, ack 1, win 2048, options [nop,nop,TS val 1315238072 ecr 2884459980], length 48
+19:27:45.123641 IP <TS_IP_B>.60000 > <TS_IP_A>.53628: Flags [.], ack 128, win 201, options [nop,nop,TS val 2884463942 ecr 1315238072], length 0
+19:27:45.123847 IP <TS_IP_B>.60000 > <TS_IP_A>.53628: Flags [P.], seq 31:81, ack 128, win 201, options [nop,nop,TS val 2884463942 ecr 1315238072], length 50
+19:27:45.123861 IP <TS_IP_B>.60000 > <TS_IP_A>.53628: Flags [P.], seq 81:129, ack 128, win 201, options [nop,nop,TS val 2884463942 ecr 1315238072], length 48
+19:27:45.193048 IP <TS_IP_A>.53628 > <TS_IP_B>.60000: Flags [.], ack 31, win 2048, options [nop,nop,TS val 1315238145 ecr 2884463938], length 0
+19:27:45.197174 IP <TS_IP_A>.53628 > <TS_IP_B>.60000: Flags [.], ack 129, win 2047, options [nop,nop,TS val 1315238150 ecr 2884463942], length 0
+19:27:45.197210 IP <TS_IP_A>.53628 > <TS_IP_B>.60000: Flags [P.], seq 128:190, ack 129, win 2048, options [nop,nop,TS val 1315238151 ecr 2884463942], length 62
+19:27:45.197356 IP <TS_IP_B>.60000 > <TS_IP_A>.53628: Flags [P.], seq 129:191, ack 190, win 201, options [nop,nop,TS val 2884464016 ecr 1315238151], length 62
+19:27:45.269624 IP <TS_IP_A>.53628 > <TS_IP_B>.60000: Flags [.], ack 191, win 2048, options [nop,nop,TS val 1315238223 ecr 2884464016], length 0
+19:27:45.269682 IP <TS_IP_A>.53628 > <TS_IP_B>.60000: Flags [P.], seq 190:220, ack 191, win 2048, options [nop,nop,TS val 1315238224 ecr 2884464016], length 30
+19:27:45.269873 IP <TS_IP_B>.60000 > <TS_IP_A>.53628: Flags [P.], seq 191:221, ack 220, win 201, options [nop,nop,TS val 2884464088 ecr 1315238224], length 30
+19:27:45.343232 IP <TS_IP_A>.53628 > <TS_IP_B>.60000: Flags [.], ack 221, win 2048, options [nop,nop,TS val 1315238296 ecr 2884464088], length 0
+19:27:45.617541 IP <TS_IP_A>.53628 > <TS_IP_B>.60000: Flags [P.], seq 220:890, ack 221, win 2048, options [nop,nop,TS val 1315238571 ecr 2884464088], length 670
+19:27:45.655284 IP <TS_IP_B>.60000 > <TS_IP_A>.53628: Flags [P.], seq 221:290, ack 890, win 201, options [nop,nop,TS val 2884464474 ecr 1315238571], length 69
+19:27:45.655377 IP <TS_IP_B>.60000 > <TS_IP_A>.53628: Flags [P.], seq 290:960, ack 890, win 201, options [nop,nop,TS val 2884464474 ecr 1315238571], length 670
+19:27:45.727450 IP <TS_IP_A>.53628 > <TS_IP_B>.60000: Flags [.], ack 290, win 2047, options [nop,nop,TS val 1315238681 ecr 2884464474], length 0
+19:27:45.727502 IP <TS_IP_A>.53628 > <TS_IP_B>.60000: Flags [.], ack 960, win 2037, options [nop,nop,TS val 1315238682 ecr 2884464474], length 0
+19:27:45.864368 IP <TS_IP_A>.53628 > <TS_IP_B>.60000: Flags [P.], seq 890:1560, ack 960, win 2048, options [nop,nop,TS val 1315238814 ecr 2884464474], length 670
+19:27:45.904575 IP <TS_IP_B>.60000 > <TS_IP_A>.53628: Flags [P.], seq 960:1029, ack 1560, win 201, options [nop,nop,TS val 2884464723 ecr 1315238814], length 69
+19:27:45.904766 IP <TS_IP_B>.60000 > <TS_IP_A>.53628: Flags [P.], seq 1029:1699, ack 1560, win 201, options [nop,nop,TS val 2884464723 ecr 1315238814], length 670
+19:27:45.978363 IP <TS_IP_A>.53628 > <TS_IP_B>.60000: Flags [.], ack 1699, win 2037, options [nop,nop,TS val 1315238931 ecr 2884464723], length 0
+19:27:46.108342 IP <TS_IP_A>.53628 > <TS_IP_B>.60000: Flags [P.], seq 1560:2230, ack 1699, win 2048, options [nop,nop,TS val 1315239062 ecr 2884464723], length 670
+19:27:46.149058 IP <TS_IP_B>.60000 > <TS_IP_A>.53628: Flags [.], ack 2230, win 201, options [nop,nop,TS val 2884464968 ecr 1315239062], length 0
+19:27:46.155191 IP <TS_IP_B>.60000 > <TS_IP_A>.53628: Flags [P.], seq 1699:1768, ack 2230, win 201, options [nop,nop,TS val 2884464974 ecr 1315239062], length 69
+19:27:46.155453 IP <TS_IP_B>.60000 > <TS_IP_A>.53628: Flags [P.], seq 1768:2438, ack 2230, win 201, options [nop,nop,TS val 2884464974 ecr 1315239062], length 670
+19:27:46.228082 IP <TS_IP_A>.53628 > <TS_IP_B>.60000: Flags [.], ack 1768, win 2047, options [nop,nop,TS val 1315239181 ecr 2884464974], length 0
+19:27:46.228186 IP <TS_IP_A>.53628 > <TS_IP_B>.60000: Flags [.], ack 2438, win 2037, options [nop,nop,TS val 1315239181 ecr 2884464974], length 0
+19:27:46.358097 IP <TS_IP_A>.53628 > <TS_IP_B>.60000: Flags [P.], seq 2230:2900, ack 2438, win 2048, options [nop,nop,TS val 1315239311 ecr 2884464974], length 670
+19:27:46.358170 IP <TS_IP_B>.60000 > <TS_IP_A>.53628: Flags [.], ack 2900, win 201, options [nop,nop,TS val 2884465177 ecr 1315239311], length 0
+19:27:46.404970 IP <TS_IP_B>.60000 > <TS_IP_A>.53628: Flags [P.], seq 2438:2507, ack 2900, win 201, options [nop,nop,TS val 2884465223 ecr 1315239311], length 69
+19:27:46.405348 IP <TS_IP_B>.60000 > <TS_IP_A>.53628: Flags [P.], seq 2507:3177, ack 2900, win 201, options [nop,nop,TS val 2884465224 ecr 1315239311], length 670
+19:27:46.478820 IP <TS_IP_A>.53628 > <TS_IP_B>.60000: Flags [.], ack 3177, win 2037, options [nop,nop,TS val 1315239432 ecr 2884465224], length 0
+19:27:46.598377 IP <TS_IP_A>.53628 > <TS_IP_B>.60000: Flags [P.], seq 2900:3570, ack 3177, win 2048, options [nop,nop,TS val 1315239547 ecr 2884465224], length 670
+19:27:46.598459 IP <TS_IP_B>.60000 > <TS_IP_A>.53628: Flags [.], ack 3570, win 201, options [nop,nop,TS val 2884465417 ecr 1315239547], length 0
+19:27:46.654093 IP <TS_IP_B>.60000 > <TS_IP_A>.53628: Flags [P.], seq 3177:3246, ack 3570, win 201, options [nop,nop,TS val 2884465473 ecr 1315239547], length 69
+19:27:46.654300 IP <TS_IP_B>.60000 > <TS_IP_A>.53628: Flags [P.], seq 3246:3916, ack 3570, win 201, options [nop,nop,TS val 2884465473 ecr 1315239547], length 670
+40 packets captured
+42 packets received by filter
+0 packets dropped by kernel
+
+# tcpdump -ni eth0 "tcp port 60000" (box public/primary interface, 40 s window; 5 A->B messages exchanged inside the window)
+tcpdump: verbose output suppressed, use -v[v]... for full protocol decode
+listening on eth0, link-type EN10MB (Ethernet), snapshot length 262144 bytes
+
+0 packets captured
+0 packets received by filter
+0 packets dropped by kernel
+
+# tcpdump -ni eth0 "udp port 41641 or udp port 3478" -c 15 (same window: what DOES leave the primary interface = WireGuard UDP)
+tcpdump: verbose output suppressed, use -v[v]... for full protocol decode
+listening on eth0, link-type EN10MB (Ethernet), snapshot length 262144 bytes
+19:27:45.118701 IP6 <mac-public-ipv6>.41641 > <box-public-ipv6>.41641: UDP, length 128
+19:27:45.119389 IP6 <box-public-ipv6>.41641 > <mac-public-ipv6>.41641: UDP, length 96
+19:27:45.119413 IP6 <box-public-ipv6>.41641 > <mac-public-ipv6>.41641: UDP, length 128
+19:27:45.122794 IP6 <mac-public-ipv6>.41641 > <box-public-ipv6>.41641: UDP, length 288
+19:27:45.123984 IP6 <box-public-ipv6>.41641 > <mac-public-ipv6>.41641: UDP, length 96
+19:27:45.123999 IP6 <box-public-ipv6>.41641 > <mac-public-ipv6>.41641: UDP, length 144
+19:27:45.124007 IP6 <box-public-ipv6>.41641 > <mac-public-ipv6>.41641: UDP, length 144
+19:27:45.192852 IP6 <mac-public-ipv6>.41641 > <box-public-ipv6>.41641: UDP, length 96
+19:27:45.197075 IP6 <mac-public-ipv6>.41641 > <box-public-ipv6>.41641: UDP, length 96
+19:27:45.197075 IP6 <mac-public-ipv6>.41641 > <box-public-ipv6>.41641: UDP, length 160
+19:27:45.197465 IP6 <box-public-ipv6>.41641 > <mac-public-ipv6>.41641: UDP, length 160
+19:27:45.269377 IP6 <mac-public-ipv6>.41641 > <box-public-ipv6>.41641: UDP, length 96
+19:27:45.269445 IP6 <mac-public-ipv6>.41641 > <box-public-ipv6>.41641: UDP, length 128
+19:27:45.269955 IP6 <box-public-ipv6>.41641 > <mac-public-ipv6>.41641: UDP, length 128
+19:27:45.343029 IP6 <mac-public-ipv6>.41641 > <box-public-ipv6>.41641: UDP, length 96
+15 packets captured
+15 packets received by filter
+0 packets dropped by kernel

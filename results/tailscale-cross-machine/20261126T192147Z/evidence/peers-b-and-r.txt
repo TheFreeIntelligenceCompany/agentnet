@@ -1,0 +1,11 @@
+# 2026-11-26T19:31:29Z node B (box): /admin/v1/peers
+{"multiaddr":"/ip4/172.28.66.10/tcp/56268/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV","connected":"Connected","agent":"logos-delivery-\"v0.39.2\""}
+# R (box): /admin/v1/peers = what R sees
+{"multiaddr":"/ip4/172.28.66.1/tcp/53628/p2p/16Uiu2HAm1N4XD7fSWLmsU6kG1sDNeW5cRHgfMB87Uw3yFD3qkeLj","connected":"Connected"}
+{"multiaddr":"/ip4/172.28.66.22/tcp/60000/p2p/16Uiu2HAmGGTNKYN2QDGjGj2HK1fXFUZ4js6P5K1VmMvEofo4MfAZ","connected":"Connected"}
+# R: ss -tn state established, dport/sport 60000
+State Recv-Q Send-Q Local Address:Port Peer Address:Port
+# in R netns
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       
+tcp        0      0 172.28.66.10:56268      172.28.66.22:60000      ESTABLISHED 
+tcp        0      0 172.28.66.10:60000      172.28.66.1:53628       ESTABLISHED 

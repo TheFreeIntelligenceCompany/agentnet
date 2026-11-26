@@ -1,0 +1,17 @@
+box: Linux 6.18.60-instabox x86_64
+Docker version 29.8.2, build 7fc2dff
+1.104.7
+net.ipv4.tcp_retries2 = 15
+6
+agentnet 0.1.0
+c331f7a
+mac: Darwin 25.6.0 arm64
+26.6.2
+Docker version 29.8.1, build 4a63305d74
+1.102.3
+  tailscale commit: 9329c3677031109ff6d0b80abee0cddc8f35ff6f
+  long version: 1.102.3-t9329c3677-ga522f65e9
+  other commit: a522f65e92d54b594fe72e842afc9572bd9cf0b8
+  go version: go1.26.6 (tailscale/go 7275f792d4)
+agentnet 0.1.0
+c331f7a

@@ -1,0 +1,12 @@
+# 2026-11-26T19:39:16Z short counter capture: block the Mac's tailnet IP for ~15 s, try a NEW connection from the Mac, show counters, restore
+2026-11-26T19:39:16.695Z
+Mac nc -z <TS_IP_B> 60000 while blocked: rc=1
+Chain PREROUTING (policy ACCEPT 84118 packets, 8670317 bytes)
+num      pkts      bytes target     prot opt in     out     source               destination         
+1         108    14245 DROP       tcp  --  *      *       <TS_IP_A>       <TS_IP_B>        tcp dpt:60000 /* an-ts */
+2           0        0 ACCEPT     tcp  --  *      *       <TS_IP_B>        <TS_IP_B>        tcp dpt:60000 /* an-ts */
+3         161    14035 ACCEPT     tcp  --  *      *       172.28.66.22         <TS_IP_B>        tcp dpt:60000 /* an-ts */
+4           0        0 DROP       tcp  --  *      *       0.0.0.0/0            <TS_IP_B>        tcp dpt:60000 /* an-ts */
+2026-11-26T19:40:38.487Z
+Connection to <TS_IP_B> port 60000 [tcp/*] succeeded!
+Mac nc after restore: rc=0

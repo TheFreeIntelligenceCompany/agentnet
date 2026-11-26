@@ -1,0 +1,2 @@
+# 2026-11-26T19:31:29Z node A (Mac, colima): /admin/v1/peers
+{"multiaddr":"/ip4/<TS_IP_B>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV","connected":"Connected","agent":"logos-delivery-\"v0.39.2\""}
