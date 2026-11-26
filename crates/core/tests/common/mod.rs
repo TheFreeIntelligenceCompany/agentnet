@@ -11,7 +11,7 @@ use agentnet_core::api::{
 };
 use agentnet_core::config::{NodeConfig, UnknownSenders};
 use agentnet_core::identity::Identity;
-use agentnet_core::{Clock, Node};
+use agentnet_core::{Clock, Node, NodeOptions};
 use agentnet_transport::mock::{MockClock, MockNetwork, MockTransport};
 
 pub const MS: i64 = 1_000;
@@ -73,7 +73,7 @@ impl World {
         let id_path = self.dir.path().join(format!("{name}.identity.json"));
         id.save(&id_path, false).unwrap();
         let transport = self.net.endpoint();
-        self.open_agent(name, config, transport, id_path)
+        self.open_agent(name, config, transport, id_path, NodeOptions::default())
     }
 
     fn open_agent(
@@ -82,17 +82,19 @@ impl World {
         config: NodeConfig,
         transport: MockTransport,
         id_path: PathBuf,
+        options: NodeOptions,
     ) -> Agent {
         let id = Identity::load(&id_path).unwrap();
         let record = id.contact_record().to_document();
         let addr = id.address().to_string();
         let store_path = self.dir.path().join(format!("{name}.sqlite"));
-        let node = Node::open(
+        let node = Node::open_with(
             id,
             &store_path,
             Arc::new(transport.clone()),
             config,
             Arc::new(self.clock.clone()),
+            options,
         )
         .unwrap();
         Agent {
@@ -109,6 +111,11 @@ impl World {
     /// Drop the old node (without any shutdown) and open a new one on the same
     /// store, identity and transport endpoint.
     pub fn reopen(&self, old: Agent, config: NodeConfig) -> Agent {
+        self.reopen_with(old, config, NodeOptions::default())
+    }
+
+    /// [`World::reopen`] with explicit node options (protection, local revocation).
+    pub fn reopen_with(&self, old: Agent, config: NodeConfig, options: NodeOptions) -> Agent {
         let Agent {
             name,
             transport,
@@ -118,7 +125,7 @@ impl World {
         } = old;
         node.close();
         drop(node);
-        self.open_agent(&name, config, transport, id_path)
+        self.open_agent(&name, config, transport, id_path, options)
     }
 }
 
