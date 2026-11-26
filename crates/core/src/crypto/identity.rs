@@ -17,9 +17,10 @@ use zeroize::{Zeroize, Zeroizing};
 
 use agentnet_transport::ContentTopic;
 
-use crate::address::{Address, DEFAULT_INBOX_BUCKETS, MAX_INBOX_BUCKETS, MIN_INBOX_BUCKETS};
-use crate::contact::SignedContactRecord;
-use crate::error::IdentityError;
+use super::address::{Address, DEFAULT_INBOX_BUCKETS, MAX_INBOX_BUCKETS, MIN_INBOX_BUCKETS};
+use super::contact::SignedContactRecord;
+use super::revocation::SignedRevocation;
+use crate::error::{IdentityError, RevocationError};
 
 type KemPrivateKey = <X25519HkdfSha256 as hpke::Kem>::PrivateKey;
 
@@ -42,10 +43,16 @@ pub(crate) struct KemKeypair {
     pk: [u8; 32],
     /// When this key was created (becomes the contact record's `created_at`).
     created_at: i64,
+    /// Key epoch (starts at 1, +1 per rotation).
+    epoch: u64,
 }
 
 impl KemKeypair {
-    fn from_secret(sk: Zeroizing<[u8; 32]>, created_at: i64) -> Result<Self, IdentityError> {
+    fn from_secret(
+        sk: Zeroizing<[u8; 32]>,
+        created_at: i64,
+        epoch: u64,
+    ) -> Result<Self, IdentityError> {
         let key = KemPrivateKey::from_bytes(sk.as_slice())
             .map_err(|_| IdentityError::Malformed("invalid KEM secret key"))?;
         let pk_arr = X25519HkdfSha256::sk_to_pk(&key).to_bytes();
@@ -53,13 +60,22 @@ impl KemKeypair {
             .as_slice()
             .try_into()
             .map_err(|_| IdentityError::Malformed("invalid KEM public key length"))?;
-        Ok(Self { sk, pk, created_at })
+        Ok(Self {
+            sk,
+            pk,
+            created_at,
+            epoch,
+        })
     }
 
-    fn generate(created_at: i64) -> Result<Self, IdentityError> {
+    fn generate(created_at: i64, epoch: u64) -> Result<Self, IdentityError> {
         let mut sk = Zeroizing::new([0u8; 32]);
         random_bytes(sk.as_mut_slice())?;
-        Self::from_secret(sk, created_at)
+        Self::from_secret(sk, created_at, epoch)
+    }
+
+    pub(crate) fn epoch(&self) -> u64 {
+        self.epoch
     }
 
     pub(crate) fn public_key(&self) -> &[u8; 32] {
@@ -86,6 +102,10 @@ pub struct Identity {
     inbox_buckets: u16,
     created_at: i64,
     kem_expires_at: Option<i64>,
+    /// Epochs strictly below this are revoked (1 = none).
+    min_valid_epoch: u64,
+    /// Suites listed in the contact record this identity publishes.
+    advertised_suites: Vec<u8>,
 }
 
 impl std::fmt::Debug for Identity {
@@ -95,6 +115,7 @@ impl std::fmt::Debug for Identity {
             .field("inbox_buckets", &self.inbox_buckets)
             .field("created_at", &self.created_at)
             .field("kem_expires_at", &self.kem_expires_at)
+            .field("key_epoch", &self.kem.epoch)
             .field("previous_kems", &self.previous.len())
             .finish_non_exhaustive()
     }
@@ -106,6 +127,9 @@ struct PreviousKemFile {
     kem_sk: String,
     created_at: i64,
     retire_at: i64,
+    /// 0 = unknown (file written before epochs existed; assigned on load).
+    #[serde(default)]
+    epoch: u64,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -120,6 +144,11 @@ struct IdentityFile {
     created_at: i64,
     kem_expires_at: Option<i64>,
     previous_kems: Vec<PreviousKemFile>,
+    /// 0 = unknown (assigned on load).
+    #[serde(default)]
+    kem_epoch: u64,
+    #[serde(default)]
+    min_valid_epoch: u64,
 }
 
 #[derive(Deserialize)]
@@ -173,11 +202,13 @@ impl Identity {
         Ok(Self {
             signing,
             address,
-            kem: KemKeypair::generate(now_ms)?,
+            kem: KemKeypair::generate(now_ms, 1)?,
             previous: Vec::new(),
             inbox_buckets,
             created_at: now_ms,
             kem_expires_at: None,
+            min_valid_epoch: 1,
+            advertised_suites: vec![super::envelope::SUITE_ID],
         })
     }
 
@@ -211,6 +242,27 @@ impl Identity {
         self.kem.created_at
     }
 
+    /// Epoch of the current KEM key (starts at 1; +1 per rotation).
+    pub fn key_epoch(&self) -> u64 {
+        self.kem.epoch
+    }
+
+    /// KEM epochs strictly below this value have been revoked by this identity.
+    pub fn min_valid_epoch(&self) -> u64 {
+        self.min_valid_epoch
+    }
+
+    /// Suites listed in the published contact record.
+    pub fn advertised_suites(&self) -> &[u8] {
+        &self.advertised_suites
+    }
+
+    /// Set the suites listed in the published contact record (the engine sets
+    /// this from its message-protection registry). Not persisted.
+    pub fn set_advertised_suites(&mut self, suites: Vec<u8>) {
+        self.advertised_suites = suites;
+    }
+
     /// Current KEM public key.
     pub fn kem_public_key(&self) -> [u8; 32] {
         self.kem.pk
@@ -228,7 +280,19 @@ impl Identity {
 
     /// Create the signed, shareable contact record for the current KEM key.
     pub fn contact_record(&self) -> SignedContactRecord {
-        SignedContactRecord::create(self)
+        SignedContactRecord::create(self, &self.advertised_suites)
+    }
+
+    /// Create a signed identity-revocation tombstone for this address
+    /// (`reason`: 1..=256 bytes, no control characters). This only builds the
+    /// document; persisting it and marking the local identity revoked is the
+    /// caller's job (the daemon's `identity revoke`).
+    pub fn create_revocation(
+        &self,
+        reason: &str,
+        now_ms: i64,
+    ) -> Result<SignedRevocation, RevocationError> {
+        SignedRevocation::create(self, reason, now_ms)
     }
 
     /// Sign `domain || msg` with the Ed25519 signing key.
@@ -245,7 +309,7 @@ impl Identity {
         std::iter::once(&self.kem).chain(
             self.previous
                 .iter()
-                .filter(move |p| p.retire_at > now_ms)
+                .filter(move |p| p.retire_at > now_ms && p.kem.epoch >= self.min_valid_epoch)
                 .map(|p| &p.kem),
         )
     }
@@ -259,14 +323,43 @@ impl Identity {
         keep_previous_until_ms: i64,
         new_expiry: Option<i64>,
     ) -> Result<(), IdentityError> {
-        let fresh = KemKeypair::generate(now_ms)?;
+        self.rotate_kem_with(now_ms, keep_previous_until_ms, new_expiry, false)
+    }
+
+    /// Replace the KEM key and increment `key_epoch`.
+    ///
+    /// Without `revoke_previous` the old key stays usable for decryption until
+    /// `keep_previous_until_ms`. With it, *every* earlier KEM secret key is
+    /// destroyed immediately (frames sealed to them can never be opened again,
+    /// including undelivered ones: senders must re-seal after learning the new
+    /// record) and the new record carries `revoked_kem_epochs_below = new epoch`.
+    pub fn rotate_kem_with(
+        &mut self,
+        now_ms: i64,
+        keep_previous_until_ms: i64,
+        new_expiry: Option<i64>,
+        revoke_previous: bool,
+    ) -> Result<(), IdentityError> {
+        let next_epoch = self
+            .kem
+            .epoch
+            .checked_add(1)
+            .ok_or(IdentityError::Malformed("key epoch overflow"))?;
+        let fresh = KemKeypair::generate(now_ms, next_epoch)?;
         let old = std::mem::replace(&mut self.kem, fresh);
-        self.previous.push(RetiredKem {
-            kem: old,
-            retire_at: keep_previous_until_ms,
-        });
-        while self.previous.len() > MAX_PREVIOUS_KEMS {
-            self.previous.remove(0);
+        if revoke_previous {
+            // Dropping the keypairs zeroizes their secrets.
+            drop(old);
+            self.previous.clear();
+            self.min_valid_epoch = next_epoch;
+        } else {
+            self.previous.push(RetiredKem {
+                kem: old,
+                retire_at: keep_previous_until_ms,
+            });
+            while self.previous.len() > MAX_PREVIOUS_KEMS {
+                self.previous.remove(0);
+            }
         }
         self.kem_expires_at = new_expiry;
         Ok(())
@@ -297,8 +390,11 @@ impl Identity {
                     kem_sk: B64.encode(p.kem.sk.as_slice()),
                     created_at: p.kem.created_at,
                     retire_at: p.retire_at,
+                    epoch: p.kem.epoch,
                 })
                 .collect(),
+            kem_epoch: self.kem.epoch,
+            min_valid_epoch: self.min_valid_epoch,
         };
         let bytes = serde_json::to_vec_pretty(&f)
             .map_err(|_| IdentityError::Malformed("serialization failed"))?;
@@ -331,14 +427,39 @@ impl Identity {
         if stored != address {
             return Err(IdentityError::AddressMismatch);
         }
-        let kem = KemKeypair::from_secret(decode_secret(&f.kem_sk)?, f.kem_created_at)?;
+        // Files written before epochs existed carry 0: number the retired keys
+        // 1..=n in order and the current key n+1.
+        let n_prev = u64::try_from(f.previous_kems.len()).unwrap_or(0);
+        let cur_epoch = if f.kem_epoch == 0 {
+            n_prev.saturating_add(1)
+        } else {
+            f.kem_epoch
+        };
+        let kem = KemKeypair::from_secret(decode_secret(&f.kem_sk)?, f.kem_created_at, cur_epoch)?;
         let mut previous = Vec::with_capacity(f.previous_kems.len());
-        for p in &f.previous_kems {
+        for (i, p) in f.previous_kems.iter().enumerate() {
+            let epoch = if p.epoch == 0 {
+                u64::try_from(i).unwrap_or(0).saturating_add(1)
+            } else {
+                p.epoch
+            };
+            if epoch >= cur_epoch {
+                return Err(IdentityError::Malformed(
+                    "retired KEM epoch is not below the current one",
+                ));
+            }
             previous.push(RetiredKem {
-                kem: KemKeypair::from_secret(decode_secret(&p.kem_sk)?, p.created_at)?,
+                kem: KemKeypair::from_secret(decode_secret(&p.kem_sk)?, p.created_at, epoch)?,
                 retire_at: p.retire_at,
             });
         }
+        let min_valid_epoch = f.min_valid_epoch.max(1);
+        if min_valid_epoch > cur_epoch {
+            return Err(IdentityError::Malformed(
+                "min_valid_epoch is above the current epoch",
+            ));
+        }
+        previous.retain(|p| p.kem.epoch >= min_valid_epoch);
         Ok(Self {
             signing,
             address,
@@ -347,6 +468,8 @@ impl Identity {
             inbox_buckets: f.inbox_buckets,
             created_at: f.created_at,
             kem_expires_at: f.kem_expires_at,
+            min_valid_epoch,
+            advertised_suites: vec![super::envelope::SUITE_ID],
         })
     }
 

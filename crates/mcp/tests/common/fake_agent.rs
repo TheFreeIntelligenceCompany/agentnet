@@ -166,6 +166,8 @@ impl AgentApi for FakeAgent {
             inbox_topic: "/agentnet/1/inbox-03/proto".into(),
             created_at: 1_700_000_000_000,
             kem_expires_at: Some(1_800_000_000_000),
+            key_epoch: 1,
+            revoked: false,
         })
     }
 
@@ -324,6 +326,8 @@ impl AgentApi for FakeAgent {
             added_at: now(),
             kem_expires_at: None,
             updated,
+            key_epoch: 1,
+            revoked: false,
         };
         s.contacts.insert(address, info.clone());
         Ok(info)
@@ -352,6 +356,8 @@ impl AgentApi for FakeAgent {
             last_history_sync_at: None,
             detail: "ok".into(),
             peers: verbose.then(|| vec!["16Uiu2HAmFakePeerA".into(), "16Uiu2HAmFakePeerB".into()]),
+            replay_guard: None,
+            identity_revoked: false,
         })
     }
 

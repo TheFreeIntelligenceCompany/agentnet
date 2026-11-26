@@ -31,8 +31,10 @@ fn contact_of(id: &Identity) -> VerifiedContact {
     VerifiedContact::parse_and_verify(&id.contact_record().to_document(), NOW).unwrap()
 }
 
+/// An envelope as `seal` will produce it for a recipient on key epoch 1
+/// (the signed `suite` and `recipient_key_epoch` are filled in by `seal`).
 fn env(from: &Identity, to: &Identity, body: &str) -> Envelope {
-    Envelope::new(
+    let mut e = Envelope::new(
         from.address(),
         to.address(),
         MESSAGE_TYPE_MESSAGE,
@@ -40,7 +42,9 @@ fn env(from: &Identity, to: &Identity, body: &str) -> Envelope {
         NOW,
         TTL,
     )
-    .unwrap()
+    .unwrap();
+    e.recipient_key_epoch = to.key_epoch();
+    e
 }
 
 fn seal_to(from: &Identity, to: &Identity, body: &str) -> Vec<u8> {

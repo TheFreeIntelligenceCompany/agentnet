@@ -4,17 +4,15 @@ use async_trait::async_trait;
 use rusqlite::{params, OptionalExtension, Row};
 use tokio::sync::broadcast;
 
-use crate::address::Address;
 use crate::api::{
     AcknowledgeResponse, AddContactRequest, AgentApi, ApiError, ApiResult, ChangeHint, ContactInfo,
     ConversationEntry, ConversationPage, CreateTriggerRequest, DeleteTriggerResponse, Direction,
-    EventPage, IdentityInfo, InboxRecord, MessageStatus, NetworkStatus, OutboxPage, OutboxRecord,
-    PageRequest, QueueHealth, ReadInboxRequest, ReadInboxResponse, SendMessageRequest,
-    SendMessageResponse, TriggerInfo, Trust,
+    ErrorCode, EventPage, IdentityInfo, InboxRecord, MessageStatus, NetworkStatus, OutboxPage,
+    OutboxRecord, PageRequest, QueueHealth, ReadInboxRequest, ReadInboxResponse, ReplayGuardInfo,
+    SendMessageRequest, SendMessageResponse, TriggerInfo, Trust,
 };
-use crate::contact::VerifiedContact;
+use crate::crypto::{Address, Envelope, VerifiedContact};
 use crate::cursor::{decode_conv, decode_seq, encode_conv, encode_seq, CursorKind};
-use crate::envelope::Envelope;
 use crate::node::{state_from_db, trust_from_db, trust_to_db, Node};
 use crate::store::{kv_get, StoreError};
 use crate::triggers::clamp_limit;
@@ -77,6 +75,8 @@ impl Node {
             inbox_topic: self.topic.to_string(),
             created_at: self.identity.created_at(),
             kem_expires_at: self.identity.kem_expires_at(),
+            key_epoch: self.identity.key_epoch(),
+            revoked: self.local_revocation.is_some(),
         }
     }
 
@@ -89,6 +89,8 @@ impl Node {
             added_at: row.added_at,
             kem_expires_at: row.contact.kem_expires_at,
             updated,
+            key_epoch: row.contact.key_epoch,
+            revoked: row.revoked,
         }
     }
 
@@ -105,6 +107,13 @@ impl Node {
         let now = self.now();
         self.store
             .tx(|tx| {
+                if Self::is_revoked(tx, &addr)? {
+                    return Err(ApiError::new(
+                        ErrorCode::Conflict,
+                        "this contact's identity has been revoked (signed tombstone); it cannot be re-trusted",
+                    )
+                    .into());
+                }
                 let n = tx.execute(
                     "UPDATE contacts SET trust = ?2, updated_at = ?3 WHERE address = ?1",
                     params![addr.to_string(), trust_to_db(trust), now],
@@ -165,7 +174,8 @@ impl Node {
                 type Q = (i64, String, String, Option<String>, Option<String>, String, i64, i64);
                 let mut st = tx.prepare(
                     "SELECT seq, sender, type, conversation_id, correlation_id, body, created_at, expires_at
-                     FROM inbox WHERE message_id = ?1 AND quarantined = 1 ORDER BY seq",
+                     FROM inbox WHERE message_id = ?1 AND quarantined = 1 AND hold_reason IS NULL
+                     ORDER BY seq",
                 )?;
                 let rows: Vec<Q> = st
                     .query_map([message_id], |r| {
@@ -200,6 +210,8 @@ impl Node {
                         message_id: message_id.to_owned(),
                         sender: addr,
                         recipient: self.own,
+                        suite: crate::crypto::envelope::SUITE_ID,
+                        recipient_key_epoch: 0,
                         message_type: ty,
                         conversation_id: conv.clone(),
                         correlation_id: corr,
@@ -237,12 +249,12 @@ impl Node {
         Ok(QueueHealth {
             outbox_queued: count(
                 c,
-                "SELECT COUNT(*) FROM outbox WHERE is_ack=0 AND state='queued'",
+                "SELECT COUNT(*) FROM outbox WHERE is_ack=0 AND hidden = 0 AND state='queued'",
                 [],
             )?,
             outbox_sent_unacked: count(
                 c,
-                "SELECT COUNT(*) FROM outbox WHERE is_ack=0 AND state='sent'",
+                "SELECT COUNT(*) FROM outbox WHERE is_ack=0 AND hidden = 0 AND state='sent'",
                 [],
             )?,
             inbox_unread: count(
@@ -356,7 +368,7 @@ impl AgentApi for Node {
             .read(|c| {
                 Ok(c.query_row(
                     &format!(
-                        "SELECT {STATUS_COLS} FROM outbox WHERE message_id = ?1 AND is_ack = 0"
+                        "SELECT {STATUS_COLS} FROM outbox WHERE message_id = ?1 AND is_ack = 0 AND hidden = 0"
                     ),
                     [&message_id],
                     status_from_row,
@@ -399,15 +411,41 @@ impl AgentApi for Node {
             }
         }
         let addr = vc.address;
+        let mut resealed = 0usize;
         let res = self.store.tx(|tx| {
+            if Self::is_revoked(tx, &addr)? {
+                return Err(ApiError::new(
+                    ErrorCode::Conflict,
+                    "this address has a verified identity revocation (tombstone); it cannot be added again",
+                )
+                .into());
+            }
             let old = self.load_contact(tx, &addr)?;
             let (updated, trust, alias, added_at) = match &old {
                 Some(o) => {
-                    if vc.created_at < o.contact.created_at {
-                        return Err(ApiError::invalid("an older contact record cannot replace the stored one").into());
+                    // Rotation order is the monotonic key_epoch, not created_at.
+                    if vc.key_epoch < o.contact.key_epoch {
+                        return Err(ApiError::new(
+                            ErrorCode::Conflict,
+                            format!(
+                                "stale contact record: key_epoch {} is older than the stored key_epoch {}; the stored record is kept",
+                                vc.key_epoch, o.contact.key_epoch
+                            ),
+                        )
+                        .into());
+                    }
+                    if vc.key_epoch == o.contact.key_epoch && !vc.same_record(&o.contact) {
+                        return Err(ApiError::new(
+                            ErrorCode::Conflict,
+                            format!(
+                                "conflicting contact record: key_epoch {} is already stored with different content; the stored record is kept",
+                                vc.key_epoch
+                            ),
+                        )
+                        .into());
                     }
                     (
-                        o.contact.document() != vc.document(),
+                        vc.key_epoch > o.contact.key_epoch,
                         req.trust.unwrap_or(o.trust),
                         req.alias.clone().or_else(|| o.alias.clone()),
                         o.added_at,
@@ -422,9 +460,17 @@ impl AgentApi for Node {
                    alias = excluded.alias, trust = excluded.trust, updated_at = excluded.updated_at",
                 params![addr.to_string(), vc.document(), alias, trust_to_db(trust), added_at],
             )?;
-            let row = crate::node::ContactRow { contact: vc.clone(), trust, alias, added_at };
+            let row = crate::node::ContactRow { contact: vc.clone(), trust, alias, added_at, revoked: false };
+            if updated {
+                // Pending messages survive the recipient's key rotation.
+                resealed = self.reseal_outbox(tx, &row, now)?;
+            }
             Ok(Self::contact_info(&row, updated))
         });
+        if resealed > 0 {
+            self.hint(ChangeHint::Outbox);
+            self.send_nudge.notify_one();
+        }
         res.map_err(|e| e.to_api())
     }
 
@@ -473,6 +519,36 @@ impl AgentApi for Node {
             detail.push_str("; history recovery pending");
         }
         let live = self.last_live_poll();
+        let replay_guard = match self.guard_state() {
+            Some(g) => {
+                let held = self
+                    .store
+                    .read(|c| {
+                        count(
+                            c,
+                            "SELECT COUNT(*) FROM inbox WHERE hold_reason IS NOT NULL",
+                            [],
+                        )
+                    })
+                    .unwrap_or(0);
+                Some(ReplayGuardInfo {
+                    reason: g.reason,
+                    since: g.since,
+                    until: g.until,
+                    held,
+                })
+            }
+            None => None,
+        };
+        if let Some(g) = &replay_guard {
+            detail.push_str(&format!(
+                "; REPLAY GUARD ({}): {} message(s) held; run `agentnet doctor --accept-rollback` with the daemon stopped to accept",
+                g.reason, g.held
+            ));
+        }
+        if self.local_revocation.is_some() {
+            detail.push_str("; this identity is REVOKED: only its revocation notice is sent");
+        }
         Ok(NetworkStatus {
             mode: self.config.network_mode.clone(),
             ready: ts.ready,
@@ -484,6 +560,8 @@ impl AgentApi for Node {
             last_history_sync_at: watermark,
             detail,
             peers: verbose.then(|| ts.peers.iter().map(|p| p.peer_id.clone()).collect()),
+            replay_guard,
+            identity_revoked: self.local_revocation.is_some(),
         })
     }
 
@@ -508,7 +586,7 @@ impl AgentApi for Node {
         self.store
             .read(|c| {
                 let mut st = c.prepare(&format!(
-                    "SELECT {STATUS_COLS}, body, seq FROM outbox WHERE is_ack = 0 AND seq > ?1 ORDER BY seq LIMIT ?2"
+                    "SELECT {STATUS_COLS}, body, seq FROM outbox WHERE is_ack = 0 AND hidden = 0 AND seq > ?1 ORDER BY seq LIMIT ?2"
                 ))?;
                 let rows = st.query_map(params![after, i64::try_from(limit + 1).unwrap_or(i64::MAX)], |r| {
                     Ok(OutboxRecord {
@@ -561,7 +639,7 @@ impl AgentApi for Node {
                        UNION ALL
                        SELECT created_at, 1, seq, recipient, type, correlation_id,
                               created_at, body, state, message_id
-                         FROM outbox WHERE conversation_id = ?1 AND is_ack = 0
+                         FROM outbox WHERE conversation_id = ?1 AND is_ack = 0 AND hidden = 0
                      ) WHERE (ts, d, seq) > (?2, ?3, ?4) ORDER BY ts, d, seq LIMIT ?5",
                 )?;
                 let rows = st.query_map(

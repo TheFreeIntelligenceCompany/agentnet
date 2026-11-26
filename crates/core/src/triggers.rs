@@ -210,6 +210,8 @@ impl Node {
             message_id: "00000000-0000-4000-8000-000000000000".into(),
             sender: self.own,
             recipient: self.own,
+            suite: crate::crypto::envelope::SUITE_ID,
+            recipient_key_epoch: 0,
             message_type: req.message_type.clone().unwrap_or_else(|| "message".into()),
             conversation_id: req.conversation_id.clone(),
             correlation_id: req.correlation_id.clone(),

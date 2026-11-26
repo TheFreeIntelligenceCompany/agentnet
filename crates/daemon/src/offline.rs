@@ -33,6 +33,8 @@ pub fn identity_info(id: &Identity) -> IdentityInfo {
         inbox_topic: id.inbox_topic().to_string(),
         created_at: id.created_at(),
         kem_expires_at: id.kem_expires_at(),
+        key_epoch: id.key_epoch(),
+        revoked: false,
     }
 }
 

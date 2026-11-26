@@ -3,15 +3,16 @@
 use agentnet_transport::{ContentTopic, TransportError};
 use rusqlite::{params, OptionalExtension, Transaction};
 
-use crate::address::Address;
 use crate::api::{
     ApiError, ApiResult, ChangeHint, DeliveryState, ErrorCode, SendMessageRequest,
     SendMessageResponse, Trust,
 };
-use crate::envelope::{
-    self, new_message_id, Envelope, MESSAGE_TYPE_ACK_RECEIVED, MESSAGE_TYPE_MESSAGE,
-    MESSAGE_TYPE_TASK_REQUEST, MESSAGE_TYPE_TASK_RESULT,
+use crate::crypto::envelope::{
+    new_message_id, Envelope, MESSAGE_TYPE_ACK_RECEIVED, MESSAGE_TYPE_CONTACT_UPDATE,
+    MESSAGE_TYPE_IDENTITY_REVOKED, MESSAGE_TYPE_MESSAGE, MESSAGE_TYPE_TASK_REQUEST,
+    MESSAGE_TYPE_TASK_RESULT,
 };
+use crate::crypto::Address;
 use crate::error::SealError;
 use crate::node::{sanitize, state_from_db, Node, NodeError, SendReport};
 use crate::store::StoreError;
@@ -25,6 +26,9 @@ pub(crate) struct OutboxInsert<'a> {
     pub topic: &'a str,
     pub frame: &'a [u8],
     pub is_ack: bool,
+    /// System message (`contact.update`, `identity.revoked`): retried and
+    /// acked like a user message but hidden from the user-facing outbox.
+    pub hidden: bool,
     pub idempotency_key: Option<&'a str>,
 }
 
@@ -43,13 +47,14 @@ impl Node {
             topic,
             frame,
             is_ack,
+            hidden,
             idempotency_key,
         } = *row;
         tx.execute(
             "INSERT INTO outbox (message_id, recipient, topic, type, conversation_id, correlation_id,
                                  body, frame, state, created_at, expires_at, next_attempt_at,
-                                 idempotency_key, is_ack)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 'queued', ?9, ?10, ?9, ?11, ?12)",
+                                 idempotency_key, is_ack, hidden)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 'queued', ?9, ?10, ?9, ?11, ?12, ?13)",
             params![
                 env.message_id,
                 env.recipient.to_string(),
@@ -63,6 +68,7 @@ impl Node {
                 env.expires_at,
                 idempotency_key,
                 i64::from(is_ack),
+                i64::from(hidden),
             ],
         )?;
         Ok(())
@@ -72,6 +78,11 @@ impl Node {
         &self,
         req: SendMessageRequest,
     ) -> ApiResult<SendMessageResponse> {
+        if self.local_revocation.is_some() {
+            return Err(ApiError::policy(
+                "this identity has been revoked; it can only deliver its revocation notice",
+            ));
+        }
         let recipient: Address = req
             .recipient
             .parse()
@@ -79,10 +90,12 @@ impl Node {
         let mtype = req.message_type.as_deref().unwrap_or(MESSAGE_TYPE_MESSAGE);
         match mtype {
             MESSAGE_TYPE_MESSAGE | MESSAGE_TYPE_TASK_REQUEST | MESSAGE_TYPE_TASK_RESULT => {}
-            MESSAGE_TYPE_ACK_RECEIVED => {
-                return Err(ApiError::invalid(
-                    "message type ack.received is reserved for the engine",
-                ))
+            MESSAGE_TYPE_ACK_RECEIVED
+            | MESSAGE_TYPE_CONTACT_UPDATE
+            | MESSAGE_TYPE_IDENTITY_REVOKED => {
+                return Err(ApiError::invalid(format!(
+                    "message type {mtype} is reserved for the engine"
+                )))
             }
             _ => {
                 return Err(ApiError::invalid(
@@ -164,6 +177,12 @@ impl Node {
             let row = self
                 .load_contact(tx, &recipient)?
                 .ok_or_else(|| ApiError::not_found("recipient is not a known contact; add_contact first"))?;
+            if row.revoked {
+                return Err(ApiError::policy(
+                    "the recipient's identity has been revoked (signed tombstone); messages are refused",
+                )
+                .into());
+            }
             if row.trust == Trust::Blocked {
                 return Err(ApiError::policy("recipient is blocked").into());
             }
@@ -174,7 +193,7 @@ impl Node {
                 .into());
             }
             let pending: i64 = tx.query_row(
-                "SELECT COUNT(*) FROM outbox WHERE is_ack = 0 AND state IN ('queued','sent')",
+                "SELECT COUNT(*) FROM outbox WHERE is_ack = 0 AND hidden = 0 AND state IN ('queued','sent')",
                 [],
                 |r| r.get(0),
             )?;
@@ -187,7 +206,9 @@ impl Node {
             env.correlation_id = req.correlation_id.clone();
             env.validate()
                 .map_err(|f| ApiError::invalid(format!("invalid field: {f}")))?;
-            let frame = envelope::seal(&self.identity, &row.contact, &env, now, self.max_frame_len)
+            let frame = self
+                .protection
+                .seal(&self.identity, &row.contact, &env, now, self.max_frame_len)
                 .map_err(|e| match e {
                     SealError::TooLarge { max_body_len_hint, .. } => ApiError::new(
                         ErrorCode::TooLarge,
@@ -197,6 +218,9 @@ impl Node {
                         "the recipient's encryption key has expired; import a fresh contact record",
                     ),
                     SealError::InvalidField(f) => ApiError::invalid(format!("invalid field: {f}")),
+                    SealError::NoCommonSuite => ApiError::invalid(
+                        "no cipher suite in common with the recipient's signed contact record; refusing to downgrade",
+                    ),
                     _ => ApiError::internal("could not seal message"),
                 })?;
             self.insert_outbox_row(
@@ -206,6 +230,7 @@ impl Node {
                     topic: &row.contact.inbox_topic().to_string(),
                     frame: &frame,
                     is_ack: false,
+                    hidden: false,
                     idempotency_key: req.idempotency_key.as_deref(),
                 },
                 now,
@@ -238,17 +263,20 @@ impl Node {
     /// until it is acked or expires). Retryable transport errors keep the state
     /// and back off by the same schedule using a separate failure counter.
     pub async fn step_send(&self) -> Result<SendReport, NodeError> {
-        type Due = (String, String, Vec<u8>, i64, u32, u32, bool);
+        type Due = (String, String, Vec<u8>, i64, u32, u32, bool, bool);
         let now = self.now();
         let batch = i64::from(self.config.delivery.send_batch);
         let due: Vec<Due> = self.store.read(|c| {
             let mut st = c.prepare(
-                "SELECT message_id, topic, frame, expires_at, attempts, failures, is_ack
+                "SELECT message_id, topic, frame, expires_at, attempts, failures, is_ack, hidden
                  FROM outbox
                  WHERE state IN ('queued','sent') AND next_attempt_at IS NOT NULL AND next_attempt_at <= ?1
+                   AND (?3 = 0 OR type = ?4)
                  ORDER BY next_attempt_at, seq LIMIT ?2",
             )?;
-            let rows = st.query_map(params![now, batch], |r| {
+            // A revoked identity publishes nothing except its own tombstone.
+            let only_tombstone = i64::from(self.local_revocation.is_some());
+            let rows = st.query_map(params![now, batch, only_tombstone, MESSAGE_TYPE_IDENTITY_REVOKED], |r| {
                 Ok((
                     r.get(0)?,
                     r.get(1)?,
@@ -257,6 +285,7 @@ impl Node {
                     r.get(4)?,
                     r.get(5)?,
                     r.get::<_, i64>(6)? != 0,
+                    r.get::<_, i64>(7)? != 0,
                 ))
             })?;
             let mut v = Vec::new();
@@ -267,7 +296,9 @@ impl Node {
         })?;
         let mut rep = SendReport::default();
         let max_attempts = self.config.delivery.max_attempts;
-        for (id, topic, frame, expires_at, attempts, failures, is_ack) in due {
+        for (id, topic, frame, expires_at, attempts, failures, is_ack, hidden) in due {
+            // Acks and system messages are invisible to the user-facing outbox.
+            let quiet = is_ack || hidden;
             let now = self.now();
             if now >= expires_at {
                 let n = self.store.tx(|tx| {
@@ -280,14 +311,14 @@ impl Node {
                 if n > 0 {
                     rep.expired += 1;
                     self.metrics.inc("outbox.expired");
-                    if !is_ack {
+                    if !quiet {
                         self.hint(ChangeHint::Outbox);
                     }
                 }
                 continue;
             }
             let Ok(topic) = ContentTopic::new(topic) else {
-                self.fail_row(&id, "invalid stored topic", is_ack)?;
+                self.fail_row(&id, "invalid stored topic", quiet)?;
                 rep.failed += 1;
                 continue;
             };
@@ -310,12 +341,12 @@ impl Node {
                     })?;
                     rep.published += 1;
                     self.metrics.inc("publish.ok");
-                    if n > 0 && !is_ack && attempts == 0 {
+                    if n > 0 && !quiet && attempts == 0 {
                         self.hint(ChangeHint::Outbox);
                     }
                 }
                 Err(TransportError::TooLarge { .. }) => {
-                    self.fail_row(&id, "frame too large for the transport", is_ack)?;
+                    self.fail_row(&id, "frame too large for the transport", quiet)?;
                     rep.failed += 1;
                     self.metrics.inc("publish.too_large");
                 }
