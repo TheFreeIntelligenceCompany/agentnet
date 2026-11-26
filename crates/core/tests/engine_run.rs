@@ -42,6 +42,12 @@ async fn run_smoke_delivers_and_shuts_down_promptly() {
     let a = w.agent("a", cfg_with(fast));
     let b = w.agent("b", cfg_with(fast));
     exchange(&a, &b).await;
+    // Subscribe both inboxes before the run loops start: `run` subscribes in
+    // its receive task, and a frame published before the recipient's first
+    // poll is only recoverable through history (disabled here) or a retry
+    // (the mock clock is frozen). This was an intermittent failure.
+    a.node.step_receive().await.unwrap();
+    b.node.step_receive().await.unwrap();
     let tok = CancellationToken::new();
     let (ha, hb) = (spawn_run(&a, &tok), spawn_run(&b, &tok));
     let r = a.send(&b, "via run").await;

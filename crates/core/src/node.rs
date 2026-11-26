@@ -561,8 +561,12 @@ impl Node {
         self.store.close();
     }
 
-    /// Full-jitter exponential backoff after `n >= 1` completed attempts:
-    /// uniform in `[1, min(retry_max, retry_base * 2^(n-1))]` milliseconds.
+    /// Equal-jitter exponential backoff after `n >= 1` completed attempts:
+    /// with `c = min(retry_max, retry_base * 2^(n-1))`, uniform in
+    /// `[c/2, c]` milliseconds (never below 1). The floor matters: with full
+    /// jitter a share of messages was re-published within milliseconds of the
+    /// first publish, before any receipt could exist
+    /// (`results/fixups/burst-latency.md`).
     pub(crate) fn backoff_ms(&self, n: u32) -> i64 {
         let d = &self.config.delivery;
         let shift = n.saturating_sub(1).min(32);
@@ -575,7 +579,9 @@ impl Node {
             let mut g = self.rng.lock().unwrap_or_else(|e| e.into_inner());
             splitmix(&mut g)
         };
-        i64::try_from(1 + r % ceiling).unwrap_or(i64::MAX)
+        let half = ceiling / 2;
+        let span = ceiling - half + 1;
+        i64::try_from((half + r % span).max(1)).unwrap_or(i64::MAX)
     }
 
     /// Load a contact (or synthesize our own record for self-addressed mail).

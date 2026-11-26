@@ -442,8 +442,8 @@ works through the relay echo (the engine synthesizes our own contact record).
 * A row is due when `next_attempt_at <= now` and its state is `queued` or `sent`
   (`ack.received` rows: `queued` only).
 * After the n-th **accepted** publish (n >= 1) of a non-ack row:
-  `next_attempt_at = now + d`, `d` uniform in `[1, min(retry_max_ms, retry_base_ms * 2^(n-1))]`
-  milliseconds (full jitter; defaults 2000 / 300000; seedable via
+  `next_attempt_at = now + d`, with `c = min(retry_max_ms, retry_base_ms * 2^(n-1))`, `d` uniform in `[c/2, c]`
+  milliseconds (equal jitter; defaults 2000 / 300000; seedable via
   `delivery.jitter_seed`).
 * System rows (`contact.update`, `identity.revoked`) are ordinary outbox rows
   (retried, acked, expired like user messages) with `hidden = 1`: they are
@@ -538,7 +538,7 @@ advance on a failed pass).
 
 Live poll every `poll_interval_ms` (250) plus history sync. History sync runs at
 start, after the transport becomes ready again, after a persistence failure, and
-every `history_sync_interval_s` (60). A pass queries
+every `history_sync_interval_s` (15). A pass queries
 `[max(watermark - history_overlap_s, now - retention_hours), now + clock_skew]`
 in windows of at most the transport's `max_history_window_ns`, following page
 cursors, and advances the watermark to the pass's start time only if every page

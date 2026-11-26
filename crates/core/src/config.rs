@@ -105,7 +105,7 @@ impl Default for DeliveryConfig {
             retry_max_ms: 300_000,
             max_attempts: 20,
             poll_interval_ms: 250,
-            history_sync_interval_s: 60,
+            history_sync_interval_s: 15,
             history_overlap_s: 30,
             clock_skew_s: 120,
             max_body_bytes: 65_536,

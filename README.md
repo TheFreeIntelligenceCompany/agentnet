@@ -31,7 +31,7 @@ Details: [docs/architecture.md](docs/architecture.md), wire protocol [docs/proto
 
 ## Prerequisites
 
-* Rust **1.89 or newer** to build with the checked-in `Cargo.lock`. The workspace declares `rust-version = "1.88"`, but locked crates `rusqlite 0.42.0` and `uuid 1.29.3` declare 1.89.0 (verified: `cargo check --workspace --locked` with rustc 1.88.0 stops with "rustc 1.88.0 is not supported by the following packages: rusqlite@0.42.0 requires rustc 1.89.0, uuid@1.29.3 requires rustc 1.89.0", `results/audit/msrv-1.88-check.log`).
+* Rust **1.89 or newer** (the workspace declares `rust-version = "1.89"`; built with rustc 1.89.0 in a container, `results/fixups/msrv-1.89-build.log`; developed on 1.92).
   The host used for all tests has rustc 1.92.0.
 * Docker, to run the Logos Delivery node sidecar. The pinned image is **linux/amd64 only**; on arm64 hosts it runs under emulation (works on the test host, slower).
   The helper script `spike/relay/scripts/up.sh` calls the standalone `docker-compose` binary, not `docker compose`.
@@ -183,7 +183,6 @@ Read these before relying on anything here.
 * **No third-party MCP host has been tested**, nor the MCP Tasks extension.
 * **Hostile load is untested** (flood of a bucket topic, quarantine/inbox saturation under attack at rate); no fuzzing campaign was run beyond property tests.
 * The relay-gated tests silently pass when their environment variable is unset (see below).
-* The declared MSRV (1.88) is lower than what the locked dependencies need (1.89).
 * Release binary: 18.9 MB (macOS arm64); idle/steady daemon memory and CPU, startup and shutdown times, idle bandwidth and sustainable message rate were **not measured**.
 
 ## Running the tests
@@ -194,10 +193,10 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace --locked
 ```
 
-* The relay-gated tests need the local relay topology and are **skipped (and reported as passed)** without their environment variables. To run them against the topology started in quickstart step 2:
-  `AGENTNET_RELAY_TESTS=1 cargo test -p agentnet-cli --test relay_e2e -- --nocapture` and
-  `AGENTNET_RELAY_TESTS=1 cargo test -p agentnet-transport --test logos_rest_relay -- --nocapture`.
-  Two further transport tests stop or restart containers and are `#[ignore]`: add `AGENTNET_RELAY_DISRUPTIVE=1` and `-- --ignored` (run last; they restart `an-na` and stop `an-r1`).
+* The relay-gated tests need the local relay topology and are `#[ignore]`d in a plain `cargo test` run (shown as ignored, not passed). To run them against the topology started in quickstart step 2:
+  `AGENTNET_RELAY_TESTS=1 cargo test --workspace --locked -- --ignored` (these tests are `#[ignore]`d in a plain run; the
+  container-restarting ones additionally need `AGENTNET_RELAY_DISRUPTIVE=1 cargo test -p agentnet-transport --features disruptive-tests --test logos_rest_relay -- --ignored --test-threads=1`).
+  Run the disruptive ones last; they restart `an-na` and stop `an-r1`.
   Note: the topology is shared state; do not run them while something else uses the same containers.
 * The acceptance script (`scripts/acceptance.sh`) and its results are documented in [docs/acceptance.md](docs/acceptance.md) ("see acceptance results"). (At the time of writing `docs/acceptance.md` did not exist yet; it is written by the acceptance run.)
 * CI: [.github/workflows/ci.yml](.github/workflows/ci.yml) (format, clippy, tests, `cargo deny`; plus a manual relay-gated job). **The workflow has not run on GitHub.** `cargo deny` was run in a container and results are in [docs/dependency-audit.md](docs/dependency-audit.md).

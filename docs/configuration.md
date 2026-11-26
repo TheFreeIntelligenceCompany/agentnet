@@ -93,7 +93,7 @@ traffic are never bridged: one daemon talks to one node in one mode.
 
 Engine tuning; defaults are in `docs/protocol.md` section 8 and `crates/core/src/config.rs`:
 `default_ttl_s` (86400), `max_ttl_s` (604800), `retry_base_ms` (2000), `retry_max_ms` (300000),
-`max_attempts` (20), `poll_interval_ms` (250), `history_sync_interval_s` (60), `history_overlap_s` (30),
+`max_attempts` (20), `poll_interval_ms` (250), `history_sync_interval_s` (15), `history_overlap_s` (30),
 `clock_skew_s` (120), `max_body_bytes` (65536), `max_outbox_pending` (1000), `inbound_channel_capacity`
 (256), `reack_min_interval_s` (30), `send_batch` (64), `transport_seen_ttl_s` (86400), `jitter_seed`
 (unset; tests only).

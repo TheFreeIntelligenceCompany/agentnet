@@ -130,7 +130,7 @@ arrived). Terminal alternatives: `failed` (permanent error such as oversize or
 unknown recipient key), `expired` (TTL passed without ack).
 
 * Retry: while not delivered and not expired, re-publish with exponential backoff
-  (base 2 s, factor 2, cap 5 min, full jitter), fresh Waku timestamp each time.
+  (base 2 s, factor 2, cap 5 min, equal jitter: uniform in [c/2, c]), fresh Waku timestamp each time.
   Bounded by `expires_at` and `max_attempts`.
 * Receive: live poll of the node's relay cache every `poll_interval_ms`, plus a
   Store catch-up at start, after reconnect and every `store_sync_interval_s`,

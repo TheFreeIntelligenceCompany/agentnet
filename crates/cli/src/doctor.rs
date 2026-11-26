@@ -421,11 +421,24 @@ pub async fn run(dir: &Path) -> Vec<Check> {
                             .filter(|p| !allow.iter().any(|a| p.contains(a)))
                             .collect();
                         if !outside.is_empty() {
+                            // A *connected* peer outside the allowlist is an
+                            // isolation violation and already fails the check
+                            // above. Entries that are merely known to the node
+                            // (for example a mistyped static peer it could not
+                            // reach) are reported, not treated as a breach.
+                            let level = if st.isolation_violation.is_some() {
+                                Level::Fail
+                            } else {
+                                Level::Warn
+                            };
                             out.push(check(
                                 "peers == allowlist",
-                                Level::Fail,
-                                format!("{} peer(s) outside the allowlist", outside.len()),
-                                "the node must only know the peers in agentnet.toml; check its discovery flags",
+                                level,
+                                format!(
+                                    "the node knows {} peer(s) outside the allowlist (not connected unless an isolation violation is reported)",
+                                    outside.len()
+                                ),
+                                "the node should only know the peers in agentnet.toml; check its discovery flags, then restart the node to clear stale entries",
                             ));
                         } else if st.connected_peers == 0 {
                             out.push(check(

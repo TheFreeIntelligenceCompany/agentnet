@@ -25,7 +25,7 @@ network (see section 9 and `docs/spike-report.md`).
   the same, they poll the same content topic and each message is delivered to whichever daemon polls first, the other never sees
   it live; even with different buckets they share the 50-slot cache, the node's peer list and its subscriptions. What the user sees
   is **delayed delivery, not loss**: the starved recipient only gets the frame through the next history sync (up to
-  `history_sync_interval_s` = 60 s, from the service node's Store) or the sender's retry. The acceptance script
+  `history_sync_interval_s` (default 15 s; 60 s when the measurements in this document were taken), from the service node's Store) or the sender's retry. The acceptance script
   (`scripts/acceptance.sh`, `new_agent`) had to re-draw identities until their buckets differed to keep two test agents on one node apart;
   that is a test workaround, not a supported deployment. A wrongly configured daemon also leaves its peer in the shared node (section 4a).
 
@@ -107,7 +107,7 @@ The measurements are in `results/fixups/burst-latency.md` (single host, amd64 no
   two client nodes did not work until about **62 s** after the node reported itself connected to the service node, 3 of 3 trials
   (`results/fixups/mesh-warmup.txt`; mechanism not verified, consistent with libp2p gossipsub's 60 s prune backoff and with E12). A message sent during that window is accepted by the node
   (`publish` returns 200) and then never reaches the recipient's live queue; it arrives through the sender's retries (first retry delay uniform in
-  [1 ms, 2 s], doubling) or, at the latest, the recipient's next history sync, up to `history_sync_interval_s` = 60 s later. That is the 24 to 31 s p50
+  [1 s, 2 s] since the retry-floor fix (it was [1 ms, 2 s] when measured), doubling) or, at the latest, the recipient's next history sync, up to `history_sync_interval_s` (default 15 s; 60 s when the measurements in this document were taken) later. That is the 24 to 31 s p50
   (and about 60 s p95/p99) seen in two of three acceptance runs, and the 0.3 s in the third is the same burst on a node that was already warm.
 * Operational consequence: **after restarting a client node or the service node, expect up to about a minute in which delivery depends on retries and Store**
   (messages are delayed, not lost, inside the retention and TTL windows). Do not restart nodes casually while agents are exchanging time-critical traffic.
@@ -154,7 +154,7 @@ With every discovery option disabled the node still resolves `one.one.one.one` v
   ready after 3.4 s (`results/b-transport/relay-disruptive-tests.log`).
 * **Reconnecting is not the mesh being usable.** After that service-node restart live relay delivery stayed broken for about 9 minutes
   (empty or flapping gossipsub mesh; cause not found, E12). AgentNet recovers those messages through Store catch-up (up to
-  `history_sync_interval_s` = 60 s later) **if the Store holds them**. History during that specific gap was not separately tested.
+  `history_sync_interval_s` (default 15 s; 60 s when the measurements in this document were taken) later) **if the Store holds them**. History during that specific gap was not separately tested.
 * The spike compose files now default `DNS_NS` to `127.0.0.1` (`${DNS_NS:-127.0.0.1}`), matching `agentnet relay print-config`; they used to
   default to the upstream `1.1.1.1`. `DNS_NS=1.1.1.1` can still be set explicitly to reproduce the upstream behaviour
   (`spike/relay/scripts/egress-capture.sh` does, to document it); `DNS_NS=127.0.0.1 ./scripts/up.sh` remains valid.
