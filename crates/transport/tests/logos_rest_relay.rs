@@ -630,3 +630,223 @@ async fn r1_down_gives_unavailable_and_history_unavailable() {
     println!("time-to-reconnect after R1 restart (adapter redial): {took:?}");
     outcome
 }
+
+// ---------------------------------------------------------------------------
+// Audit-window test: the allowlist audit runs immediately before EVERY publish.
+// The node REST API has no way to drop a peer, so the foreign peer is a throwaway
+// node container owned by this test and removed (docker rm -f) by a drop guard.
+// an-na is never restarted. Run with the other disruptive tests:
+//   AGENTNET_RELAY_TESTS=1 AGENTNET_RELAY_DISRUPTIVE=1 cargo test -p agentnet-transport \
+//     --features disruptive-tests --test logos_rest_relay -- --ignored
+// ---------------------------------------------------------------------------
+
+#[cfg(feature = "disruptive-tests")]
+mod audit_window {
+    use super::*;
+
+    const IMAGE: &str =
+        "wakuorg/nwaku@sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73";
+    const NAME: &str = "an-throwaway";
+    const IP: &str = "172.28.66.30";
+    const REST: &str = "http://127.0.0.1:18650";
+    const NETWORK: &str = "agentnet-relay_relaynet";
+
+    struct Container;
+    impl Container {
+        fn rm() {
+            let _ = std::process::Command::new("docker")
+                .args(["rm", "-f", NAME])
+                .output();
+        }
+    }
+    impl Drop for Container {
+        fn drop(&mut self) {
+            Container::rm();
+        }
+    }
+
+    fn random_key() -> String {
+        use std::io::Read;
+        let mut b = [0u8; 32];
+        std::fs::File::open("/dev/urandom")
+            .and_then(|mut f| f.read_exact(&mut b))
+            .expect("/dev/urandom");
+        b.iter().map(|x| format!("{x:02x}")).collect()
+    }
+
+    async fn peers(http: &reqwest::Client, base: &str) -> Vec<serde_json::Value> {
+        let r = http.get(format!("{base}/admin/v1/peers")).send().await;
+        match r {
+            Ok(r) if r.status().is_success() => {
+                serde_json::from_str(&r.text().await.unwrap_or_default()).unwrap_or_default()
+            }
+            _ => Vec::new(),
+        }
+    }
+
+    fn connected_to(list: &[serde_json::Value], id: &str) -> bool {
+        list.iter().any(|p| {
+            p["multiaddr"].as_str().is_some_and(|m| m.ends_with(id))
+                && p["connected"].as_str() == Some("Connected")
+        })
+    }
+
+    #[tokio::test]
+    #[ignore = "starts a throwaway node container; needs AGENTNET_RELAY_TESTS=1 AGENTNET_RELAY_DISRUPTIVE=1 and --features disruptive-tests"]
+    async fn publish_audits_peers_immediately_before_sending() {
+        require_disruptive_env();
+        let _g = SERIAL.lock().await;
+        Container::rm(); // stale one from an aborted run
+        let _guard = Container;
+        let http = reqwest::Client::builder().no_proxy().build().unwrap();
+
+        let key = random_key();
+        let out = std::process::Command::new("docker")
+            .args([
+                "run",
+                "-d",
+                "--name",
+                NAME,
+                "--platform",
+                "linux/amd64",
+                "--network",
+                NETWORK,
+                "--ip",
+                IP,
+                "-p",
+                "127.0.0.1:18650:8645",
+                IMAGE,
+            ])
+            .arg(format!("--nodekey={key}"))
+            .args([
+                &format!("--nat=extip:{IP}"),
+                "--relay=true",
+                "--store=false",
+                "--filter=false",
+                "--lightpush=false",
+                "--rest=true",
+                "--rest-address=0.0.0.0",
+                "--rest-port=8645",
+                "--rest-admin=true",
+                "--cluster-id=66",
+                "--num-shards-in-network=1",
+                "--shard=0",
+                "--discv5-discovery=false",
+                "--peer-exchange=false",
+                "--relay-peer-exchange=false",
+                "--rendezvous=false",
+                "--enable-kad-discovery=false",
+                "--quic-support=false",
+                "--mix=false",
+                "--rln-relay=false",
+                "--listen-address=0.0.0.0",
+                "--tcp-port=60000",
+                "--dns-addrs-name-server=127.0.0.1",
+                "--metrics-server=false",
+                "--peer-persistence=false",
+                "--log-level=INFO",
+            ])
+            .output()
+            .expect("docker run");
+        assert!(
+            out.status.success(),
+            "{}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+
+        // the throwaway node's own multiaddr (peer id is derived from the random key)
+        let deadline = Instant::now() + Duration::from_secs(180);
+        let foreign = loop {
+            if let Ok(r) = http.get(format!("{REST}/debug/v1/info")).send().await {
+                if let Ok(v) =
+                    serde_json::from_str::<serde_json::Value>(&r.text().await.unwrap_or_default())
+                {
+                    if let Some(a) = v["listenAddresses"][0].as_str() {
+                        break a.to_string();
+                    }
+                }
+            }
+            assert!(Instant::now() < deadline, "throwaway node did not come up");
+            tokio::time::sleep(Duration::from_secs(1)).await;
+        };
+        let foreign_id = foreign.rsplit('/').next().unwrap().to_string();
+        assert_ne!(foreign_id, r1_peer_id());
+        println!("throwaway node: {foreign}");
+
+        // allowlist = R1 only; the periodic audit (10 min) cannot be what catches the peer
+        let mut cfg = config(NODE_A, vec![r1_peer_id()]);
+        cfg.audit_interval = Duration::from_secs(600);
+        cfg.static_peers = vec![format!("{R1_MULTIADDR_PREFIX}{}", r1_peer_id())];
+        let t = LogosRestTransport::new(cfg).unwrap();
+        let reader = adapter(NODE_B);
+        let topic = unique_topic();
+        let start = now_ns() - 2_000_000_000;
+        retry("subscribe", || t.subscribe(&topic)).await;
+        retry("subscribe reader", || reader.subscribe(&topic)).await;
+        tokio::time::sleep(Duration::from_secs(3)).await;
+
+        // 1. clean mesh: publish succeeds
+        let first = retry("publish 1", || t.publish(&topic, b"audit-window-1")).await;
+
+        // 2. introduce the foreign peer: an-na dials the throwaway node
+        let r = http
+            .post(format!("{NODE_A}/admin/v1/peers"))
+            .header("content-type", "application/json")
+            .body(serde_json::to_string(&[&foreign]).unwrap())
+            .send()
+            .await
+            .unwrap();
+        assert!(r.status().is_success(), "dial: HTTP {}", r.status());
+        let deadline = Instant::now() + Duration::from_secs(60);
+        while !connected_to(&peers(&http, NODE_A).await, &foreign_id) {
+            assert!(
+                Instant::now() < deadline,
+                "an-na never connected to the throwaway node"
+            );
+            tokio::time::sleep(Duration::from_millis(500)).await;
+        }
+
+        // 3. NO status()/audit() call: publish itself must catch it
+        let audits_before = t.metrics().audits_run;
+        let e = t
+            .publish(&topic, b"audit-window-2-MUST-NOT-LEAVE")
+            .await
+            .unwrap_err();
+        assert!(
+            matches!(e, TransportError::Isolation(_)),
+            "expected Isolation, got {e:?}"
+        );
+        assert!(
+            t.metrics().audits_run > audits_before,
+            "publish must have performed a fresh audit"
+        );
+        let (frames, _) = history_until(&reader, &topic, start, 100, 1).await;
+        assert!(frames.iter().any(|f| f.transport_id == first.transport_id));
+        assert!(
+            frames.iter().all(|f| f.payload == b"audit-window-1"),
+            "the blocked publish reached the relay Store"
+        );
+
+        // 4. remove the foreign peer; an-na must stop listing it Connected, then recover
+        Container::rm();
+        let gone_at = Instant::now();
+        let deadline = gone_at + Duration::from_secs(300);
+        while connected_to(&peers(&http, NODE_A).await, &foreign_id) {
+            assert!(
+                Instant::now() < deadline,
+                "an-na still lists the removed peer as Connected after 300 s"
+            );
+            tokio::time::sleep(Duration::from_millis(500)).await;
+        }
+        println!(
+            "an-na dropped the removed peer after {:?}",
+            gone_at.elapsed()
+        );
+        retry("publish after recovery", || {
+            t.publish(&topic, b"audit-window-3")
+        })
+        .await;
+        let _ = collect(&t, &topic, 10, Duration::from_millis(500)).await;
+        let _ = collect(&reader, &topic, 10, Duration::from_millis(500)).await;
+    }
+}
