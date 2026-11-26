@@ -14,7 +14,7 @@
 use std::net::SocketAddr;
 
 use agentnet_core::config::{
-    DeliveryConfig, NodeConfig, PolicyConfig, StorageConfig, TriggerConfig,
+    DeliveryConfig, DiscoveryConfig, NodeConfig, PolicyConfig, StorageConfig, TriggerConfig,
 };
 use agentnet_transport::logos_rest::{LogosRestConfig, NetworkMode};
 use serde::{Deserialize, Serialize};
@@ -162,6 +162,8 @@ pub struct DaemonConfig {
     pub triggers: TriggerConfig,
     /// `[delivery]`
     pub delivery: DeliveryConfig,
+    /// `[discovery]` (opt-in, off by default)
+    pub discovery: DiscoveryConfig,
     /// `[mcp_http]`
     pub mcp_http: McpHttpSection,
     /// `[webhook]`
@@ -207,6 +209,7 @@ impl DaemonConfig {
             triggers: self.triggers.clone(),
             delivery: self.delivery.clone(),
             storage: self.storage.clone(),
+            discovery: self.discovery.clone(),
             network_mode: self.network.mode.as_str().to_owned(),
         }
     }
@@ -345,7 +348,9 @@ pub fn render_private_config(node_url: &str, peers: &[String]) -> String {
 #
 # Private mode fails closed: the Logos Delivery node must be on a loopback or
 # private address, connected only to the peers listed here, and on a private
-# cluster id. Discovery and public fallback do not exist.
+# cluster id. Public peer discovery and public fallback do not exist. (The
+# optional [discovery] section below is something else: it lists capability
+# adverts on YOUR relay, off by default.)
 
 [network]
 mode = "private"
@@ -372,6 +377,19 @@ max_active = 32
 max_matches_per_minute = 60
 default_lifetime_s = 3600
 max_lifetime_hours = 24
+
+# Optional capability discovery (docs/discovery.md). OFF by default: nothing is
+# subscribed or published and the discovery tools return policy_denied.
+# Advertisements are PLAINTEXT: every node on your relay can read them. Only
+# the topic names listed here can be used; the topics exist only on this relay.
+[discovery]
+enabled = false
+topics = []                      # e.g. ["general"]; names are [a-z0-9-]{{1,32}}
+max_records = 500
+max_advert_ttl_s = 86400
+default_advert_ttl_s = 3600
+republish_interval_s = 900
+max_capabilities = 16
 
 [mcp_http]
 enabled = false

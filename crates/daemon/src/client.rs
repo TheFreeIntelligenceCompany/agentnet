@@ -569,6 +569,15 @@ impl AgentApi for RemoteAgent {
             .await
             .map(|_| ())
     }
+    async fn advertise_agent(&self, req: AdvertiseRequest) -> ApiResult<AdvertInfo> {
+        self.call("advertise_agent", req).await
+    }
+    async fn withdraw_advert(&self, topic: String) -> ApiResult<WithdrawInfo> {
+        self.call("withdraw_advert", json!({"topic": topic})).await
+    }
+    async fn discover_agents(&self, req: DiscoverRequest) -> ApiResult<DiscoverPage> {
+        self.call("discover_agents", req).await
+    }
     fn changes(&self) -> broadcast::Receiver<ChangeHint> {
         let rx = self.inner.changes_tx.subscribe();
         self.ensure_changes_task();
