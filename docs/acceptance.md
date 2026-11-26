@@ -9,6 +9,15 @@ system behaves over a real WAN.
 Everything is produced by one script, `scripts/acceptance.sh`, plus the Rust driver `tests/acceptance`
 (package `agentnet-acceptance`: rmcp client over `agentnet mcp` stdio children, the daemon crate's `RemoteAgent` and `EventStream`).
 
+## Latest result
+
+Run 4 (`results/acceptance/20261126T014245Z/SUMMARY.md`), executed by the lead on the merged code: steps 1 to 6 and the
+extras PASS (52 checks), Tailscale UNTESTED (not installed, no second host). Selected numbers from that run: 100 messages
+each direction at 25 ms pacing were all delivered with 0 duplicate rows or events, send-to-receipt p50/p95/p99 =
+12.7 / 13.8 / 13.8 s (A to B) and 5.4 / 11.6 / 13.3 s (B to A); paced at 400 ms: 0.78 / 1.28 / 2.13 s and 0.85 / 1.35 / 1.52 s.
+The burst figures are dominated by the relay-mesh warm-up after node recreation and by serial REST publishes
+(`results/fixups/burst-latency.md`); they are not typical latencies and not a service level.
+
 ## How to run
 
 ```
@@ -58,6 +67,7 @@ containers running. Exit status is 1 if any check FAILs (UNTESTED does not fail 
 | 1 | `results/acceptance/20261125T232522Z` | `FRESH_TOPOLOGY=1`. All steps PASS except 6.embed (FAIL, flaky example) |
 | 2 | `results/acceptance/20261125T235510Z` | Re-run on the same topology without a reset. **Steps 1 and 6 FAIL** (see "Flakiness") |
 | 3 | `results/acceptance/20261126T001904Z` | `FRESH_TOPOLOGY=1`, after a script fix. Final run, table below. Only 6.embed FAIL and the optional Tailscale UNTESTED |
+| 4 | `results/acceptance/20261126T014245Z` | **Latest; run by the lead** on the merged tree (git `7b74ba4`: crypto hardening, retry floor, 15 s history sync, fixed `embed`), `FRESH_TOPOLOGY=1`. **52 PASS, 0 FAIL, 1 UNTESTED (Tailscale).** Step 6 including `embed` (5/5) passes. The per-check table below is still run 3; run 4's own table is its `SUMMARY.md`. |
 
 (Three runs rather than two: run 2 exposed a test-hygiene problem in my own script, fixed before run 3. The failing log of run 2 is kept.)
 

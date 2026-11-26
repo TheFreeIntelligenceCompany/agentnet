@@ -1,0 +1,20 @@
+=== attempt 1 exit 0
+alice queued ae18b59c-7e9b-430a-98e5-8881f6fc6433 (Queued)
+bob received "hello from an embedded engine" from an1vlywiiwvo4zph54hefmyufl42z5zcf3xqew6dmx46hg4ne6tsn23b3gi4y
+alice's status is now Delivered (authenticated ack)
+=== attempt 2 exit 0
+alice queued 9a222e47-18a3-4663-ba63-44fb5b42bdad (Queued)
+bob received "hello from an embedded engine" from an1uqau3aoepixtbv6d4ikxxwryw52acmpb736nmntkcpqgvqfago5x2whsr4
+alice's status is now Delivered (authenticated ack)
+=== attempt 3 exit 0
+alice queued c682cccf-ff77-4058-87ad-12d3e25bb11c (Queued)
+bob received "hello from an embedded engine" from an1a36wluldrnv2of675vqzxy76yhzxdt5ndhklhmnjcg34hg4o2omcc6fvha
+alice's status is now Delivered (authenticated ack)
+=== attempt 4 exit 0
+alice queued fe56c3c4-377e-4236-ac93-a5d21f83685b (Queued)
+bob received "hello from an embedded engine" from an1ulytznpvtjjjpaibbrw6kzwgby7lfvx6pcxwh44y2a5fckqjuuswopeoty
+alice's status is now Delivered (authenticated ack)
+=== attempt 5 exit 0
+alice queued 3f836bcb-f1e9-4a94-b319-bb55c3e95987 (Queued)
+bob received "hello from an embedded engine" from an1gpqn5anncxflics3awkovdpxhhfnyklsydkdkadcow2xoib4i6nma7qzyu
+alice's status is now Delivered (authenticated ack)

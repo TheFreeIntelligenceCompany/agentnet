@@ -1,0 +1,8 @@
+$ /Users/dennison/develop/FIC-elipsis/target/release/agentnet --json --data-dir /tmp/an-acc.oPXKW0/a contact add @/tmp/an-acc.oPXKW0/b.tampered --expect an1w5ssvnls6oxdc3ydeulppla34ss2gecg7arj5izm7y3lfswyqvkgbcvgja --alias tampered
+{"error":{"code":"invalid_argument","message":"invalid contact record: contact record signature does not verify"}}
+[stderr] error: invalid contact record: contact record signature does not verify
+[exit 4]
+$ /Users/dennison/develop/FIC-elipsis/target/release/agentnet --json --data-dir /tmp/an-acc.oPXKW0/a contact add @/tmp/an-acc.oPXKW0/b.record --expect an14tr2oal3gem5aftqgjgpwlwkagmh7fc3gkpznvfror3cetsfwh2cn5v5y4 --alias wrong
+{"error":{"code":"invalid_argument","message":"contact record is not for the expected address"}}
+[stderr] error: contact record is not for the expected address
+[exit 4]

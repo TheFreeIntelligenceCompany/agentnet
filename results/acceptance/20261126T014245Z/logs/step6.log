@@ -1,0 +1,37 @@
+$ /Users/dennison/develop/FIC-elipsis/target/release/agentnet-acceptance config-check --config /Users/dennison/develop/FIC-elipsis/results/acceptance/20261126T014245Z/evidence/mcp-client-config.json --server agentnet --expect-address an14tr2oal3gem5aftqgjgpwlwkagmh7fc3gkpznvfror3cetsfwh2cn5v5y4 --out /Users/dennison/develop/FIC-elipsis/results/acceptance/20261126T014245Z/evidence/step6-config-check.json
+{
+  "args": [
+    "mcp",
+    "--data-dir",
+    "/tmp/an-acc.oPXKW0/a"
+  ],
+  "command": "/Users/dennison/develop/FIC-elipsis/target/release/agentnet",
+  "get_identity": {
+    "agent_id": "an14tr2oal3gem5aftqgjgpwlwkagmh7fc3gkpznvfror3cetsfwh2cn5v5y4",
+    "contact_record": "{\"record\":\"eyJ2IjoxLCJhZGRyZXNzIjoiYW4xNHRyMm9hbDNnZW01YWZ0cWdqZ3B3bHdrYWdtaDdmYzNna3B6bnZmcm9yM2NldHNmd2gyY241djV5NCIsInNpZ25pbmdfcGsiOiI1T09uQVhzeEdkQVdjREpNLXk3S0FaaF9sRnN5bjViVXNYUjJJazVGc2ZRIiwia2VtX3BrIjoiN2txb1ZOcF95YlNvY0UyUWk0YW9MRG56OUNWMmNtVUlYdmNVWVdWY25BUSIsImtleV9lcG9jaCI6MSwicmV2b2tlZF9rZW1fZXBvY2hzX2JlbG93IjoxLCJzdWl0ZXMiOlsxXSwiaW5ib3hfYnVja2V0cyI6MTYsImNyZWF0ZWRfYXQiOjE3OTU2NTc0NTc3MjcsImtlbV9leHBpcmVzX2F0IjpudWxsfQ\",\"sig\":\"9X81eIRhdjiQY87lGC5NsRKh_NU9Fr8ALEjiNXeB_0srA4iPhgpLioqQF9fv98B5exavMpC1bXRtfYtEH74_Dg\"}",
+    "created_at": 1795657457727,
+    "inbox_topic": "/agentnet/1/inbox-0e/proto",
+    "kem_expires_at": null
+  },
+  "ok": true,
+  "protocol": {
+    "negotiated_protocol_version": "2026-07-28",
+    "server_info": {
+      "name": "agentnet",
+      "version": "0.1.0"
+    }
+  },
+  "tools": [
+    "acknowledge_message",
+    "add_contact",
+    "create_trigger",
+    "delete_trigger",
+    "get_identity",
+    "get_message_status",
+    "list_triggers",
+    "network_status",
+    "read_inbox",
+    "send_message"
+  ]
+}
+[exit 0]

@@ -1,0 +1,41 @@
+{
+ "what_R1_stored": [
+  {
+   "which": "B inbox topic (the message)",
+   "messageHash": "0x62fcd0e070294292746e125812a7acf4c4fca7c038096ea26fa343024ebde367",
+   "contentTopic": "/agentnet/1/inbox-07/proto",
+   "pubsubTopic": "/waku/2/rs/66/0",
+   "payload_bytes": 564,
+   "timestamp_ns": 1795657461470141000,
+   "frame_header_hex": "414e0101be48d318",
+   "plaintext_found_in_payload": {
+    "marker": false,
+    "message_id": false,
+    "sender_addr": false,
+    "recipient_addr": false,
+    "plaintext_word_ACCEPTANCE": false
+   }
+  },
+  {
+   "which": "A inbox topic (the ack)",
+   "messageHash": "0x838143821591d5684689954577561b2155e80566aef94f6b1255308e8e88a70c",
+   "contentTopic": "/agentnet/1/inbox-0e/proto",
+   "pubsubTopic": "/waku/2/rs/66/0",
+   "payload_bytes": 564,
+   "timestamp_ns": 1795657461640025000,
+   "frame_header_hex": "414e010122973aa0",
+   "plaintext_found_in_payload": {
+    "marker": false,
+    "message_id": false,
+    "sender_addr": false,
+    "recipient_addr": false,
+    "plaintext_word_ACCEPTANCE": false
+   }
+  }
+ ],
+ "plaintext_leak_check": {
+  "leak_detected": false,
+  "marker": "ACCEPTANCE-STEP2-PLAINTEXT-MARKER-1795657461466",
+  "note": "R1 sees: content topic (shared inbox bucket), time, padded payload length, hash, publisher peer. It does not see sender, recipient address, message id, type or body."
+ }
+}
