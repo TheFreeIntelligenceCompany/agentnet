@@ -1,0 +1,7 @@
+mode = "public"
+node_url = "http://127.0.0.1:18650"
+peers = ["/dns4/<PUB_HOST>/tcp/443/wss/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV"]
+cluster_id = 66
+public_discovery = false   # true is a config error in private mode
+public_fallback = false    # true is always a config error
+i_understand_public = true

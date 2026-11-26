@@ -1,0 +1,21 @@
+# 2026-11-26T20:39:42Z offline B: stop agent B and node B (box)
+an-r1
+agent B stopped
+# 2026-11-26T20:39:44Z A sends 5 (B offline)
+["fc5bbe45-a8f9-43b8-983e-3594ba71a964", "dcaad743-2f62-4796-8738-ed5c04bdaead", "f61bd932-2c71-45c9-80c6-c6ae31b47741", "4915b3ac-fa09-4b5b-a975-9d5f866c06bf", "30328789-3496-4305-bc55-ac05514169d5"]
+{'state': 'sent', 'attempts': 3, 'last_error': None}
+{'state': 'sent', 'attempts': 3, 'last_error': None}
+{'state': 'sent', 'attempts': 3, 'last_error': None}
+{'state': 'sent', 'attempts': 3, 'last_error': None}
+{'state': 'sent', 'attempts': 3, 'last_error': None}
+# 2026-11-26T20:39:52Z restart node B + agent B (T0=1795725592.633282)
+started
+20:39:54 delivered=0/5
+20:39:56 delivered=1/5
+20:39:58 delivered=4/5
+20:40:00 delivered=5/5
+{"state": "delivered", "attempts": 4, "delivered_s_after_restart": 3.857717990875244}
+{"state": "delivered", "attempts": 4, "delivered_s_after_restart": 1.8577179908752441}
+{"state": "delivered", "attempts": 4, "delivered_s_after_restart": 4.863718032836914}
+{"state": "delivered", "attempts": 4, "delivered_s_after_restart": 3.867717981338501}
+{"state": "delivered", "attempts": 4, "delivered_s_after_restart": 5.85571813583374}

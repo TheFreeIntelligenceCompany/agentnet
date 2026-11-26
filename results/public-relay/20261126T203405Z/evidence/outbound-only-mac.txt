@@ -1,0 +1,30 @@
+# 2026-11-26T20:40:48Z A inbox offA bodies
+26 records, 26 unique
+['offA 1', 'offA 2', 'offA 3', 'offA 4', 'offA 5']
+# docker port an-x-node-a
+8645/tcp -> 127.0.0.1:18650
+# docker ps
+an-x-node-a  8545/tcp, 30303/tcp, 60000/tcp, 127.0.0.1:18650->8645/tcp
+# lsof TCP LISTEN on the Mac (all)
+limactl   87679 <user>   13u  IPv4 0x40aa058d73ae878d      0t0  TCP 127.0.0.1:52722 (LISTEN)
+limactl   87707 <user>    8u  IPv6 0x2e74144316e8ff10      0t0  TCP *:53 (LISTEN)
+ssh       88182 <user>   11u  IPv4 0xc14bd9bc266940c6      0t0  TCP 127.0.0.1:18650 (LISTEN)
+# listeners on 60000 / 8000 on the Mac host:
+rc=1 (1 and empty = none)
+# established connections of colima/qemu VM process to the public endpoint (remote side only)
+-> <PUB_IP>:443
+# node A listen addrs (in-container, inside the VM)
+{"listenAddresses":["/ip4/172.17.0.2/tcp/60000/p2p/16Uiu2HAm1N4XD7fSWLmsU6kG1sDNeW5cRHgfMB87Uw3yFD3qkeLj","/ip4/172.17.0.2/tcp/8000/ws/p2p/16Uiu2HAm1N4XD7fSWLmsU6kG1sDNeW5cRHgfMB87Uw3yFD3qkeLj"],"enrUri":"enr:-La4QFi2pf4epW5IgYLawNsT_mgq6RtK6Zuo-dUgOHBSHUyraAfX4CpTsUx_r_2NcwGeZRE2HJJgsrb-qBZzK3fCwoMFgmlkgnY0gmlwhKwRAAKKbXVsdGlhZGRyc5YACASsEQACBupgAAoErBEAAgYfQN0DgnJzhQBCAQAAiXNlY3AyNTZrMaECWDlJSBMCJ_SVVswPzAgCLeAlz1MioYYOd78EyWo0J6SDdGNwgupghXdha3UyAQ"}
+# R's view of node A (box R peers)
+# box: ss -ltnp (listeners on box), docker port an-r1; instabox port ls
+State  Recv-Q Send-Q Local Address:Port  Peer Address:Port
+LISTEN 0      4096       127.0.0.1:18642      0.0.0.0:*   
+LISTEN 0      4096       127.0.0.1:18640      0.0.0.0:*   
+LISTEN 0      128          0.0.0.0:22         0.0.0.0:*   
+LISTEN 0      4096         0.0.0.0:8000       0.0.0.0:*   
+LISTEN 0      128             [::]:22            [::]:*   
+8000/tcp -> 0.0.0.0:8000
+8645/tcp -> 127.0.0.1:18640
+<BOX> 8000 http public
+# 2026-11-26T20:40:54Z R's view of its peers (box, REST on loopback)
+# (a listing of Mac processes with connections to :443 was dropped: it mixed in unrelated applications; the colima VM process limactl is the one carrying node A's connection)

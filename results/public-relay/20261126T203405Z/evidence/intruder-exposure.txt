@@ -1,0 +1,31 @@
+# 2026-11-26T20:41:42Z intruder: different nodekey, cluster 66 shard 0, dials the public wss endpoint, no AgentNet identity, no allowlist entry
+# intruder peers:
+  /ip4/<PUB_IP>/tcp/443/wss/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV Connected 11 protocols
+# R's peers (box):
+  /ip4/172.28.66.1/tcp/37610/ws/p2p/16Uiu2HAm1N4XD7fSWLmsU6kG1sDNeW5cRHgfMB87Uw3yFD3qkeLj Connected
+  /ip4/172.28.66.22/tcp/58410/p2p/16Uiu2HAmGGTNKYN2QDGjGj2HK1fXFUZ4js6P5K1VmMvEofo4MfAZ CannotConnect
+  /ip4/172.28.66.1/tcp/43958/ws/p2p/16Uiu2HAmS5h5q6V8EdXzJkGYkA3VG1j6Fafrqddc9HxwVHMdRzKK Connected
+subscribe /agentnet/1/inbox-00/proto 200
+subscribe /agentnet/1/inbox-01/proto 200
+subscribe /agentnet/1/inbox-02/proto 200
+subscribe /agentnet/1/inbox-03/proto 200
+subscribe /agentnet/1/inbox-04/proto 200
+subscribe /agentnet/1/inbox-05/proto 200
+subscribe /agentnet/1/inbox-06/proto 200
+subscribe /agentnet/1/inbox-07/proto 200
+subscribe /agentnet/1/inbox-08/proto 200
+subscribe /agentnet/1/inbox-09/proto 200
+subscribe /agentnet/1/inbox-10/proto 200
+subscribe /agentnet/1/inbox-11/proto 200
+subscribe /agentnet/1/inbox-12/proto 200
+subscribe /agentnet/1/inbox-13/proto 200
+subscribe /agentnet/1/inbox-14/proto 200
+subscribe /agentnet/1/inbox-15/proto 200
+relay-received frames (cache of the intruder's own node): 4
+   ('relay', '/agentnet/1/inbox-00/proto', 564, False)
+   ('relay', '/agentnet/1/inbox-00/proto', 564, False)
+   ('relay', '/agentnet/1/inbox-08/proto', 564, False)
+   ('relay', '/agentnet/1/inbox-08/proto', 564, False)
+store query via R (no authentication): messages 145 plaintext-canary-hits 0
+   /agentnet/1/inbox-00/proto n=75 payload bytes min/max 564 564
+   /agentnet/1/inbox-08/proto n=70 payload bytes min/max 564 564

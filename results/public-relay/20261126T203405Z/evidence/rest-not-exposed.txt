@@ -1,0 +1,20 @@
+# 2026-11-26T20:41:55Z REST reachability through the public endpoint (expected: none)
+GET https://<PUB_HOST>/admin/v1/peers -> 502 52B
+GET https://<PUB_HOST>/debug/v1/info -> 502 52B
+GET https://<PUB_HOST>/relay/v1/auto/messages -> 502 52B
+GET https://<PUB_HOST>/health -> 502 52B
+GET https://<PUB_HOST>/ -> 502 52B
+# unpublished REST port 8645 / libp2p 60000 on the edge (not published):
+https://8645-<BOX_ID>.instabox.tech/ -> 404
+https://60000-<BOX_ID>.instabox.tech/ -> 404
+https://18640-<BOX_ID>.instabox.tech/ -> 404
+# raw TCP 60000 on the public IPs (not published)
+<PUB_IP>:60000 rc=1
+<PUB_IP>:8645 rc=143
+(note: the macOS nc connect to port 8645 did not return within its timeout and was killed by hand, rc=143: no answer = not open; 60000 was refused, rc=1)
+# REST works on the box loopback only:
+127.0.0.1:18640 -> 200
+LISTEN 0      4096       127.0.0.1:18642      0.0.0.0:*   
+LISTEN 0      4096       127.0.0.1:18640      0.0.0.0:*   
+LISTEN 0      4096         0.0.0.0:8000       0.0.0.0:*   
+# the only published port (instabox port ls): 8000 -> plain WebSocket listener of the libp2p node; non-upgrade HTTP requests to it return 502 from the edge (the libp2p WS server does not speak HTTP REST)

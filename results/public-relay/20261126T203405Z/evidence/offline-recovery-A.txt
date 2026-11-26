@@ -1,0 +1,29 @@
+# 2026-11-26T20:40:07Z B inbox bodies for offB:
+27 records, 27 unique
+['offB 1', 'offB 2', 'offB 3', 'offB 4', 'offB 5']
+# 2026-11-26T20:40:08Z offline A: stop agent A and node A (Mac)
+node A stopped
+# B sends 5 to A
+["20910acf-d6a2-4966-b6b9-e2550527470e", "830a4304-7dfb-47a5-881a-00f71f8b390b", "9cc4dfec-acb0-420a-8f41-5ca5ddcf7f52", "9b1417de-ab14-49c4-9871-fdd235e71673", "1e028334-8f1e-41d4-9794-4382decfee87"]
+{'state': 'sent', 'attempts': 3, 'last_error': None}
+{'state': 'sent', 'attempts': 3, 'last_error': None}
+{'state': 'sent', 'attempts': 3, 'last_error': None}
+{'state': 'sent', 'attempts': 3, 'last_error': None}
+{'state': 'sent', 'attempts': 3, 'last_error': None}
+# 2026-11-26T20:40:18Z restart node A + agent A (T0=1795725618.5645068)
+20:40:19 delivered=0/5
+20:40:21 delivered=0/5
+20:40:23 delivered=0/5
+20:40:25 delivered=0/5
+20:40:27 delivered=0/5
+20:40:29 delivered=0/5
+20:40:31 delivered=0/5
+20:40:33 delivered=0/5
+20:40:35 delivered=0/5
+20:40:37 delivered=0/5
+20:40:39 delivered=5/5
+{"state": "delivered", "attempts": 5, "delivered_s_after_restart": 19.43349313735962}
+{"state": "delivered", "attempts": 5, "delivered_s_after_restart": 19.435493230819702}
+{"state": "delivered", "attempts": 5, "delivered_s_after_restart": 19.436493158340454}
+{"state": "delivered", "attempts": 5, "delivered_s_after_restart": 19.437493324279785}
+{"state": "delivered", "attempts": 5, "delivered_s_after_restart": 19.43949317932129}

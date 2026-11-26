@@ -1,0 +1,6 @@
+# 2026-11-26T20:36:55Z private mode (default) with the wss peer: expected refusal
+error: invalid configuration: network: isolation violation: static_peers entry rejected in private mode: must be one literal IP address and one /p2p/ peer id (no relay hops or DNS)
+rc=4
+# same with the resolved public IP literal
+error: invalid configuration: network: isolation violation: static_peers entry rejected in private mode: address must be a literal private IP
+rc=4

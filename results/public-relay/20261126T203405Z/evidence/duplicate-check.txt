@@ -1,0 +1,3 @@
+inbox a records 21 unique 21 duplicates 0
+inbox b records 22 unique 22 duplicates 0
+all 20 b2a ids in A inbox: True  all 20 a2b ids in B inbox: True

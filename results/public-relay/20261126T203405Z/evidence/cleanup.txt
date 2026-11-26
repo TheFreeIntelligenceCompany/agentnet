@@ -1,0 +1,5 @@
+# 2026-11-26T20:47:59Z
+ports with port 8000 or machine agrbtd: []
+total published ports (other boxes untouched): 4
+$ instabox ls --meta project=agentnet
+[]

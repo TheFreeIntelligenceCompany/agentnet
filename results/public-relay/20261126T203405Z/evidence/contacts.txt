@@ -1,0 +1,3 @@
+2026-11-26T20:37:44Z
+{"address":"an1u2sr35b25gpq3ebfp5ptc6ox6zsx6g4z5eh3snqtjd463lbztig4eq5pxq","alias":"recB","trust":"trusted","inbox_topic":"/agentnet/1/inbox-08/proto","added_at":1795725464611,"kem_expires_at":null,"updated":false,"key_epoch":1,"revoked":false}
+{"address":"an1tgn5tklskdww6c6w5yefbzc6b7epltsqwdgbwjiyrlcsr7hw263x2hro3m","alias":"recA","trust":"trusted","inbox_topic":"/agentnet/1/inbox-00/proto","added_at":1795725464737,"kem_expires_at":null,"updated":false,"key_epoch":1,"revoked":false}
