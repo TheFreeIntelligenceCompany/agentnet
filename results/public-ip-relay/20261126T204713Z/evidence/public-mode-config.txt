@@ -1,0 +1,24 @@
+## [network] public mode
+[network]
+mode = "public"
+node_url = "http://127.0.0.1:18690"
+peers = ["/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV"]
+cluster_id = 66
+public_discovery = false   # true is a config error in private mode
+public_fallback = false    # true is always a config error
+i_understand_public = true
+
+[storage]
+## doctor (daemon stopped)
+[ok  ] data dir permissions: directory 0700, files 0600
+[ok  ] config: <scratch>/w/agentA/agentnet.toml valid (public mode, 1 peer(s))
+[ok  ] identity: address an1zren6rxfdcw5th3igijx6x5c5vea7codw5xlx73fmx24ktuetatkpexkh4
+[ok  ] replay guard: inactive (no store yet)
+[warn] daemon socket: the AgentNet daemon is not running (cannot connect to <scratch>/w/agentA/agentnet.sock); start it with `agentnet --data-dir <scratch>/w/agentA serve`
+[ok  ] node reachable: http://127.0.0.1:18690 answered 200
+[ok  ] clock: within 0 s of the node's clock
+[skip] isolation: needs the running daemon
+[skip] peers == allowlist: needs the running daemon
+[skip] history sync: needs the running daemon
+[skip] local inbox database: needs the running daemon
+0 failing, 2 warning(s)

@@ -1,0 +1,7 @@
+## node A peers (REST 127.0.0.1:18690)
+{"multiaddr":"/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV","connected":"Connected","shards":[0],"agent":"logos-delivery-\"v0.39.2\""}
+## R peers (droplet loopback REST)
+{"multiaddr":"/ip4/<PUB_IP_A>/tcp/54558/p2p/16Uiu2HAm1N4XD7fSWLmsU6kG1sDNeW5cRHgfMB87Uw3yFD3qkeLj","connected":"Connected"}
+{"multiaddr":"/ip4/172.28.66.1/tcp/33738/p2p/16Uiu2HAmGGTNKYN2QDGjGj2HK1fXFUZ4js6P5K1VmMvEofo4MfAZ","connected":"Connected"}
+## node B peers
+{"multiaddr":"/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV","connected":"Connected"}

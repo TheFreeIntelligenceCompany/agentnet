@@ -1,0 +1,66 @@
+{
+ "name": "agentnet-pub-test-fw",
+ "status": "succeeded",
+ "inbound_rules": [
+  {
+   "protocol": "tcp",
+   "ports": "22",
+   "sources": {
+    "addresses": [
+     "<PUB_IP_A>/32"
+    ]
+   },
+   "action": "allow"
+  },
+  {
+   "protocol": "tcp",
+   "ports": "60000",
+   "sources": {
+    "addresses": [
+     "<PUB_IP_A>/32"
+    ]
+   },
+   "action": "allow"
+  }
+ ],
+ "outbound_rules": [
+  {
+   "protocol": "icmp",
+   "ports": "0",
+   "destinations": {
+    "addresses": [
+     "0.0.0.0/0",
+     "::/0"
+    ]
+   },
+   "action": "allow"
+  },
+  {
+   "protocol": "tcp",
+   "ports": "0",
+   "destinations": {
+    "addresses": [
+     "0.0.0.0/0",
+     "::/0"
+    ]
+   },
+   "action": "allow"
+  },
+  {
+   "protocol": "udp",
+   "ports": "0",
+   "destinations": {
+    "addresses": [
+     "0.0.0.0/0",
+     "::/0"
+    ]
+   },
+   "action": "allow"
+  }
+ ],
+ "droplet_ids": [
+  "<DROPLET_ID>"
+ ],
+ "tags": [],
+ "pending_changes": []
+}

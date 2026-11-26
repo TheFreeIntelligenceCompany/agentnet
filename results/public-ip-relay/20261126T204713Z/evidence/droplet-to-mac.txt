@@ -1,0 +1,3 @@
+## from the droplet: connect to the Mac's public IP tcp/60000
+nc: connect to <PUB_IP_A> port 60000 (tcp) timed out: Operation now in progress
+rc=1

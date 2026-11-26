@@ -1,0 +1,14 @@
+20:57:48.322Z remove inbound rule tcp/60000 (keep tcp/22)
+20:57:48.822Z remove-rules returned
+20:57:51.467Z firewall status succeeded
+jq: error (at <stdin>:59): Cannot index array with string "inbound_rules"
+20:58:01.891Z message queued during block: e3bc9185-cd39-48a3-913f-5de61179609a
+20:59:41.929Z nc from Mac during block:
+nc: connectx to <PUB_IP_R> port 60000 (tcp) failed: Operation timed out
+Connection to <PUB_IP_R> port 22 [tcp/ssh] succeeded!
+20:59:50.821Z add rule back
+20:59:51.755Z add-rules returned
+20:59:53.160Z firewall status succeeded
+jq: error (at <stdin>:69): Cannot index array with string "inbound_rules"
+20:59:55.422Z message delivered
+20:59:55.449Z done waiting

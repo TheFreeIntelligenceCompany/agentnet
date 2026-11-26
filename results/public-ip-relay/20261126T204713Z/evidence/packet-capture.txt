@@ -1,0 +1,35 @@
+# Packet capture on the droplet's public interface (eth0): tcpdump -i eth0 -n -s 0 -w pub.pcap 'tcp port 60000' (4788 packets, 20:46Z-21:04Z). The pcap itself is NOT committed (raw IPs in headers).
+ESTAB 0      0      <PUB_IP_R>:60000 172.28.66.22:40364 timer:(keepalive,,0)
+-rw-r--r-- 1 tcpdump tcpdump 738862 Nov 26 21:04 /root/pub.pcap
+4788
+--- src/dst pairs (top)
+   1639 <PUB_IP_R>.60000 <PUB_IP_A>.54558
+   1571 <PUB_IP_A>.54558 <PUB_IP_R>.60000
+    525 <PUB_IP_R>.60000 <PUB_IP_A>.59035
+    512 <PUB_IP_A>.59035 <PUB_IP_R>.60000
+    140 <PUB_IP_A>.63177 <PUB_IP_R>.60000
+    136 <PUB_IP_R>.60000 <PUB_IP_A>.63177
+      8 <PUB_IP_R>.60166 <PUB_IP_A>.60000
+      8 <PUB_IP_R>.60030 <PUB_IP_A>.60000
+--- distinct peers of port 60000 sources
+   2240 <PUB_IP_A>
+--- body grep (hits for each known synthetic string, raw packet bytes)
+synthetic: 0
+first-a2b: 0
+first-b2a: 0
+bench-a2b: 0
+bench-b2a: 0
+offA: 0
+offB: 0
+drop-trial: 0
+queued message: 0
+message A to B: 0
+--- noise / multistream strings
+      6 /multistream/1.0.0
+      6 /noise
+--- first payload packets of the first libp2p connection (payload text only; headers elided)
+A -> R  20 bytes  "/multistream/1.0.0
+"   (plain-text protocol negotiation)
+A -> R   8 bytes  "/noise
+"             (selects the Noise security protocol)
+R -> A  same two lines; after that every payload is a Noise handshake/transport message: 2-byte length + high-entropy bytes (c9d3 8ad4 2a75 ...), no readable text

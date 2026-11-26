@@ -1,0 +1,13 @@
+20:56:31.380Z stop node A (docker stop an-do-node-a on the Mac)
+20:56:32.479Z
+5 sent from B while A offline
+20:56:47.519Z start node A
+T0(epoch)=1795726607.554097
+20:56:48.923Z delivered=0/5
+20:56:50.965Z delivered=0/5
+20:56:53.003Z delivered=5/5
+{"state":"delivered","attempts":4,"delivered_at":1795726611206}
+{"state":"delivered","attempts":4,"delivered_at":1795726611217}
+{"state":"delivered","attempts":4,"delivered_at":1795726611226}
+{"state":"delivered","attempts":4,"delivered_at":1795726611236}
+{"state":"delivered","attempts":4,"delivered_at":1795726611249}

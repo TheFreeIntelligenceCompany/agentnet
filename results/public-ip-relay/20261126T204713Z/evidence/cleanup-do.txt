@@ -1,0 +1,3 @@
+droplets named agentnet-pub-test*: 0
+firewalls named agentnet-pub-test*: 0
+ssh keys named agentnet-pub-test*: 0

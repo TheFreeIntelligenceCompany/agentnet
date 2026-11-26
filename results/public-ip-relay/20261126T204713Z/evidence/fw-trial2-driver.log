@@ -1,0 +1,24 @@
+21:00:26.229Z remove inbound rule tcp/60000 (keep tcp/22)
+21:00:26.822Z remove-rules returned
+21:00:29.024Z firewall status succeeded
+21:00:29.324Z restart node A (docker restart an-do-node-a): kills the established flow so the node must dial anew
+21:00:31.092Z node A restarted
+21:00:51.261Z message queued during block: f3f2a48c-8a38-4ff5-831d-3200f0a6dd36
+21:02:21.306Z nc from Mac during block 60000:
+nc: connectx to <PUB_IP_R> port 60000 (tcp) failed: Operation timed out
+21:03:36.446Z agent A network status:
+mode: public
+ready: false
+connected peers: 0
+isolation: ok
+queue: outbox queued=1 sent-unacked=0, inbox unread=26 quarantined=0, events unacked=26, active triggers=0
+last live poll: 2026-11-26 21:03:36 UTC
+last history sync: 2026-11-26 21:00:19 UTC
+detail: node reachable; 0 connected allowed peer(s)
+daemon: version 0.1.0 uptime 959s
+webhook: disabled
+21:03:36.523Z add rule back
+21:03:38.226Z add-rules returned
+21:03:39.745Z firewall status succeeded
+21:04:19.054Z message delivered
+21:04:19.093Z done waiting

@@ -1,0 +1,1 @@
+{"tool": "send_message", "elapsed_ms": 1, "is_error": false, "protocol": "2025-06-18", "result": {"conversation_id": "152baf88-3390-4481-8ecd-1830cfbc9920", "deduplicated": false, "expires_at": 1795812927357, "message_id": "42abd9cb-3f6a-4050-bdc1-3233587a0b98", "status": "queued"}}

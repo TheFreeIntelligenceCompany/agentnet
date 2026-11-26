@@ -1,0 +1,17 @@
+20:56:04.288Z stop node B (docker stop an-nb on the droplet)
+stopped
+20:56:05.141Z 5 sent from A while B offline
+{"state":"sent","attempts":4}
+{"state":"sent","attempts":4}
+{"state":"sent","attempts":4}
+{"state":"sent","attempts":4}
+{"state":"sent","attempts":4}
+20:56:20.274Z start node B
+started
+20:56:20.999Z delivered=0/5
+20:56:23.069Z delivered=5/5
+{"state":"delivered","attempts":4,"delivered_s_after_B_node_start":1.1551728248596191}
+{"state":"delivered","attempts":4,"delivered_s_after_B_node_start":1.1821727752685547}
+{"state":"delivered","attempts":4,"delivered_s_after_B_node_start":1.2001729011535645}
+{"state":"delivered","attempts":4,"delivered_s_after_B_node_start":1.2191729545593262}
+{"state":"delivered","attempts":4,"delivered_s_after_B_node_start":1.23317289352417}

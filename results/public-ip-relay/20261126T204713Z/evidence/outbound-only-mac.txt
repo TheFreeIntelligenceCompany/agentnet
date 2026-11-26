@@ -1,0 +1,18 @@
+## 2026-11-26T20:57:00Z Mac: docker port an-do-node-a
+8645/tcp -> 127.0.0.1:18690
+## docker ps
+an-do-node-a 8545/tcp, 30303/tcp, 60000/tcp, 127.0.0.1:18690->8645/tcp
+## Mac listening TCP sockets (lsof -nP -iTCP -sTCP:LISTEN), filtered to port 60000/18690/agentnet/colima/limactl/ssh
+COMMAND     PID     USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+ssh       88182 <user>   11u  IPv4 0xfbf50b0047961d8d      0t0  TCP 127.0.0.1:18690 (LISTEN)
+(end; any line above other than the header and the REST 127.0.0.1:18690 forward would be a libp2p listener)
+## inside the colima VM: listeners on 60000 (container netns only)
+Unable to find image 'alpine:latest' locally
+latest: Pulling from library/alpine
+a1c67c46f05a: Download complete
+417332e4182f: Download complete
+Digest: sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf
+Status: Downloaded newer image for alpine:latest
+0
+## Mac established connections of the colima/docker forwarder to R
+limactl   87679 <user>    9u  IPv4 0xde7e152ac8967812      0t0  TCP <LAN_IP_A>:59035-><PUB_IP_R>:60000 (ESTABLISHED)

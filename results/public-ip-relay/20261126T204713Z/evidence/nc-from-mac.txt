@@ -1,0 +1,3 @@
+# 2026-11-26T20:48:01Z from the Mac: nc -vz -w 5 <PUB_IP_R> 60000
+Connection to <PUB_IP_R> port 60000 [tcp/*] succeeded!
+rc=0

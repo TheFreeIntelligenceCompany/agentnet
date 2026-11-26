@@ -1,0 +1,50 @@
+## Mac: node A container args
+--nodekey=b02fa8e1840177dd16156335233d71dcfca98cecd5b77fade35352783276a15d --nat=none --relay=true --store=false --filter=false --lightpush=false --st
+aticnode=/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV --storenode=/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2H
+Am8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV --filternode=/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV --
+lightpushnode=/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV --max-msg-size=150KiB --cluster-id=66 --num-shar
+ds-in-network=1 --shard=0 --discv5-discovery=false --peer-exchange=false --relay-peer-exchange=false --rendezvous=false --enable-kad-discovery=false -
+-quic-support=false --mix=false --rln-relay=false --listen-address=0.0.0.0 --dns-addrs-name-server=127.0.0.1 --tcp-port=60000 --metrics-server=false -
+-peer-persistence=false --local-storage-path=/data --log-level=INFO --rest=true --rest-address=0.0.0.0 --rest-port=8645 --rest-admin=true --rest-relay
+-cache-capacity=1000 --rest-messaging-cache-capacity=1000
+image=wakuorg/nwaku@sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73 platform=linux published={"30303/tcp":null,"60000/tcp":null,"8545/tcp":null,"8645/tcp":[{"HostIp":"127.0.0.1","HostPort":"18690"}]}
+
+## droplet: node R / node B container args
+-- an-r1
+--nodekey=e83105f9fe35cdb5cd2eadeaae4604f8f3c8fb23bca46c13be280c2856ebd1c7 --nat=extip:<PUB_IP_R> --relay=true --store=true --store-message-db-url
+=sqlite:///data/r1-store.sqlite3 --store-message-retention-policy=time:604800;capacity:100000 --filter=true --lightpush=true --max-msg-size=150KiB --c
+luster-id=66 --num-shards-in-network=1 --shard=0 --discv5-discovery=false --peer-exchange=false --relay-peer-exchange=false --rendezvous=false --enabl
+e-kad-discovery=false --quic-support=false --mix=false --rln-relay=false --listen-address=0.0.0.0 --dns-addrs-name-server=127.0.0.1 --tcp-port=60000 -
+-metrics-server=false --peer-persistence=false --local-storage-path=/data --log-level=INFO --rest=true --rest-address=0.0.0.0 --rest-port=8645 --rest-
+admin=true --rest-relay-cache-capacity=1000 --rest-messaging-cache-capacity=1000
+image=wakuorg/nwaku@sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73 sysctls=map[net.ipv4.tcp_retries2:6] ports={"60000/tcp":[{"HostIp":"<PUB_IP_R>","HostPort":"60000"}],"8645/tcp":[{"HostIp":"127.0.0.1","HostPort":"18640"}]}
+-- an-nb
+--nodekey=398d445e449874cee2d4394bb41285dd4fd296d96829f825b86aa55543b58134 --nat=extip:172.28.66.22 --relay=true --store=false --filter=false --lightp
+ush=false --staticnode=/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV --storenode=/ip4/<PUB_IP_R>/tcp/600
+00/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV --filternode=/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzgho
+yfpJoCYesLV --lightpushnode=/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV --max-msg-size=150KiB --cluster-id
+=66 --num-shards-in-network=1 --shard=0 --discv5-discovery=false --peer-exchange=false --relay-peer-exchange=false --rendezvous=false --enable-kad-dis
+covery=false --quic-support=false --mix=false --rln-relay=false --listen-address=0.0.0.0 --dns-addrs-name-server=127.0.0.1 --tcp-port=60000 --metrics-
+server=false --peer-persistence=false --local-storage-path=/data --log-level=INFO --rest=true --rest-address=0.0.0.0 --rest-port=8645 --rest-admin=tru
+e --rest-relay-cache-capacity=1000 --rest-messaging-cache-capacity=1000
+image=wakuorg/nwaku@sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73 sysctls=map[] ports={"8645/tcp":[{"HostIp":"127.0.0.1","HostPort":"18642"}]}
+
+## droplet versions
+Linux 6.8.0-149-generic
+Ubuntu 24.04.5 LTS
+Docker version 29.1.3, build 29.1.3-0ubuntu3~24.04.2
+rustc 1.92.0 (ded5c06cf 2025-12-08)
+b3a60a693bed8f76d030492f391f3f2ab572b1c9
+agentnet 0.1.0
+net.ipv4.tcp_retries2 = 15
+LISTEN 0      4096   <PUB_IP_R>:60000      0.0.0.0:*    users:(("docker-proxy",pid=3800,fd=7))                 
+LISTEN 0      4096        127.0.0.1:18642      0.0.0.0:*    users:(("docker-proxy",pid=14256,fd=7))                
+LISTEN 0      4096        127.0.0.1:18640      0.0.0.0:*    users:(("docker-proxy",pid=3770,fd=7))                 
+LISTEN 0      4096          0.0.0.0:22         0.0.0.0:*    users:(("sshd",pid=1093,fd=3),("systemd",pid=1,fd=115))
+LISTEN 0      4096             [::]:22            [::]:*    users:(("sshd",pid=1093,fd=4),("systemd",pid=1,fd=116))
+## Mac
+26.6.2
+arm64
+agentnet 0.1.0
+local HEAD 7f54712597557296534cc3ac4aa6919632c4455d
+docker client 29.8.1 server 29.5.2 linux/arm64

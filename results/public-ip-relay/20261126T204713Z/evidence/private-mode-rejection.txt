@@ -1,0 +1,36 @@
+## agentnet.toml [network] (private mode, as written by init)
+[network]
+mode = "private"
+# REST endpoint of YOUR local Logos Delivery node (loopback / RFC1918 / 100.64.0.0/10 only).
+node_url = "http://127.0.0.1:18690"
+# Static peers: multiaddrs of your own relay/store node(s), ending in /p2p/<peerId>.
+peers = ["/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV"]
+# Cluster ids 1, 2, 3 and 16 select public presets and are rejected.
+cluster_id = 66
+public_discovery = false   # true is a config error in private mode
+public_fallback = false    # true is always a config error
+i_understand_public = false
+
+[storage]
+## doctor --ready
+[ok  ] data dir permissions: directory 0700, files 0600
+[FAIL] config: invalid configuration: network: isolation violation: static_peers entry rejected in private mode: address must be a literal private IP
+       -> edit agentnet.toml (see docs/configuration.md)
+[ok  ] identity: address an1zren6rxfdcw5th3igijx6x5c5vea7codw5xlx73fmx24ktuetatkpexkh4
+[ok  ] replay guard: inactive (no store yet)
+[warn] single instance: the same identity running in two data directories cannot be detected or prevented (the data-dir lock only covers one directory); both would receive, persist and acknowledge every message independently and may both fire triggers
+       -> run each identity in exactly one place; to move it, stop the old daemon first and copy agentnet.db + agentnet.generation or use `identity export/import`
+[warn] daemon socket: the AgentNet daemon is not running (cannot connect to <scratch>/w/agentA/agentnet.sock); start it with `agentnet --data-dir <scratch>/w/agentA serve`
+       -> run `agentnet --data-dir <scratch>/w/agentA serve`
+1 failing, 2 warning(s)
+NOT READY: messaging is not operational:
+  - daemon socket: warning: the AgentNet daemon is not running (cannot connect to <scratch>/w/agentA/agentnet.sock); start it with `agentnet --data-dir <scratch>/w/agentA serve` -> run `agentnet --data-dir <scratch>/w/agentA serve`
+  - node reachable: not run (it needs a readable config and a running daemon) -> fix the failing or skipped checks above, then run `agentnet --data-dir <scratch>/w/agentA doctor --ready` again
+  - isolation: not run (it needs a readable config and a running daemon) -> fix the failing or skipped checks above, then run `agentnet --data-dir <scratch>/w/agentA doctor --ready` again
+  - transport ready: not run (it needs a readable config and a running daemon) -> fix the failing or skipped checks above, then run `agentnet --data-dir <scratch>/w/agentA doctor --ready` again
+  - local inbox database: not run (it needs a readable config and a running daemon) -> fix the failing or skipped checks above, then run `agentnet --data-dir <scratch>/w/agentA doctor --ready` again
+  - config: FAILED: invalid configuration: network: isolation violation: static_peers entry rejected in private mode: address must be a literal private IP
+rc=7
+## serve
+error: invalid configuration: network: isolation violation: static_peers entry rejected in private mode: address must be a literal private IP
+rc=4

@@ -1,0 +1,9 @@
+## A adds B with a WRONG --expect (A's own address): must be refused
+error: contact record is not for the expected address
+rc=4
+## A adds B with --expect <B address>
+an1q6chdhpujtdqapxjcdvxal4ntp2uyklt7carnlakgjl5hgzdu2cqb2p3uu trusted alias=b
+rc=0
+## B adds A with --expect <A address>
+an1zren6rxfdcw5th3igijx6x5c5vea7codw5xlx73fmx24ktuetatkpexkh4 trusted alias=a
+rc=0

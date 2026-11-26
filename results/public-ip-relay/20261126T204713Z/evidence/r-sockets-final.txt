@@ -1,0 +1,2 @@
+ESTAB 0      0      <PUB_IP_R>:60000 172.28.66.22:40364 timer:(keepalive,6.455ms,0)
+

@@ -1,0 +1,57 @@
+## 2026-11-26T21:04:59Z Mac, agent A: doctor --ready
+[ok  ] data dir permissions: directory 0700, files 0600
+[ok  ] config: <datadir>/a/agentnet.toml valid (public mode, 1 peer(s))
+[ok  ] identity: address an1zren6rxfdcw5th3igijx6x5c5vea7codw5xlx73fmx24ktuetatkpexkh4
+[ok  ] replay guard: inactive (store generation 55)
+[warn] single instance: the same identity running in two data directories cannot be detected or prevented (the data-dir lock only covers one directory); both would receive, persist and acknowledge every message independently and may both fire triggers
+       -> run each identity in exactly one place; to move it, stop the old daemon first and copy agentnet.db + agentnet.generation or use `identity export/import`
+[ok  ] daemon socket: daemon answers on agentnet.sock
+[ok  ] node reachable: http://127.0.0.1:18690 answered 200
+[ok  ] clock: within 1 s of the node's clock
+[ok  ] isolation: no isolation violation reported
+[skip] peers == allowlist: public mode: no allowlist audit
+[ok  ] history sync: last successful relay Store sync 2 s ago (interval 15 s)
+[ok  ] transport ready: node reachable; 1 connected allowed peer(s)
+[ok  ] local inbox database: inbox query works (this tests the local database, not the relay Store)
+0 failing, 1 warning(s)
+ready: daemon, node, isolation and transport checks are ok
+rc=0
+## agent A: network status
+mode: public
+ready: true
+connected peers: 1
+isolation: ok
+queue: outbox queued=0 sent-unacked=0, inbox unread=26 quarantined=0, events unacked=26, active triggers=0
+last live poll: 2026-11-26 21:04:59 UTC
+last history sync: 2026-11-26 21:04:56 UTC
+detail: node reachable; 1 connected allowed peer(s)
+daemon: version 0.1.0 uptime 1042s
+webhook: disabled
+## Droplet, agent B: doctor --ready
+[ok  ] data dir permissions: directory 0700, files 0600
+[ok  ] config: /root/b/agentnet.toml valid (public mode, 1 peer(s))
+[ok  ] identity: address an1q6chdhpujtdqapxjcdvxal4ntp2uyklt7carnlakgjl5hgzdu2cqb2p3uu
+[ok  ] replay guard: inactive (store generation 55)
+[warn] single instance: the same identity running in two data directories cannot be detected or prevented (the data-dir lock only covers one directory); both would receive, persist and acknowledge every message independently and may both fire triggers
+       -> run each identity in exactly one place; to move it, stop the old daemon first and copy agentnet.db + agentnet.generation or use `identity export/import`
+[ok  ] daemon socket: daemon answers on agentnet.sock
+[ok  ] node reachable: http://127.0.0.1:18642 answered 200
+[ok  ] clock: within 0 s of the node's clock
+[ok  ] isolation: no isolation violation reported
+[skip] peers == allowlist: public mode: no allowlist audit
+[ok  ] history sync: last successful relay Store sync 7 s ago (interval 15 s)
+[ok  ] transport ready: node reachable; 1 connected allowed peer(s)
+[ok  ] local inbox database: inbox query works (this tests the local database, not the relay Store)
+0 failing, 1 warning(s)
+ready: daemon, node, isolation and transport checks are ok
+rc=0
+mode: public
+ready: true
+connected peers: 1
+isolation: ok
+queue: outbox queued=0 sent-unacked=0, inbox unread=29 quarantined=0, events unacked=29, active triggers=0
+last live poll: 2026-11-26 21:04:59 UTC
+last history sync: 2026-11-26 21:04:51 UTC
+detail: node reachable; 1 connected allowed peer(s)
+daemon: version 0.1.0 uptime 624s
+webhook: disabled
