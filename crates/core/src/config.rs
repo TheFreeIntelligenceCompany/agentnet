@@ -146,6 +146,58 @@ impl Default for StorageConfig {
     }
 }
 
+/// `[discovery]` (optional, opt-in; see `docs/discovery.md`).
+///
+/// Discovery is OFF by default. When on, the node subscribes to the listed
+/// discovery content topics and publishes signed capability advertisements to
+/// them. Advertisements are PLAINTEXT: every node on the relay can read them.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields, default)]
+pub struct DiscoveryConfig {
+    /// Master switch. With `false` nothing is subscribed or published and the
+    /// discovery tools return `policy_denied`.
+    pub enabled: bool,
+    /// The authorised discovery topic names (`[a-z0-9-]{1,32}`); each maps to
+    /// the content topic `/agentnet/1/discovery-<name>/proto`.
+    pub topics: Vec<String>,
+    /// Most stored advertisements across all topics.
+    pub max_records: u64,
+    /// Longest accepted (and issued) advertisement lifetime.
+    pub max_advert_ttl_s: u64,
+    /// Lifetime used when an `advertise_agent` request gives none.
+    pub default_advert_ttl_s: u64,
+    /// How often the own advertisement is published again.
+    pub republish_interval_s: u64,
+    /// Most capabilities in one advertisement (also the limit for received ones).
+    pub max_capabilities: usize,
+}
+impl Default for DiscoveryConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            topics: Vec::new(),
+            max_records: 500,
+            max_advert_ttl_s: 86_400,
+            default_advert_ttl_s: 3600,
+            republish_interval_s: 900,
+            max_capabilities: 16,
+        }
+    }
+}
+
+/// Valid discovery topic name: `[a-z0-9-]{1,32}`.
+pub fn valid_discovery_topic_name(n: &str) -> bool {
+    !n.is_empty()
+        && n.len() <= 32
+        && n.bytes()
+            .all(|b| matches!(b, b'a'..=b'z' | b'0'..=b'9' | b'-'))
+}
+
+/// The content topic of a discovery topic name.
+pub fn discovery_content_topic(name: &str) -> String {
+    format!("/agentnet/1/discovery-{name}/proto")
+}
+
 /// The complete engine configuration.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields, default)]
@@ -158,6 +210,8 @@ pub struct NodeConfig {
     pub delivery: DeliveryConfig,
     /// `[storage]`
     pub storage: StorageConfig,
+    /// `[discovery]`
+    pub discovery: DiscoveryConfig,
     /// Label reported by `network_status` (`private` / `public`).
     pub network_mode: String,
 }
@@ -168,6 +222,7 @@ impl Default for NodeConfig {
             triggers: TriggerConfig::default(),
             delivery: DeliveryConfig::default(),
             storage: StorageConfig::default(),
+            discovery: DiscoveryConfig::default(),
             network_mode: "private".to_owned(),
         }
     }
@@ -238,9 +293,57 @@ impl NodeConfig {
                 return Err(msg.to_owned());
             }
         }
+        self.validate_discovery()?;
         // Retries must not outlive what the receiver would accept.
         if d.max_ttl_s > i64::MAX as u64 / 2000 {
             return Err("delivery.max_ttl_s is unreasonably large".into());
+        }
+        Ok(())
+    }
+}
+
+impl NodeConfig {
+    fn validate_discovery(&self) -> Result<(), String> {
+        let c = &self.discovery;
+        let checks: [(bool, &str); 6] = [
+            (c.max_records > 0, "discovery.max_records must be > 0"),
+            (
+                c.max_advert_ttl_s > 0 && c.max_advert_ttl_s <= 7 * 86_400,
+                "discovery.max_advert_ttl_s must be in 1..=604800",
+            ),
+            (
+                c.default_advert_ttl_s > 0 && c.default_advert_ttl_s <= c.max_advert_ttl_s,
+                "discovery.default_advert_ttl_s must be > 0 and <= max_advert_ttl_s",
+            ),
+            (
+                c.republish_interval_s > 0,
+                "discovery.republish_interval_s must be > 0",
+            ),
+            (
+                (1..=crate::crypto::advert::MAX_CAPABILITIES_HARD).contains(&c.max_capabilities),
+                "discovery.max_capabilities must be in 1..=64",
+            ),
+            (c.topics.len() <= 16, "discovery.topics lists at most 16 topics"),
+        ];
+        for (ok, msg) in checks {
+            if !ok {
+                return Err(msg.to_owned());
+            }
+        }
+        for (i, t) in c.topics.iter().enumerate() {
+            if !valid_discovery_topic_name(t) {
+                return Err(format!(
+                    "discovery.topics: {t:?} is not a valid topic name ([a-z0-9-]{{1,32}})"
+                ));
+            }
+            if c.topics.iter().take(i).any(|p| p == t) {
+                return Err(format!("discovery.topics lists {t:?} twice"));
+            }
+        }
+        if c.enabled && c.topics.is_empty() {
+            return Err(
+                "discovery.enabled = true requires at least one name in discovery.topics".into(),
+            );
         }
         Ok(())
     }
@@ -259,6 +362,43 @@ mod tests {
         assert_eq!(c.delivery.retry_base_ms, 2000);
         assert_eq!(c.delivery.retry_max_ms, 300_000);
         assert_eq!(c.storage.retention_hours, 168);
+        let d = &c.discovery;
+        assert!(!d.enabled && d.topics.is_empty());
+        assert_eq!(
+            (
+                d.max_records,
+                d.max_advert_ttl_s,
+                d.default_advert_ttl_s,
+                d.republish_interval_s,
+                d.max_capabilities
+            ),
+            (500, 86_400, 3600, 900, 16)
+        );
+    }
+
+    #[test]
+    fn discovery_validation() {
+        let mut c = NodeConfig::default();
+        c.discovery.enabled = true;
+        assert!(c.validate().is_err(), "enabled without topics");
+        c.discovery.topics = vec!["general".into(), "team-1".into()];
+        assert!(c.validate().is_ok());
+        for bad in ["", "UP", "a b", "a/b", &"x".repeat(33)] {
+            let mut b = c.clone();
+            b.discovery.topics = vec![bad.to_owned()];
+            assert!(b.validate().is_err(), "{bad:?}");
+        }
+        let mut b = c.clone();
+        b.discovery.topics = vec!["a".into(), "a".into()];
+        assert!(b.validate().is_err());
+        let mut b = c.clone();
+        b.discovery.default_advert_ttl_s = b.discovery.max_advert_ttl_s + 1;
+        assert!(b.validate().is_err());
+        assert_eq!(
+            discovery_content_topic("general"),
+            "/agentnet/1/discovery-general/proto"
+        );
+        assert!(serde_json::from_str::<NodeConfig>(r#"{"discovery":{"nope":1}}"#).is_err());
     }
 
     #[test]

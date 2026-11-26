@@ -6,6 +6,7 @@
 //! `send`, triggers/events in `triggers`, and the `AgentApi` implementation in
 //! `api_impl`.
 
+use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
@@ -19,6 +20,7 @@ use tokio_util::sync::CancellationToken;
 use crate::api::{ApiError, ChangeHint, DeliveryState, Trust};
 use crate::clock::Clock;
 use crate::config::NodeConfig;
+use crate::crypto::advert::AdvertLimits;
 use crate::crypto::envelope::OpenLimits;
 use crate::crypto::{
     default_protection, Address, Identity, MessageProtection, VerifiedContact, VerifiedRevocation,
@@ -146,6 +148,11 @@ pub struct Node {
     pub(crate) history_kick: Notify,
     pub(crate) max_frame_len: usize,
     pub(crate) open_limits: OpenLimits,
+    /// Authorised discovery topics (name, content topic); empty unless
+    /// `discovery.enabled`.
+    pub(crate) disc_topics: Vec<(String, ContentTopic)>,
+    pub(crate) advert_limits: AdvertLimits,
+    disc_subscribed: Mutex<HashSet<ContentTopic>>,
     subscribed: AtomicBool,
     last_live_poll_at: AtomicI64,
     transport_was_ok: AtomicBool,
@@ -302,6 +309,25 @@ impl Node {
             max_ttl_ms: i64::try_from(d.max_ttl_s.saturating_mul(1000)).unwrap_or(i64::MAX),
             max_frame_len,
         };
+        let dc = &config.discovery;
+        let disc_topics: Vec<(String, ContentTopic)> = if dc.enabled {
+            dc.topics
+                .iter()
+                .map(|n| {
+                    ContentTopic::new(crate::config::discovery_content_topic(n))
+                        .map(|t| (n.clone(), t))
+                        .map_err(|e| NodeError::Config(e.to_string()))
+                })
+                .collect::<Result<_, _>>()?
+        } else {
+            Vec::new()
+        };
+        let advert_limits = AdvertLimits {
+            max_ttl_ms: i64::try_from(dc.max_advert_ttl_s.saturating_mul(1000))
+                .unwrap_or(i64::MAX),
+            clock_skew_ms: open_limits.clock_skew_ms,
+            max_capabilities: dc.max_capabilities,
+        };
         let (changes, _) = broadcast::channel(256);
         let (pause, _) = watch::channel(false);
         let sidecar_path = options
@@ -333,6 +359,9 @@ impl Node {
             history_kick: Notify::new(),
             max_frame_len,
             open_limits,
+            disc_topics,
+            advert_limits,
+            disc_subscribed: Mutex::new(HashSet::new()),
             subscribed: AtomicBool::new(false),
             last_live_poll_at: AtomicI64::new(0),
             transport_was_ok: AtomicBool::new(true),
@@ -424,6 +453,7 @@ impl Node {
                 .tx(|tx| kv_set(tx, KV_LOCAL_REVOCATION, r.document()))?;
         }
         self.announce_changes(now)?;
+        self.reissue_own_adverts(now)?;
         Ok(())
     }
 
@@ -510,8 +540,9 @@ impl Node {
     /// Test hook: row count of one of the engine's tables.
     #[doc(hidden)]
     pub fn debug_table_count(&self, table: &str) -> u64 {
-        const TABLES: [&str; 10] = [
+        const TABLES: [&str; 11] = [
             "revocations",
+            "adverts",
             "contacts",
             "outbox",
             "inbox",
@@ -668,7 +699,31 @@ impl Node {
                 self.metrics.inc("transport.poll_error");
             }
         }
-        frames
+        let mut frames = frames?;
+        // Discovery topics (opt-in; empty unless `discovery.enabled`). A failure
+        // here never affects message delivery: history sync recovers adverts.
+        for (_, t) in &self.disc_topics {
+            let known = self
+                .disc_subscribed
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .contains(t);
+            if !known {
+                if self.transport.subscribe(t).await.is_err() {
+                    self.metrics.inc("advert.subscribe_error");
+                    continue;
+                }
+                self.disc_subscribed
+                    .lock()
+                    .unwrap_or_else(|e| e.into_inner())
+                    .insert(t.clone());
+            }
+            match self.transport.poll(t).await {
+                Ok(f) => frames.extend(f),
+                Err(_) => self.metrics.inc("advert.poll_error"),
+            }
+        }
+        Ok(frames)
     }
 
     /// Poll the live queue once and process every frame returned.
@@ -729,52 +784,67 @@ impl Node {
             .saturating_mul(1_000_000);
         let max_window = self.transport.max_history_window_ns().max(1);
         let mut rep = HistoryReport::default();
-        let mut ws = start_ns;
+        // The inbox topic first, then the discovery topics (only when enabled).
+        // Older adverts than `max_advert_ttl + skew` are expired anyway, so the
+        // discovery windows start no earlier than that.
+        let mut targets: Vec<(ContentTopic, i64)> = vec![(self.topic.clone(), start_ns)];
+        if !self.disc_topics.is_empty() {
+            let advert_floor = now
+                .saturating_sub(self.advert_limits.max_ttl_ms)
+                .saturating_sub(self.advert_limits.clock_skew_ms);
+            let d_start = start_ms.max(advert_floor).saturating_mul(1_000_000);
+            for (_, t) in &self.disc_topics {
+                targets.push((t.clone(), d_start));
+            }
+        }
         let mut pages = 0usize;
-        loop {
-            let we = ws.saturating_add(max_window).min(end_ns);
-            let mut cursor: Option<String> = None;
+        for (topic, topic_start_ns) in targets {
+            let mut ws = topic_start_ns;
             loop {
-                pages += 1;
-                if pages > MAX_HISTORY_PAGES {
-                    rep.error = Some("too many history pages".into());
-                    return Ok(rep);
-                }
-                let q = HistoryQuery {
-                    topic: self.topic.clone(),
-                    start_ns: ws,
-                    end_ns: we,
-                    cursor: cursor.clone(),
-                    limit: HISTORY_PAGE_LIMIT,
-                };
-                let page = match self.transport.history(&q).await {
-                    Ok(p) => p,
-                    Err(e) => {
-                        self.metrics.inc(match e {
-                            TransportError::HistoryUnavailable(_) => "history.unavailable",
-                            TransportError::Isolation(_) => "history.isolation",
-                            _ => "history.error",
-                        });
-                        rep.error = Some(sanitize(&e.to_string()));
+                let we = ws.saturating_add(max_window).min(end_ns);
+                let mut cursor: Option<String> = None;
+                loop {
+                    pages += 1;
+                    if pages > MAX_HISTORY_PAGES {
+                        rep.error = Some("too many history pages".into());
                         return Ok(rep);
                     }
-                };
-                for f in &page.frames {
-                    rep.frames += 1;
-                    if self.ingest_frame(f).is_store_failure() {
-                        rep.error = Some("storage error while processing history".into());
-                        return Ok(rep);
+                    let q = HistoryQuery {
+                        topic: topic.clone(),
+                        start_ns: ws,
+                        end_ns: we,
+                        cursor: cursor.clone(),
+                        limit: HISTORY_PAGE_LIMIT,
+                    };
+                    let page = match self.transport.history(&q).await {
+                        Ok(p) => p,
+                        Err(e) => {
+                            self.metrics.inc(match e {
+                                TransportError::HistoryUnavailable(_) => "history.unavailable",
+                                TransportError::Isolation(_) => "history.isolation",
+                                _ => "history.error",
+                            });
+                            rep.error = Some(sanitize(&e.to_string()));
+                            return Ok(rep);
+                        }
+                    };
+                    for f in &page.frames {
+                        rep.frames += 1;
+                        if self.ingest_frame(f).is_store_failure() {
+                            rep.error = Some("storage error while processing history".into());
+                            return Ok(rep);
+                        }
+                    }
+                    match page.next_cursor {
+                        Some(c) if Some(&c) != cursor.as_ref() => cursor = Some(c),
+                        _ => break,
                     }
                 }
-                match page.next_cursor {
-                    Some(c) if Some(&c) != cursor.as_ref() => cursor = Some(c),
-                    _ => break,
+                if we >= end_ns {
+                    break;
                 }
+                ws = we;
             }
-            if we >= end_ns {
-                break;
-            }
-            ws = we;
         }
         self.store
             .tx(|tx| kv_set(tx, KV_HISTORY_WATERMARK, &now.to_string()))?;
@@ -843,6 +913,7 @@ impl Node {
                 "DELETE FROM triggers WHERE state != 'active' AND created_at < ?1",
                 [ev_ret],
             )?;
+            pruned += self.prune_adverts(tx, now)?;
             rep.pruned_rows = pruned;
             Ok((rep, expired))
         })?;
@@ -933,7 +1004,10 @@ impl Node {
             loop {
                 tokio::select! {
                     _ = shutdown.cancelled() => return,
-                    _ = self.step_send() => {}
+                    _ = async {
+                        let _ = self.step_send().await;
+                        let _ = self.step_adverts().await;
+                    } => {}
                 }
                 tokio::select! {
                     _ = shutdown.cancelled() => return,

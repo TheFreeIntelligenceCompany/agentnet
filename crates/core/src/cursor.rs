@@ -16,6 +16,8 @@ pub enum CursorKind {
     Event,
     /// Conversation position `(timestamp, direction, seq)`.
     Conversation,
+    /// Discovery result position (advert row id).
+    Advert,
 }
 
 impl CursorKind {
@@ -25,6 +27,7 @@ impl CursorKind {
             Self::Outbox => "outbox",
             Self::Event => "event",
             Self::Conversation => "conv",
+            Self::Advert => "advert",
         }
     }
 }

@@ -515,6 +515,14 @@ impl MockTransport {
         });
     }
 
+    /// Every topic this endpoint ever subscribed to through the trait (sorted),
+    /// for asserting that a node subscribes to nothing it should not.
+    pub fn subscribed_topics(&self) -> Vec<ContentTopic> {
+        let mut v: Vec<ContentTopic> = self.with_ep(|e| e.wanted.iter().cloned().collect());
+        v.sort_by(|a, b| a.as_str().cmp(b.as_str()));
+        v
+    }
+
     /// Number of transparent re-subscriptions performed after restarts.
     pub fn resubscribe_count(&self) -> u64 {
         self.with_ep(|e| e.resubscribes)

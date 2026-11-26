@@ -15,6 +15,7 @@ pub mod clock;
 pub mod config;
 pub mod crypto;
 pub mod cursor;
+mod discovery;
 pub mod error;
 pub mod guard;
 mod ingest;

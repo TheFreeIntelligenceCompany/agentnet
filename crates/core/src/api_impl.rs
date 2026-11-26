@@ -5,7 +5,8 @@ use rusqlite::{params, OptionalExtension, Row};
 use tokio::sync::broadcast;
 
 use crate::api::{
-    AcknowledgeResponse, AddContactRequest, AgentApi, ApiError, ApiResult, ChangeHint, ContactInfo,
+    AcknowledgeResponse, AddContactRequest, AdvertInfo, AdvertiseRequest, AgentApi, DiscoverPage,
+    DiscoverRequest, WithdrawInfo, ApiError, ApiResult, ChangeHint, ContactInfo,
     ConversationEntry, ConversationPage, CreateTriggerRequest, DeleteTriggerResponse, Direction,
     ErrorCode, EventPage, IdentityInfo, InboxRecord, MessageStatus, NetworkStatus, OutboxPage,
     OutboxRecord, PageRequest, QueueHealth, ReadInboxRequest, ReadInboxResponse, ReplayGuardInfo,
@@ -120,6 +121,9 @@ impl Node {
                 )?;
                 if n == 0 {
                     return Err(ApiError::not_found("no such contact").into());
+                }
+                if trust == Trust::Blocked {
+                    Self::purge_adverts(tx, &addr)?;
                 }
                 let row = self
                     .load_contact(tx, &addr)?
@@ -460,6 +464,9 @@ impl AgentApi for Node {
                    alias = excluded.alias, trust = excluded.trust, updated_at = excluded.updated_at",
                 params![addr.to_string(), vc.document(), alias, trust_to_db(trust), added_at],
             )?;
+            if trust == Trust::Blocked {
+                Self::purge_adverts(tx, &addr)?;
+            }
             let row = crate::node::ContactRow { contact: vc.clone(), trust, alias, added_at, revoked: false };
             if updated {
                 // Pending messages survive the recipient's key rotation.
@@ -681,6 +688,18 @@ impl AgentApi for Node {
 
     async fn ack_events(&self, cursor: String) -> ApiResult<()> {
         self.ack_events_impl(cursor)
+    }
+
+    async fn advertise_agent(&self, req: AdvertiseRequest) -> ApiResult<AdvertInfo> {
+        self.advertise_impl(req)
+    }
+
+    async fn withdraw_advert(&self, topic: String) -> ApiResult<WithdrawInfo> {
+        self.withdraw_impl(topic)
+    }
+
+    async fn discover_agents(&self, req: DiscoverRequest) -> ApiResult<DiscoverPage> {
+        self.discover_impl(req)
     }
 
     fn changes(&self) -> broadcast::Receiver<ChangeHint> {

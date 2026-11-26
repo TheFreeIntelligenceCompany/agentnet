@@ -72,6 +72,41 @@ pub enum RevocationError {
     InvalidReason,
 }
 
+/// Failure to create, parse or verify a signed capability advertisement.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, thiserror::Error)]
+pub enum AdvertError {
+    #[error("advertisement frame is malformed or too large")]
+    BadFrame,
+    #[error("advertisement document exceeds the size limit")]
+    TooLarge,
+    #[error("malformed advertisement: {0}")]
+    Malformed(&'static str),
+    #[error("unknown advertisement version {0}")]
+    UnknownVersion(u64),
+    #[error("invalid address in advertisement: {0}")]
+    InvalidAddress(AddressError),
+    #[error("advertisement signature does not verify under the address it names")]
+    BadSignature,
+    #[error("the embedded contact record is invalid: {0}")]
+    BadContact(ContactError),
+    #[error("the embedded contact record is for a different address")]
+    ContactAddressMismatch,
+    #[error("advertisement timestamps are invalid")]
+    InvalidTimestamp,
+    #[error("advertisement has expired")]
+    Expired,
+    #[error("advertisement was issued in the future")]
+    FromFuture,
+    #[error("advertisement lifetime exceeds the maximum")]
+    TtlTooLong,
+    #[error("invalid capability: {0}")]
+    InvalidCapability(&'static str),
+    #[error("invalid display name")]
+    InvalidDisplayName,
+    #[error("invalid sequence number")]
+    InvalidSeq,
+}
+
 /// Failure to seal an envelope.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, thiserror::Error)]
 pub enum SealError {

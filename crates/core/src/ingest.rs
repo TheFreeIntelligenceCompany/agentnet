@@ -58,6 +58,18 @@ pub enum FrameOutcome {
     HeldByGuard,
     /// An ack that was ignored (wrong party, unknown id, untrusted, duplicate).
     AckIgnored,
+    /// A valid advertisement was stored, replaced an older one or recorded a
+    /// withdrawal (discovery topics only).
+    AdvertApplied,
+    /// A valid advertisement that changed nothing (stale or repeated sequence
+    /// number, expired, or our own).
+    AdvertIgnored,
+    /// A discovery-topic frame that is not a valid advertisement (counted by kind).
+    AdvertInvalid,
+    /// Dropped without being stored: an advertisement frame on an inbox topic, a
+    /// sealed frame on a discovery topic, an advertiser that is blocked or
+    /// revoked, or a full advert table.
+    Dropped,
     /// The database failed; nothing was recorded, the frame is not marked seen.
     StoreFailure,
 }
@@ -147,6 +159,16 @@ impl Node {
             }
             Ok(false) => {}
             Err(_) => return self.store_failure(),
+        }
+        // 1b. route by topic: discovery topics carry plaintext advertisement
+        // frames only; every other topic carries sealed frames only.
+        if let Some(name) = self.discovery_name(&frame.topic) {
+            return self.ingest_advert_frame(frame, &name);
+        }
+        if crate::crypto::advert::has_advert_magic(&frame.payload) {
+            self.metrics.inc("advert.cross_topic.advert_on_inbox");
+            self.mark_transport_seen(frame);
+            return FrameOutcome::Dropped;
         }
         // 2. open
         let now = self.now();
