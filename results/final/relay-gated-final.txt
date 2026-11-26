@@ -1,4 +1,4 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.80s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.68s
      Running unittests src/main.rs (target/debug/deps/agentnet_acceptance-4a930d6b8766df72)
 
 running 0 tests
@@ -9,27 +9,27 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
 running 0 tests
 
-test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 12 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 16 filtered out; finished in 0.00s
 
      Running tests/cli.rs (target/debug/deps/cli-517fb641811481ea)
 
 running 0 tests
 
-test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 26 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 29 filtered out; finished in 0.00s
 
      Running tests/relay_discovery.rs (target/debug/deps/relay_discovery-58bb17eab7c2264e)
 
 running 1 test
 test signed_capability_discovery_works_over_the_private_relay ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 34.50s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 34.32s
 
      Running tests/relay_e2e.rs (target/debug/deps/relay_e2e-0e507deb0bba19e3)
 
 running 1 test
 test two_agentnet_serve_processes_exchange_messages_over_the_private_relay ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.63s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.97s
 
      Running unittests src/lib.rs (target/debug/deps/agentnet_core-6977f6af65678f01)
 
@@ -101,7 +101,7 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; fini
 
 running 0 tests
 
-test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 17 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 20 filtered out; finished in 0.00s
 
      Running tests/discovery.rs (target/debug/deps/discovery-619d85c9ecd390e2)
 
@@ -167,18 +167,18 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 17 filtered out; fin
 
 running 0 tests
 
-test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 73 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 85 filtered out; finished in 0.00s
 
      Running tests/logos_rest_relay.rs (target/debug/deps/logos_rest_relay-3be48f08846c5ffb)
 
 running 5 tests
-test isolation_audit_passes_with_right_allowlist_and_fails_closed_with_wrong_one ... ok
 test a_to_b_and_b_to_a_with_identical_ids_in_live_and_history ... ok
+test isolation_audit_passes_with_right_allowlist_and_fails_closed_with_wrong_one ... ok
+test history_paginates_across_pages_and_dedupes_against_live ... ok
 test max_payload_len_is_accepted_and_delivered_and_one_more_is_rejected_locally ... ok
 test adapter_redial_restores_a_disconnected_client ... ok
-test history_paginates_across_pages_and_dedupes_against_live ... ok
 
-test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 11.03s
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 10.97s
 
    Doc-tests agentnet_core
 
