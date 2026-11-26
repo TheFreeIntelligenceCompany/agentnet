@@ -1,0 +1,1 @@
+INF 2026-11-26 23:19:52.873+00:00 Relay peer connections                     topics="waku node peer_manager" tid=1 file=peer_manager.nim:975 inRelayConns=1/50 outRelayConns=0/25 totalConnections=1/150 notConnectedPeers=1 outsideBackoffPeers=0

@@ -134,6 +134,7 @@ does **not** tell what happens with a NAT whose timeout is shorter than the ~9 s
    relay the stale socket died 31 to 32 s after the path was lost and the client was back 3.4 to 9.5 s after the path returned (4 of 4);
    with a tcp-reset REJECT rule on the client for stale relay segments, 2.3 to 9.7 s (4 of 4). Why the relay closes the new connection
    (probably one connection per peer id) is UNTESTED, as are real Tailscale and NAT devices.
+   **Idle variant** (`results/reconnect-idle/20261126T233013Z/SUMMARY.md`): when the relay's socket has nothing in flight, `tcp_retries2` never applies; reproduced deterministically (B's FIN lost, R idle): refused for 401 s and 496 s. A relay-side watchdog destroying sockets with no data received for 60 s (`spike/relay-wireguard/scripts/stale-watchdog.sh`) recovered 3 of 3 (2.4 s after the path returned).
    This is the same family as E12 in
    `docs/spike/notes-daemon-rest.md` (a client that loses its relay does not simply reconnect). It is the realistic failure for outbound-only
    clients: expect anywhere from under a minute to a quarter of an hour after a NAT mapping loss or a tunnel interruption. Messages were

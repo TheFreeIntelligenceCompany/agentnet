@@ -376,6 +376,7 @@ fn relay_print_config_has_the_verified_flags_and_marks_tailscale_untested() {
     assert!(s.contains("sysctls: {net.ipv4.tcp_retries2: \"6\"}"));
     assert!(s.contains("sysctl -w net.ipv4.tcp_retries2=6"));
     assert!(s.contains("half-open"));
+    assert!(s.contains("stale-watchdog.sh"));
     let j = json_ok(t.path(), &["relay", "print-config"]);
     assert!(j["relay_flags"].as_array().unwrap().len() > 20);
 }

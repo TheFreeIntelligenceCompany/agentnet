@@ -26,6 +26,19 @@ services:
     ports: ["127.0.0.1:18650:8645"]          # operator diagnostics only (R's REST); the firewall admits it only from the docker host gateway
     networks: {underlay: {ipv4_address: 172.29.70.10}}
 
+  # Profile "watchdog" (docker-compose --profile watchdog up -d stale-watchdog): destroys IDLE stale sockets on the relay. The node sets no
+  # SO_KEEPALIVE and never pings inbound peers, so an idle half-open socket is never retransmitted on and tcp_retries2 does not apply
+  # (results/reconnect-idle/*/SUMMARY.md). Shares R's network namespace; needs NET_ADMIN and `ss -K`.
+  stale-watchdog:
+    profiles: [watchdog]
+    image: an-net-tools:local
+    container_name: an-wg-r-watchdog
+    network_mode: "service:wg-r"
+    cap_add: [NET_ADMIN]
+    volumes: ["./scripts:/scripts:ro"]
+    command: ["sh", "/scripts/stale-watchdog.sh", "60000", "60", "10"]
+    depends_on: {wg-r: {condition: service_healthy}}
+
   wg-a:
     <<: *wg
     container_name: an-wg-a
@@ -79,7 +92,7 @@ services:
       - --metrics-server=false
       - --peer-persistence=false
       - --local-storage-path=/data
-      - --log-level=INFO
+      - --log-level=${R_LOG_LEVEL:-INFO}
     volumes: ["rdata:/data"]
 
   node-a:

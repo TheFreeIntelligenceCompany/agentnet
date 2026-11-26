@@ -1,0 +1,7 @@
+t_ms	event	detail
+0	block_start
+51485	B_lists_R_not_connected	CanConnect
+51485	redial	http=400 dur=10075ms
+63773	redial	http=400 dur=10094ms
+76101	block_end
+76101	redial	http=200 dur=64ms

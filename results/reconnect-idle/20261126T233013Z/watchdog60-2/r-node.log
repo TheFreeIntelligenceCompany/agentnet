@@ -1,0 +1,28 @@
+DBG 2026-11-26 23:07:36.024+00:00 Maintaining subscriptions                  topics="waku filter" tid=1 file=protocol.nim:239
+DBG 2026-11-26 23:07:36.024+00:00 Cleanup                                    topics="waku filter subscriptions" tid=1 file=subscriptions.nim:119 currentPeerIds=[]
+DBG 2026-11-26 23:07:36.024+00:00 After cleanup                              topics="waku filter subscriptions" tid=1 file=subscriptions.nim:131 currentPeerIds=[]
+DBG 2026-11-26 23:07:36.049+00:00 Retrieving peer info via peer exchange protocol topics="waku node peerexchange api" tid=1 file=peer_exchange.nim:70 amount=5
+DBG 2026-11-26 23:07:36.051+00:00 Peer exchange request could not be made as no peer exchange peers found topics="waku peer_exchange client" tid=1 file=client.nim:104
+DBG 2026-11-26 23:07:36.051+00:00 Failed to retrieve peer info via peer exchange protocol topics="waku node peerexchange api" tid=1 file=peer_exchange.nim:88 error="(status_code: SERVICE_UNAVAILABLE, status_desc: ok(peer_not_found_failure))"
+DBG 2026-11-26 23:07:36.052+00:00 Cannot fetch peers from peer exchange      topics="waku node peerexchange api" tid=1 file=peer_exchange.nim:98 cause="(status_code: SERVICE_UNAVAILABLE, status_desc: ok(peer_not_found_failure))"
+DBG 2026-11-26 23:07:39.633+00:00 Peer dial started                          topics="libp2p dialer" tid=1 file=dialer.nim:547 peerId=16Uiu2...bRy573 addresses=[/ip4/10.66.0.2/tcp/60000]
+DBG 2026-11-26 23:07:39.635+00:00 Peer dial started                          topics="libp2p dialer" tid=1 file=dialer.nim:547 peerId=16Uiu2...bRy573 addresses=[/ip4/10.66.0.2/tcp/33372]
+DBG 2026-11-26 23:08:09.633+00:00 Peer dial started                          topics="libp2p dialer" tid=1 file=dialer.nim:547 peerId=16Uiu2...bRy573 addresses=[/ip4/10.66.0.2/tcp/60000]
+DBG 2026-11-26 23:08:09.635+00:00 Peer dial started                          topics="libp2p dialer" tid=1 file=dialer.nim:547 peerId=16Uiu2...bRy573 addresses=[/ip4/10.66.0.2/tcp/33372]
+DBG 2026-11-26 23:08:18.346+00:00 unsubscribing pubsub peer                  topics="libp2p pubsub" tid=1 file=pubsub.nim:218 peerId=16Uiu2...UCqzq6
+DBG 2026-11-26 23:08:18.347+00:00 calculateConnectionState                   tid=1 file=node_health_monitor.nim:456 relayCount=1 storeClientCount=0 lightpushCount=0 filterCount=0
+DBG 2026-11-26 23:08:36.027+00:00 Maintaining subscriptions                  topics="waku filter" tid=1 file=protocol.nim:239
+DBG 2026-11-26 23:08:36.027+00:00 Cleanup                                    topics="waku filter subscriptions" tid=1 file=subscriptions.nim:119 currentPeerIds=[]
+DBG 2026-11-26 23:08:36.027+00:00 After cleanup                              topics="waku filter subscriptions" tid=1 file=subscriptions.nim:131 currentPeerIds=[]
+DBG 2026-11-26 23:08:36.057+00:00 Retrieving peer info via peer exchange protocol topics="waku node peerexchange api" tid=1 file=peer_exchange.nim:70 amount=5
+DBG 2026-11-26 23:08:36.057+00:00 Peer exchange request could not be made as no peer exchange peers found topics="waku peer_exchange client" tid=1 file=client.nim:104
+DBG 2026-11-26 23:08:36.058+00:00 Failed to retrieve peer info via peer exchange protocol topics="waku node peerexchange api" tid=1 file=peer_exchange.nim:88 error="(status_code: SERVICE_UNAVAILABLE, status_desc: ok(peer_not_found_failure))"
+DBG 2026-11-26 23:08:36.058+00:00 Cannot fetch peers from peer exchange      topics="waku node peerexchange api" tid=1 file=peer_exchange.nim:98 cause="(status_code: SERVICE_UNAVAILABLE, status_desc: ok(peer_not_found_failure))"
+DBG 2026-11-26 23:08:36.432+00:00 Transport connection accepted              topics="libp2p switch" tid=1 file=switch.nim:328 conn=:6b08bbf437072d81342908a4
+DBG 2026-11-26 23:08:36.434+00:00 Transport connection acceptance started    topics="libp2p switch" tid=1 file=switch.nim:296
+DBG 2026-11-26 23:08:36.440+00:00 created new pubsub peer                    topics="libp2p pubsub" tid=1 file=pubsub.nim:447 peerId=16Uiu2...UCqzq6
+DBG 2026-11-26 23:08:36.442+00:00 calculateConnectionState                   tid=1 file=node_health_monitor.nim:456 relayCount=1 storeClientCount=0 lightpushCount=0 filterCount=0
+DBG 2026-11-26 23:08:36.444+00:00 Incoming WakuRelay connection              topics="waku relay" tid=1 file=protocol.nim:192 connection=16Uiu2...UCqzq6:6b08bbf437072d81342908a8 protocol=/vac/waku/relay/2.0.0
+DBG 2026-11-26 23:08:36.447+00:00 Event identified                           topics="waku node peer_manager" tid=1 file=peer_manager.nim:941 peerId=16Uiu2...UCqzq6
+DBG 2026-11-26 23:08:36.450+00:00 Received WakuMetadata request              topics="waku metadata" tid=1 file=protocol.nim:86 remoteClusterId=ok(66) remoteShards="[0]" localClusterId=66 localShards="[0]" peer=16Uiu2...UCqzq6
+DBG 2026-11-26 23:08:36.545+00:00 calculateConnectionState                   tid=1 file=node_health_monitor.nim:456 relayCount=2 storeClientCount=0 lightpushCount=0 filterCount=0
