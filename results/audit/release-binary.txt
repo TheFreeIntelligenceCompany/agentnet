@@ -1,0 +1,10 @@
+# host release build, 2026-11-25T22:39:04Z
+cmd: cargo build --release --locked -p agentnet-cli --target-dir <scratchpad>/target-release  (rustc 1.92.0, macOS arm64, profile.release lto=thin; wall time 8m48s on a loaded host while other agents were building)
+-rwxr-xr-x@ 1 dennison  wheel  18919008 Nov 25 17:36 /private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/target-release/release/agentnet
+$ otool -L agentnet
+/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/target-release/release/agentnet:
+	/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)
+	/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.40.3)
+$ strip -o agentnet.stripped agentnet; ls -l
+-rwxr-xr-x@ 1 dennison  wheel  15731872 Nov 25 17:38 /private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/agentnet.stripped
+/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/target-release/release/agentnet: Mach-O 64-bit executable arm64

@@ -1,0 +1,89 @@
+# Compatibility matrix
+
+Status: written by a contributor after the Phase A spikes; verified only as far as each cell cites evidence. **Anything not run on a platform is UNTESTED.** All runs were made on one macOS arm64 host
+(the Linux arm64 results come from containers in the colima VM on the same host, not from a separate machine). See `docs/spike-report.md` section 2 for the environment.
+
+Cell vocabulary: **OK** = run and the cited log shows success; **FAILED** = run and failed; **PARTIAL** = some of it ran; **UNTESTED** = not run.
+
+## 1. Platform x component
+
+| Component | macOS arm64 (host, rustc 1.92.0) | Linux arm64 (`rust:1.92-bookworm` container) | Linux x86_64 |
+|---|---|---|---|
+| **agentnet Rust workspace: build** | **OK**: debug build and release build (`results/audit/release-build.log`: `cargo build --release --locked -p agentnet-cli`, 8m48s on a loaded host, exit 0) | **OK**: `cargo build --workspace --locked` in `rust:1.92-bookworm` linux/arm64, from `git archive HEAD` (clean checkout, commit `0eb3d35`), exit 0, 45m58s wall on a heavily loaded host (`results/audit/linux-arm64-build.log`; an earlier attempt on the working tree failed only because the acceptance contributor had added a workspace member without a lockfile entry: `linux-arm64-build-attempt1-working-tree-FAILED-lock.log`, `linux-lockdiag.log`) | **UNTESTED** natively. linux/amd64 under qemu: **not attempted** (the native arm64 build alone took 46 min on a loaded host; an emulated build was judged unable to finish in the session) - **UNTESTED** |
+| **agentnet Rust workspace: tests** | **OK** as recorded by the lead's run: all suites `ok` in `results/b-daemon/workspace-tests.log` (commit `0eb3d35`: fmt, clippy `-D warnings`, all tests, live-relay e2e). Caveat: relay-gated tests count as passed when skipped (see `docs/spike-report.md` section 15 item 3) | **OK**: `cargo test --workspace --locked` exit 0, 25 test suites, **308 passed, 0 failed, 2 ignored**, 41m59s wall (same log). Relay-gated tests were **skipped** (no relay inside the container) but are counted as passed | **UNTESTED** |
+| **Logos Delivery node image** `wakuorg/nwaku@sha256:cb4d14a2...` (v0.39.2) | **OK** as a container in the colima VM: image is linux/amd64, emulated by qemu on the arm64 VM (all experiments, `results/a1-daemon/`, `results/a2-e2e-crypto/`). A native macOS node: **UNTESTED** | **OK** (same runs: the colima VM *is* Ubuntu 24.04 aarch64, `results/a1-daemon/toolchain.txt`); the image runs emulated. A native arm64 build of the Nim node from source: **UNTESTED** | **UNTESTED** natively (amd64 image expected to run natively; no evidence). CI note: GitHub `ubuntu-latest` is amd64, workflow **UNTESTED** |
+| **Native FFI bindings** (`logos-delivery-rust-bindings` `d60fcfd`, `liblogosdelivery.so`) | `cargo check` of the spike crate **OK** (4m13s, `results/a1-ffi/macos-cargo-check.log`); the native library was **not built** on macOS | built from source on linux/arm64 **only with a native-Nim workaround** (about 2 h wall, `docs/spike/notes-ffi-bindings.md` s6); 295 MB unstripped / 57 MB stripped; two nodes: **100/100 each way**, lead re-run in `results/a1-ffi/run-lead-verify-2node/`; **in-process start/stop leaks about 24.5 MB RSS + 4 fds per cycle**; stdout TRACE logging unless `LOG_LEVEL=ERROR` | **UNTESTED** |
+| **libchat** (`c7c0c1ba`) | build **FAILED** on rustc 1.92.0 (needs 1.95); **OK** on rustc 1.100.0: `cargo build --locked` 2m30s, `cargo test --locked` all pass (`results/a1-libchat/cargo-build-summary.txt`, `cargo-test-rust1100.txt`). Spike tests T6 and T7b FAIL by design of libchat (memory-only MLS state) | **UNTESTED** here (upstream CI lists ubuntu and macOS: `docs/spike/notes-libchat-and-crypto.md` s1.1, not verified by us) | **UNTESTED** here |
+| **rmcp 3.11.0 + `agentnet-mcp`** | **OK**: spike 14 tests, MVP 62 tests (`results/a3-mcp/cargo-test.log`, `results/b-mcp/cargo-test.log`) | **OK**: part of the workspace tests above (`agentnet-mcp` suites included) | **UNTESTED** |
+| **SQLite (bundled, `rusqlite` 0.42.0 / `libsqlite3-sys` 0.40.0)** | **OK** (part of the workspace build) | **OK**: bundled SQLite compiled by the container's gcc 12.2.0 (part of the build above) | **UNTESTED** |
+| **`cargo deny check`** | not run on the host (cargo-deny not installed; not installed on purpose) | **run in an arm64 Linux container**: `advisories ok, bans ok, licenses ok, sources ok` after one documented advisory ignore (RUSTSEC-2026-0387, see `docs/dependency-audit.md`) (`results/audit/cargo-deny.log`) | **UNTESTED** |
+| Docker/compose helper scripts (`spike/relay/scripts/up.sh` etc.) | **OK** with standalone `docker-compose` v5.6.0; the `docker compose` plugin form failed on this host | n/a | **UNTESTED** |
+
+Other platforms: Windows is not supported (Unix sockets and file modes; `docs/threat-model.md`). Intel macOS: **UNTESTED**.
+
+## 2. MCP protocol-version matrix
+
+Server: `agentnet-mcp` over rmcp 3.11.0, tested with the rmcp client only (**no third-party MCP host was tested**). Source: `docs/mcp-api.md` section 2, which cites `results/b-mcp/cargo-test.log` (lines `VERSION`); the spike
+repeated the offered/negotiated table with raw frames in `results/a3-mcp/transcript-stdio-legacy-*.txt` and `transcript-http.txt`. My own run through the CLI binary (quickstart, `results/audit/readme-quickstart-transcript.log`)
+confirms `server/discover` over stdio returns `["2024-11-05","2025-03-26","2025-06-18","2025-11-25","2026-07-28"]`.
+
+| Client opens with | Offered | Negotiated over **stdio** | Negotiated over **HTTP** (loopback, bearer) |
+|---|---|---|---|
+| `server/discover` (no handshake) | 2026-07-28 | 2026-07-28 | 2026-07-28 |
+| `initialize` | 2026-07-28 | 2025-11-25 | 2025-11-25 |
+| `initialize` | 2025-11-25 | 2025-11-25 | 2025-11-25 |
+| `initialize` | 2025-06-18 | 2025-06-18 | 2025-06-18 |
+| `initialize` | 2025-03-26 | 2025-03-26 | 2025-03-26 |
+| `initialize` | 2024-11-05 | 2024-11-05 | 2024-11-05 |
+| `initialize` | unknown (`1900-01-01`) | 2025-11-25 (spike, stdio only) | not recorded |
+| request `_meta` with an unsupported version | - | JSON-RPC `-32022` | HTTP 400 + `-32022` (spike) |
+
+Behaviour that depends on the negotiated era: change notifications (`subscriptions/listen` on 2026-07-28; `resources/subscribe` on legacy; the wrong era's method gets `-32601`), resource-not-found code (`-32602` modern, `-32002` for versions older than 2026-07-28),
+HTTP session headers (none for 2026-07-28; `Mcp-Session-Id` for legacy). Capabilities: `tools`, `resources` with `subscribe: true`; no `listChanged`, prompts, logging, sampling, tasks, completions.
+**UNTESTED**: MCP Tasks extension, rmcp `auth` feature, OAuth 2.1 / RFC 9728 profile for HTTP (the HTTP server uses a static bearer token), Claude Code / MCP Inspector / other hosts.
+
+## 3. Feature matrix: node feature x implementation x AgentNet
+
+"Native reference node" = the Nim `logos-delivery` node (v0.39.2 in the pinned image) and its flags. "REST API" = the node's local REST server. "Rust FFI bindings" = `logos-delivery-rust-bindings` `d60fcfd`
+(**read from source** `logos-delivery/src/*.rs` and `docs/spike/notes-ffi-bindings.md` unless the cell says it was exercised). "Used by AgentNet" = by the REST adapter in `crates/transport`.
+
+| Node feature | Native reference node | REST API | Rust FFI bindings | Used by AgentNet |
+|---|---|---|---|---|
+| Relay publish / subscribe / receive | yes (`--relay`); exercised | yes: `/relay/v1/auto/*` (autosharding) and `/relay/v1/*` (static); receive = polling a 50-slot destructive per-node cache; no message hash or pubsub topic in responses | `subscribe`, `unsubscribe`, `publish`, `publish_ephemeral`, `messages()` stream, `events()`; **exercised** (subscribe, publish, connect, events) in the FFI spike, 100/100 two-node | **yes** (autosharded publish and poll) |
+| Store: serve history | yes (`--store`, SQLite; retention policy `time:..;capacity:..`, applied at start and every 30 min); exercised | n/a (server side is a node flag) | not reachable from the new crate (audit finding); **UNTESTED** | the service node runs it (`docs/relay-setup.md`) |
+| Store: query | yes; exercised | yes `/store/v3/messages` (page size cap 100, 24 h range cap, 5 s query timeout) | `store_query`, `store_query_pages` exist in source but the audit found Store not reachable from the crate's stable tier; **UNTESTED** at runtime | **yes** (history catch-up) |
+| Filter (v2) | yes service and client; exercised in E4 | yes client-side routes `/filter/v2/*` | no explicit API in the source read (may be used internally in Edge mode): **UNTESTED** | no (clients use Relay) |
+| Light Push (v3 and legacy) | yes; exercised in E4 | yes `/lightpush/v3/message`, `/lightpush/v1/message` | no explicit API in the source read: **UNTESTED** | no |
+| Static peers | `--staticnode`, `--storenode`, `--filternode`, `--lightpushnode` (one value each for the service ones); exercised | dial via `POST /admin/v1/peers` (needs `--rest-admin`); `--staticnode` itself is a CLI flag only | `connect(multiaddr, timeout)`; **exercised** (spike); static-node config key via `option()`: **UNTESTED** | **yes**: flags on the node, REST dial for redial after relay loss; peer list audit via `GET /admin/v1/peers` |
+| Discovery toggles (discv5, peer-exchange, relay-peer-exchange, rendezvous, kad, DNS discovery, mix) | all default **on** except kad/mix/relay-PX; all set off in the verified flag set; exercised | none (flags only) | via `option("discv5Discovery", false)` etc.; **exercised** (FFI spike) | all off; AgentNet **cannot set them**, it audits the resulting peer list |
+| Cluster id / shards | `--cluster-id`, `--num-shards-in-network`, `--shard`; ids 1, 2, 3, 16 are presets (public bootstrap, RLN); exercised with 66 / 1 / 0 | auto routes need `--num-shards-in-network > 0`; adapter supports **only a single-shard network** | `option("clusterId", ..)`, `option("numShardsInNetwork", ..)`, `option("shards", ..)`; spike used 7777 / 8 shards | cluster 66, shard 0; presets rejected |
+| RLN (spam protection) | `--rln-relay` (default off); presets enable it; **not needed on a private cluster** (all experiments ran with it off); RLN-on private cluster **UNTESTED** | message `proof` field only | build flag `DISABLE_RLN`, zerokit submodule (Dockerfile) | not used |
+| Reliable channels / messaging layer | `--entry-layer=messaging\|channels`, `--reliability`; messaging smoke-tested (E10), reliability and channels **UNTESTED** | `/messaging/v1/*` (send, send events, received events with `source: live\|history`); API changed between v0.39.2 and master; 50-entry destructive cache | `create_channel`, `Channel::send/events`, `DeliveryEvent`: in source; **UNTESTED** at runtime | **no** (AgentNet implements its own acks, retries, dedupe) |
+| Ephemeral messages | relayed, not stored | `ephemeral: true` | `publish_ephemeral` | not used |
+| Authentication of the local API | n/a | **none**; CORS only via `--rest-allow-origin` | in-process | adapter requires a loopback/private `node_url` |
+| Node health / status | yes | `GET /health`, `/info`, `/version`, `/admin/v1/peers*` | `connection_status`, `wait_connected`, `connected_peers_info`, `listen_addresses` | `/health`-equivalent via peers audit and `doctor` |
+| NAT handling | `--nat=any` (default, UPnP/PMP), `extip:<ip>`, `none` | n/a | `option("nat", "none")` (spike) | `--nat=extip:<ip>` in the verified set |
+
+## 4. Toolchain and MSRV matrix
+
+| Item | Declared minimum Rust | Source |
+|---|---|---|
+| **This workspace** (`Cargo.toml` `workspace.package.rust-version`) | **1.88** | `Cargo.toml` |
+| Highest MSRV among locked dependencies | **1.89.0**: `rusqlite 0.42.0` and `uuid 1.29.3` (also 1.88: `libsqlite3-sys 0.40.0`, `rmcp 3.11.0`, `proptest 1.12.0`, `sha2 0.11.2`, `darling 0.24.1`, `icu_* 2.4.0`) | `cargo metadata` of `Cargo.lock`; `results/audit/crates-io-versions.txt` |
+| Result of building the locked workspace with rustc 1.88 | **FAILED**, `cargo check --workspace --locked` in `rust:1.88-bookworm` (rustc 1.88.0): "error: rustc 1.88.0 is not supported by the following packages: rusqlite@0.42.0 requires rustc 1.89.0; uuid@1.29.3 requires rustc 1.89.0", exit 101 (no compilation happened) | `results/audit/msrv-1.88-check.log` |
+| `rmcp` 3.11.0 | 1.88 | crates.io API, `docs/spike/notes-mcp.md` s2 |
+| `hpke` 0.15.1 | 1.87 | crates.io API |
+| `ed25519-dalek` 3.0.0 / `age` 0.12.1 / `tokio` 1.54.1 / `clap` 4.6.10 | 1.85 / 1.74 / 1.85 / 1.85 | crates.io API |
+| `vodozemac` 0.11.2 (documented upgrade path, compiled only) | 1.89 | notes-libchat s2 |
+| `openmls` 0.9.2 / 0.10.0-rc.1 (not used) | 1.91 / 1.94 | notes-libchat s2 |
+| libchat (`de-mls` 4.0.0, not used) | **1.95**; host rustc is 1.92, so it does not build on the host | `results/a1-libchat/cargo-build-summary.txt` |
+| Host used for every Phase A/B run | rustc 1.92.0, cargo 1.92.0 | `results/a1-daemon/toolchain.txt` |
+| CI pin | 1.92.0 (`.github/workflows/ci.yml`; workflow **UNTESTED** on GitHub) | the workflow |
+| Native FFI build | Rust 1.92 (container), Nim 2.2.6 built natively on aarch64, nimble 0.26.0, cmake 3.25.1, gcc/g++ 12.2.0, GNU Make 4.3, patchelf 0.14.3; build about 2 h wall including layer commits (CPU-bound part 45-50 min) | `results/a1-ffi/toolchain-versions.log`, `lib-build-6-clean.log` |
+| C toolchain needed by the Rust workspace | a C compiler for bundled SQLite (`libsqlite3-sys`) and `ring`; `cmake` is additionally needed by `aws-lc-sys`, which is only in the **dev/test** feature graph (via the `reqwest 0.13` dev-dependency of `agentnet-mcp` with `rustls` enabling `aws-lc-rs`): not in the release binary's graph (`results/audit/cargo-tree-inverse.txt`) | `results/audit/cargo-tree-inverse.txt`; the Linux container had **no cmake installed** and the test build still compiled `aws-lc-sys 0.47.0` successfully (`linux-arm64-build.log`), so cmake was not needed there |
+| Docker | client 29.8.1, server 29.5.2; standalone `docker-compose` 5.6.0 | `results/a1-daemon/toolchain.txt` |
+
+## 5. Inconsistencies found while building this matrix
+
+* The declared MSRV 1.88 is not what the locked dependency set requires (1.89.0); verified by running the check (section 4, `results/audit/msrv-1.88-check.log`): the build stops at dependency resolution on rustc 1.88.0. Either raise `rust-version` to 1.89 or pin `rusqlite`/`uuid` to older versions (`cargo update <name>@<ver> --precise <ver>`); the README prerequisite says 1.89 until the owner decides.
+* `docs/mcp-api.md` s8 and `docs/examples/mcp-client-stdio.json` order the CLI arguments differently (`mcp --data-dir X` versus `--data-dir X mcp`); both forms returned a valid `server/discover` answer in this report's quickstart run (`results/audit/readme-quickstart-transcript.log`, step 7).

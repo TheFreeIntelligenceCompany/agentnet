@@ -1,0 +1,33 @@
+== start 2026-11-25T22:31:37Z
+Linux 3dbd68c47c58 6.8.0-117-generic #117-Ubuntu SMP PREEMPT_DYNAMIC Thu May  7 17:26:37 UTC 2026 aarch64 GNU/Linux
+rustc 1.92.0 (ded5c06cf 2025-12-08)
+cargo 1.92.0 (344c4567c 2025-10-21)
+gcc (Debian 12.2.0-14+deb12u1) 12.2.0
+/repo/results/audit/linux-build.sh: line 5: cmake: command not found
+AGENTS.md
+Cargo.lock
+Cargo.toml
+crates
+docs
+goal.md
+scripts
+spike
+tests
+== cargo build --workspace --locked  2026-11-25T22:31:48Z
+    Updating crates.io index
+error: the lock file /work/Cargo.lock needs to be updated but --locked was passed to prevent this
+If you want to try to generate the lock file without accessing the network, remove the --locked flag and use --offline instead.
+
+real	1m25.278s
+user	0m31.353s
+sys	0m43.845s
+BUILD_EXIT=101
+== cargo test --workspace --locked  2026-11-25T22:33:14Z
+error: the lock file /work/Cargo.lock needs to be updated but --locked was passed to prevent this
+If you want to try to generate the lock file without accessing the network, remove the --locked flag and use --offline instead.
+
+real	0m6.446s
+user	0m1.603s
+sys	0m4.569s
+TEST_EXIT=101
+== end 2026-11-25T22:33:20Z

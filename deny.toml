@@ -1,0 +1,66 @@
+# cargo-deny configuration for the AgentNet workspace.
+# Run: `cargo deny check` (CI uses EmbarkStudios/cargo-deny-action; UNTESTED on GitHub, run locally
+# in a container, see results/audit/cargo-deny.log and docs/dependency-audit.md).
+#
+# Every allowance below is justified in docs/dependency-audit.md. Keep the two in sync.
+
+[graph]
+# The project is Unix only (README "Limitations"). Restricting the targets keeps Windows-only and
+# wasm-only crates in Cargo.lock (windows-sys, sqlite-wasm-rs, wasm-bindgen, ...) out of the checks.
+targets = [
+    "aarch64-apple-darwin",
+    "aarch64-unknown-linux-gnu",
+    "x86_64-unknown-linux-gnu",
+]
+all-features = true
+
+[advisories]
+version = 2
+# Advisory database as fetched at check time. One advisory is ignored, with justification:
+#  RUSTSEC-2026-0387 (crypto-bigint 0.5.5, timing variability in constant-time integer operations).
+#  Path: crypto-bigint <- elliptic-curve <- p256 <- {age 0.12.1, hpke 0.12.0}. These are pulled in only through
+#  the `age` crate (used for the passphrase-encrypted identity export, scrypt recipient only) and age's own
+#  `hpke 0.12.0`. AgentNet's message encryption uses `hpke =0.15.1` (X25519 only, no P-256, no crypto-bigint).
+#  Whether the P-256 code in age is reachable from the scrypt-only export path was read from the code, not tested.
+#  No fixed version is reachable: elliptic-curve 0.13.8 requires crypto-bigint ^0.5. Revisit when age updates.
+ignore = [
+    { id = "RUSTSEC-2026-0387", reason = "only via age -> p256 -> elliptic-curve; agentnet uses age scrypt recipients only; no semver-compatible fix" },
+]
+
+[licenses]
+version = 2
+confidence-threshold = 0.9
+# Allow list is the set of licences actually present in the dependency graph for the targets above,
+# all permissive. Anything else fails the check.
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-3.0",
+    "Zlib",
+    "CDLA-Permissive-2.0",
+    "Unlicense",
+    "MIT-0",
+    "CC0-1.0",
+    "BSL-1.0",
+]
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+allow-wildcard-paths = true
+# This project uses rustls (via reqwest) and bundled SQLite; it must not link OpenSSL.
+deny = [
+    { crate = "openssl" },
+    { crate = "openssl-sys" },
+    { crate = "native-tls" },
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []

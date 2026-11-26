@@ -1,0 +1,188 @@
+# AgentNet threat model
+
+Status: first version, written by a contributor after the Phase A spikes and the Phase B MVP, for the owner to
+fact-check. Nothing here has been reviewed by an independent security reviewer. The cryptographic composition
+(HPKE base mode + inner Ed25519 signature, `docs/adr/0002-end-to-end-encryption.md`) is **unaudited**.
+
+Evidence convention: a path with `:line` is source code in this repository at the time of writing (line numbers
+drift; the symbol or test name is the durable reference). `results/...` paths are raw logs. **UNTESTED** means no
+run in this repository exercises the statement. Everything that was run was run on **one macOS arm64 host**
+(containers on a colima VM), see `docs/spike-report.md` section 2. Nothing in this document is a claim about
+cross-machine, NAT, Tailscale or public-network behaviour.
+
+Related: wire protocol `docs/protocol.md` (section 7 lists the security properties and non-properties),
+architecture `docs/architecture.md`, host integration `docs/host-integration.md`, MCP surface `docs/mcp-api.md`,
+configuration `docs/configuration.md`, relay deployment `docs/relay-setup.md`, dependency inventory
+`docs/dependency-audit.md`.
+
+## 1. Assets
+
+| # | Asset | Where it lives | Why it matters |
+|---|---|---|---|
+| A1 | Ed25519 signing key (the address) | `<data_dir>/identity.json`, process memory | Loss of secrecy = permanent impersonation; there is no revocation (`docs/protocol.md` section 3) |
+| A2 | X25519 KEM private key (current and retained previous keys) | `identity.json`, process memory | Decrypts every recorded frame sealed to it, past and (until rotation) future |
+| A3 | Message plaintext (bodies, ids, sender, type, conversation) | SQLite `agentnet.db` (plaintext, not encrypted at rest), process memory | Confidentiality of agent conversations |
+| A4 | Contact book and trust decisions | `agentnet.db` | Controls who is acked, who can match triggers, who is quarantined |
+| A5 | Control-socket token, HTTP MCP bearer token, webhook HMAC secret | `control.token`, `mcp-http.token`, `webhook.secret_file` (mode 0600) | Grant API access, MCP access, or the ability to forge webhook calls |
+| A6 | Host event stream and trigger configuration | `agentnet.db`, config | Controls whether a harness spends compute on a message |
+| A7 | Availability of delivery (relay, store, local node) | Operator infrastructure | Offline delivery depends on it |
+| A8 | Metadata: who talks to which bucket, when, how much | Visible to relays, store nodes, network observers | See section 4 |
+| A9 | Private-mode isolation (no contact with public Waku infrastructure) | Operator flags + AgentNet audit | Core promise of private mode |
+
+## 2. Trust boundaries and actors
+
+```
+ [remote agent] --(sealed frame)--> [Logos Delivery relay/store] <--libp2p--> [local node sidecar]
+                                         ^   ^                                      |
+                           network observer   operator of relay/store              REST (no auth)
+                                                                                    |
+ [MCP host/client] --stdio/HTTP--> [agentnet mcp / http] --unix socket+token--> [agentnet serve daemon: identity, SQLite]
+ [harness] --unix socket+token / signed webhook-->  daemon
+ [Tailscale coordination plane] sees machine-level metadata only if tailnet is used (UNTESTED here)
+```
+
+| Boundary / actor | Trusted for | Not trusted for |
+|---|---|---|
+| **Agent host (OS user running the daemon)** | Everything. Holds A1-A5 in plaintext | Nothing is defended against it: **a compromised execution host is total loss** (section 5, T20). No confidentiality claim against it |
+| **Daemon (`agentnet serve`)** | Single writer of identity and SQLite (exclusive lock `crates/daemon/src/datadir.rs`) | |
+| **Local node sidecar (Logos Delivery node)** | Carrying opaque frames; reporting its own peer list | Confidentiality of what it carries (it sees only ciphertext + topic), honesty of its answers (a malicious local node can drop, replay or fabricate frames; fabricated frames fail authentication) |
+| **Node REST API** | Nothing: it has **no authentication or TLS** (`docs/spike/notes-daemon-rest.md` s1.1, item 4 of s3). Must be loopback/private (T11) | |
+| **Relay and Store operators** | Availability, retention | Anything else. They see section 4 metadata and can drop, delay, duplicate, reorder and replay frames |
+| **Network observers** | | See section 4 metadata (IP, timing, size of the libp2p connection; payload is ciphertext) |
+| **Tailscale coordination service** | Machine-level connectivity and ACLs (if used, **UNTESTED**) | Application identity and message encryption; it can observe which machines talk to which |
+| **MCP host/client (stdio)** | Whatever it launches as the same OS user | Content of remote messages (untrusted data) |
+| **MCP HTTP client** | Holders of the static bearer token | Browsers on the same machine (DNS rebinding, T15) |
+| **Harness** | Decides whether to run inference; holds the control token | |
+| **Remote agents (contacts)** | Authenticated as the holder of their address key | Their content (untrusted data, never instructions); their availability |
+| **Unknown/untrusted senders** | | Quarantined by default |
+
+## 3. Adversaries and capabilities
+
+| ID | Adversary | Assumed capabilities |
+|---|---|---|
+| ADV1 | Passive network observer on the path to the relay or on the relay's network | Sees IPs, ports, timing, sizes of libp2p connections |
+| ADV2 | Honest-but-curious or malicious relay/store operator | Sees every frame on every topic it carries, per-topic subscriber and publisher peer IDs and IPs, timing, padded size; can drop, delay, duplicate, replay, reorder; can retain forever |
+| ADV3 | Another participant on the same relay/cluster (knows or guesses the cluster id, can reach the relay port) | Can join the gossipsub mesh, subscribe to any bucket topic, publish arbitrary frames to any topic, flood |
+| ADV4 | Malicious or compromised contact (a trusted sender) | Sends authenticated messages with hostile content, floods, retries |
+| ADV5 | Unknown sender who learned a victim's contact record | Can seal valid frames to the victim; sender identity is theirs, not the victim's contacts' |
+| ADV6 | Local unprivileged user on the same machine (not the agent's OS user) | Can reach loopback TCP ports (node REST, HTTP MCP), can try to read files if modes are wrong |
+| ADV7 | Web page in the user's browser | Can issue requests to loopback ports (DNS rebinding, cross-origin) |
+| ADV8 | Attacker with read access to a disk backup or discarded disk | Reads `identity.json`, `agentnet.db`, tokens |
+| ADV9 | Supply-chain attacker (a crate, the node image) | Controls code that runs with the daemon's or node's privileges |
+| ADV10 | Compromised execution host / same-OS-user malware | Total access to A1-A6. **Out of scope: no defence is claimed** |
+
+## 4. What each party can see (metadata)
+
+Evidence: `results/a2-e2e-crypto/metadata-1795640646489.json`, section 8 of `docs/spike/notes-e2e-crypto.md`.
+These were observed on the single-host topology. Publisher IP as seen by the first-hop node: **UNTESTED**.
+
+| Observer | Sees | Does not see |
+|---|---|---|
+| Relay / Store node (stores and relays frames) | pubsub topic (`/waku/2/rs/66/0`), content topic = the recipient's **inbox bucket** (`/agentnet/1/inbox-<hh>/proto`, 1 of `inbox_buckets`, default 16, stable per recipient), publish time (publisher clock, ns), payload length (`564` B for bodies of 1 B and 115 B in one run, `1076` B for 166 B: power-of-two buckets), the 4-byte cleartext frame header `41 4e 01 01`, the random HPKE `enc`, message hash, the peer ID (and IP) of the publishing node and of every subscriber of the topic | Envelope `v`, `message_id`, sender, recipient, `type`, `conversation_id`, `correlation_id`, `created_at`, `expires_at`, body, inner signature, body length inside a bucket |
+| Any subscriber to the same bucket topic | All frames of the bucket; can trial-decrypt only its own | Content of others' frames |
+| Network observer | Connection endpoints and timing; payload is ciphertext | Content |
+| Tailscale coordination plane (if used; **UNTESTED**) | Which machines are in the tailnet, when they are online, connection metadata of the coordination protocol | Frame content, and (it does not terminate) the libp2p payload |
+
+Properties and costs of the bucket scheme:
+
+* **k-anonymity is within the bucket population of one deployment.** Bucket = `u16_be(SHA-256("agentnet/v1/inbox-topic" || signing_pk)[0..2]) mod inbox_buckets`
+  (`docs/protocol.md` section 3). Anyone who knows an address can compute its bucket, so the scheme hides *which member of a bucket*
+  a frame is for, not *which bucket*. With a small deployment (the 2-agent topologies used here) the anonymity set is 1-2.
+* **Bandwidth/CPU trade-off, measured.** A foreign frame costs one X25519 decapsulation + AEAD failure per receiver in the bucket:
+  **52.5 / 54.3 / 58.7 us** best-batch (three runs, 10 000 ops each, host macOS arm64, release build, host heavily loaded; median-batch
+  63.9 / 71.2 / 117.1 us) per failed open (`results/a2-e2e-crypto/bench-standalone-{1,2,3}.txt`, `docs/spike/notes-e2e-crypto.md` s7).
+  A successful full open incl. Ed25519 verify: 97.1-102.0 us best-batch. In the 100-logical-client / 1000-message run with 16 buckets,
+  **6695 failed trial decryptions** were observed for 1000 delivered messages, i.e. 6.7 foreign frames processed per delivered message
+  (`results/a2-e2e-crypto/load-1795640646489.json`, row "100 clients, poll 50 ms"). Arithmetic from the measured 55 us: 1000 foreign frames/s in one bucket
+  is about 5.5 % of one core (derived, not separately measured). More buckets means fewer foreign frames per agent and a smaller anonymity set; fewer buckets the reverse.
+  `inbox_buckets` is fixed per contact record (signed), range 1..=256.
+* **Store catch-up** replays every frame of the bucket inside the requested window (up to `storage.retention_hours`, default 168), so recovery bandwidth also scales with bucket population (not measured beyond the 20-message test, `results/a1-daemon/rust-probe-offline-45d196c.json`).
+* Timing correlation (sender publishes at t, recipient's bucket sees a frame at t) is **not mitigated**. No cover traffic, no mixnet. Mixnet readiness is **not claimed**.
+
+## 5. Threats, mitigations implemented, residual risk
+
+Mitigation column cites code or tests. "Residual" is what remains after the mitigation.
+
+### 5.1 Message security
+
+| # | Threat | Mitigation implemented | Evidence | Residual risk |
+|---|---|---|---|---|
+| T1 | Passive/active party reads a message (confidentiality) | HPKE base mode, DHKEM(X25519)/HKDF-SHA256/ChaCha20-Poly1305; envelope including sender, type, ids, body is inside the ciphertext | `crates/core/src/envelope.rs`; `docs/protocol.md` s5; tests `every_single_bit_flip_is_rejected`, `wrong_recipient_is_not_for_us` (`results/b-core/crypto-tests.log`); spike: wrong recipient 10/10 failed to open (`results/a2-e2e-crypto/wrong-recipient-1795640646489.json`) | **No independent review of the composition.** `hpke` 0.15.1 has no public third-party audit (ADR 0002). No forward secrecy: anyone obtaining the recipient KEM key (current or retained previous key) decrypts every recorded frame sealed to it (T2) |
+| T2 | Later compromise of the recipient KEM key decrypts recorded history (no forward secrecy / PCS) | `rotate-kem` limits *future* exposure; previous key kept only until `retire_at` (default `storage.retention_hours`) | `identity.rs` tests `rotation_and_prune`, `previous_keys_are_capped`; `docs/protocol.md` s7 | **Accepted, not mitigated.** No ratchet. Frames recorded by ADV2/ADV1 before rotation remain readable by whoever holds the old key. `vodozemac` is the documented upgrade path, **UNTESTED at runtime** (ADR 0002) |
+| T3 | Forged sender (impersonation of a contact) | Inner Ed25519 signature checked with `verify_strict` over the exact received bytes, under the key encoded in the `sender` address | `forged_sender_is_bad_signature`; spike `forgery-1795640646489.json` (forged sender -> `bad_signature` 1/1, honest control opened) | Holder of a contact's signing key can impersonate them to everyone; no revocation (T22) |
+| T4 | Message redirected to a different recipient (surreptitious forwarding) | `recipient` is inside the signed bytes and checked against own address; HPKE `info` contains the recipient KEM key | `surreptitious_forwarding_is_wrong_recipient`, `wrong_recipient_field_after_valid_signature`; spike forgery test (re-seal to C -> `wrong_recipient`) | None known beyond T1 caveats |
+| T5 | Tampering / truncation / extension | AEAD tag + header in `aad`; strict length-prefix and zero-padding check | `every_single_bit_flip_is_rejected` (564-byte frame: 4512 single-bit flips rejected: 32+256+4096+128), `truncation_at_every_length_is_rejected`; spike `tamper-1795640646489.json` | None known |
+| T6 | Replay of a valid frame | Persisted `(sender, message_id)` set until `expires_at + clock_skew`; `open` rejects expired envelopes; `transport_seen` is only an optimisation | `replay_now_and_after_dedupe_pruning` (`results/b-core/engine-tests.log`); spike `replay-1795640646489.json` | A replay inside the TTL window of a message whose dedupe row was pruned early by an operator action; clock errors (T21). A **duplicate re-triggers an ack** (at most once per `reack_min_interval_s` = 30), which an attacker holding a recorded frame can use to make the victim publish acks (small amplification, bounded) |
+| T7 | Malformed input crashes the parser | Total, strict parsers; property tests (`prop_open_never_panics_on_arbitrary_bytes`, `prop_authentic_garbage_envelope_never_panics`, `ten_thousand_random_frames_never_panic`) | `results/b-core/crypto-tests.log` | **No coverage-guided fuzzing was run** (goal.md section 5 asks "if feasible"): UNTESTED. Unknown `v`, suite, frame version are rejected with distinct errors |
+| T8 | Weak/low-order public keys | `verify_strict` rejects small-order keys; contact validation rejects zero and low-order X25519 keys via an HPKE trial seal | `rejects_weak_keys`, `low_order_kem_keys_rejected` | Relies on `hpke` aborting on an all-zero DH output (documented in `docs/protocol.md` s3) |
+| T9 | Substituted contact record (wrong key for an address) | Contact record is self-signed by the address key; `add_contact` supports `expected_address`; address *is* the signing key | `swapped_kem_key_from_other_identity`, `contact_record_round_trip_and_tampering`; spike forgery test (KEM-key substitution signed by M rejected) | **The first contact exchange is only as trustworthy as the out-of-band channel that delivered the address.** TOFU if a record is accepted without `--expect`. A newer contact record for the same address (a KEM rotation) is accepted from whoever holds the address's signing key, owner or thief: the verifier has no way to tell them apart |
+| T10 | Hostile content tries to make the agent act (prompt injection) | Bodies are data. MCP tool and field descriptions state they are UNTRUSTED (`tool_descriptions_state_the_trust_and_delivery_semantics`); events carry references, never text; no tool executes remote content; remote senders cannot create triggers, change policy or set webhook targets | `crates/mcp/src/server.rs` descriptions; `crates/daemon/tests/webhook_triggers.rs` (`unauthorized_senders_never_produce_trigger_events`); `docs/host-integration.md` s0 | **This is not solved by AgentNet.** The model that reads `read_inbox` output can still be manipulated by an authenticated contact's text; a trusted contact is trusted to send text, not to command. Hosts must treat bodies as untrusted input. No content scanning exists |
+
+### 5.2 Local node, network and private mode
+
+| # | Threat | Mitigation implemented | Evidence | Residual risk |
+|---|---|---|---|---|
+| T11 | Unauthenticated node REST abused by a local attacker (ADV6) | Private mode refuses a `node_url` that is not loopback/RFC 1918/100.64.0.0/10/ULA; documentation says bind loopback only | `crates/transport/src/logos_rest/config.rs` (`validate`), `config::tests::private_mode_*`; `agentnet relay print-config` publishes REST on host loopback only | **Anyone who can reach the REST port controls the node.** With `--rest-admin=true` (required by the isolation audit and redial) they can dial arbitrary peers (`POST /admin/v1/peers`), list peers, read and **drain** the relay cache (every `GET` is destructive: loses live frames; Store catch-up still recovers within retention), unsubscribe topics (unsubscribing drops the node from the mesh, `unsub-experiment.txt`), and publish garbage. They cannot decrypt frames (T1) or forge senders (T3). The node REST has no authentication to add; mitigation is network placement only. Any non-agent user on the same host can reach loopback ports: **single-tenant hosts only** |
+| T12 | Node connects to public peers while AgentNet believes it is private | (a) Startup validation: cluster id not in {1,2,3,16}, `peers` non-empty, `public_*` false (fail closed); (b) runtime audit of `GET /admin/v1/peers` every `audit_interval` (default **15 s**): any connected peer id outside the allowlist or an unauditable node -> `isolation_violation`, sends and receives refused; (c) redial POSTs only the configured static peers (rate limit 10 s) | `crates/transport/src/logos_rest/mod.rs` `fetch_audit`/`ensure_audit`/`redial`; `isolation_violation_blocks_everything_until_cleared`; live: `isolation_audit_passes_with_right_allowlist_and_fails_closed_with_wrong_one` (`results/b-transport/relay-tests.log`) | The audit is **detective, not preventive**: it reads the node's peer list, it cannot stop the node dialling. Up to 15 s may pass between audits. **Whether the node contacts public infrastructure depends on the operator's node flags** (discovery off, `--dns-addrs-name-server`, `--cluster-id`, `--nat=extip`, `--quic-support=false`); AgentNet cannot set them. The audit does not look at DNS: the node's default online-monitor queries `one.one.one.one` via 1.1.1.1 every 5 s even with all discovery off (E7, `results/a1-daemon/egress-default-dns.egress.txt`). With `--dns-addrs-name-server=127.0.0.1`: 1175 packets in 100 s, 0 with an endpoint outside the container subnet (`results/a1-daemon/e7b-egress-dns-localhost-run.txt`). Capture was on the colima VM bridge only; other NAT behaviour (UPnP/PMP, QUIC) **UNTESTED** |
+| T13 | Anyone who can reach the relay joins the private cluster | None in AgentNet. Cluster/shard separation is **not access control** (goal.md B2). Peer-ID allowlisting is **client-side**: a client ignores unknown peers' effect only by refusing to operate (T12); the *relay* accepts any peer that dials it and knows cluster 66 / shard 0 | `docs/spike/notes-daemon-rest.md` s1.2 | **Unmitigated at the AgentNet layer.** A joiner can subscribe to every bucket (sees ADV2-level metadata), publish garbage (T16), consume relay bandwidth. Needs firewall / tailnet ACL restricting tcp/60000 to known client IPs (`docs/relay-setup.md`). No RLN on private clusters (`--rln-relay=false`): no rate limiting except `--rate-limit` (UNTESTED) |
+| T14 | Relay outage, restart or partition (availability) | Retry with jittered exponential backoff (2 s base, 5 min cap, `max_attempts` 20), Store catch-up at start/reconnect/every 60 s, static-peer redial | `lost_publish_retries_with_backoff_bounds_then_delivers`, `offline_recipient_recovers_20_via_history`; live: redial 11.4 s (`results/b-transport/relay-disruptive-tests.log`) | After a relay restart the **gossipsub mesh took about 9 minutes** to carry live traffic again (E12, cause not found); recovery then relies on Store. Store availability, retention (`time:3600;capacity:5000` in the verified flag set = **1 hour**), and the +-20 s archive timestamp rule bound offline delivery. A relay operator can simply refuse to store. There is no automatic Store failover (E9) |
+| T15 | Browser-based attack on loopback HTTP MCP (DNS rebinding / CSRF) | Static bearer required on every request (constant-time compare, minimum 16 bytes); `Host` allowlist (default `localhost`, `127.0.0.1`, `::1`); `Origin` validation always on (empty allow-list = any present Origin is 403); non-loopback bind refused | `crates/mcp/src/http.rs`; `http_auth_origin_and_host_rules`, `serve_http_refuses_unsafe_configuration`, `router_fails_closed_with_an_unusable_token` (`results/b-mcp/cargo-test.log`); config `mcp_http.bind` must be loopback (`config::tests::mcp_http_bind_must_be_loopback`) | A **static bearer is not the MCP OAuth profile** (`2026-07-28/basic/authorization`); a host that requires OAuth discovery cannot authenticate. The token lives in a 0600 file; any process of the same OS user can read it. Third-party MCP hosts (Claude Code, Inspector) **UNTESTED** |
+| T16 | DoS: flooding a bucket topic or the store (ADV3, ADV5) | Foreign/garbage frames are rejected cheaply (header check, then one HPKE decap ~55 us); `transport_seen` prunes after 24 h or above 200 000 rows (`TRANSPORT_SEEN_CAP`, `crates/core/src/node.rs:35`); inbound channel bounded (256) with back-pressure; inbox cap `max_inbox_records` (100 000), quarantine cap `max_quarantined` (1000), outbox cap `max_outbox_pending` (1000) | `inbound_channel_applies_backpressure_and_loses_nothing`, `inbox_saturation_not_acked_then_accepted_after_space_frees`, `outbox_saturation_returns_unavailable`, `reject_blocked_accept_untrusted_and_quarantine_cap` | **Every foreign frame costs a SQLite write**: `ingest_frame` calls `mark_transport_seen` for `NotForUs` (`crates/core/src/ingest.rs`, branch `OpenError::NotForUs`), with `synchronous=FULL` (`docs/protocol.md` s8.8). A flood of 10^5 distinct frames grows `transport_seen` to its cap and costs CPU+fsync; **no flood test was run**: UNTESTED. The relay has no rate limit without RLN (T13). A full inbox makes the daemon refuse (not ack) new messages from legitimate senders. The REST cache is 50 slots and destructive: a flood within one poll interval evicts legitimate live frames silently (Store catch-up recovers them if the relay archived them) |
+| T17 | Hostile contact floods trigger events / wakes the harness | `policy.auto_trigger = false` by default; allow-listed `target_session`; `max_active` 32; `max_matches_per_minute` 60 (over budget: not recorded, once-triggers not consumed); lifetime cap 24 h; only Trusted, non-quarantined senders match | `policy_gates_on_create_trigger`, `rate_budget_blocks_recording_and_does_not_consume_once_triggers`, `unauthorized_senders_never_match`, `triggers_are_off_by_default` | A trusted contact can still burn the per-minute budget (60 events/min) so that other triggers do not fire (budget is global across triggers, `docs/protocol.md` s8.7). Budget exhaustion is a denial of wake-ups, not of storage |
+| T18 | Webhook abuse: SSRF, forged or replayed calls | One URL from host config only; http/https, no credentials; literal loopback/private IP or `localhost` unless `allow_remote`; link-local/metadata (169.254.0.0/16, fe80::/10), multicast, unspecified **always** blocked; names re-resolved per attempt and the connection pinned to a checked address; redirects never followed; proxies ignored; HMAC-SHA256 over `timestamp.body` with +-300 s window and `event_id` idempotency; 5 s timeout | `crates/daemon/src/webhook.rs` (`is_blocked_ip`, `.redirect(Policy::none()).no_proxy()`, `verify_signature`); tests `blocklist`, `redirects_are_not_followed`, `signature_round_trip_and_failures`, `startup_rejects_unsafe_webhook_setups`, `retries_on_500_then_succeeds_with_one_effect_per_event_id` | Replay protection beyond +-300 s is **the receiver's duty** (remember `event_id`s; the shipped mock harness does). The HMAC secret is a shared secret in a 0600 file. With `allow_remote = true` the operator takes responsibility for the destination. A DNS-rebinding race between the check and the connect is addressed by pinning the checked address (tested for `localhost` only: `localhost_resolves_to_a_pinned_loopback_address`); public-name behaviour **UNTESTED** against a real resolver |
+| T19 | Local control-socket abuse (ADV6) | Unix socket mode 0600 in a 0700 directory (daemon refuses looser modes at start); hello with 32-byte random token (constant time); 5 s hello timeout; 1 MiB line limit; 64 connections | `crates/daemon/src/server.rs:135`, `crates/daemon/src/datadir.rs`; tests `socket_auth_matrix`, `socket_file_is_private`, `hello_timeout_closes_the_connection`, `startup_refuses_bad_configuration_and_permissions` | Any process of the **same OS user** can read `control.token` and act as the user (that is the intended boundary). Root can do anything. Windows unsupported |
+
+### 5.3 Host, keys and operations
+
+| # | Threat | Mitigation implemented | Evidence | Residual risk |
+|---|---|---|---|---|
+| T20 | Compromised execution host / same-user malware | None. Secrets are plaintext in `identity.json` (mode 0600, directory 0700) and in process memory; zeroization on drop is best-effort (`docs/protocol.md` s7). **No confidentiality or integrity claim is made against a compromised host** | `crates/core/src/identity.rs` (load refuses group/other bits), `identity::tests::debug_has_no_secrets` | Total loss of A1-A6. No OS keychain, no HSM, no passphrase on the live file. Disk backups (ADV8) expose everything, `agentnet.db` plaintext included. Use full-disk encryption; **UNTESTED** that backups exclude the data dir |
+| T21 | Clock errors: replay of expired frames, or rejection of valid ones; Store refusing archive | Skew window 120 s (`clock_skew_s`), max TTL 7 d, `doctor` compares the local clock with the node's clock | `time_checks_skew_expiry_ttl`, `time_checks_and_exact_boundaries`; `doctor` check "clock: within 1 s of the node's clock" in `results/b-daemon/relay-e2e.log` | A host with a wrong clock may accept expired or reject valid messages. **Store archive silently refuses messages whose publisher timestamp is >20 s from the store node's clock** while the relay still delivers them (E3): offline recovery silently fails under skew. NTP is a deployment requirement; it is not enforced |
+| T22 | Key compromise, rotation and revocation | `rotate-kem` (same address, new contact record, previous key retired after a window); export/import with age (scrypt) | `docs/protocol.md` s3 "Rotation and revocation limits" | **There is no revocation.** A stolen signing key = a new identity and out-of-band re-introduction. Peers learn about a rotated KEM key only by importing the new record (no push). A thief of the KEM key keeps reading until senders move to the new record; senders that keep the old record keep sealing to it |
+| T23 | Identity at two places at once (migration mistakes, split brain) | One data dir = one process (exclusive `flock`); `identity export` requires the daemon stopped; import refuses a dir that has an identity; the store refuses a different identity (`opening_store_with_different_identity_is_refused`) | `lock_is_exclusive_and_released_on_drop`, `lock_exclusivity_and_graceful_shutdown_cleanup`; spike persistence test (20/20 decrypted after file migration; second process refused while first holds the lock: `results/a2-e2e-crypto/persistence-1795640646489.json`) | **The lock covers one data directory, not the identity.** Copying `identity.json` (or an export) to a second machine and running both yields two daemons that each dedupe, ack and trigger independently, with different inboxes. No detection exists: **UNTESTED** and unmitigated. An exported file protected by a weak passphrase is an identity leak |
+| T24 | Export file theft | age scrypt passphrase encryption, ASCII armor, file created 0600, never overwritten | `encrypted_export_import` | Offline passphrase guessing. Wrong passphrase and corruption are indistinguishable (by design) |
+| T25 | Unknown or untrusted senders reach the inbox | `unknown_senders = quarantine` (default): stored flagged, hidden from default reads, never acked, no event, no trigger; `reject`; `accept` stores but never acks or triggers | `quarantine_hides_message_and_emits_nothing`, `ack_rules_wrong_party_unknown_id_untrusted_and_no_ping_pong` | Quarantine consumes storage (cap 1000, then dropped). Anyone with a victim's contact record can enqueue quarantined messages (ADV5). Trust is per address, set by the user: **a user who trusts an address trusts the holder of its key** |
+| T26 | Supply chain (crates, node image) | Dependency versions fixed in `Cargo.lock`; `hpke` pinned `=0.15.1`, `rmcp` pinned `=3.11.0`; `deny.toml` + `cargo deny check` (results in `docs/dependency-audit.md`); node image referenced **by digest** `wakuorg/nwaku@sha256:cb4d14a2...` | `Cargo.toml`, `crates/cli/src/relay.rs` `IMAGE` | `hpke` is unaudited. The node image is **linux/amd64 only**, from Docker Hub, **not signed as far as verified** (signature/provenance checks UNTESTED, `docs/spike/notes-daemon-rest.md` s4), built from the Nim reference node whose vendored dependency licences and security were not audited. It runs as root inside the container (`rootfs-info.txt`). 439 packages appear in the lock graph (`docs/dependency-audit.md`), including bundled SQLite and `ring`/`aws-lc` C code |
+| T27 | MCP host misuses tools (confused deputy) | `acknowledge_message` is local only; `add_contact` description says only for verified contacts; `create_trigger` is `policy_denied` unless the host enabled it; tool annotations mark read-only/destructive | `tool_annotations_mark_read_only_tools`; `docs/mcp-api.md` s4 | An MCP client with the bearer token (or on stdio) can send messages as the agent, read the whole inbox and add contacts. The host's own approval UX is the control; AgentNet has no per-tool authorization. Only the rmcp client was tested; **third-party hosts UNTESTED** |
+| T28 | Data directory permissions loosened | Daemon refuses to start if the directory or secret files are group/other accessible | `startup_refuses_bad_configuration_and_permissions`, `dir_perms_and_tokens` | Check is at start only; changes while running are not noticed |
+
+## 6. Private mode: what AgentNet enforces and what the operator must do
+
+| Concern | Enforced by AgentNet | Depends on the operator |
+|---|---|---|
+| Config fails closed (no peers, public cluster id, public `node_url`, `public_fallback=true`, `public_discovery=true`) | Yes: startup error (`crates/daemon/src/config.rs`, `config::tests`) | |
+| Daemon talks only to the configured node REST (and the optional webhook) | Yes by construction (no other network client in the daemon; `docs/architecture.md` s2) - **not separately verified by a packet capture of the daemon**: UNTESTED | |
+| Node connected only to allowlisted peers | Detected within `audit_interval` (15 s) and then all traffic refused | The node's flags and network. Discovery flags, DNS server, NAT mode, QUIC, cluster id |
+| No public contact by the node | **Not enforced** | `--dns-addrs-name-server=127.0.0.1` (or an internal resolver) removes the only observed external contact (E7); on a network with no egress, this makes the node depend on a first successful peer dial (E8, E12): redial is implemented |
+| Only legitimate clients can join the relay | **Not enforced** | Firewall: tcp/60000 from known client addresses only; tailnet ACLs; cluster/shard ids are not access control (T13) |
+| Node REST not reachable by others | Validates the URL is local/private | Bind to loopback, never publish the REST port beyond the host |
+| No public/private bridging | One daemon = one node = one mode | |
+| Public mode | Explicit opt-in (`i_understand_public`); **UNTESTED on any public network**; adapter supports only single-shard networks | |
+
+## 7. Not claimed
+
+* **Anonymity or unlinkability.** Relays and observers see bucket, timing, size and publisher/subscriber peer identity.
+* **Mixnet readiness.** No evidence gathered.
+* **Forward secrecy, post-compromise security, deniability.**
+* **Protection against a compromised host, a malicious local user with the same UID, or a malicious node image.**
+* **Production reliability.** All measurements are single-host, container networking, amd64 images under qemu on arm64, on a heavily shared machine (`docs/spike/notes-e2e-crypto.md` header).
+* **Cross-machine, NAT and Tailscale behaviour.** UNTESTED; steps are in `docs/relay-setup.md`.
+* **Public network interoperability.** UNTESTED, deliberately.
+* **A security audit.** None of the code or the cryptographic composition has been reviewed by anyone outside the project.
+* **Resistance to flooding.** No flood or load test against hostile traffic was run.
+* **Windows.** Not supported.
+
+## 8. What a security review should look at first
+
+Prioritised.
+
+1. **The crypto composition** (`crates/core/src/envelope.rs`, `contact.rs`, `docs/protocol.md` s4-s5): HPKE base mode with `info` = domain || recipient KEM key and `aad` = 4-byte header (RFC 9180 s8.1 cautions against relying on both in single-shot APIs, flagged in ADR 0002); sign-then-encrypt with recipient binding; the KEM-key validation by trial seal; the `hpke` crate itself (unaudited).
+2. **Key handling at rest and in memory** (`identity.rs`): plaintext 0600 file, zeroization limits, export format, `previous_kems` retention.
+3. **Identity migration / split brain** (T23): decide whether a second-instance detection is required before any real use.
+4. **Private-mode isolation**: that the peer-allowlist audit and the config checks cover the real node flags; whether a *preventive* control (the operator's firewall egress rules) must be mandated; DNS egress behaviour on the target platforms.
+5. **Ingest path under hostile load** (`crates/core/src/ingest.rs`, `node.rs`): `NotForUs` writes, `transport_seen` growth, SQLite fsync cost, inbox/quarantine saturation behaviour; run a flood test and fuzzers.
+6. **Control socket and HTTP MCP authentication** (`server.rs`, `http.rs`): token handling, Host/Origin checks, behaviour with third-party hosts, whether the OAuth profile is needed.
+7. **Webhook** (`webhook.rs`): SSRF controls with a real resolver, redirect and proxy handling, secret handling, replay protection contract.
+8. **Trigger/wake logic** (`triggers.rs`): budgets, one-shot atomicity, `since_cursor` matching.
+9. **Supply chain**: the dependency set (`docs/dependency-audit.md`), the node image's provenance and signature (not verified), root-in-container.
+10. **Operational guidance**: the retention defaults in the verified relay flag set (1 hour) versus the client's 168 h expectation, clock requirements.

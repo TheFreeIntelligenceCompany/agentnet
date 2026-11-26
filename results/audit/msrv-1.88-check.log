@@ -1,0 +1,34 @@
+Unable to find image 'rust:1.88-bookworm' locally
+1.88-bookworm: Pulling from library/rust
+e4b341315eac: Pulling fs layer
+2a5ced73697d: Pulling fs layer
+2c8f8efa4105: Pulling fs layer
+1de51daaef20: Pulling fs layer
+6fbab1970a5a: Pulling fs layer
+904a4f19fbcf: Download complete
+308fdc860cd2: Download complete
+e4b341315eac: Download complete
+6fbab1970a5a: Download complete
+1de51daaef20: Download complete
+2a5ced73697d: Download complete
+2c8f8efa4105: Download complete
+6fbab1970a5a: Pull complete
+e4b341315eac: Pull complete
+1de51daaef20: Pull complete
+2c8f8efa4105: Pull complete
+2a5ced73697d: Pull complete
+Digest: sha256:af306cfa71d987911a781c37b59d7d67d934f49684058f96cf72079c3626bfe0
+Status: Downloaded newer image for rust:1.88-bookworm
+== start 2026-11-25T22:56:15Z
+rustc 1.88.0 (6b00bc388 2025-06-23)
+cargo 1.88.0 (873a06493 2025-05-10)
+    Updating crates.io index
+error: rustc 1.88.0 is not supported by the following packages:
+  rusqlite@0.42.0 requires rustc 1.89.0
+  uuid@1.29.3 requires rustc 1.89.0
+Either upgrade rustc or select compatible dependency versions with
+`cargo update <name>@<current-ver> --precise <compatible-ver>`
+where `<compatible-ver>` is the latest version supporting rustc 1.88.0
+
+CHECK_EXIT=101
+== end 2026-11-25T23:00:04Z

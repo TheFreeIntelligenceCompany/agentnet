@@ -1,0 +1,41 @@
+# date 2026-11-25T22:28:09Z
+$ cargo search agentnet --limit 20
+
+$ cargo info agentnet
+    Updating crates.io index
+error: could not find `agentnet` in registry `https://github.com/rust-lang/crates.io-index`
+
+$ gh auth status
+github.com
+  ✓ Logged in to github.com account dennisonbertram (keyring)
+  - Active account: true
+  - Git operations protocol: https
+  - Token: gho_************************************
+  - Token scopes: 'gist', 'read:org', 'repo', 'workflow'
+$ gh search repos agentnet --limit 20
+agent-network-protocol/AgentNetworkProtocol	AgentNetworkProtocol(ANP) is an open source protocol for agent communication. Our vision is to define how agents connect with each other, building an open, secure, and efficient collaboration network for billions of intelligent agents.	public	2026-11-25T14:09:56Z
+yandexdataschool/AgentNet	Deep Reinforcement Learning library for humans	public, archived	2026-05-11T09:38:07Z
+xlang-ai/AgentNetTool	This is the official code base of AgentNetTool in OpenCUA. Website: https://opencua.xlang.ai/	public	2026-11-24T07:23:29Z
+zoe-yyx/AgentNet	[NIPS2025] A decentralized, RAG-enhanced multi-agent framework for LLMs with dynamic task routing and agent evolution.	public	2026-11-19T09:57:13Z
+raihankhan-rk/AgentNet		public	2026-03-13T00:02:11Z
+nokpil/AgentNet	Pytorch implementation of AgentNet, which is designed for reveal hidden interactions and predict future dynamics of the unknown complex system.	public	2026-10-19T05:58:28Z
+yuki-2025/Dyna_Swarm	AgentNet: Dynamically Graph Structure Selection for LLM-Based Multi-Agent System	public	2026-10-01T13:48:32Z
+IQCoreTeam/AgentNet		public	2026-10-09T13:54:55Z
+TheAgent-net/agentnet-cli	CLI tool to discover AI agents and connect them to the Agent-net marketplace	public	2026-09-27T13:32:18Z
+KarolisMart/AgentNet	Reference implementation for Agent-based Graph Neural Networks	public	2026-10-23T05:42:07Z
+SuperagenticAI/agentnetes	Kubernetes for AI agents, Zero to a Self-Organizing AI Agency. On Demand.	public	2026-09-19T09:03:39Z
+oxgeneral/agentnet	Your agent has zero users. This fixes that. An agent-to-agent referral network where AI agents discover each other, cross-refer users, and earn credits. Available as an MCP server and HTTP API. Built by an AI agent that couldn't find its own customers.	public	2026-07-05T03:09:07Z
+misunders2d/agentnet	Secure, self-hosted communication network for verified agents and humans	public	2026-11-12T13:23:48Z
+IQCoreTeam/agentnet-nft-contract		public	2026-08-19T13:42:26Z
+0xbyt4/agentnet	Social network relay for Hermes agents - Ed25519 signed events on Cloudflare Workers	public	2026-10-13T20:46:11Z
+scottcwy/AgentNetwork-Red		public	2026-05-19T02:19:29Z
+spacebuneth/skillz	iqlabs-agentnet-skills	public	2026-07-08T04:57:57Z
+Kelly-Leeee/AgentNetwork-jev	JEV is fast enough to sit inside the multi-agent network—not just before it.	public	2026-10-15T07:27:04Z
+MFS-code/agentnet-code	AgentNet: an infrastructure layer that makes a codebase agent-native — code graph indexing, ownership zones, and persistent code-owner agents	public	2026-08-26T16:35:44Z
+smartpricing/agentnet	An agent library for building connected multi agent systems	public, archived	2026-10-14T09:33:02Z
+
+$ gh search repos --owner agentnet
+{"message":"Not Found","documentation_url":"https://docs.github.com/rest","status":"404"}gh: Not Found (HTTP 404)
+
+$ gh api orgs/agentnet
+{"login":"agentnet","id":146057100,"node_id":"O_kgDOCLSnjA","url":"https://api.github.com/orgs/agentnet","repos_url":"https://api.github.com/orgs/agentnet/repos","events_url":"https://api.github.com/orgs/agentnet/events","hooks_url":"https://api.github.com/orgs/agentnet/hooks","issues_url":"https://

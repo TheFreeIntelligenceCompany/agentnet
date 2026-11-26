@@ -1,0 +1,80 @@
+# CI commands run locally on the committed tree (git archive HEAD), 2026-11-25T22:52:00Z
+rustc 1.92.0 (ded5c06cf 2025-12-08)
+$ cargo fmt --all --check
+[exit 0]
+$ cargo clippy --workspace --all-targets --all-features -- -D warnings
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 4m 46s
+[exit 0]
+$ AGENTNET_RELAY_TESTS=1 cargo test --locked -p agentnet-transport --test logos_rest_relay -- --nocapture
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 31s
+     Running tests/logos_rest_relay.rs (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/target-debug/debug/deps/logos_rest_relay-c9a72af5478f425b)
+
+running 8 tests
+test node_restart_triggers_transparent_resubscribe ... ignored, restarts container an-na; run last with AGENTNET_RELAY_DISRUPTIVE=1 -- --ignored
+test r1_down_gives_unavailable_and_history_unavailable ... ignored, stops container an-r1; run last with AGENTNET_RELAY_DISRUPTIVE=1 -- --ignored
+test private_mode_config_rejects_public_ip_and_hostnames ... ok
+live frames received by B: 12/12
+test history_paginates_across_pages_and_dedupes_against_live ... ok
+test a_to_b_and_b_to_a_with_identical_ids_in_live_and_history ... ok
+status: TransportStatus { ready: true, peers: [PeerInfo { peer_id: "16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV", connected: true, allowed: true }], isolation_violation: None, detail: "node reachable; 1 connected allowed peer(s)" }
+violation text: Some("node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV)")
+test isolation_audit_passes_with_right_allowlist_and_fails_closed_with_wrong_one ... ok
+max_payload_len(/agentnet/1/ttest-6121c497fa3303/proto) = 153503
+measured node boundary for topic of 38 bytes: largest accepted payload = 153511; our max_payload_len = 153503; slack = 8
+test max_payload_len_is_accepted_and_delivered_and_one_more_is_rejected_locally ... ok
+ready again after 30.362625ms (redials sent: 0)
+http://127.0.0.1:18641: ready after 30.362625ms, metrics LogosRestMetrics { malformed_skipped: 0, hash_mismatches: 0, resubscribes: 0, audits_run: 1, redials: 0 }
+ready again after 40.782334ms (redials sent: 0)
+http://127.0.0.1:18642: ready after 40.782334ms, metrics LogosRestMetrics { malformed_skipped: 0, hash_mismatches: 0, resubscribes: 0, audits_run: 1, redials: 0 }
+test adapter_redial_restores_a_disconnected_client ... ok
+
+test result: ok. 6 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 26.09s
+
+[exit 0]
+$ AGENTNET_RELAY_TESTS=1 cargo test --locked -p agentnet-cli --test relay_e2e -- --nocapture
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3m 19s
+     Running tests/relay_e2e.rs (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/target-debug/debug/deps/relay_e2e-7d644b7ed79da0e9)
+
+running 1 test
+[1795647740] relay e2e: topology = spike/relay (localhost / docker bridge, NOT cross-machine)
+[1795647740] ok: node A health
+[1795647759] ok: node B health
+[1795647762] A = an1f5lt5dxuufwmwdvk6emluyodioeci25xh65l6vy6zjj6bssmk3t2kg2hmm
+[1795647762] B = an1dad74lrjfmqadypihfq25hk6fegw6d5v74fkesfxdzfkbkfmdi7b2ckpra
+[1795647765] ok: serve A ready (node reachable, peer connected)
+[1795647765] ok: serve B ready
+[1795647765] A network status: {"daemon":{"agent_id":"an1f5lt5dxuufwmwdvk6emluyodioeci25xh65l6vy6zjj6bssmk3t2kg2hmm","mcp_http":{"addr":null,"enabled":false},"mode":"private","protocol":1,"uptime_s":2,"version":"0.1.0","webhook":{"cursor":null,"delivered":0,"enabled":false,"last_error":null,"parked":0,"retries":0}},"network":{"connected_peers":1,"detail":"node reachable; 1 connected allowed peer(s)","isolation_violation":null,"last_history_sync_at":null,"last_live_poll_at":1795647765668,"mode":"private","peers":["16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV"],"queue":{"active_triggers":0,"events_unacked":0,"inbox_quarantined":0,"inbox_unread":0,"outbox_queued":0,"outbox_sent_unacked":0},"ready":true}}
+[1795647765] contacts exchanged: an1dad74lrjfmqadypihfq25hk6fegw6d5v74fkesfxdzfkbkfmdi7b2ckpra trusted alias=b
+[1795647765] A sent 28da9d06-ae62-4ef9-b51b-82de84b12d8a state="queued"
+[1795647766] ok: B inbox shows the message
+[1795647766] B inbox: {"has_more":false,"next_cursor":"aW5ib3g6MQ","records":[{"acknowledged":false,"body":"hello over the relay (cli)","conversation_id":"relay-e2e","correlation_id":null,"created_at":1795647765878,"cursor":"aW5ib3g6MQ","expires_at":1795734165878,"message_id":"28da9d06-ae62-4ef9-b51b-82de84b12d8a","message_type":"message","quarantined":false,"received_at":1795647766772,"sender":"an1f5lt5dxuufwmwdvk6emluyodioeci25xh65l6vy6zjj6bssmk3t2kg2hmm","sender_trust":"trusted"}]}
+[1795647768] ok: A status delivered
+[1795647768] A status: {"attempts":2,"conversation_id":"relay-e2e","created_at":1795647765878,"delivered_at":1795647767641,"expires_at":1795734165878,"last_attempt_at":1795647767162,"last_error":null,"message_id":"28da9d06-ae62-4ef9-b51b-82de84b12d8a","message_type":"message","next_attempt_at":null,"recipient":"an1dad74lrjfmqadypihfq25hk6fegw6d5v74fkesfxdzfkbkfmdi7b2ckpra","sent_at":1795647765883,"state":"delivered"} (end to end 2.271346417s)
+[1795647768] B subscribed to agentnet://inbox
+[1795647768] A mcp send_message -> {"conversation_id":"a5c59ce1-1463-4fc6-bd28-9f866b1f168a","deduplicated":false,"expires_at":1795734168795,"message_id":"078701a5-ad0a-46c7-9b5d-0ae5ef83df87","status":"queued"}
+[1795647769] B received a subscription update: Some(ResourceUpdatedNotification(Notification { method: ResourceUpdatedNotificationMethod, params: ResourceUpdatedNotificationParam { uri: "agentnet://inbox", meta: None }, extensions: Extensions }))
+[1795647769] B mcp read_inbox bodies: ["hello over the relay (cli)", "hello over the relay (mcp)"]
+[1795647769] A mcp get_message_status: {"attempts":1,"conversation_id":"a5c59ce1-1463-4fc6-bd28-9f866b1f168a","created_at":1795647768795,"delivered_at":1795647769455,"expires_at":1795734168795,"last_attempt_at":1795647768934,"last_error":null,"message_id":"078701a5-ad0a-46c7-9b5d-0ae5ef83df87","message_type":"message","next_attempt_at":null,"recipient":"an1dad74lrjfmqadypihfq25hk6fegw6d5v74fkesfxdzfkbkfmdi7b2ckpra","sent_at":1795647768934,"state":"delivered"}
+[1795647770] doctor (A) exit=Some(0)
+[ok  ] data dir permissions: directory 0700, files 0600
+[ok  ] config: /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/.tmprdmoci/a/agentnet.toml valid (private mode, 1 peer(s))
+[ok  ] identity: address an1f5lt5dxuufwmwdvk6emluyodioeci25xh65l6vy6zjj6bssmk3t2kg2hmm
+[ok  ] daemon socket: daemon answers on agentnet.sock
+[ok  ] node reachable: http://127.0.0.1:18641 answered 200
+[ok  ] clock: within 0 s of the node's clock
+[ok  ] isolation: no isolation violation reported
+[ok  ] peers == allowlist: 1 connected, all in the allowlist
+[ok  ] transport ready: node reachable; 1 connected allowed peer(s)
+[ok  ] store query: inbox query works
+0 failing, 0 warning(s)
+
+[1795647770] serve A exited: exit status: 0
+[1795647770] serve A log: 4 lines (stderr, RUST_LOG=info)
+[1795647770] serve B exited: exit status: 0
+[1795647770] serve B log: 4 lines (stderr, RUST_LOG=info)
+test two_agentnet_serve_processes_exchange_messages_over_the_private_relay ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 29.73s
+
+[exit 0]
+# done 2026-11-25T23:02:50Z

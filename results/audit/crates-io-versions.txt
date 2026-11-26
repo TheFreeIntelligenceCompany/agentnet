@@ -1,0 +1,20 @@
+# crates.io version metadata 2026-11-25T22:42:10Z (API: /api/v1/crates/<name>/<version>)
+rmcp/3.11.0 2026-11-17 license=Apache-2.0 msrv=1.88 yanked=False
+hpke/0.15.1 2026-10-28 license=MIT/Apache-2.0 msrv=1.87 yanked=False
+hpke/0.12.0 2024-07-03 license=MIT/Apache-2.0 msrv=None yanked=False
+ed25519-dalek/3.0.0 2026-07-06 license=BSD-3-Clause msrv=1.85 yanked=False
+age/0.12.1 2026-07-14 license=MIT OR Apache-2.0 msrv=1.74 yanked=False
+rusqlite/0.42.0 2026-11-11 license=MIT msrv=1.89.0 yanked=False
+libsqlite3-sys/0.40.0 2026-11-11 license=MIT msrv=1.88.0 yanked=False
+tokio/1.54.1 2026-10-21 license=MIT msrv=1.85 yanked=False
+reqwest/0.12.28 2025-12-22 license=MIT OR Apache-2.0 msrv=1.64.0 yanked=False
+axum/0.8.9 2026-04-14 license=MIT msrv=1.80 yanked=False
+clap/4.6.10 2026-11-24 license=MIT OR Apache-2.0 msrv=1.85 yanked=False
+ring/0.17.14 2025-03-11 license=Apache-2.0 AND ISC msrv=1.66.0 yanked=False
+rustls/0.23.46 2026-10-14 license=Apache-2.0 OR ISC OR MIT msrv=1.71 yanked=False
+vodozemac/0.11.2 2026-11-05 license=Apache-2.0 msrv=1.89 yanked=False
+sha2/0.10.9 2025-04-30 license=MIT OR Apache-2.0 msrv=None yanked=False
+serde/1.0.229 2026-07-18 license=MIT OR Apache-2.0 msrv=1.56 yanked=False
+fs4/0.13.1 2025-03-08 license=MIT OR Apache-2.0 msrv=1.75.0 yanked=False
+subtle/2.6.1 2024-06-24 license=BSD-3-Clause msrv=None yanked=False
+zeroize/1.9.2 2026-11-17 license=Apache-2.0 OR MIT msrv=1.85 yanked=False

@@ -1,0 +1,13 @@
+# YAML validation of .github/workflows/ci.yml, 2026-11-25T22:56:46Z
+$ python3 -I -c "import yaml"
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import yaml
+ModuleNotFoundError: No module named 'yaml'
+$ ruby -ryaml -e (parse and summarise)
+parsed ok; top-level keys: ["name", true, "permissions", "env", "jobs"]
+jobs: ["check", "deny", "relay-tests"]
+  check: runs-on=ubuntu-latest steps=6 if=nil
+  deny: runs-on=ubuntu-latest steps=2 if=nil
+  relay-tests: runs-on=ubuntu-latest steps=8 if="${{ github.event_name == 'workflow_dispatch' && inputs.run_relay_tests }}"
+on (parsed as key true by YAML 1.1): ["push", "pull_request", "workflow_dispatch"]

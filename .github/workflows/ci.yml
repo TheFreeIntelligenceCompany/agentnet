@@ -1,0 +1,97 @@
+# AgentNet CI.
+#
+# STATUS: UNTESTED ON GITHUB. This workflow has never run on GitHub Actions (no runner was available when it was
+# written). Its YAML syntax was validated locally and each shell command in it was run locally where possible;
+# see results/audit/ci-local-validation.log for what was and was not run. Treat the first GitHub run as the real test.
+#
+# Jobs
+#   check       ubuntu-latest: fmt, clippy -D warnings, tests (relay-gated tests skip without a relay).
+#   deny        cargo-deny (licences, bans, advisories, sources) using deny.toml.
+#   relay-tests MANUAL DISPATCH ONLY: starts the local relay topology (spike/relay) with docker-compose and runs the
+#               relay-gated tests. The node image is linux/amd64; GitHub's ubuntu-latest runners are amd64, so the
+#               image runs natively there (no qemu).
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      run_relay_tests:
+        description: "Also run the relay-gated tests against the local relay topology (needs Docker; pulls the node image)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  # Pinned toolchain. Cargo.toml declares rust-version 1.88, but the locked dependencies (rusqlite 0.42.0, uuid 1.29.3)
+  # declare 1.89.0, so the pin must be >= 1.89. 1.92.0 is the version all local runs used.
+  RUST_TOOLCHAIN: "1.92.0"
+
+jobs:
+  check:
+    name: fmt, clippy, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Format
+        run: cargo fmt --all --check
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+      - name: Test
+        # Relay-gated tests return early (and are reported as passed) unless AGENTNET_RELAY_TESTS=1.
+        run: cargo test --workspace --locked
+
+  deny:
+    name: cargo deny
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check
+          arguments: --all-features
+
+  relay-tests:
+    name: relay-gated tests (manual)
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_relay_tests }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+      - uses: Swatinem/rust-cache@v2
+      - name: Provide a docker-compose command (spike/relay/scripts/up.sh calls the standalone binary)
+        run: |
+          if ! command -v docker-compose >/dev/null; then
+            printf '#!/bin/sh\nexec docker compose "$@"\n' | sudo tee /usr/local/bin/docker-compose >/dev/null
+            sudo chmod +x /usr/local/bin/docker-compose
+          fi
+          docker-compose version
+      - name: Start the local relay topology
+        # DNS_NS=127.0.0.1: without it the nodes query 1.1.1.1 every 5 s (docs/relay-setup.md section 5).
+        run: cd spike/relay && DNS_NS=127.0.0.1 ./scripts/up.sh
+      - name: Relay-gated tests
+        env:
+          AGENTNET_RELAY_TESTS: "1"
+        run: |
+          cargo test --locked -p agentnet-transport --test logos_rest_relay -- --nocapture
+          cargo test --locked -p agentnet-cli --test relay_e2e -- --nocapture
+      - name: Node logs on failure
+        if: failure()
+        run: docker logs an-r1 --tail 100; docker logs an-na --tail 100; docker logs an-nb --tail 100
+      - name: Stop the topology
+        if: always()
+        run: cd spike/relay && docker-compose down -v

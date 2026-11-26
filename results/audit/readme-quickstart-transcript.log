@@ -1,0 +1,135 @@
+# README quickstart transcript, started 2026-11-25T22:49:20Z
+# host: Darwin 25.6.0 arm64; agentnet: agentnet 0.1.0
+
+### Step 2: local relay topology (idempotent if already up)
+$ (cd spike/relay && DNS_NS=127.0.0.1 ./scripts/up.sh)
+18640 peers: ['Connected', 'Connected']
+18641 peers: ['Connected']
+18642 peers: ['Connected']
+
+### Step 3: create two agents (short data dirs: Unix socket path limit)
+$ A=$(mktemp -d); B=$(mktemp -d)
+A=/var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.q5L3E9EZ2q
+B=/var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.yWIogT1Vuq
+$ agentnet --data-dir /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.q5L3E9EZ2q init --node-url http://127.0.0.1:18641 --peer /ip4/172.28.66.10/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV >/dev/null && echo 'A initialised'
+A initialised
+$ agentnet --data-dir /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.yWIogT1Vuq init --node-url http://127.0.0.1:18642 --peer /ip4/172.28.66.10/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV >/dev/null && echo 'B initialised'
+B initialised
+
+### Step 4: start both daemons
+$ agentnet --data-dir $A serve &   # and the same for $B
+[ok] A doctor passes (after 0 s)
+[ok] B doctor passes (after 0 s)
+$ agentnet --data-dir /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.q5L3E9EZ2q doctor
+[ok  ] data dir permissions: directory 0700, files 0600
+[ok  ] config: /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.q5L3E9EZ2q/agentnet.toml valid (private mode, 1 peer(s))
+[ok  ] identity: address an1ibmcebhdg4fxkvy4phnsdt7nsjxxahimddwt2spxuhwmf3tle2ewybzdzi
+[ok  ] daemon socket: daemon answers on agentnet.sock
+[ok  ] node reachable: http://127.0.0.1:18641 answered 200
+[ok  ] clock: within 1 s of the node's clock
+[ok  ] isolation: no isolation violation reported
+[ok  ] peers == allowlist: 1 connected, all in the allowlist
+[ok  ] transport ready: node reachable; 1 connected allowed peer(s)
+[ok  ] store query: inbox query works
+0 failing, 0 warning(s)
+$ agentnet --data-dir /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.q5L3E9EZ2q network status
+mode: private
+ready: true
+connected peers: 1
+isolation: ok
+queue: outbox queued=0 sent-unacked=0, inbox unread=0 quarantined=0, events unacked=0, active triggers=0
+last live poll: 2026-11-25 22:49:37 UTC
+detail: node reachable; 1 connected allowed peer(s)
+daemon: version 0.1.0 uptime 0s
+webhook: disabled
+
+### Step 5: exchange and verify contact records
+$ agentnet --data-dir /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.q5L3E9EZ2q identity show --json | jq -r .contact_record > /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.q5L3E9EZ2q/self-record.json
+$ agentnet --data-dir /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.yWIogT1Vuq identity show --json | jq -r .contact_record > /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.yWIogT1Vuq/self-record.json
+$ agentnet --data-dir /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.q5L3E9EZ2q contact add @/var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.yWIogT1Vuq/self-record.json --expect an1s6okyyjcorrsuhtw3zbxijrw377nzbsvxj7mjcmdlurh6pyxpy5cpikjli --alias b
+an1s6okyyjcorrsuhtw3zbxijrw377nzbsvxj7mjcmdlurh6pyxpy5cpikjli trusted alias=b
+$ agentnet --data-dir /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.yWIogT1Vuq contact add @/var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.q5L3E9EZ2q/self-record.json --expect an1ibmcebhdg4fxkvy4phnsdt7nsjxxahimddwt2spxuhwmf3tle2ewybzdzi --alias a
+an1ibmcebhdg4fxkvy4phnsdt7nsjxxahimddwt2spxuhwmf3tle2ewybzdzi trusted alias=a
+$ agentnet --data-dir /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.q5L3E9EZ2q contact list
+an1s6okyyjcorrsuhtw3zbxijrw377nzbsvxj7mjcmdlurh6pyxpy5cpikjli trusted alias=b
+
+### Step 6: send, read inbox, check delivery status
+$ agentnet --data-dir /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.q5L3E9EZ2q send an1s6okyyjcorrsuhtw3zbxijrw377nzbsvxj7mjcmdlurh6pyxpy5cpikjli 'hello from A' --json | tee /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.q5L3E9EZ2q/send.json
+{"message_id":"f1f82b23-0380-499a-88db-3415c5edc38a","status":"queued","conversation_id":"d98bdff9-1702-4fd1-b810-011742ecf54c","expires_at":1795733378420,"deduplicated":false}
+[ok] B inbox shows the message (after 2 s)
+$ agentnet --data-dir /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.yWIogT1Vuq inbox
+f1f82b23-0380-499a-88db-3415c5edc38a from an1ibmcebhdg4fxkvy4phnsdt7nsjxxahimddwt2spxuhwmf3tle2ewybzdzi [trusted] message
+    hello from A
+next_cursor=aW5ib3g6MQ
+[ok] A sees authenticated receipt (state delivered) (after 0 s)
+$ agentnet --data-dir /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.q5L3E9EZ2q status f1f82b23-0380-499a-88db-3415c5edc38a
+delivered  message_id=f1f82b23-0380-499a-88db-3415c5edc38a to an1s6okyyjcorrsuhtw3zbxijrw377nzbsvxj7mjcmdlurh6pyxpy5cpikjli attempts=1
+  sent at 2026-11-25 22:49:38 UTC
+  delivered (authenticated receipt) at 2026-11-25 22:49:39 UTC
+  expires 2026-11-26 22:49:38 UTC
+$ agentnet --data-dir /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.yWIogT1Vuq ack f1f82b23-0380-499a-88db-3415c5edc38a
+f1f82b23-0380-499a-88db-3415c5edc38a acknowledged
+$ agentnet --data-dir /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.yWIogT1Vuq network status
+mode: private
+ready: true
+connected peers: 1
+isolation: ok
+queue: outbox queued=0 sent-unacked=0, inbox unread=0 quarantined=0, events unacked=1, active triggers=0
+last live poll: 2026-11-25 22:49:41 UTC
+last history sync: 2026-11-25 22:49:37 UTC
+detail: node reachable; 1 connected allowed peer(s)
+daemon: version 0.1.0 uptime 3s
+webhook: disabled
+
+### Step 7: MCP stdio client config (sample file) and a real stdio session
+$ cat docs/examples/mcp-client-stdio.json
+{
+  "mcpServers": {
+    "agentnet": {
+      "command": "agentnet",
+      "args": ["--data-dir", "/home/you/.agentnet", "mcp"]
+    }
+  }
+}
+$ printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"server/discover","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{}}}}' | agentnet --data-dir /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.q5L3E9EZ2q mcp | jq -c '.result.supportedVersions'
+["2024-11-05","2025-03-26","2025-06-18","2025-11-25","2026-07-28"]
+$ printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"server/discover","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{}}}}' | agentnet mcp --data-dir /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.q5L3E9EZ2q | jq -c '.result.supportedVersions'
+["2024-11-05","2025-03-26","2025-06-18","2025-11-25","2026-07-28"]
+
+### Step 8: triggers + mock harness (B enables auto_trigger for one allowlisted session)
+$ pkill -f 'agentnet --data-dir /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.yWIogT1Vuq serve'; sleep 2
+$ sed -i.bak -e 's/^auto_trigger = false/auto_trigger = true/' -e 's/^allowed_sessions = \[\]/allowed_sessions = ["demo-session"]/' /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.yWIogT1Vuq/agentnet.toml && grep -E '^(auto_trigger|allowed_sessions)' /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.yWIogT1Vuq/agentnet.toml
+auto_trigger = true             # triggers are off until the host enables them
+allowed_sessions = ["demo-session"]            # host-approved target_session values
+[ok] B doctor passes after restart (after 0 s)
+$ agentnet --data-dir /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.yWIogT1Vuq trigger create --target-session demo-session --sender an1ibmcebhdg4fxkvy4phnsdt7nsjxxahimddwt2spxuhwmf3tle2ewybzdzi
+6e68670b-9039-414a-a7c9-36ab701c5321 Active session=demo-session once=true matches=0 expires=2026-11-25 23:49:44 UTC sender=an1ibmcebhdg4fxkvy4phnsdt7nsjxxahimddwt2spxuhwmf3tle2ewybzdzi
+$ cargo run -p agentnet-daemon --example mock_harness -- --data-dir $B --out $B/turns.jsonl --state $B/harness-state.json --max-events 1 &
+$ agentnet --data-dir /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.q5L3E9EZ2q send an1s6okyyjcorrsuhtw3zbxijrw377nzbsvxj7mjcmdlurh6pyxpy5cpikjli 'wake up' --json | tee /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.q5L3E9EZ2q/send2.json
+{"message_id":"352aee3e-6ba8-453b-8784-5ecfeca397ca","status":"queued","conversation_id":"549594ce-1263-44aa-980c-22e81f383eed","expires_at":1795733384215,"deduplicated":false}
+[ok] harness recorded a simulated turn (after 6 s)
+$ cat /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.yWIogT1Vuq/turns.jsonl
+{"event_id":"8b76b885-eece-4a5d-af6c-efdbc1124b0b","message_id":"352aee3e-6ba8-453b-8784-5ecfeca397ca","simulated_turn":1,"target_session":"demo-session","trigger_id":"6e68670b-9039-414a-a7c9-36ab701c5321"}
+$ wc -l < /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.yWIogT1Vuq/turns.jsonl
+       1
+$ agentnet --data-dir /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.yWIogT1Vuq trigger list --all
+6e68670b-9039-414a-a7c9-36ab701c5321 Consumed session=demo-session once=true matches=1 expires=2026-11-25 23:49:44 UTC sender=an1ibmcebhdg4fxkvy4phnsdt7nsjxxahimddwt2spxuhwmf3tle2ewybzdzi
+$ ( agentnet --data-dir /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.yWIogT1Vuq events tail --all --json --ack & p=$!; sleep 3; kill $p 2>/dev/null; wait $p 2>/dev/null; true )
+{"event_id":"cb71cec6-23bd-4afb-bb88-1a192cbcce86","cursor":"ZXZlbnQ6MQ","event_type":"message.received","agent_id":"an1s6okyyjcorrsuhtw3zbxijrw377nzbsvxj7mjcmdlurh6pyxpy5cpikjli","message_id":"f1f82b23-0380-499a-88db-3415c5edc38a","trigger_id":null,"target_session":null,"timestamp":1795646978775}
+{"event_id":"1b92dfa1-7f95-4190-b430-7a4e4f8a1c25","cursor":"ZXZlbnQ6Mg","event_type":"message.received","agent_id":"an1s6okyyjcorrsuhtw3zbxijrw377nzbsvxj7mjcmdlurh6pyxpy5cpikjli","message_id":"352aee3e-6ba8-453b-8784-5ecfeca397ca","trigger_id":null,"target_session":null,"timestamp":1795646984817}
+{"event_id":"8b76b885-eece-4a5d-af6c-efdbc1124b0b","cursor":"ZXZlbnQ6Mw","event_type":"trigger.matched","agent_id":"an1s6okyyjcorrsuhtw3zbxijrw377nzbsvxj7mjcmdlurh6pyxpy5cpikjli","message_id":"352aee3e-6ba8-453b-8784-5ecfeca397ca","trigger_id":"6e68670b-9039-414a-a7c9-36ab701c5321","target_session":"demo-session","timestamp":1795646984817}
+
+### Step 9: stop daemons (SIGTERM), clean up
+$ pkill -TERM -f 'agentnet --data-dir /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.q5L3E9EZ2q serve'; pkill -TERM -f 'agentnet --data-dir /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.yWIogT1Vuq serve'; sleep 2; pgrep -fl "agentnet --data-dir (/var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.q5L3E9EZ2q|/var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.yWIogT1Vuq) serve" || echo 'no daemons of this transcript left'
+no daemons of this transcript left
+$ cat /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.q5L3E9EZ2q.serve.log | wc -l
+       1
+
+# serve A log:
+agentnet daemon running for an1ibmcebhdg4fxkvy4phnsdt7nsjxxahimddwt2spxuhwmf3tle2ewybzdzi (socket /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.q5L3E9EZ2q/agentnet.sock); stop with Ctrl-C or SIGTERM
+# serve B log:
+agentnet daemon running for an1s6okyyjcorrsuhtw3zbxijrw377nzbsvxj7mjcmdlurh6pyxpy5cpikjli (socket /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.yWIogT1Vuq/agentnet.sock); stop with Ctrl-C or SIGTERM
+agentnet daemon running for an1s6okyyjcorrsuhtw3zbxijrw377nzbsvxj7mjcmdlurh6pyxpy5cpikjli (socket /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.yWIogT1Vuq/agentnet.sock); stop with Ctrl-C or SIGTERM
+$ rm -rf /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.q5L3E9EZ2q /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.yWIogT1Vuq /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.q5L3E9EZ2q.* /var/folders/9p/36kvv42n3nl4p20d9c2v3pym0000gn/T/tmp.yWIogT1Vuq.*
+
+# finished 2026-11-25T22:49:57Z; failed steps: 0

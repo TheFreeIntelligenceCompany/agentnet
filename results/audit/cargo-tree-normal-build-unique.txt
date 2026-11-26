@@ -1,0 +1,412 @@
+
+aead v0.5.2
+aead v0.5.2 (*)
+aead v0.6.1
+aead v0.6.1 (*)
+aes v0.8.4
+aes-gcm v0.10.3
+age v0.12.1
+age-core v0.12.0
+agentnet-cli v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/cli)
+agentnet-core v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/core)
+agentnet-core v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/core) (*)
+agentnet-daemon v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/daemon)
+agentnet-daemon v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/daemon) (*)
+agentnet-mcp v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/mcp)
+agentnet-mcp v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/mcp) (*)
+agentnet-transport v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/transport)
+agentnet-transport v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/transport) (*)
+anstream v1.0.0
+anstyle v1.0.14
+anstyle-parse v1.0.0
+anstyle-query v1.1.5
+arc-swap v1.9.5
+arc-swap v1.9.5 (*)
+async-trait v0.1.92 (proc-macro)
+async-trait v0.1.92 (proc-macro) (*)
+atomic-waker v1.1.2
+autocfg v1.5.1
+axum v0.8.9
+axum-core v0.5.6
+base16ct v0.2.0
+base64 v0.22.1
+base64 v0.23.1
+basic-toml v0.1.10
+bech32 v0.11.1
+bitflags v2.13.2
+block-buffer v0.10.4
+block-buffer v0.12.1
+block-buffer v0.12.1 (*)
+bytes v1.12.2
+cc v1.11.3
+cc v1.11.3 (*)
+cfg-if v1.0.5
+chacha20 v0.10.2
+chacha20 v0.10.2 (*)
+chacha20 v0.9.1
+chacha20poly1305 v0.10.1
+chacha20poly1305 v0.10.1 (*)
+chacha20poly1305 v0.11.0
+chrono v0.4.45
+chrono v0.4.45 (*)
+cipher v0.4.4
+cipher v0.4.4 (*)
+cipher v0.5.2
+cipher v0.5.2 (*)
+clap v4.6.10
+clap_builder v4.6.10
+clap_derive v4.6.9 (proc-macro)
+clap_lex v1.1.2
+cmov v0.5.4
+colorchoice v1.0.5
+const-oid v0.10.3
+const-oid v0.9.6
+cookie-factory v0.3.3
+cookie-factory v0.3.3 (*)
+cpufeatures v0.2.17
+cpufeatures v0.2.17 (*)
+cpufeatures v0.3.1
+crypto-bigint v0.5.5
+crypto-common v0.1.7
+crypto-common v0.1.7 (*)
+crypto-common v0.2.2
+crypto-common v0.2.2 (*)
+ctr v0.9.2
+ctutils v0.4.8
+ctutils v0.4.8 (*)
+curve25519-dalek v4.1.3
+curve25519-dalek v5.0.0
+curve25519-dalek v5.0.0 (*)
+darling v0.24.1
+darling_core v0.24.1
+darling_core v0.24.1 (*)
+darling_macro v0.24.1 (proc-macro)
+data-encoding v2.11.1
+der v0.7.10
+digest v0.10.7
+digest v0.10.7 (*)
+digest v0.11.3
+digest v0.11.3 (*)
+displaydoc v0.2.7 (proc-macro)
+displaydoc v0.2.7 (proc-macro) (*)
+dyn-clone v1.0.20
+ed25519 v3.0.0
+ed25519-dalek v3.0.0
+elliptic-curve v0.13.8
+elliptic-curve v0.13.8 (*)
+equivalent v1.0.3
+errno v0.3.15
+errno v0.3.15 (*)
+fallible-iterator v0.3.0
+fallible-streaming-iterator v0.1.9
+ff v0.13.1
+ff v0.13.1 (*)
+find-crate v0.6.3
+find-crate v0.6.3 (*)
+find-msvc-tools v0.1.15
+fluent v0.17.0
+fluent v0.17.0 (*)
+fluent-bundle v0.16.0
+fluent-langneg v0.13.1
+fluent-langneg v0.13.1 (*)
+fluent-syntax v0.12.0
+fluent-syntax v0.12.0 (*)
+foldhash v0.2.0
+form_urlencoded v1.2.3
+form_urlencoded v1.2.3 (*)
+fs4 v0.13.1
+futures v0.3.34
+futures v0.3.34 (*)
+futures-channel v0.3.34
+futures-channel v0.3.34 (*)
+futures-core v0.3.34
+futures-executor v0.3.34
+futures-io v0.3.34
+futures-macro v0.3.34 (proc-macro)
+futures-sink v0.3.34
+futures-task v0.3.34
+futures-util v0.3.34
+futures-util v0.3.34 (*)
+generic-array v0.14.7
+generic-array v0.14.7 (*)
+getrandom v0.2.17
+getrandom v0.2.17 (*)
+getrandom v0.4.3
+getrandom v0.4.3 (*)
+ghash v0.5.1
+group v0.13.0
+hashbrown v0.17.2
+hashbrown v0.17.2 (*)
+hashlink v0.12.2
+heck v0.5.0
+hkdf v0.12.4
+hkdf v0.12.4 (*)
+hkdf v0.13.0
+hmac v0.12.1
+hmac v0.12.1 (*)
+hmac v0.13.0
+hpke v0.12.0
+hpke v0.12.0 (*)
+hpke v0.15.1
+http v1.5.0
+http v1.5.0 (*)
+http-body v1.1.0
+http-body v1.1.0 (*)
+http-body-util v0.1.5
+http-body-util v0.1.5 (*)
+httparse v1.10.1
+httpdate v1.0.3
+hybrid-array v0.2.3
+hybrid-array v0.4.15
+hybrid-array v0.4.15 (*)
+hyper v1.13.0
+hyper v1.13.0 (*)
+hyper-rustls v0.27.10
+hyper-util v0.1.21
+hyper-util v0.1.21 (*)
+i18n-config v0.4.8
+i18n-config v0.4.8 (*)
+i18n-embed v0.16.0
+i18n-embed-fl v0.10.1 (proc-macro)
+i18n-embed-impl v0.8.4 (proc-macro)
+i18n-embed-impl v0.8.4 (proc-macro) (*)
+icu_collections v2.4.0
+icu_collections v2.4.0 (*)
+icu_locale_core v2.4.0
+icu_locale_core v2.4.0 (*)
+icu_normalizer v2.4.0
+icu_normalizer_data v2.4.0
+icu_properties v2.4.0
+icu_properties_data v2.4.0
+icu_provider v2.4.0
+icu_provider v2.4.0 (*)
+ident_case v1.0.1
+idna v1.1.0
+idna_adapter v1.2.2
+indexmap v2.14.2
+inout v0.1.4
+inout v0.2.6
+inout v0.2.6 (*)
+intl_pluralrules v7.0.2
+intl-memoizer v0.5.3
+intl-memoizer v0.5.3 (*)
+io_tee v0.1.1
+ipnet v2.12.2
+is_terminal_polyfill v1.70.2
+itoa v1.0.19
+keccak v0.1.6
+kem v0.3.0-pre.0
+lazy_static v1.5.1
+libc v0.2.191
+libsqlite3-sys v0.40.0
+litemap v0.8.3
+lock_api v0.4.14
+log v0.4.35
+matchers v0.2.0
+matchit v0.8.4
+memchr v2.8.3
+mime v0.3.18
+mime_guess v2.0.5
+mio v1.2.5
+ml-kem v0.2.3
+nom v8.0.0
+nom v8.0.0 (*)
+nu-ansi-term v0.50.3
+num-traits v0.2.19
+once_cell v1.21.4
+opaque-debug v0.3.1
+p256 v0.13.2
+p256 v0.13.2 (*)
+parking_lot v0.12.5
+parking_lot v0.12.5 (*)
+parking_lot_core v0.9.12
+pastey v0.2.3 (proc-macro)
+pbkdf2 v0.12.2
+percent-encoding v2.3.2
+pin-project v1.2.0
+pin-project-internal v1.2.0 (proc-macro)
+pin-project-lite v0.2.18
+pkg-config v0.3.34
+poly1305 v0.8.0
+poly1305 v0.9.1
+polyval v0.6.2
+potential_utf v0.1.6
+ppv-lite86 v0.2.21
+primeorder v0.13.6
+proc-macro-error-attr3 v3.1.1 (proc-macro)
+proc-macro-error3 v3.1.1
+proc-macro2 v1.0.107
+proc-macro2 v1.0.107 (*)
+quote v1.0.47
+quote v1.0.47 (*)
+rand v0.10.4
+rand v0.8.8
+rand v0.8.8 (*)
+rand_chacha v0.3.1
+rand_core v0.10.1
+rand_core v0.6.4
+rand_core v0.6.4 (*)
+ref-cast v1.0.27
+ref-cast-impl v1.0.27 (proc-macro)
+regex-automata v0.4.19
+regex-automata v0.4.19 (*)
+regex-syntax v0.8.12
+reqwest v0.12.28
+reqwest v0.12.28 (*)
+ring v0.17.14
+ring v0.17.14 (*)
+rmcp v3.11.0
+rmcp-macros v3.11.0 (proc-macro)
+rpassword v7.5.5
+rtoolbox v0.0.6
+rusqlite v0.42.0
+rusqlite v0.42.0 (*)
+rust-embed v8.14.0
+rust-embed v8.14.0 (*)
+rust-embed-impl v8.14.0 (proc-macro)
+rust-embed-utils v8.14.0
+rust-embed-utils v8.14.0 (*)
+rustc_version v0.4.1
+rustc_version v0.4.1 (*)
+rustc-hash v2.1.3
+rustix v1.1.6
+rustix v1.1.6 (*)
+rustls v0.23.46
+rustls v0.23.46 (*)
+rustls-pki-types v1.16.0
+rustls-pki-types v1.16.0 (*)
+rustls-webpki v0.103.17
+rustversion v1.0.23 (proc-macro)
+ryu v1.0.23
+salsa20 v0.10.2
+same-file v1.0.6
+schemars v1.2.3
+schemars_derive v1.2.3 (proc-macro)
+scopeguard v1.2.0
+scrypt v0.11.0
+sec1 v0.7.3
+secrecy v0.10.3
+self_cell v1.3.0
+semver v1.0.28
+serde v1.0.229
+serde v1.0.229 (*)
+serde_core v1.0.229
+serde_derive v1.0.229 (proc-macro)
+serde_derive v1.0.229 (proc-macro) (*)
+serde_derive_internals v0.30.0
+serde_json v1.0.154
+serde_json v1.0.154 (*)
+serde_spanned v1.1.3
+serde_urlencoded v0.7.1
+sha2 v0.10.9
+sha2 v0.10.9 (*)
+sha2 v0.11.2
+sha2 v0.11.2 (*)
+sha3 v0.10.9
+sha3 v0.10.9 (*)
+sharded-slab v0.1.7
+shlex v2.0.1
+signal-hook-registry v1.4.8
+signature v3.0.0
+slab v0.4.12
+smallvec v1.16.6
+socket2 v0.6.5
+socket2 v0.6.5 (*)
+sse-stream v0.2.6
+stable_deref_trait v1.2.1
+strsim v0.11.1
+subtle v2.6.1
+syn v2.0.119
+syn v2.0.119 (*)
+syn v3.0.10
+syn v3.0.10 (*)
+sync_wrapper v1.0.2
+sync_wrapper v1.0.2 (*)
+synstructure v0.14.0
+synstructure v0.14.0 (*)
+terminal_size v0.4.4
+thiserror v1.0.69
+thiserror v1.0.69 (*)
+thiserror v2.0.21
+thiserror v2.0.21 (*)
+thiserror-impl v1.0.69 (proc-macro)
+thiserror-impl v2.0.21 (proc-macro)
+thread_local v1.1.10
+tinystr v0.8.5
+tinystr v0.8.5 (*)
+tinyvec v1.13.3
+tokio v1.54.1
+tokio v1.54.1 (*)
+tokio-macros v2.7.2 (proc-macro)
+tokio-rustls v0.26.6
+tokio-rustls v0.26.6 (*)
+tokio-stream v0.1.19
+tokio-util v0.7.20
+tokio-util v0.7.20 (*)
+toml v0.5.11
+toml v0.9.12+spec-1.1.0
+toml_datetime v0.7.5+spec-1.1.0
+toml_parser v1.1.7+spec-1.1.0
+toml_writer v1.2.0+spec-1.1.0
+tower v0.5.3
+tower v0.5.3 (*)
+tower-http v0.6.11
+tower-layer v0.3.3
+tower-service v0.3.3
+tracing v0.1.44
+tracing v0.1.44 (*)
+tracing-attributes v0.1.31 (proc-macro)
+tracing-core v0.1.36
+tracing-core v0.1.36 (*)
+tracing-log v0.2.0
+tracing-subscriber v0.3.23
+try-lock v0.2.5
+type-map v0.5.1
+typenum v1.20.1
+unic-langid v0.9.6
+unic-langid v0.9.6 (*)
+unic-langid-impl v0.9.6
+unicase v2.10.0
+unicode-general-category v1.1.0
+unicode-ident v1.0.27
+unicode-normalization v0.1.26
+universal-hash v0.5.1
+universal-hash v0.5.1 (*)
+universal-hash v0.6.1
+untrusted v0.9.0
+url v2.5.9
+url v2.5.9 (*)
+utf_types v1.0.0
+utf8_iter v1.1.0
+utf8_iter v1.1.0 (*)
+utf8parse v0.2.2
+uuid v1.29.3
+uuid v1.29.3 (*)
+vcpkg v0.2.15
+version_check v0.9.5
+walkdir v2.5.1
+walkdir v2.5.1 (*)
+want v0.3.2
+webpki-roots v1.0.12
+webpki-roots v1.0.12 (*)
+winnow v0.7.15
+winnow v1.0.5
+writeable v0.6.4
+x25519-dalek v2.0.1
+x25519-dalek v3.0.0
+yoke v0.8.4
+yoke v0.8.4 (*)
+yoke-derive v0.8.4 (proc-macro)
+zerocopy v0.8.65
+zerofrom v0.1.8
+zerofrom v0.1.8 (*)
+zerofrom-derive v0.1.8 (proc-macro)
+zeroize v1.9.2
+zeroize v1.9.2 (*)
+zeroize_derive v1.5.0 (proc-macro)
+zerotrie v0.2.5
+zerotrie v0.2.5 (*)
+zerovec v0.11.9
+zerovec v0.11.9 (*)
+zerovec-derive v0.11.7 (proc-macro)
+zmij v1.0.23

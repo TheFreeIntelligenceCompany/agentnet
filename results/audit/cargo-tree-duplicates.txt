@@ -1,0 +1,784 @@
+aead v0.5.2
+├── aes-gcm v0.10.3
+│   └── hpke v0.12.0
+│       ├── age v0.12.1
+│       │   └── agentnet-core v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/core)
+│       │       ├── agentnet-cli v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/cli)
+│       │       ├── agentnet-daemon v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/daemon)
+│       │       │   └── agentnet-cli v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/cli)
+│       │       └── agentnet-mcp v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/mcp)
+│       │           ├── agentnet-cli v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/cli)
+│       │           └── agentnet-daemon v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/daemon) (*)
+│       │       [dev-dependencies]
+│       │       └── agentnet-core v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/core) (*)
+│       └── age-core v0.12.0
+│           └── age v0.12.1 (*)
+├── chacha20poly1305 v0.10.1
+│   ├── age v0.12.1 (*)
+│   ├── age-core v0.12.0 (*)
+│   └── hpke v0.12.0 (*)
+└── hpke v0.12.0 (*)
+
+aead v0.6.1
+├── chacha20poly1305 v0.11.0
+│   └── hpke v0.15.1
+│       └── agentnet-core v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/core) (*)
+└── hpke v0.15.1 (*)
+
+base64 v0.22.1
+├── age v0.12.1 (*)
+├── age-core v0.12.0 (*)
+├── agentnet-core v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/core) (*)
+├── agentnet-transport v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/transport)
+│   ├── agentnet-cli v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/cli)
+│   ├── agentnet-core v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/core) (*)
+│   └── agentnet-daemon v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/daemon) (*)
+└── reqwest v0.12.28
+    ├── agentnet-cli v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/cli)
+    ├── agentnet-daemon v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/daemon) (*)
+    └── agentnet-transport v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/transport) (*)
+    [dev-dependencies]
+    └── agentnet-transport v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/transport) (*)
+[dev-dependencies]
+└── agentnet-transport v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/transport) (*)
+
+base64 v0.23.1
+├── hyper-util v0.1.21
+│   ├── axum v0.8.9
+│   │   └── agentnet-mcp v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/mcp) (*)
+│   │   [dev-dependencies]
+│   │   └── agentnet-daemon v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/daemon) (*)
+│   ├── hyper-rustls v0.27.10
+│   │   ├── reqwest v0.12.28 (*)
+│   │   └── reqwest v0.13.5
+│   │       └── rmcp v3.11.0
+│   │           └── agentnet-mcp v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/mcp) (*)
+│   │           [dev-dependencies]
+│   │           ├── agentnet-cli v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/cli)
+│   │           └── agentnet-mcp v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/mcp) (*)
+│   │       [dev-dependencies]
+│   │       └── agentnet-mcp v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/mcp) (*)
+│   ├── reqwest v0.12.28 (*)
+│   └── reqwest v0.13.5 (*)
+├── reqwest v0.13.5 (*)
+└── rmcp v3.11.0 (*)
+
+bit-set v0.8.0
+└── fancy-regex v0.20.2
+    └── jsonschema v0.63.1
+        [dev-dependencies]
+        └── agentnet-mcp v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/mcp) (*)
+
+bit-set v0.11.1
+└── proptest v1.12.0
+    [dev-dependencies]
+    └── agentnet-core v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/core) (*)
+
+bit-vec v0.8.0
+└── bit-set v0.8.0 (*)
+
+bit-vec v0.10.2
+├── bit-set v0.11.1 (*)
+└── proptest v1.12.0 (*)
+
+block-buffer v0.10.4
+└── digest v0.10.7
+    ├── elliptic-curve v0.13.8
+    │   ├── p256 v0.13.2
+    │   │   ├── age v0.12.1 (*)
+    │   │   └── hpke v0.12.0 (*)
+    │   └── primeorder v0.13.6
+    │       └── p256 v0.13.2 (*)
+    ├── hmac v0.12.1
+    │   ├── age v0.12.1 (*)
+    │   ├── agentnet-daemon v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/daemon) (*)
+    │   ├── hkdf v0.12.4
+    │   │   ├── age v0.12.1 (*)
+    │   │   ├── age-core v0.12.0 (*)
+    │   │   ├── elliptic-curve v0.13.8 (*)
+    │   │   └── hpke v0.12.0 (*)
+    │   ├── hpke v0.12.0 (*)
+    │   └── pbkdf2 v0.12.2
+    │       └── scrypt v0.11.0
+    │           └── age v0.12.1 (*)
+    ├── hpke v0.12.0 (*)
+    ├── pbkdf2 v0.12.2 (*)
+    ├── sha2 v0.10.9
+    │   ├── age v0.12.1 (*)
+    │   ├── age-core v0.12.0 (*)
+    │   ├── agentnet-core v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/core) (*)
+    │   ├── agentnet-daemon v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/daemon) (*)
+    │   ├── agentnet-transport v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/transport) (*)
+    │   ├── hpke v0.12.0 (*)
+    │   └── scrypt v0.11.0 (*)
+    └── sha3 v0.10.9
+        ├── age v0.12.1 (*)
+        └── ml-kem v0.2.3
+            └── age v0.12.1 (*)
+
+block-buffer v0.12.1
+├── cipher v0.5.2
+│   ├── chacha20 v0.10.2
+│   │   ├── chacha20poly1305 v0.11.0 (*)
+│   │   ├── proptest v1.12.0 (*)
+│   │   └── rand v0.10.4
+│   │       ├── proptest v1.12.0 (*)
+│   │       └── rmcp v3.11.0 (*)
+│   └── chacha20poly1305 v0.11.0 (*)
+├── digest v0.11.3
+│   ├── curve25519-dalek v5.0.0
+│   │   ├── ed25519-dalek v3.0.0
+│   │   │   └── agentnet-core v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/core) (*)
+│   │   ├── hpke v0.15.1 (*)
+│   │   └── x25519-dalek v3.0.0
+│   │       └── hpke v0.15.1 (*)
+│   └── hmac v0.13.0
+│       └── hkdf v0.13.0
+│           └── hpke v0.15.1 (*)
+└── digest v0.11.3
+    └── sha2 v0.11.2
+        ├── ed25519-dalek v3.0.0 (*)
+        ├── hpke v0.15.1 (*)
+        ├── rmcp v3.11.0 (*)
+        └── rust-embed-utils v8.14.0
+            ├── rust-embed v8.14.0
+            │   ├── age v0.12.1 (*)
+            │   ├── i18n-embed v0.16.0
+            │   │   └── i18n-embed-fl v0.10.1 (proc-macro)
+            │   │       └── age v0.12.1 (*)
+            │   └── i18n-embed v0.16.0
+            │       └── age v0.12.1 (*)
+            └── rust-embed-impl v8.14.0 (proc-macro)
+                └── rust-embed v8.14.0 (*)
+
+chacha20 v0.9.1
+└── chacha20poly1305 v0.10.1 (*)
+
+chacha20 v0.10.2 (*)
+
+chacha20poly1305 v0.10.1 (*)
+
+chacha20poly1305 v0.11.0 (*)
+
+cipher v0.4.4
+├── aes v0.8.4
+│   └── aes-gcm v0.10.3 (*)
+├── aes-gcm v0.10.3 (*)
+├── age v0.12.1 (*)
+├── chacha20 v0.9.1 (*)
+├── chacha20poly1305 v0.10.1 (*)
+├── ctr v0.9.2
+│   └── aes-gcm v0.10.3 (*)
+└── salsa20 v0.10.2
+    └── scrypt v0.11.0 (*)
+
+cipher v0.5.2 (*)
+
+const-oid v0.9.6
+└── der v0.7.10
+    └── sec1 v0.7.3
+        └── elliptic-curve v0.13.8 (*)
+
+const-oid v0.10.3
+├── digest v0.11.3 (*)
+└── digest v0.11.3 (*)
+
+cpufeatures v0.2.17
+├── aes v0.8.4 (*)
+├── keccak v0.1.6
+│   └── sha3 v0.10.9 (*)
+├── polyval v0.6.2
+│   └── ghash v0.5.1
+│       └── aes-gcm v0.10.3 (*)
+└── sha2 v0.10.9 (*)
+
+cpufeatures v0.3.1
+└── sha2 v0.11.2 (*)
+
+crypto-common v0.1.7
+├── aead v0.5.2 (*)
+├── cipher v0.4.4 (*)
+├── digest v0.10.7 (*)
+└── universal-hash v0.5.1
+    ├── poly1305 v0.8.0
+    │   └── chacha20poly1305 v0.10.1 (*)
+    └── polyval v0.6.2 (*)
+
+crypto-common v0.2.2
+├── aead v0.6.1 (*)
+├── cipher v0.5.2 (*)
+├── digest v0.11.3 (*)
+├── digest v0.11.3 (*)
+└── universal-hash v0.6.1
+    └── poly1305 v0.9.1
+        └── chacha20poly1305 v0.11.0 (*)
+
+curve25519-dalek v4.1.3
+└── x25519-dalek v2.0.1
+    └── age v0.12.1 (*)
+
+curve25519-dalek v5.0.0 (*)
+
+digest v0.10.7 (*)
+
+digest v0.11.3 (*)
+
+digest v0.11.3 (*)
+
+getrandom v0.2.17
+├── rand_core v0.6.4
+│   ├── crypto-bigint v0.5.5
+│   │   └── elliptic-curve v0.13.8 (*)
+│   ├── crypto-common v0.1.7 (*)
+│   ├── elliptic-curve v0.13.8 (*)
+│   ├── ff v0.13.1
+│   │   ├── elliptic-curve v0.13.8 (*)
+│   │   └── group v0.13.0
+│   │       └── elliptic-curve v0.13.8 (*)
+│   ├── group v0.13.0 (*)
+│   ├── hpke v0.12.0 (*)
+│   ├── kem v0.3.0-pre.0
+│   │   └── ml-kem v0.2.3 (*)
+│   ├── ml-kem v0.2.3 (*)
+│   ├── rand v0.8.8
+│   │   ├── age v0.12.1 (*)
+│   │   └── age-core v0.12.0 (*)
+│   ├── rand_chacha v0.3.1
+│   │   └── rand v0.8.8 (*)
+│   └── x25519-dalek v2.0.1 (*)
+└── ring v0.17.14
+    ├── rustls v0.23.46
+    │   ├── hyper-rustls v0.27.10 (*)
+    │   ├── reqwest v0.12.28 (*)
+    │   ├── reqwest v0.13.5 (*)
+    │   ├── rustls-platform-verifier v0.7.1
+    │   │   └── reqwest v0.13.5 (*)
+    │   └── tokio-rustls v0.26.6
+    │       ├── hyper-rustls v0.27.10 (*)
+    │       ├── reqwest v0.12.28 (*)
+    │       └── reqwest v0.13.5 (*)
+    └── rustls-webpki v0.103.17
+        └── rustls v0.23.46 (*)
+
+getrandom v0.4.3
+├── agentnet-core v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/core) (*)
+├── agentnet-daemon v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/daemon) (*)
+├── ahash v0.8.14
+│   ├── jsonschema v0.63.1 (*)
+│   ├── jsonschema-value v0.63.1
+│   │   └── jsonschema v0.63.1 (*)
+│   └── referencing v0.63.1
+│       └── jsonschema v0.63.1 (*)
+├── hpke v0.15.1 (*)
+├── rand v0.10.4 (*)
+├── tempfile v3.27.0
+│   ├── proptest v1.12.0 (*)
+│   └── rusty-fork v0.3.1
+│       └── proptest v1.12.0 (*)
+│   [dev-dependencies]
+│   ├── agentnet-cli v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/cli)
+│   ├── agentnet-core v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/core) (*)
+│   └── agentnet-daemon v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/daemon) (*)
+└── uuid v1.29.3
+    ├── agentnet-core v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/core) (*)
+    └── rmcp v3.11.0 (*)
+
+hkdf v0.12.4 (*)
+
+hkdf v0.13.0 (*)
+
+hmac v0.12.1 (*)
+
+hmac v0.13.0 (*)
+
+hpke v0.12.0 (*)
+
+hpke v0.15.1 (*)
+
+hybrid-array v0.2.3
+└── ml-kem v0.2.3 (*)
+
+hybrid-array v0.4.15
+├── block-buffer v0.12.1 (*)
+├── crypto-common v0.2.2 (*)
+├── hpke v0.15.1 (*)
+└── inout v0.2.6
+    ├── aead v0.6.1 (*)
+    └── cipher v0.5.2 (*)
+
+i18n-embed v0.16.0 (*)
+
+i18n-embed v0.16.0 (*)
+
+inout v0.1.4
+└── cipher v0.4.4 (*)
+
+inout v0.2.6 (*)
+
+libc v0.2.191
+├── core-foundation v0.10.1
+│   ├── rustls-platform-verifier v0.7.1 (*)
+│   └── security-framework v3.7.0
+│       └── rustls-platform-verifier v0.7.1 (*)
+├── cpufeatures v0.2.17 (*)
+├── errno v0.3.15
+│   ├── rustix v1.1.6
+│   │   ├── fs4 v0.13.1
+│   │   │   └── agentnet-daemon v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/daemon) (*)
+│   │   ├── tempfile v3.27.0 (*)
+│   │   └── terminal_size v0.4.4
+│   │       └── clap_builder v4.6.10
+│   │           └── clap v4.6.10
+│   │               └── agentnet-cli v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/cli)
+│   └── signal-hook-registry v1.4.8
+│       └── tokio v1.54.1
+│           ├── agentnet-cli v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/cli)
+│           ├── agentnet-core v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/core) (*)
+│           ├── agentnet-daemon v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/daemon) (*)
+│           ├── agentnet-mcp v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/mcp) (*)
+│           ├── agentnet-transport v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/transport) (*)
+│           ├── axum v0.8.9 (*)
+│           ├── hyper v1.13.0
+│           │   ├── axum v0.8.9 (*)
+│           │   ├── hyper-rustls v0.27.10 (*)
+│           │   ├── hyper-util v0.1.21 (*)
+│           │   ├── reqwest v0.12.28 (*)
+│           │   └── reqwest v0.13.5 (*)
+│           ├── hyper-rustls v0.27.10 (*)
+│           ├── hyper-util v0.1.21 (*)
+│           ├── process-wrap v10.0.2
+│           │   └── rmcp v3.11.0 (*)
+│           ├── reqwest v0.12.28 (*)
+│           ├── reqwest v0.13.5 (*)
+│           ├── rmcp v3.11.0 (*)
+│           ├── tokio-rustls v0.26.6 (*)
+│           ├── tokio-stream v0.1.19
+│           │   └── rmcp v3.11.0 (*)
+│           ├── tokio-util v0.7.20
+│           │   ├── agentnet-cli v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/cli)
+│           │   ├── agentnet-core v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/core) (*)
+│           │   ├── agentnet-daemon v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/daemon) (*)
+│           │   ├── agentnet-mcp v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/mcp) (*)
+│           │   ├── reqwest v0.13.5 (*)
+│           │   └── rmcp v3.11.0 (*)
+│           └── tower v0.5.3
+│               ├── axum v0.8.9 (*)
+│               ├── reqwest v0.12.28 (*)
+│               ├── reqwest v0.13.5 (*)
+│               └── tower-http v0.6.11
+│                   ├── reqwest v0.12.28 (*)
+│                   └── reqwest v0.13.5 (*)
+│           [dev-dependencies]
+│           └── agentnet-transport v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/transport) (*)
+├── getrandom v0.2.17 (*)
+├── getrandom v0.4.3 (*)
+├── hyper-util v0.1.21 (*)
+├── mio v1.2.5
+│   └── tokio v1.54.1 (*)
+├── nix v0.31.4
+│   └── process-wrap v10.0.2 (*)
+├── parking_lot_core v0.9.12
+│   └── parking_lot v0.12.5
+│       ├── i18n-embed v0.16.0 (*)
+│       ├── i18n-embed v0.16.0 (*)
+│       └── referencing v0.63.1 (*)
+├── rand v0.8.8 (*)
+├── ring v0.17.14 (*)
+├── rmcp v3.11.0 (*)
+├── rpassword v7.5.5
+│   └── agentnet-cli v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/cli)
+├── rtoolbox v0.0.6
+│   └── rpassword v7.5.5 (*)
+├── rustix v1.1.6 (*)
+├── security-framework v3.7.0 (*)
+├── security-framework-sys v2.17.0
+│   ├── rustls-platform-verifier v0.7.1 (*)
+│   └── security-framework v3.7.0 (*)
+├── signal-hook-registry v1.4.8 (*)
+├── socket2 v0.6.5
+│   ├── hyper-util v0.1.21 (*)
+│   └── tokio v1.54.1 (*)
+├── tokio v1.54.1 (*)
+├── tokio-util v0.7.20 (*)
+└── wait-timeout v0.2.1
+    └── rusty-fork v0.3.1 (*)
+
+libc v0.2.191
+├── cc v1.11.3
+│   └── cmake v0.1.58
+│       [build-dependencies]
+│       └── aws-lc-sys v0.47.0
+│           └── aws-lc-rs v1.19.0
+│               ├── rustls v0.23.46 (*)
+│               └── rustls-webpki v0.103.17 (*)
+│   [build-dependencies]
+│   ├── aws-lc-sys v0.47.0 (*)
+│   ├── libsqlite3-sys v0.40.0
+│   │   └── rusqlite v0.42.0
+│   │       ├── agentnet-core v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/core) (*)
+│   │       └── agentnet-daemon v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/daemon) (*)
+│   └── ring v0.17.14 (*)
+├── cpufeatures v0.3.1 (*)
+└── jobserver v0.1.35
+    └── cc v1.11.3 (*)
+
+log v0.4.35
+├── i18n-config v0.4.8
+│   ├── i18n-embed-fl v0.10.1 (proc-macro) (*)
+│   └── i18n-embed-impl v0.8.4 (proc-macro)
+│       ├── i18n-embed v0.16.0 (*)
+│       └── i18n-embed v0.16.0 (*)
+└── i18n-embed v0.16.0 (*)
+
+log v0.4.35
+├── i18n-embed v0.16.0 (*)
+├── reqwest v0.12.28 (*)
+├── reqwest v0.13.5 (*)
+├── rustls-platform-verifier v0.7.1 (*)
+└── tracing-log v0.2.0
+    └── tracing-subscriber v0.3.23
+        └── agentnet-cli v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/cli)
+        [dev-dependencies]
+        └── agentnet-mcp v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/mcp) (*)
+
+poly1305 v0.8.0 (*)
+
+poly1305 v0.9.1 (*)
+
+rand v0.8.8 (*)
+
+rand v0.10.4 (*)
+
+rand_core v0.6.4 (*)
+
+rand_core v0.10.1
+├── chacha20 v0.10.2 (*)
+├── getrandom v0.4.3 (*)
+├── hpke v0.15.1 (*)
+├── rand v0.10.4 (*)
+├── rand_xorshift v0.5.0
+│   └── proptest v1.12.0 (*)
+└── x25519-dalek v3.0.0 (*)
+
+reqwest v0.12.28 (*)
+
+reqwest v0.13.5 (*)
+
+serde v1.0.229
+├── agentnet-cli v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/cli)
+├── agentnet-core v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/core) (*)
+├── agentnet-daemon v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/daemon) (*)
+├── agentnet-mcp v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/mcp) (*)
+├── agentnet-transport v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/transport) (*)
+├── ahash v0.8.14 (*)
+├── chrono v0.4.45
+│   ├── rmcp v3.11.0 (*)
+│   └── schemars v1.2.3
+│       └── rmcp v3.11.0 (*)
+├── email_address v0.2.10
+│   └── jsonschema v0.63.1 (*)
+├── fluent-uri v0.4.1
+│   └── referencing v0.63.1 (*)
+├── jsonschema v0.63.1 (*)
+├── reqwest v0.12.28 (*)
+├── reqwest v0.13.5 (*)
+├── rmcp v3.11.0 (*)
+├── schemars v1.2.3 (*)
+└── serde_urlencoded v0.7.1
+    └── reqwest v0.12.28 (*)
+
+serde v1.0.229
+├── basic-toml v0.1.10
+│   └── i18n-config v0.4.8 (*)
+├── i18n-config v0.4.8 (*)
+├── toml v0.5.11
+│   └── find-crate v0.6.3
+│       ├── i18n-embed-fl v0.10.1 (proc-macro) (*)
+│       └── i18n-embed-impl v0.8.4 (proc-macro) (*)
+└── unic-langid-impl v0.9.6
+    └── unic-langid v0.9.6
+        ├── i18n-config v0.4.8 (*)
+        ├── i18n-embed v0.16.0 (*)
+        └── i18n-embed-fl v0.10.1 (proc-macro) (*)
+
+serde_core v1.0.229
+├── axum v0.8.9 (*)
+├── indexmap v2.14.2
+│   ├── process-wrap v10.0.2 (*)
+│   └── rmcp v3.11.0 (*)
+├── serde v1.0.229 (*)
+├── serde_json v1.0.154
+│   ├── agentnet-cli v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/cli)
+│   ├── agentnet-core v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/core) (*)
+│   ├── agentnet-daemon v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/daemon) (*)
+│   ├── agentnet-mcp v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/mcp) (*)
+│   ├── agentnet-transport v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/transport) (*)
+│   ├── jsonschema v0.63.1 (*)
+│   ├── jsonschema-value v0.63.1 (*)
+│   ├── referencing v0.63.1 (*)
+│   ├── reqwest v0.13.5 (*)
+│   ├── rmcp v3.11.0 (*)
+│   └── schemars v1.2.3 (*)
+│   [dev-dependencies]
+│   └── agentnet-transport v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/transport) (*)
+├── serde_spanned v1.1.3
+│   └── toml v0.9.12+spec-1.1.0
+│       └── agentnet-daemon v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/daemon) (*)
+├── toml v0.9.12+spec-1.1.0 (*)
+└── toml_datetime v0.7.5+spec-1.1.0
+    └── toml v0.9.12+spec-1.1.0 (*)
+
+serde_core v1.0.229
+├── serde v1.0.229 (*)
+└── serde_json v1.0.154
+    └── rmcp-macros v3.11.0 (proc-macro)
+        └── rmcp v3.11.0 (*)
+
+serde_json v1.0.154 (*)
+
+serde_json v1.0.154 (*)
+
+sha2 v0.10.9 (*)
+
+sha2 v0.11.2 (*)
+
+syn v2.0.119
+├── i18n-embed-fl v0.10.1 (proc-macro) (*)
+├── i18n-embed-impl v0.8.4 (proc-macro) (*)
+├── rust-embed-impl v8.14.0 (proc-macro) (*)
+├── strum_macros v0.28.0 (proc-macro)
+│   └── strum v0.28.0
+│       └── jsonschema v0.63.1 (*)
+├── thiserror-impl v1.0.69 (proc-macro)
+│   └── thiserror v1.0.69
+│       ├── i18n-config v0.4.8 (*)
+│       ├── i18n-embed v0.16.0 (*)
+│       └── i18n-embed v0.16.0 (*)
+├── tracing-attributes v0.1.31 (proc-macro)
+│   └── tracing v0.1.44
+│       ├── agentnet-cli v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/cli)
+│       ├── agentnet-core v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/core) (*)
+│       ├── agentnet-daemon v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/daemon) (*)
+│       ├── agentnet-mcp v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/mcp) (*)
+│       ├── hyper-util v0.1.21 (*)
+│       ├── process-wrap v10.0.2 (*)
+│       ├── rmcp v3.11.0 (*)
+│       └── tracing-subscriber v0.3.23 (*)
+└── zeroize_derive v1.5.0 (proc-macro)
+    └── zeroize v1.9.2
+        ├── age v0.12.1 (*)
+        ├── agentnet-core v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/core) (*)
+        ├── aws-lc-rs v1.19.0 (*)
+        ├── chacha20 v0.10.2 (*)
+        ├── chacha20poly1305 v0.10.1 (*)
+        ├── chacha20poly1305 v0.11.0 (*)
+        ├── cipher v0.4.4 (*)
+        ├── crypto-bigint v0.5.5 (*)
+        ├── curve25519-dalek v4.1.3 (*)
+        ├── curve25519-dalek v5.0.0 (*)
+        ├── der v0.7.10 (*)
+        ├── ed25519-dalek v3.0.0 (*)
+        ├── elliptic-curve v0.13.8 (*)
+        ├── generic-array v0.14.7
+        │   ├── aead v0.5.2 (*)
+        │   ├── block-buffer v0.10.4 (*)
+        │   ├── crypto-bigint v0.5.5 (*)
+        │   ├── crypto-common v0.1.7 (*)
+        │   ├── elliptic-curve v0.13.8 (*)
+        │   ├── hpke v0.12.0 (*)
+        │   ├── inout v0.1.4 (*)
+        │   └── sec1 v0.7.3 (*)
+        ├── hpke v0.12.0 (*)
+        ├── hpke v0.15.1 (*)
+        ├── kem v0.3.0-pre.0 (*)
+        ├── rustls v0.23.46 (*)
+        ├── rustls-pki-types v1.16.0
+        │   ├── reqwest v0.12.28 (*)
+        │   ├── reqwest v0.13.5 (*)
+        │   ├── rustls v0.23.46 (*)
+        │   ├── rustls-webpki v0.103.17 (*)
+        │   └── webpki-roots v1.0.12
+        │       ├── hyper-rustls v0.27.10 (*)
+        │       └── reqwest v0.12.28 (*)
+        ├── sec1 v0.7.3 (*)
+        ├── secrecy v0.10.3
+        │   └── age-core v0.12.0 (*)
+        ├── x25519-dalek v2.0.1 (*)
+        └── x25519-dalek v3.0.0 (*)
+
+syn v3.0.10
+├── async-trait v0.1.92 (proc-macro)
+│   ├── agentnet-core v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/core) (*)
+│   ├── agentnet-daemon v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/daemon) (*)
+│   ├── agentnet-transport v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/transport) (*)
+│   └── rmcp v3.11.0 (*)
+│   [dev-dependencies]
+│   └── agentnet-mcp v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/mcp) (*)
+├── clap_derive v4.6.9 (proc-macro)
+│   └── clap v4.6.10 (*)
+├── darling_core v0.24.1
+│   ├── darling v0.24.1
+│   │   └── rmcp-macros v3.11.0 (proc-macro) (*)
+│   └── darling_macro v0.24.1 (proc-macro)
+│       └── darling v0.24.1 (*)
+├── darling_macro v0.24.1 (proc-macro) (*)
+├── displaydoc v0.2.7 (proc-macro)
+│   ├── icu_collections v2.4.0
+│   │   ├── icu_normalizer v2.4.0
+│   │   │   └── idna_adapter v1.2.2
+│   │   │       └── idna v1.1.0
+│   │   │           └── url v2.5.9
+│   │   │               ├── agentnet-daemon v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/daemon) (*)
+│   │   │               ├── agentnet-transport v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/transport) (*)
+│   │   │               ├── reqwest v0.12.28 (*)
+│   │   │               ├── reqwest v0.13.5 (*)
+│   │   │               └── tower-http v0.6.11 (*)
+│   │   └── icu_properties v2.4.0
+│   │       └── idna_adapter v1.2.2 (*)
+│   ├── icu_locale_core v2.4.0
+│   │   ├── icu_properties v2.4.0 (*)
+│   │   └── icu_provider v2.4.0
+│   │       ├── icu_normalizer v2.4.0 (*)
+│   │       └── icu_properties v2.4.0 (*)
+│   ├── icu_properties v2.4.0 (*)
+│   ├── icu_provider v2.4.0 (*)
+│   ├── tinystr v0.8.5
+│   │   └── unic-langid-impl v0.9.6 (*)
+│   ├── tinystr v0.8.5
+│   │   ├── icu_locale_core v2.4.0 (*)
+│   │   └── unic-langid-impl v0.9.6
+│   │       └── unic-langid v0.9.6
+│   │           ├── fluent v0.17.0
+│   │           │   ├── i18n-embed v0.16.0 (*)
+│   │           │   ├── i18n-embed v0.16.0 (*)
+│   │           │   └── i18n-embed-fl v0.10.1 (proc-macro) (*)
+│   │           ├── fluent-bundle v0.16.0
+│   │           │   └── fluent v0.17.0 (*)
+│   │           ├── fluent-langneg v0.13.1
+│   │           │   ├── fluent-bundle v0.16.0 (*)
+│   │           │   ├── i18n-embed v0.16.0 (*)
+│   │           │   └── i18n-embed v0.16.0 (*)
+│   │           ├── i18n-embed v0.16.0 (*)
+│   │           ├── intl-memoizer v0.5.3
+│   │           │   ├── fluent-bundle v0.16.0 (*)
+│   │           │   ├── i18n-embed v0.16.0 (*)
+│   │           │   └── i18n-embed v0.16.0 (*)
+│   │           └── intl_pluralrules v7.0.2
+│   │               └── fluent-bundle v0.16.0 (*)
+│   └── zerotrie v0.2.5
+│       ├── icu_properties v2.4.0 (*)
+│       └── icu_provider v2.4.0 (*)
+├── futures-macro v0.3.34 (proc-macro)
+│   └── futures-util v0.3.34
+│       ├── axum v0.8.9 (*)
+│       ├── futures v0.3.34
+│       │   ├── cookie-factory v0.3.3
+│       │   │   ├── age v0.12.1 (*)
+│       │   │   └── age-core v0.12.0 (*)
+│       │   ├── process-wrap v10.0.2 (*)
+│       │   └── rmcp v3.11.0 (*)
+│       ├── futures-executor v0.3.34
+│       │   └── futures v0.3.34 (*)
+│       ├── hyper-util v0.1.21 (*)
+│       ├── reqwest v0.13.5 (*)
+│       ├── sse-stream v0.2.6
+│       │   └── rmcp v3.11.0 (*)
+│       ├── tower v0.5.3 (*)
+│       └── tower-http v0.6.11 (*)
+├── pin-project-internal v1.2.0 (proc-macro)
+│   └── pin-project v1.2.0
+│       └── age v0.12.1 (*)
+├── proc-macro-error3 v3.1.1
+│   └── i18n-embed-fl v0.10.1 (proc-macro) (*)
+├── ref-cast-impl v1.0.27 (proc-macro)
+│   └── ref-cast v1.0.27
+│       ├── fluent-uri v0.4.1 (*)
+│       └── schemars v1.2.3 (*)
+├── rmcp-macros v3.11.0 (proc-macro) (*)
+├── schemars_derive v1.2.3 (proc-macro)
+│   └── schemars v1.2.3 (*)
+├── serde_derive v1.0.229 (proc-macro)
+│   ├── i18n-config v0.4.8 (*)
+│   ├── serde v1.0.229 (*)
+│   └── serde v1.0.229 (*)
+├── serde_derive_internals v0.30.0
+│   └── schemars_derive v1.2.3 (proc-macro) (*)
+├── synstructure v0.14.0
+│   ├── yoke-derive v0.8.4 (proc-macro)
+│   │   └── yoke v0.8.4
+│   │       ├── icu_collections v2.4.0 (*)
+│   │       ├── icu_provider v2.4.0 (*)
+│   │       ├── zerotrie v0.2.5 (*)
+│   │       └── zerovec v0.11.9
+│   │           ├── icu_collections v2.4.0 (*)
+│   │           ├── icu_locale_core v2.4.0 (*)
+│   │           ├── icu_normalizer v2.4.0 (*)
+│   │           ├── icu_properties v2.4.0 (*)
+│   │           ├── icu_provider v2.4.0 (*)
+│   │           ├── potential_utf v0.1.6
+│   │           │   └── icu_collections v2.4.0 (*)
+│   │           └── tinystr v0.8.5 (*)
+│   └── zerofrom-derive v0.1.8 (proc-macro)
+│       └── zerofrom v0.1.8
+│           ├── icu_collections v2.4.0 (*)
+│           ├── icu_provider v2.4.0 (*)
+│           ├── yoke v0.8.4 (*)
+│           ├── zerotrie v0.2.5 (*)
+│           └── zerovec v0.11.9 (*)
+├── thiserror-impl v2.0.21 (proc-macro)
+│   └── thiserror v2.0.21
+│       ├── agentnet-core v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/core) (*)
+│       ├── agentnet-daemon v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/daemon) (*)
+│       ├── agentnet-mcp v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/mcp) (*)
+│       ├── agentnet-transport v0.1.0 (/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/export/crates/transport) (*)
+│       ├── fluent-syntax v0.12.0
+│       │   ├── fluent-bundle v0.16.0 (*)
+│       │   ├── i18n-embed v0.16.0 (*)
+│       │   ├── i18n-embed v0.16.0 (*)
+│       │   └── i18n-embed-fl v0.10.1 (proc-macro) (*)
+│       └── rmcp v3.11.0 (*)
+├── tokio-macros v2.7.2 (proc-macro)
+│   └── tokio v1.54.1 (*)
+├── yoke-derive v0.8.4 (proc-macro) (*)
+├── zerofrom-derive v0.1.8 (proc-macro) (*)
+└── zerovec-derive v0.11.7 (proc-macro)
+    └── zerovec v0.11.9 (*)
+
+thiserror v1.0.69 (*)
+
+thiserror v2.0.21 (*)
+
+thiserror-impl v1.0.69 (proc-macro) (*)
+
+thiserror-impl v2.0.21 (proc-macro) (*)
+
+tinystr v0.8.5 (*)
+
+tinystr v0.8.5 (*)
+
+toml v0.5.11 (*)
+
+toml v0.9.12+spec-1.1.0 (*)
+
+unic-langid v0.9.6 (*)
+
+unic-langid v0.9.6 (*)
+
+unic-langid-impl v0.9.6 (*)
+
+unic-langid-impl v0.9.6 (*)
+
+universal-hash v0.5.1 (*)
+
+universal-hash v0.6.1 (*)
+
+winnow v0.7.15
+└── toml v0.9.12+spec-1.1.0 (*)
+
+winnow v1.0.5
+└── toml_parser v1.1.7+spec-1.1.0
+    └── toml v0.9.12+spec-1.1.0 (*)
+
+x25519-dalek v2.0.1 (*)
+
+x25519-dalek v3.0.0 (*)

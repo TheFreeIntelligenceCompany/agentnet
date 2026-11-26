@@ -1,0 +1,4 @@
+# README step 1, run 2026-11-25T22:51:15Z in the working tree (--target-dir in scratchpad instead of ./target because other agents build there)
+$ cargo build --release --locked -p agentnet-cli
+    Finished `release` profile [optimized] target(s) in 4.20s
+[exit 0]
