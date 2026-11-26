@@ -1,0 +1,1 @@
+attempt 2 (tests only, -j2) did not complete: the host disk filled and the container VM was restarted. Superseded by native x86_64 evidence: GitHub Actions runs 45845088419 (fmt, clippy, tests, MSRV, cargo-deny) and 45846705416 (relay-gated tests), both success on ubuntu-latest.
