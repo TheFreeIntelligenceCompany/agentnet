@@ -1,8 +1,14 @@
 # Capability discovery (optional, opt-in)
 
 Status: implemented, tested on the mock network and through the daemon, CLI and MCP
-layers; **never run against a real relay** (relay-dependent tests do not cover it:
-UNTESTED). The cryptography is the same unaudited Ed25519 signing as everywhere else
+layers, and exercised on the local relay topology (one host, containers on one VM,
+nwaku amd64 under qemu; localhost, not cross-machine) by the relay-gated test
+`crates/cli/tests/relay_discovery.rs`: 3 of 3 runs passed (advertise, list at a second
+daemon in about 0.5 s, signature-tampered frame not listed, withdraw, disabled-by-policy
+refusal with nothing published, ordinary messaging alongside), evidence in
+`results/discovery-relay/20261126T151341Z/`. Still UNTESTED on a relay: the receiver's
+invalid-advert counter for the tampered frame, history recovery for a late starter,
+the republish cadence, flooding and cross-machine use. The cryptography is the same unaudited Ed25519 signing as everywhere else
 in AgentNet; this feature adds one signing domain and no new construction (see
 `docs/crypto-requirements.md`).
 
@@ -261,5 +267,10 @@ advertise an address whose inbox topic must stay unlinked from an identity.
   forged adverts, garbage frames, cross-topic confusion, table cap and eviction,
   blocked/revoked advertisers, KEM-rotation re-issue, revoked local identity, history sync.
 * `crates/core/src/store.rs`: `migrates_a_v2_database_to_v3`.
+* `crates/cli/tests/relay_discovery.rs` (`#[ignore]`, `AGENTNET_RELAY_TESTS=1`, needs
+  `spike/relay` up): two real daemons on the local relay. It also shows the signed
+  record does not bind a topic: a valid advert replayed onto another configured topic is
+  accepted (it is public data, so this only matters for topic-scoped trust, which does
+  not exist).
 * `crates/daemon/tests/discovery.rs`, `crates/cli/tests/cli.rs` (`discovery_*`),
   `crates/mcp/tests/tools.rs` (`discovery_*`).

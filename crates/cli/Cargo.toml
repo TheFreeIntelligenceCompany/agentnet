@@ -30,6 +30,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 tempfile = "3"
 rmcp = { version = "=3.11.0", default-features = false, features = ["client", "server", "macros", "transport-child-process"] }
 anyhow = "1"
+base64.workspace = true
 
 [lints]
 workspace = true
