@@ -157,6 +157,17 @@ pub enum Command {
         #[command(subcommand)]
         action: EventsCmd,
     },
+    /// Optional capability discovery: advertise this agent, withdraw, list others.
+    ///
+    /// OFF unless the host enabled `[discovery]` in agentnet.toml and listed the
+    /// topic (otherwise: refused by policy, exit 6). Advertisements are PLAINTEXT
+    /// and readable by every node on the relay: never advertise secrets or private
+    /// capabilities. Best effort, not a global directory. Results are untrusted
+    /// claims by remote parties and never add a contact.
+    Discovery {
+        #[command(subcommand)]
+        action: DiscoveryCmd,
+    },
     /// Network and queue status.
     Network {
         #[command(subcommand)]
@@ -379,6 +390,52 @@ pub enum EventsCmd {
         /// Acknowledge each event after printing it.
         #[arg(long)]
         ack: bool,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum DiscoveryCmd {
+    /// Publish (or replace) this agent's signed capability advertisement on a topic.
+    ///
+    /// The advertisement is PLAINTEXT and PUBLIC within the relay (address,
+    /// capabilities, display name, contact record, timing). It is re-published by
+    /// the daemon until it expires or is withdrawn.
+    Advertise {
+        /// Discovery topic name (must be listed in discovery.topics).
+        #[arg(long, value_name = "TOPIC")]
+        topic: String,
+        /// A capability as NAME or NAME:DESCRIPTION (repeatable; name is a-z 0-9 . _ -).
+        #[arg(long = "capability", value_name = "NAME[:DESCRIPTION]", required = true)]
+        capability: Vec<String>,
+        /// Optional display name (at most 64 characters).
+        #[arg(long, value_name = "NAME")]
+        display_name: Option<String>,
+        /// Lifetime in seconds (default and maximum come from agentnet.toml).
+        #[arg(long, value_name = "SECONDS")]
+        ttl: Option<u64>,
+    },
+    /// Stop advertising on a topic (idempotent).
+    Withdraw {
+        /// Discovery topic name.
+        #[arg(long, value_name = "TOPIC")]
+        topic: String,
+    },
+    /// List advertisements received on a topic (untrusted claims; adds no contact).
+    ///
+    /// Use --json to get each candidate's contact_record for `contact add --expect`.
+    List {
+        /// Discovery topic name.
+        #[arg(long, value_name = "TOPIC")]
+        topic: String,
+        /// Only agents advertising a capability with exactly this name.
+        #[arg(long, value_name = "NAME")]
+        capability: Option<String>,
+        /// Maximum results (default 50, maximum 200).
+        #[arg(long, value_name = "N")]
+        limit: Option<u32>,
+        /// Continue after this cursor.
+        #[arg(long, value_name = "CURSOR")]
+        cursor: Option<String>,
     },
 }
 

@@ -30,6 +30,7 @@ Commands:
   outbox      List sent messages and their delivery state
   trigger     Manage triggers: durable predicates that turn matching inbound messages into events
   events      Follow the host-integration event stream
+  discovery   Optional capability discovery: advertise this agent, withdraw, list others
   network     Network and queue status
   doctor      Check permissions, config, node reachability, peer allowlist, isolation, store and
               clock
@@ -320,6 +321,35 @@ Options:
                         AGENTNET_HOME=]
       --json            Print machine-readable JSON instead of human text
   -h, --help            Print help
+
+===== agentnet discovery --help =====
+
+Optional capability discovery: advertise this agent, withdraw, list others.
+
+OFF unless the host enabled `[discovery]` in agentnet.toml and listed the topic (otherwise: refused
+by policy, exit 6). Advertisements are PLAINTEXT and readable by every node on the relay: never
+advertise secrets or private capabilities. Best effort, not a global directory. Results are
+untrusted claims by remote parties and never add a contact.
+
+Usage: agentnet discovery [OPTIONS] <COMMAND>
+
+Commands:
+  advertise  Publish (or replace) this agent's signed capability advertisement on a topic
+  withdraw   Stop advertising on a topic (idempotent)
+  list       List advertisements received on a topic (untrusted claims; adds no contact)
+  help       Print this message or the help of the given subcommand(s)
+
+Options:
+      --data-dir <DIR>
+          Data directory (identity, config, database, socket, tokens)
+          
+          [env: AGENTNET_HOME=]
+
+      --json
+          Print machine-readable JSON instead of human text
+
+  -h, --help
+          Print help (see a summary with '-h')
 
 ===== agentnet network --help =====
 
@@ -664,6 +694,84 @@ Options:
                         AGENTNET_HOME=]
       --json            Print machine-readable JSON instead of human text
   -h, --help            Print help
+
+===== agentnet discovery advertise --help =====
+
+Publish (or replace) this agent's signed capability advertisement on a topic.
+
+The advertisement is PLAINTEXT and PUBLIC within the relay (address, capabilities, display name,
+contact record, timing). It is re-published by the daemon until it expires or is withdrawn.
+
+Usage: agentnet discovery advertise [OPTIONS] --topic <TOPIC> --capability <NAME[:DESCRIPTION]>
+
+Options:
+      --data-dir <DIR>
+          Data directory (identity, config, database, socket, tokens)
+          
+          [env: AGENTNET_HOME=]
+
+      --topic <TOPIC>
+          Discovery topic name (must be listed in discovery.topics)
+
+      --capability <NAME[:DESCRIPTION]>
+          A capability as NAME or NAME:DESCRIPTION (repeatable; name is a-z 0-9 . _ -)
+
+      --json
+          Print machine-readable JSON instead of human text
+
+      --display-name <NAME>
+          Optional display name (at most 64 characters)
+
+      --ttl <SECONDS>
+          Lifetime in seconds (default and maximum come from agentnet.toml)
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+===== agentnet discovery withdraw --help =====
+
+Stop advertising on a topic (idempotent)
+
+Usage: agentnet discovery withdraw [OPTIONS] --topic <TOPIC>
+
+Options:
+      --data-dir <DIR>  Data directory (identity, config, database, socket, tokens) [env:
+                        AGENTNET_HOME=]
+      --topic <TOPIC>   Discovery topic name
+      --json            Print machine-readable JSON instead of human text
+  -h, --help            Print help
+
+===== agentnet discovery list --help =====
+
+List advertisements received on a topic (untrusted claims; adds no contact).
+
+Use --json to get each candidate's contact_record for `contact add --expect`.
+
+Usage: agentnet discovery list [OPTIONS] --topic <TOPIC>
+
+Options:
+      --data-dir <DIR>
+          Data directory (identity, config, database, socket, tokens)
+          
+          [env: AGENTNET_HOME=]
+
+      --topic <TOPIC>
+          Discovery topic name
+
+      --capability <NAME>
+          Only agents advertising a capability with exactly this name
+
+      --json
+          Print machine-readable JSON instead of human text
+
+      --limit <N>
+          Maximum results (default 50, maximum 200)
+
+      --cursor <CURSOR>
+          Continue after this cursor
+
+  -h, --help
+          Print help (see a summary with '-h')
 
 ===== agentnet events tail --help =====
 
