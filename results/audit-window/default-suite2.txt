@@ -1,0 +1,206 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.68s
+     Running unittests src/main.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/agentnet_acceptance-945c98d22b858944)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/agentnet-c1e691a13c6b7ee9)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 16 filtered out; finished in 0.00s
+
+     Running tests/cli.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/cli-3382e02e6e29dad0)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 29 filtered out; finished in 0.00s
+
+     Running tests/relay_discovery.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/relay_discovery-f4e8f943b1f158a3)
+
+running 1 test
+test signed_capability_discovery_works_over_the_private_relay ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 34.19s
+
+     Running tests/relay_e2e.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/relay_e2e-2944973cb963238f)
+
+running 1 test
+test two_agentnet_serve_processes_exchange_messages_over_the_private_relay ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.95s
+
+     Running unittests src/lib.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/agentnet_core-53c625302af291f2)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 44 filtered out; finished in 0.00s
+
+     Running tests/architecture.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/architecture-98acdd2c394d3bea)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/crypto.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/crypto-0b72fb48d74d79c6)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 42 filtered out; finished in 0.00s
+
+     Running tests/engine_delivery.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/engine_delivery-7a932411a6bf9b49)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 25 filtered out; finished in 0.00s
+
+     Running tests/engine_discovery.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/engine_discovery-b53afbe7251489cc)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 27 filtered out; finished in 0.00s
+
+     Running tests/engine_hardening.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/engine_hardening-c08a00b85745e61e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 20 filtered out; finished in 0.00s
+
+     Running tests/engine_random.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/engine_random-a16da8ef0e860d10)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/engine_run.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/engine_run-27a1d7e93af3cdb2)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/engine_security.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/engine_security-cd544d2845b509c4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.00s
+
+     Running tests/engine_triggers.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/engine_triggers-d4746fadec046988)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.00s
+
+     Running tests/vectors.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/vectors-b4bc452ed4493239)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/agentnet_daemon-2e0c4a5095924004)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 20 filtered out; finished in 0.00s
+
+     Running tests/discovery.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/discovery-5d3ae55882f47d42)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/harness.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/harness-5f7aae54e57daaa5)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/rotation_revocation.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/rotation_revocation-a2e6b874b2e9fa05)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/socket_api.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/socket_api-3579c317a9a81a1d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 16 filtered out; finished in 0.00s
+
+     Running tests/webhook_triggers.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/webhook_triggers-7f0b503820eb45be)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/agentnet_mcp-9dcc6dbb9bfb8516)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+     Running tests/resources.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/resources-fd0f6c463b0ebd0f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.00s
+
+     Running tests/subscriptions.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/subscriptions-9432d2183d5227db)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 17 filtered out; finished in 0.00s
+
+     Running tests/tools.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/tools-d05e807dd0074f65)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 18 filtered out; finished in 0.00s
+
+     Running tests/transports.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/transports-293b73f201852e70)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 17 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/agentnet_transport-f4d2d64f5e90807b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 85 filtered out; finished in 0.00s
+
+     Running tests/logos_rest_relay.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/logos_rest_relay-746acf20c3d3ec45)
+
+running 5 tests
+test adapter_redial_restores_a_disconnected_client ... ok
+test max_payload_len_is_accepted_and_delivered_and_one_more_is_rejected_locally ... ok
+test history_paginates_across_pages_and_dedupes_against_live ... ok
+test isolation_audit_passes_with_right_allowlist_and_fails_closed_with_wrong_one ... ok
+test a_to_b_and_b_to_a_with_identical_ids_in_live_and_history ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 10.88s
+
+   Doc-tests agentnet_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests agentnet_daemon
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests agentnet_mcp
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests agentnet_transport
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

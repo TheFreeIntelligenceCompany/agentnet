@@ -1,0 +1,10 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.36s
+     Running tests/logos_rest_relay.rs (/Users/dennison/develop/FIC-elipsis/target/debug/deps/logos_rest_relay-3e770bbfc93aaec4)
+
+running 1 test
+throwaway node: /ip4/172.28.66.30/tcp/60000/p2p/16Uiu2HAmGwj2KbgbB6cCwGvTuPGC8aJeSh7TUPK8Qj9K4R8CVw1D
+an-na dropped the removed peer after 2.589709ms
+test audit_window::publish_audits_peers_immediately_before_sending ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 6.19s
+

@@ -102,6 +102,10 @@ results/           raw evidence; every claim in docs points here
   (`results/reconnect/20261126T065412Z/SUMMARY.md`, `docs/runbook.md` 6.3).
 - Parallel cargo builds in separate worktrees filled the disk once: share one
   `CARGO_TARGET_DIR` between worktrees and delete merged worktrees promptly.
+- The node REST API has no call to disconnect a peer: a node meshed with an
+  unwanted peer must be restarted (or the peer must leave). Tests that mesh a
+  shared node with a foreign peer must own a throwaway node (see the
+  `disruptive-tests` feature, `AGENTNET_RELAY_DISRUPTIVE=1`).
 - Relay-dependent tests are `#[ignore]`d: `AGENTNET_RELAY_TESTS=1 cargo test
   --workspace --locked -- --ignored` with the topology in `spike/relay` up.
 - The full acceptance run is `scripts/acceptance.sh` (about 50 minutes).
