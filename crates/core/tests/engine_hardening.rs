@@ -894,8 +894,18 @@ async fn replay_across_kem_revocation_and_after_pruning() {
 async fn revocation_during_a_pending_publish_stops_later_frames_of_the_batch() {
     let w = World::new();
     let (s, gate) = w.agent_gated("s", cfg());
-    let mut v = started(&w, &["r1", "r2"]).await;
-    let (r2, r1) = (v.pop().unwrap(), v.pop().unwrap());
+    let r1 = started(&w, &["r1"]).await.pop().unwrap();
+    // The assertions count publishes per topic, and two random addresses share
+    // an inbox bucket topic once in 256: pick an r2 in a different bucket.
+    let mut i = 0;
+    let r2 = loop {
+        let name = format!("r2-{i}");
+        let c = started(&w, &[name.as_str()]).await.pop().unwrap();
+        if topic_of(&c.record) != topic_of(&r1.record) {
+            break c;
+        }
+        i += 1;
+    };
     s.node.step_receive().await.unwrap();
     s.add(&r1).await;
     s.add(&r2).await;
