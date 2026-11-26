@@ -976,3 +976,83 @@ async fn key_update_during_a_pending_publish_publishes_the_resealed_frame() {
         "the obsolete old-key frame must never be published"
     );
 }
+
+// ------------------------------------- held messages vs. current sender trust
+
+/// Hold one message from `a` at `b` (rollback + replay), run `change` while the
+/// message is held, then accept the rollback and restart.
+async fn held_then_changed(change: impl FnOnce(&World, &Agent, &Agent)) -> (World, Agent, Agent) {
+    let w = World::new();
+    let mut v = started(&w, &["a", "b"]).await;
+    let (b, a) = (v.pop().unwrap(), v.pop().unwrap());
+    exchange(&a, &b).await;
+    let backup = w.dir.path().join("b-backup.sqlite");
+    b.node.close();
+    copy_store(&b, &backup);
+    let b = w.reopen(b, cfg());
+    a.send(&b, "m").await;
+    settle(&[&a, &b]).await;
+    let f = captured(&w, &a);
+    b.node.close();
+    restore_store(&b, &backup);
+    w.advance(1_000);
+    let b = w.reopen(b, cfg());
+    inject(&w, &b, &f.payload);
+    b.node.step_receive().await.unwrap();
+    assert_eq!(b.n("inbox"), 1, "held row stored");
+    change(&w, &a, &b);
+    b.node.close();
+    assert!(guard::accept_rollback(&b.store_path).unwrap());
+    let b = w.reopen(b, cfg());
+    (w, a, b)
+}
+
+/// Review finding 3: a sender blocked while its message was held must not get
+/// the message released into the inbox (no event, no ack).
+#[tokio::test]
+async fn accepting_a_rollback_does_not_release_held_messages_of_a_blocked_sender() {
+    let (_w, _a, b) = held_then_changed(|_, a, b| {
+        b.node.set_contact_trust(&a.addr, Trust::Blocked).unwrap();
+    })
+    .await;
+    assert!(b.inbox().await.is_empty());
+    assert_eq!(b.n("events"), 0, "no message.received");
+    assert_eq!(b.metric("guard.released"), 0);
+    assert_eq!(b.n("inbox"), 0, "the blocked sender's held row is dropped");
+    let acks: i64 = {
+        let c = rusqlite::Connection::open(&b.store_path).unwrap();
+        c.query_row("SELECT COUNT(*) FROM outbox WHERE is_ack = 1", [], |r| {
+            r.get(0)
+        })
+        .unwrap()
+    };
+    assert_eq!(acks, 0, "no ack for a blocked sender");
+}
+
+/// Review finding 3 (revocation): same, for a sender whose tombstone arrived.
+#[tokio::test]
+async fn accepting_a_rollback_does_not_release_held_messages_of_a_revoked_sender() {
+    let (_w, _a, b) = held_then_changed(|w, a, b| {
+        b.node
+            .import_revocation(&tombstone(w, a, "compromised"))
+            .unwrap();
+    })
+    .await;
+    assert!(b.inbox().await.is_empty());
+    assert_eq!(b.n("events"), 0);
+    assert_eq!(b.metric("guard.released"), 0);
+}
+
+/// Review finding 3 (policy): a sender that lost trust (untrusted) falls under
+/// the quarantine policy again instead of landing in the inbox.
+#[tokio::test]
+async fn accepting_a_rollback_requarantines_held_messages_of_a_distrusted_sender() {
+    let (_w, _a, b) = held_then_changed(|_, a, b| {
+        b.node.set_contact_trust(&a.addr, Trust::Untrusted).unwrap();
+    })
+    .await;
+    assert!(b.inbox().await.is_empty(), "not in the normal inbox");
+    assert_eq!(b.n("events"), 0);
+    assert_eq!(b.node.list_quarantined().unwrap().len(), 1);
+    assert_eq!(b.metric("guard.released"), 0);
+}

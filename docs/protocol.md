@@ -778,7 +778,10 @@ delivered normally; a legitimate message created within `clock_skew` after the
 guard started is held too and is released only by accepting the rollback. The guard ends when `max_ttl + clock_skew` has elapsed (every
 held message has expired by then and is discarded) or when the operator runs
 `agentnet doctor --accept-rollback` (daemon stopped); at the next start the held
-messages that have not expired are released like quarantined ones (event + ack,
+messages that have not expired are released like quarantined ones, but only after
+the sender's *current* standing is re-checked as for a new frame (a sender blocked
+or revoked in the meantime has its held messages dropped; an untrusted or unknown
+one follows `unknown_senders`) (event + ack,
 no trigger matching). The sender keeps retrying a held message (it is not acked),
 so a message that was genuinely sent before the rollback and not yet received is
 held, not lost, until the guard ends or is accepted; acceptance, however, also

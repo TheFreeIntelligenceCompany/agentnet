@@ -17,13 +17,16 @@ use agentnet_transport::InboundFrame;
 use rusqlite::{params, OptionalExtension, Transaction};
 
 use crate::api::{ApiError, ApiResult, ChangeHint, RevocationInfo, Trust};
+use crate::config::UnknownSenders;
 use crate::crypto::envelope::{
     Envelope, MESSAGE_TYPE_CONTACT_UPDATE, MESSAGE_TYPE_IDENTITY_REVOKED, SUITE_ID,
 };
 use crate::crypto::{Address, VerifiedContact, VerifiedRevocation};
 use crate::guard;
 use crate::ingest::FrameOutcome;
-use crate::node::{ContactRow, Node, NodeError, KV_ANNOUNCED_EPOCH, KV_ANNOUNCED_REVOCATION};
+use crate::node::{
+    trust_to_db, ContactRow, Node, NodeError, KV_ANNOUNCED_EPOCH, KV_ANNOUNCED_REVOCATION,
+};
 use crate::send::OutboxInsert;
 use crate::store::{kv_get, kv_set, StoreError};
 
@@ -508,8 +511,10 @@ impl Node {
     // --------------------------------------------------------- replay guard
 
     /// Release messages held by the replay guard (after the guard was cleared
-    /// or accepted): unexpired ones become normal inbox messages (event + ack,
-    /// no trigger matching), expired ones are discarded.
+    /// or accepted): expired ones are discarded; unexpired ones are judged by the
+    /// sender's current standing like a new frame (blocked or revoked: dropped;
+    /// unknown or untrusted: per `unknown_senders`) and otherwise become normal
+    /// inbox messages (event + ack, no trigger matching).
     pub(crate) fn release_held(&self, now: i64) -> Result<(), StoreError> {
         let any: i64 = self.store.read(|c| {
             Ok(c.query_row(
@@ -553,9 +558,33 @@ impl Node {
                 let Ok(addr) = sender.parse::<Address>() else {
                     continue;
                 };
+                // Re-apply the sender's *current* standing, as ingest would for a
+                // new frame: the sender may have been blocked, revoked or
+                // distrusted while the message was held.
+                let trust = match self.load_contact(tx, &addr)? {
+                    Some(r) => r.trust,
+                    None if Self::is_revoked(tx, &addr)? => Trust::Blocked,
+                    None => Trust::Unknown,
+                };
+                let policy = self.config.policy.unknown_senders;
+                if trust == Trust::Blocked
+                    || (trust != Trust::Trusted && policy == UnknownSenders::Reject)
+                {
+                    tx.execute("DELETE FROM inbox WHERE seq = ?1", [seq])?;
+                    self.metrics.inc("guard.release_dropped");
+                    continue;
+                }
+                if trust != Trust::Trusted && policy == UnknownSenders::Quarantine {
+                    tx.execute(
+                        "UPDATE inbox SET hold_reason = NULL, sender_trust = ?2 WHERE seq = ?1",
+                        params![seq, trust_to_db(trust)],
+                    )?;
+                    self.metrics.inc("guard.release_quarantined");
+                    continue;
+                }
                 tx.execute(
-                    "UPDATE inbox SET quarantined = 0, hold_reason = NULL WHERE seq = ?1",
-                    [seq],
+                    "UPDATE inbox SET quarantined = 0, hold_reason = NULL, sender_trust = ?2 WHERE seq = ?1",
+                    params![seq, trust_to_db(trust)],
                 )?;
                 self.insert_event(tx, "message.received", &message_id, None, None, now)?;
                 let orig = Envelope {
