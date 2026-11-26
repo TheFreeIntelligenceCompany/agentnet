@@ -1,0 +1,16 @@
+{
+  "elapsed_ms": 13,
+  "is_error": false,
+  "protocol": {
+    "negotiated_protocol_version": "2026-07-28",
+    "server_info": {
+      "name": "agentnet",
+      "version": "0.1.0"
+    }
+  },
+  "result": {
+    "deleted": true,
+    "trigger_id": "949b8cea-1432-4ced-b3f5-335562876e2b"
+  },
+  "tool": "delete_trigger"
+}

@@ -1,0 +1,21 @@
+$ /Users/dennison/develop/FIC-elipsis/target/release/agentnet --json --data-dir /tmp/an-acc.QyyNfM/a contact add @/tmp/an-acc.QyyNfM/b.record --expect an1sxspj65l64oxixusnqjsibkawn5buhj2gmft6p7zd2zch3rskorbo4yl3i --alias b
+{"address":"an1sxspj65l64oxixusnqjsibkawn5buhj2gmft6p7zd2zch3rskorbo4yl3i","alias":"b","trust":"trusted","inbox_topic":"/agentnet/1/inbox-0a/proto","added_at":1795652356070,"kem_expires_at":null,"updated":false}
+[exit 0]
+$ /Users/dennison/develop/FIC-elipsis/target/release/agentnet --json --data-dir /tmp/an-acc.QyyNfM/b contact add @/tmp/an-acc.QyyNfM/a.record --expect an15qfdijdtobcuaqe2gfcx5pbnfxzrwz5ufxqopv7p2aqax3msbmuq66nk7i --alias a
+{"address":"an15qfdijdtobcuaqe2gfcx5pbnfxzrwz5ufxqopv7p2aqax3msbmuq66nk7i","alias":"a","trust":"trusted","inbox_topic":"/agentnet/1/inbox-0c/proto","added_at":1795652356084,"kem_expires_at":null,"updated":false}
+[exit 0]
+$ /Users/dennison/develop/FIC-elipsis/target/release/agentnet --json --data-dir /tmp/an-acc.QyyNfM/c contact add @/tmp/an-acc.QyyNfM/b.record --expect an1sxspj65l64oxixusnqjsibkawn5buhj2gmft6p7zd2zch3rskorbo4yl3i --alias b
+{"address":"an1sxspj65l64oxixusnqjsibkawn5buhj2gmft6p7zd2zch3rskorbo4yl3i","alias":"b","trust":"trusted","inbox_topic":"/agentnet/1/inbox-0a/proto","added_at":1795652777007,"kem_expires_at":null,"updated":false}
+[exit 0]
+$ /Users/dennison/develop/FIC-elipsis/target/release/agentnet --json --data-dir /tmp/an-acc.QyyNfM/w contact add @/tmp/an-acc.QyyNfM/b.record --expect an1sxspj65l64oxixusnqjsibkawn5buhj2gmft6p7zd2zch3rskorbo4yl3i --alias b
+{"address":"an1sxspj65l64oxixusnqjsibkawn5buhj2gmft6p7zd2zch3rskorbo4yl3i","alias":"b","trust":"trusted","inbox_topic":"/agentnet/1/inbox-0a/proto","added_at":1795653176155,"kem_expires_at":null,"updated":false}
+[exit 0]
+$ /Users/dennison/develop/FIC-elipsis/target/release/agentnet --json --data-dir /tmp/an-acc.QyyNfM/b contact add @/tmp/an-acc.QyyNfM/w.record --expect an1l3wqmamalmu6jixc3lwzvp2tdnkm5jlaug2isppktijrigltsfag5h466a --alias w
+{"address":"an1l3wqmamalmu6jixc3lwzvp2tdnkm5jlaug2isppktijrigltsfag5h466a","alias":"w","trust":"trusted","inbox_topic":"/agentnet/1/inbox-02/proto","added_at":1795653176167,"kem_expires_at":null,"updated":false}
+[exit 0]
+$ /Users/dennison/develop/FIC-elipsis/target/release/agentnet --json --data-dir /tmp/an-acc.QyyNfM/m contact add @/tmp/an-acc.QyyNfM/a.record --expect an15qfdijdtobcuaqe2gfcx5pbnfxzrwz5ufxqopv7p2aqax3msbmuq66nk7i --alias a
+{"address":"an15qfdijdtobcuaqe2gfcx5pbnfxzrwz5ufxqopv7p2aqax3msbmuq66nk7i","alias":"a","trust":"trusted","inbox_topic":"/agentnet/1/inbox-0c/proto","added_at":1795653332222,"kem_expires_at":null,"updated":false}
+[exit 0]
+$ /Users/dennison/develop/FIC-elipsis/target/release/agentnet --json --data-dir /tmp/an-acc.QyyNfM/a contact add @/tmp/an-acc.QyyNfM/m.record --expect an15fdtczaydonoiim62v5wncmefiabxprtlw3fs7c7gcb2l2qbsobsb3gotu --alias m
+{"address":"an15fdtczaydonoiim62v5wncmefiabxprtlw3fs7c7gcb2l2qbsobsb3gotu","alias":"m","trust":"trusted","inbox_topic":"/agentnet/1/inbox-06/proto","added_at":1795653332234,"kem_expires_at":null,"updated":false}
+[exit 0]

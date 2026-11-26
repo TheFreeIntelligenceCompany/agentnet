@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "agentnet": {
+      "command": "/path/to/agentnet",
+      "args": [
+        "mcp",
+        "--data-dir",
+        "/home/me/.agentnet"
+      ]
+    }
+  }
+}

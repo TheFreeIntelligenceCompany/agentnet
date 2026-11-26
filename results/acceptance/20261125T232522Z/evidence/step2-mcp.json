@@ -1,0 +1,84 @@
+{
+  "A_final_status": {
+    "attempts": 1,
+    "conversation_id": "acc-step2",
+    "created_at": 1795649472313,
+    "delivered_at": 1795649473464,
+    "expires_at": 1795735872313,
+    "last_attempt_at": 1795649472315,
+    "last_error": null,
+    "message_id": "3a1733da-5967-40d6-8cf0-c37266a74378",
+    "message_type": "message",
+    "next_attempt_at": null,
+    "recipient": "an1ga5znvj4f2ynggwp7fifcxkc7oqz2e3sdzdk2g4dsbw4kobo3jdxnbvqgu",
+    "sent_at": 1795649472315,
+    "state": "delivered"
+  },
+  "A_status_timeline": [
+    {
+      "source": "send_message response",
+      "state": "queued",
+      "t_ms": 11
+    },
+    {
+      "attempts": 0,
+      "source": "get_message_status",
+      "state": "queued",
+      "t_ms": 26
+    },
+    {
+      "attempts": 1,
+      "source": "get_message_status",
+      "state": "sent",
+      "t_ms": 345
+    },
+    {
+      "attempts": 1,
+      "source": "get_message_status",
+      "state": "delivered",
+      "t_ms": 1157
+    }
+  ],
+  "B_inbox_record": {
+    "acknowledged": false,
+    "body": "ACCEPTANCE-STEP2-PLAINTEXT-MARKER-1795649472310",
+    "conversation_id": "acc-step2",
+    "correlation_id": null,
+    "created_at": 1795649472313,
+    "cursor": "aW5ib3g6MQ",
+    "expires_at": 1795735872313,
+    "message_id": "3a1733da-5967-40d6-8cf0-c37266a74378",
+    "message_type": "message",
+    "quarantined": false,
+    "received_at": 1795649473207,
+    "sender": "an12okzeqhjrdfvqtqa7aof6z47sfedks7grpfetapsb74gbkwe73udnci6pu",
+    "sender_trust": "trusted"
+  },
+  "a_addr": "an12okzeqhjrdfvqtqa7aof6z47sfedks7grpfetapsb74gbkwe73udnci6pu",
+  "b_addr": "an1ga5znvj4f2ynggwp7fifcxkc7oqz2e3sdzdk2g4dsbw4kobo3jdxnbvqgu",
+  "body_marker": "ACCEPTANCE-STEP2-PLAINTEXT-MARKER-1795649472310",
+  "latency_ms": {
+    "A_status_delivered": 1157,
+    "B_read_inbox_returned": 1161,
+    "B_resource_notification": 943,
+    "send_message_returned": 11
+  },
+  "message_id": "3a1733da-5967-40d6-8cf0-c37266a74378",
+  "notification": "Some(ResourceUpdatedNotification(Notification { method: ResourceUpdatedNotificationMethod, params: ResourceUpdatedNotificationParam { uri: \"agentnet://inbox\", meta: None }, extensions: Extensions }))",
+  "ok": true,
+  "protocol_client_A": {
+    "negotiated_protocol_version": "2026-07-28",
+    "server_info": {
+      "name": "agentnet",
+      "version": "0.1.0"
+    }
+  },
+  "protocol_client_B": {
+    "negotiated_protocol_version": "2026-07-28",
+    "server_info": {
+      "name": "agentnet",
+      "version": "0.1.0"
+    }
+  },
+  "send_wall_clock_ms": 1795649472310
+}

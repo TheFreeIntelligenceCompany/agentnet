@@ -1,0 +1,84 @@
+[00:19:04] results: /Users/dennison/develop/FIC-elipsis/results/acceptance/20261126T001904Z   work dir: /tmp/an-acc.QyyNfM
+[00:19:05] SCOPE: single-host docker-bridge test, amd64 node image under qemu on arm64 Mac. NOT cross-machine/NAT.
+[00:19:05] === STEP 1: relay + two instances, identities, contacts
+[00:19:05] FRESH_TOPOLOGY=1: docker-compose down -v, up.sh
+[00:19:15] CHECK 1.topology PASS - R1 (an-r1), NA (an-na), NB (an-nb) healthy; NA and NB connected to R1 only; compose project agentnet-relay, DNS_NS=127.0.0.1
+[00:19:15] agent a: an15qfdijdtobcuaqe2gfcx5pbnfxzrwz5ufxqopv7p2aqax3msbmuq66nk7i node=http://127.0.0.1:18641 topic=/agentnet/1/inbox-0c/proto (init attempts: 1)
+[00:19:15] agent b: an1sxspj65l64oxixusnqjsibkawn5buhj2gmft6p7zd2zch3rskorbo4yl3i node=http://127.0.0.1:18642 topic=/agentnet/1/inbox-0a/proto (init attempts: 1)
+[00:19:16] CHECK 1.serve PASS - two release-mode 'agentnet serve' processes (A -> NA http://127.0.0.1:18641, B -> NB http://127.0.0.1:18642), private mode, static peer R1, cluster 66; A=an15qfdijdtobcuaqe2gfcx5pbnfxzrwz5ufxqopv7p2aqax3msbmuq66nk7i B=an1sxspj65l64oxixusnqjsibkawn5buhj2gmft6p7zd2zch3rskorbo4yl3i
+[00:19:16] CHECK 1.contacts PASS - contact records exchanged with 'contact add @record --expect <address>' in both directions
+[00:19:16] CHECK 1.doctor.a PASS - agentnet doctor exit 0 (see logs/step1-doctor-a.log)
+[00:19:16] CHECK 1.netstatus.a PASS - network status --verbose: private, ready, no isolation violation, exactly one peer = R1 (16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV)
+[00:19:16] CHECK 1.doctor.b PASS - agentnet doctor exit 0 (see logs/step1-doctor-b.log)
+[00:19:16] CHECK 1.netstatus.b PASS - network status --verbose: private, ready, no isolation violation, exactly one peer = R1 (16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV)
+[00:19:16] CHECK 1.neg.tamper PASS - tampered contact record rejected, exit 4: error: invalid contact record: contact record signature does not verify; contact list unchanged
+[00:19:16] CHECK 1.neg.expect PASS - genuine record presented with the wrong --expect address rejected, exit 4: error: contact record is not for the expected address; contact list unchanged
+[00:19:16] === STEP 2: MCP send / subscription / receipt
+[00:19:16] CHECK 2.send PASS - send_message via MCP returned message_id dc83f290-b5f8-463e-9121-728f2ee42758 in 1 ms; negotiated protocol A: 2026-07-28, B: 2026-07-28
+[00:19:17] CHECK 2.notify PASS - B's subscriptions/listen on agentnet://inbox received a notification 227 ms after send: Some(ResourceUpdatedNotification(Notification { method: ResourceUpdatedNotificationMethod, params: ResourceUpdatedNotificationParam { uri: "agentnet://inbox", meta: None }, extensions: Extensions }))
+[00:19:17] CHECK 2.inbox PASS - B read_inbox shows the message; sender authenticated as A (an15qfdijdtobcuaqe2gfcx5pbnfxzrwz5ufxqopv7p2aqax3msbmuq66nk7i); body matches; read at +509 ms
+[00:19:17] CHECK 2.delivered PASS - A get_message_status timeline: [{"state":"queued","t_ms":1},{"state":"queued","t_ms":1},{"state":"sent","t_ms":43},{"state":"delivered","t_ms":509}]; authenticated receipt (delivered) at +509 ms
+[00:19:20] CHECK 2.relay_view PASS - R1 store holds 3 frame(s) for this exchange: topics ["/agentnet/1/inbox-0a/proto","/agentnet/1/inbox-0c/proto"], payload sizes [564,564,564] bytes; the plaintext marker, message id and both addresses do NOT occur in any stored payload
+[00:19:20] === STEP 3: recipient offline recovery
+[00:19:20] B daemon + an-nb stopped (daemon stop took 11 ms)
+[00:19:21] A sent 21 messages while B is down: sent=21 
+[00:19:49] CHECK 3.recover PASS - B recovered all 20 eligible messages via Store within 585 ms of starting the node-up + daemon (R1 held 100 frame(s) for B's topic since test start, i.e. including A's sender retries and the expiring one); inbox rows=20 unique=20
+[00:19:49] CHECK 3.no_dup_events PASS - B's event log (EventStream replay) has exactly 20 message.received events for the 20 messages, 0 messages with more than one event
+[00:20:51] CHECK 3.dup_resend PASS - re-published every R1-held frame of B's topic 4x with fresh timestamps (ok=100 in last batch; see logs/republish.log): inbox rows stayed 20, event count stayed 21
+[00:20:51] CHECK 3.delivered PASS - A's 20 statuses reached delivered (took 208 ms after B's inbox was complete)
+[00:20:53] CHECK 3.fail.a_ttl PASS - message sent with --ttl 15 while B was down: A status = expired, B never shows it (0 inbox rows incl. quarantine)
+[00:20:53] --- (b) retention variant
+[00:23:12] CHECK 3.fail.b_retention PASS - history gone: R1 had 3 frame(s), 0 after the retention restart; B (up, history sync running 90 s) recovered 0 of 3. After A's daemon restarted, the sender retry path delivered: B inbox=3/3, A states: delivered=3 , 684 ms after A's daemon start (delivered=1)
+[00:23:12] --- (c) store unavailable
+[00:24:23] R1 down, B back for 60 s: ready=false inbox=0 A states: sent=2 
+[00:25:28] CHECK 3.fail.c_store_down PASS - R1 down while B came back: B network ready=false, recovered 0/2 during 60 s; after R1 returned B recovered 2/2 (no duplicates, rows=2) 60366 ms after R1's /health, B ready after 6155 ms, A delivered after 60412 ms
+[00:25:28] CHECK 3.e12 PASS - live relay delivery between NA and NB resumed 9212 ms after R1 /health (probe #3); AgentNet delivered after 60412 ms
+[00:25:29] CHECK 3.restored PASS - topology restored: R1 default retention, an-nb running, NA and NB connected to R1
+[00:25:29] === STEP 4: triggers
+[00:25:29] CHECK 4.policy.disabled PASS - create_trigger on A (policy.auto_trigger=false): isError, code policy_denied: triggers are disabled by host policy (policy.auto_trigger = false)
+[00:25:29] CHECK 4.policy.allowlist PASS - create_trigger on B for a non-allowlisted session: isError, policy_denied: target_session is not allowlisted by host policy
+[00:25:31] CHECK 4.create PASS - B create_trigger via MCP: trigger e287675e-be0f-4fd7-b035-cd4f4cbc294f (sender A, session demo-session, once=true, state active); negotiated protocol 2026-07-28
+[00:25:31] first turn recorded after 593 ms
+[00:25:59] CHECK 4.one_shot PASS - exactly ONE simulated turn (harness out file: 1 line) and one trigger.matched event, one inbox row, after 3 republish rounds (each stored frame re-published with fresh timestamps, 5 rounds-of-frames total) and a harness restart mid-way; first turn 593 ms after send
+[00:26:16] CHECK 4.consumed PASS - second matching message (25f3a05d-f136-4bb5-997b-e9f5d5794066) arrived and is in B's inbox, but the consumed trigger did not fire: turns=1, trigger.matched=1, trigger state consumed
+[00:26:16] agent c: an1shdt4uypj6whiz22g3t7sfbz4hvexv4lyz4eljg7vm4dzyrqjpnycja6wy node=http://127.0.0.1:18641 topic=/agentnet/1/inbox-0d/proto (init attempts: 1)
+[00:26:32] CHECK 4.unknown PASS - message from unknown identity C (an1shdt4uypj6whiz22g3t7sfbz4hvexv4lyz4eljg7vm4dzyrqjpnycja6wy) is quarantined on B (not in the default inbox), no ack (C's state: sent), harness turns still 1, and a wildcard trigger (no sender filter) stayed active
+[00:26:50] CHECK 4.since_cursor PASS - reply persisted BEFORE the trigger existed; trigger created with since_cursor fired exactly once (harness turns 1 -> 2, trigger.matched events for it: 1), also after a duplicate republish
+[00:26:51] --- webhook mode
+[00:26:58] CHECK 4.webhook PASS - signed delivery from the daemon verified and recorded (1 turn); wrong-secret request -> HTTP 401; stale-timestamp request -> 401; validly signed replay of the delivered event -> 200 with no second turn (1)
+[00:26:59] === STEP 5: private network
+[00:26:59] CHECK 5.config PASS - both agents: mode=private, public_discovery=false, public_fallback=false, cluster_id=66, static peer R1 only (evidence/config-*-excerpt.toml); node flags: all discovery off, --dns-addrs-name-server=127.0.0.1, --nat=extip (spike/relay/docker-compose.yml)
+[00:27:00] CHECK 5.node_flags PASS - R1/NA/NB run with discv5/peer-exchange/rendezvous/kad off, DNS server 127.0.0.1, no dns-discovery-url / entry-node (evidence/node-flags.txt)
+[00:29:11] CHECK 5.egress PASS - tcpdump on the docker bridge, 125 s, whole exchange (A->B and B->A, 12 rounds): 14300 packets, 0 with any IP endpoint outside 172.28.66.0/24 (no DNS to 1.1.1.1 etc.; evidence pcap/egress-exchange.*). Messages: delivered=6 
+[00:29:11] CHECK 5.host_connections PASS - netstat -anv snapshots (every ~1 s for 125 s, TCP+UDP, filtered to the two 'agentnet serve' pids): 6325 socket lines, every remote endpoint is 127.0.0.1 (node REST http://127.0.0.1:18641 / http://127.0.0.1:18642), 0 non-loopback; remote hosts: 6325 127.0.0.1  (net/netstat-*.txt; lsof cross-check in net/lsof-*.txt saw no sockets because the connections are short-lived)
+[00:29:11] --- relay failure without public fallback
+[00:32:30] CHECK 5.relay_failure PASS - R1 stopped: A's message stayed 'queued' (not delivered), A network status ready=false (node reachable; 0 connected allowed peer(s)), B received 0; capture of the whole outage+recovery: 0 packets with an endpoint outside 172.28.66.0/24 (no fallback destination appeared)
+[00:32:30] CHECK 5.relay_failure_no_new_dest PASS - relay-failure capture: 0 packets with an endpoint outside 172.28.66.0/24 (pcap/egress-relay-failure.egress.txt)
+[00:32:30] CHECK 5.relay_recovery PASS - R1 restarted: the queued message was delivered 7523 ms after R1 /health (E12: live relay can lag after an R1 restart; the sender retry/history path delivered)
+[00:32:31] --- isolation fail-closed
+[00:32:31] agent w: an1l3wqmamalmu6jixc3lwzvp2tdnkm5jlaug2isppktijrigltsfag5h466a node=http://127.0.0.1:18641 topic=/agentnet/1/inbox-02/proto (init attempts: 1)
+[00:33:41] CHECK 5.isolation PASS - daemon whose only allowlisted peer is a WRONG peer id (16Uiu2HAmHGZ74cqntxJ27NBVKP9BSqKk3A691AxEvWTcWiqGaZtW): network status ready=false, isolation_violation="node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV)"; its send stayed 'queued' and B received 0; B's message to it stayed 'sent' and it received 0
+[00:33:41] node an-na knows peers other than R1 (stale entry from an earlier isolation test): restarting it
+[00:33:43] --- rejected configs
+[00:33:43] CHECK 5.reject.public_discovery PASS - startup refused, exit 4: error: invalid configuration: network.public_discovery = true is not allowed in private mode
+[00:33:43] CHECK 5.reject.public_fallback PASS - startup refused, exit 4: error: invalid configuration: network.public_fallback = true is never allowed: there is no public fallback
+[00:33:43] CHECK 5.reject.public_node_url PASS - startup refused, exit 4: error: invalid configuration: network: isolation violation: private mode: node_url host must be loopback, RFC1918, 100.64.0.0/10, IPv6 loopback/ULA or the literal 'localhost' (names are not resolved)
+[00:33:43] CHECK 5.reject.cluster_id_1 PASS - startup refused, exit 4: error: invalid configuration: network: isolation violation: private mode: cluster id 1 selects a public preset
+[00:33:43] CHECK 5.tailscale UNTESTED - tailscale not installed on this host (command -v tailscale: not found); no tailnet, no second host. Reproducible steps below. Nothing is claimed to work.
+[00:33:43] === STEP 6: MCP client config + embedding
+[00:33:43] CHECK 6.mcp_config PASS - stdio MCP client configuration emitted (evidence/mcp-client-config.json, template in .template.json); launched exactly its command+args with an rmcp client, negotiated 2026-07-28, tools/list = 10 tools, get_identity returned A's address
+[00:34:10] CHECK 6.embed FAIL - embed example (release build) succeeded only 0/5 times; failure text: 'the message was not delivered in time' (the debug build passes). Product bug candidate, not worked around: evidence/step6-embed-output.txt
+[00:34:10] CHECK 6.embed_statement PASS - statement why the adapter cannot be fully embedded (the node is a sidecar) saved to evidence/step6-embedding-statement.txt and quoted in SUMMARY.md
+[00:34:10] === EXTRAS
+[00:34:10] CHECK X.second_serve PASS - second 'agentnet serve' on A's data dir refused, exit 1: error: another AgentNet process is using this data directory (lock held on /tmp/an-acc.QyyNfM/a/lock); stop it first (one data directory = one agent identity = one process)
+[00:34:10] --- bench 100 x 2
+[00:34:51] CHECK X.bench100 PASS - 100 messages each direction (concurrent, 25 ms pacing, full stack): A->B delivered 100/100 p50/p95/p99 = 30648/31899/32007 ms; B->A delivered 100/100 p50/p95/p99 = 10050/21414/24750 ms; receiver rows A->B 100 (unique 100), B->A 100 (unique 100), duplicate message.received events 0. Latency = delivered_at - created_at in the sender's outbox (send -> authenticated receipt), includes qemu and the 250 ms poll interval
+[00:34:51] CHECK X.resources PASS - daemon RSS after bench: A 9296 KiB, B 8496 KiB; peak sampled %CPU during bench (ps pcpu, 2 s samples): 7.6; raw: evidence/ps-*.txt. Idle/before snapshot:   6736   0.1;  6384   0.1;
+[00:35:32] CHECK X.bench100_paced PASS - same workload paced at 400 ms per send per direction: A->B delivered 100/100 p50/p95/p99 = 387/499/508 ms; B->A delivered 100/100 p50/p95/p99 = 386/500/508 ms
+[00:35:32] CHECK X.startup_shutdown PASS - daemon startup (spawn -> network ready) and SIGTERM -> exit times: evidence/startup-times.tsv, evidence/shutdown-times.tsv; first-start times: a=119ms b=163ms c=49ms b=48ms b=48ms 
+[00:35:32] --- identity export/import
+[00:35:32] agent m: an15fdtczaydonoiim62v5wncmefiabxprtlw3fs7c7gcb2l2qbsobsb3gotu node=http://127.0.0.1:18642 topic=/agentnet/1/inbox-06/proto (init attempts: 1)
+[00:35:48] CHECK X.migrate PASS - identity exported (age passphrase file) with the daemon stopped, imported into a fresh data dir: same address (an15fdtczaydonoiim62v5wncmefiabxprtlw3fs7c7gcb2l2qbsobsb3gotu); a message A sent after the old instance stopped and before the import was recovered from Store and decrypted by the NEW instance with sender authenticated as A (quarantined=true: contacts are not part of the export, so the new data dir learns A's contact record after start and a message processed before that is quarantined, after that it is accepted; both outcomes show it decrypted)
+[00:35:48] done; results in /Users/dennison/develop/FIC-elipsis/results/acceptance/20261126T001904Z
+[00:35:48] cleanup (exit status of script body: 0)
+[00:35:49] topology healthy at exit

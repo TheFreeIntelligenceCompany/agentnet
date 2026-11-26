@@ -1,0 +1,1 @@
+{"exit":4,"stdout":"{\"error\":{\"code\":\"invalid_argument\",\"message\":\"invalid contact record: contact record signature does not verify\"}}","stderr":"error: invalid contact record: contact record signature does not verify"}

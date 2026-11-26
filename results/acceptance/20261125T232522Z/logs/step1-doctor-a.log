@@ -1,0 +1,13 @@
+$ /Users/dennison/develop/FIC-elipsis/target/release/agentnet --data-dir /tmp/an-acc.gbeoth/a doctor
+[ok  ] data dir permissions: directory 0700, files 0600
+[ok  ] config: /tmp/an-acc.gbeoth/a/agentnet.toml valid (private mode, 1 peer(s))
+[ok  ] identity: address an12okzeqhjrdfvqtqa7aof6z47sfedks7grpfetapsb74gbkwe73udnci6pu
+[ok  ] daemon socket: daemon answers on agentnet.sock
+[ok  ] node reachable: http://127.0.0.1:18641 answered 200
+[ok  ] clock: within 0 s of the node's clock
+[ok  ] isolation: no isolation violation reported
+[ok  ] peers == allowlist: 1 connected, all in the allowlist
+[ok  ] transport ready: node reachable; 1 connected allowed peer(s)
+[ok  ] store query: inbox query works
+0 failing, 0 warning(s)
+[exit 0]

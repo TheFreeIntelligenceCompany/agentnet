@@ -1,0 +1,10 @@
+agentnet 0.1.0
+rustc 1.92.0 (ded5c06cf 2025-12-08)
+cargo 1.92.0 (344c4567c 2025-10-21)
+Docker version 29.8.1, build 4a63305d74
+Docker Compose version 5.6.0
+Darwin Dennisons-M1-Pro---podcast-2.local 25.6.0 Darwin Kernel Version 25.6.0: Fri Jul 31 19:18:49 PDT 2026; root:xnu-12377.161.14~5/RELEASE_ARM64_T6000 arm64
+jq-1.8.1
+an-r1	cb4d14a22b8c	Up 4 minutes
+an-na	cb4d14a22b8c	Up 48 minutes
+an-nb	cb4d14a22b8c	Up 17 minutes

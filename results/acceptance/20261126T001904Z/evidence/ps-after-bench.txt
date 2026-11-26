@@ -1,0 +1,2 @@
+24317   9136  25.3 11:32 /Users/dennison/develop/FIC-elipsis/target/release/agentnet --data-dir /tmp/an-acc.QyyNfM/a serve
+41214   8320   0.1 07:44 /Users/dennison/develop/FIC-elipsis/target/release/agentnet --data-dir /tmp/an-acc.QyyNfM/b serve

@@ -1,0 +1,105 @@
+{
+ "what_R1_stored": [
+  {
+   "which": "B inbox topic (the message)",
+   "messageHash": "0x8c6fb9fb8bad1fd9d0f6670f7a17263649f0c2c84eaf16a65d313412017ccf14",
+   "contentTopic": "/agentnet/1/inbox-00/proto",
+   "pubsubTopic": "/waku/2/rs/66/0",
+   "payload_bytes": 564,
+   "timestamp_ns": 1795650916111881000,
+   "frame_header_hex": "414e0101ebc7c059",
+   "plaintext_found_in_payload": {
+    "marker": false,
+    "message_id": false,
+    "sender_addr": false,
+    "recipient_addr": false,
+    "plaintext_word_ACCEPTANCE": false
+   }
+  },
+  {
+   "which": "B inbox topic (the message)",
+   "messageHash": "0xf90f32f2b388726d30b41574afc77ea901876abda25cb40d706461b392a0fcd5",
+   "contentTopic": "/agentnet/1/inbox-00/proto",
+   "pubsubTopic": "/waku/2/rs/66/0",
+   "payload_bytes": 564,
+   "timestamp_ns": 1795650916318072000,
+   "frame_header_hex": "414e010143378678",
+   "plaintext_found_in_payload": {
+    "marker": false,
+    "message_id": false,
+    "sender_addr": false,
+    "recipient_addr": false,
+    "plaintext_word_ACCEPTANCE": false
+   }
+  },
+  {
+   "which": "B inbox topic (the message)",
+   "messageHash": "0xc877267cce91cc3b984e06b9ab715b2c639c818002748ba8172b91e3df85017f",
+   "contentTopic": "/agentnet/1/inbox-00/proto",
+   "pubsubTopic": "/waku/2/rs/66/0",
+   "payload_bytes": 564,
+   "timestamp_ns": 1795650916435248000,
+   "frame_header_hex": "414e0101ebc7c059",
+   "plaintext_found_in_payload": {
+    "marker": false,
+    "message_id": false,
+    "sender_addr": false,
+    "recipient_addr": false,
+    "plaintext_word_ACCEPTANCE": false
+   }
+  },
+  {
+   "which": "A inbox topic (the ack)",
+   "messageHash": "0x8c6fb9fb8bad1fd9d0f6670f7a17263649f0c2c84eaf16a65d313412017ccf14",
+   "contentTopic": "/agentnet/1/inbox-00/proto",
+   "pubsubTopic": "/waku/2/rs/66/0",
+   "payload_bytes": 564,
+   "timestamp_ns": 1795650916111881000,
+   "frame_header_hex": "414e0101ebc7c059",
+   "plaintext_found_in_payload": {
+    "marker": false,
+    "message_id": false,
+    "sender_addr": false,
+    "recipient_addr": false,
+    "plaintext_word_ACCEPTANCE": false
+   }
+  },
+  {
+   "which": "A inbox topic (the ack)",
+   "messageHash": "0xf90f32f2b388726d30b41574afc77ea901876abda25cb40d706461b392a0fcd5",
+   "contentTopic": "/agentnet/1/inbox-00/proto",
+   "pubsubTopic": "/waku/2/rs/66/0",
+   "payload_bytes": 564,
+   "timestamp_ns": 1795650916318072000,
+   "frame_header_hex": "414e010143378678",
+   "plaintext_found_in_payload": {
+    "marker": false,
+    "message_id": false,
+    "sender_addr": false,
+    "recipient_addr": false,
+    "plaintext_word_ACCEPTANCE": false
+   }
+  },
+  {
+   "which": "A inbox topic (the ack)",
+   "messageHash": "0xc877267cce91cc3b984e06b9ab715b2c639c818002748ba8172b91e3df85017f",
+   "contentTopic": "/agentnet/1/inbox-00/proto",
+   "pubsubTopic": "/waku/2/rs/66/0",
+   "payload_bytes": 564,
+   "timestamp_ns": 1795650916435248000,
+   "frame_header_hex": "414e0101ebc7c059",
+   "plaintext_found_in_payload": {
+    "marker": false,
+    "message_id": false,
+    "sender_addr": false,
+    "recipient_addr": false,
+    "plaintext_word_ACCEPTANCE": false
+   }
+  }
+ ],
+ "plaintext_leak_check": {
+  "leak_detected": false,
+  "marker": "ACCEPTANCE-STEP2-PLAINTEXT-MARKER-1795650916108",
+  "note": "R1 sees: content topic (shared inbox bucket), time, padded payload length, hash, publisher peer. It does not see sender, recipient address, message id, type or body."
+ }
+}

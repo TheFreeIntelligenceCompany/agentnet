@@ -1,0 +1,17 @@
+=== attempt 1 exit 1
+alice queued 94245f8d-55f5-465f-b305-5304ee40c8e8 (Queued)
+[stderr] Error: "the message was not delivered in time"
+=== attempt 2 exit 0
+alice queued 9068f564-f6c5-4b05-9c08-5575d0e6da9a (Queued)
+bob received "hello from an embedded engine" from an1zxdnhhty5y3w3iqbnv4ni6k3gi47cfwzgis6d5qz2xwqe6otbot3e2a5py
+alice's status is now Delivered (authenticated ack)
+=== attempt 3 exit 0
+alice queued 17465af9-a706-4159-bc68-3c69dea69fc5 (Queued)
+bob received "hello from an embedded engine" from an16e4g2f52ri77jhgxxenn4inzzijajk2bxjemgua3smo5kqna5idx4pbdma
+alice's status is now Delivered (authenticated ack)
+=== attempt 4 exit 1
+alice queued 8db45b96-e738-4fdf-904d-280133f135e7 (Queued)
+[stderr] Error: "the message was not delivered in time"
+=== attempt 5 exit 1
+alice queued 154fc4be-5876-43e8-983c-cff43004da87 (Queued)
+[stderr] Error: "the message was not delivered in time"

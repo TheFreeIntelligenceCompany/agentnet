@@ -1,0 +1,19 @@
+$ /Users/dennison/develop/FIC-elipsis/target/release/agentnet --json --data-dir /tmp/an-acc.QyyNfM/w network status --verbose
+{"daemon":{"agent_id":"an1l3wqmamalmu6jixc3lwzvp2tdnkm5jlaug2isppktijrigltsfag5h466a","mcp_http":{"addr":null,"enabled":false},"mode":"private","protocol":1,"uptime_s":25,"version":"0.1.0","webhook":{"cursor":null,"delivered":0,"enabled":false,"last_error":null,"parked":0,"retries":0}},"network":{"connected_peers":1,"detail":"isolation violation: node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV)","isolation_violation":"node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV)","last_history_sync_at":null,"last_live_poll_at":null,"mode":"private","peers":["16Uiu2HAmHGZ74cqntxJ27NBVKP9BSqKk3A691AxEvWTcWiqGaZtW","16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV"],"queue":{"active_triggers":0,"events_unacked":0,"inbox_quarantined":0,"inbox_unread":0,"outbox_queued":0,"outbox_sent_unacked":0},"ready":false}}
+[exit 0]
+$ /Users/dennison/develop/FIC-elipsis/target/release/agentnet --data-dir /tmp/an-acc.QyyNfM/w doctor
+[ok  ] data dir permissions: directory 0700, files 0600
+[ok  ] config: /tmp/an-acc.QyyNfM/w/agentnet.toml valid (private mode, 1 peer(s))
+[ok  ] identity: address an1l3wqmamalmu6jixc3lwzvp2tdnkm5jlaug2isppktijrigltsfag5h466a
+[ok  ] daemon socket: daemon answers on agentnet.sock
+[ok  ] node reachable: http://127.0.0.1:18641 answered 200
+[ok  ] clock: within 1 s of the node's clock
+[FAIL] isolation: node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV)
+       -> the node is connected to a peer outside agentnet.toml: restart it with the verified flags
+[FAIL] peers == allowlist: 1 peer(s) outside the allowlist
+       -> the node must only know the peers in agentnet.toml; check its discovery flags
+[warn] transport ready: isolation violation: node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV)
+       -> messages queue locally until the node is ready
+[ok  ] store query: inbox query works
+2 failing, 1 warning(s)
+[exit 7]

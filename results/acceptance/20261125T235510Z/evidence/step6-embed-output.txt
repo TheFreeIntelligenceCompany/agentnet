@@ -1,0 +1,15 @@
+=== attempt 1 exit 1
+alice queued b2d9ad93-3e65-461a-9435-7eadc4068bdf (Queued)
+[stderr] Error: "the message was not delivered in time"
+=== attempt 2 exit 1
+alice queued 022e0dc6-24d9-441e-b7a0-765f4c084c8c (Queued)
+[stderr] Error: "the message was not delivered in time"
+=== attempt 3 exit 1
+alice queued 10350f1c-662d-4bd8-8a79-3e61a56322ac (Queued)
+[stderr] Error: "the message was not delivered in time"
+=== attempt 4 exit 1
+alice queued bbe41d7b-5517-49b1-9828-676f25ab7059 (Queued)
+[stderr] Error: "the message was not delivered in time"
+=== attempt 5 exit 1
+alice queued 5a8f0452-ff7f-447a-a489-3a5eb5a4cc18 (Queued)
+[stderr] Error: "the message was not delivered in time"

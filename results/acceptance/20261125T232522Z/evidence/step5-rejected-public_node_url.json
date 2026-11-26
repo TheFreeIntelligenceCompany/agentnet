@@ -1,0 +1,1 @@
+{"case":"public_node_url","setting":"[network] node_url = \"http://8.8.8.8:8645\"","exit_code":4,"stderr":"error: invalid configuration: network: isolation violation: private mode: node_url host must be loopback, RFC1918, 100.64.0.0/10, IPv6 loopback/ULA or the literal 'localhost' (names are not resolved)"}

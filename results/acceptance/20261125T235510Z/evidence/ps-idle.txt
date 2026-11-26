@@ -1,0 +1,2 @@
+54718   6704   0.1 16:29 /Users/dennison/develop/FIC-elipsis/target/release/agentnet --data-dir /tmp/an-acc.hc3Mzm/a serve
+67096   6784   0.2 12:24 /Users/dennison/develop/FIC-elipsis/target/release/agentnet --data-dir /tmp/an-acc.hc3Mzm/b serve

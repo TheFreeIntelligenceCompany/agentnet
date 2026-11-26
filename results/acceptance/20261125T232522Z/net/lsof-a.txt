@@ -1,0 +1,50 @@
+### 2026-11-25T23:44:21Z t+0s daemon a pid 90221
+### 2026-11-25T23:44:23Z t+2s daemon a pid 90221
+### 2026-11-25T23:44:25Z t+4s daemon a pid 90221
+### 2026-11-25T23:44:27Z t+6s daemon a pid 90221
+### 2026-11-25T23:44:31Z t+10s daemon a pid 90221
+COMMAND    PID     USER   FD   TYPE            DEVICE SIZE/OFF NODE NAME
+agentnet 90221 dennison   14u  IPv4 0x8209b79bf31919a      0t0  TCP 127.0.0.1:52344->127.0.0.1:18641 (ESTABLISHED)
+### 2026-11-25T23:44:40Z t+19s daemon a pid 90221
+### 2026-11-25T23:44:41Z t+20s daemon a pid 90221
+### 2026-11-25T23:44:43Z t+22s daemon a pid 90221
+### 2026-11-25T23:44:44Z t+23s daemon a pid 90221
+### 2026-11-25T23:44:46Z t+25s daemon a pid 90221
+COMMAND    PID     USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+agentnet 90221 dennison   14u  IPv4 0xe2209929c0b3b7df      0t0  TCP 127.0.0.1:52730->127.0.0.1:18641 (ESTABLISHED)
+### 2026-11-25T23:44:52Z t+31s daemon a pid 90221
+### 2026-11-25T23:44:54Z t+33s daemon a pid 90221
+### 2026-11-25T23:44:56Z t+34s daemon a pid 90221
+### 2026-11-25T23:44:59Z t+37s daemon a pid 90221
+COMMAND    PID     USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+agentnet 90221 dennison   14u  IPv4 0xf9fc7ce18ce0244b      0t0  TCP 127.0.0.1:53269->127.0.0.1:18641 (ESTABLISHED)
+### 2026-11-25T23:45:07Z t+46s daemon a pid 90221
+### 2026-11-25T23:45:17Z t+56s daemon a pid 90221
+### 2026-11-25T23:45:18Z t+57s daemon a pid 90221
+### 2026-11-25T23:45:19Z t+58s daemon a pid 90221
+### 2026-11-25T23:45:21Z t+60s daemon a pid 90221
+### 2026-11-25T23:45:22Z t+61s daemon a pid 90221
+### 2026-11-25T23:45:30Z t+69s daemon a pid 90221
+### 2026-11-25T23:45:32Z t+71s daemon a pid 90221
+### 2026-11-25T23:45:33Z t+72s daemon a pid 90221
+### 2026-11-25T23:45:35Z t+74s daemon a pid 90221
+COMMAND    PID     USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+agentnet 90221 dennison   14u  IPv4 0x2be06575a1af300d      0t0  TCP 127.0.0.1:53925->127.0.0.1:18641 (ESTABLISHED)
+### 2026-11-25T23:45:36Z t+75s daemon a pid 90221
+### 2026-11-25T23:45:43Z t+82s daemon a pid 90221
+### 2026-11-25T23:45:44Z t+83s daemon a pid 90221
+### 2026-11-25T23:45:45Z t+84s daemon a pid 90221
+COMMAND    PID     USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+agentnet 90221 dennison   14u  IPv4 0xbe7ccc33560f2fd4      0t0  TCP 127.0.0.1:54137->127.0.0.1:18641 (ESTABLISHED)
+### 2026-11-25T23:45:47Z t+86s daemon a pid 90221
+### 2026-11-25T23:45:49Z t+88s daemon a pid 90221
+### 2026-11-25T23:45:55Z t+94s daemon a pid 90221
+### 2026-11-25T23:45:58Z t+97s daemon a pid 90221
+### 2026-11-25T23:46:02Z t+101s daemon a pid 90221
+### 2026-11-25T23:46:05Z t+104s daemon a pid 90221
+### 2026-11-25T23:46:06Z t+105s daemon a pid 90221
+### 2026-11-25T23:46:13Z t+112s daemon a pid 90221
+### 2026-11-25T23:46:15Z t+114s daemon a pid 90221
+### 2026-11-25T23:46:16Z t+115s daemon a pid 90221
+### 2026-11-25T23:46:18Z t+117s daemon a pid 90221
+### 2026-11-25T23:46:20Z t+119s daemon a pid 90221

@@ -1,0 +1,14 @@
+$ /Users/dennison/develop/FIC-elipsis/target/release/agentnet --data-dir /tmp/an-acc.hc3Mzm/a doctor
+[ok  ] data dir permissions: directory 0700, files 0600
+[ok  ] config: /tmp/an-acc.hc3Mzm/a/agentnet.toml valid (private mode, 1 peer(s))
+[ok  ] identity: address an1fjcdcnt4d4xyncjgn7pq2uog3f6mrwj6vlzzntc6xcxz4ynoy5eblcf7v4
+[ok  ] daemon socket: daemon answers on agentnet.sock
+[ok  ] node reachable: http://127.0.0.1:18641 answered 200
+[ok  ] clock: within 1 s of the node's clock
+[ok  ] isolation: no isolation violation reported
+[FAIL] peers == allowlist: 1 peer(s) outside the allowlist
+       -> the node must only know the peers in agentnet.toml; check its discovery flags
+[ok  ] transport ready: node reachable; 1 connected allowed peer(s)
+[ok  ] store query: inbox query works
+1 failing, 0 warning(s)
+[exit 7]

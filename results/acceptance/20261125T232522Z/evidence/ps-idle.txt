@@ -1,0 +1,2 @@
+ 9016   5792   0.2 07:33 /Users/dennison/develop/FIC-elipsis/target/release/agentnet --data-dir /tmp/an-acc.gbeoth/b serve
+90221   5568   0.1 13:22 /Users/dennison/develop/FIC-elipsis/target/release/agentnet --data-dir /tmp/an-acc.gbeoth/a serve

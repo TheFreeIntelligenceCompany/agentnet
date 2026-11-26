@@ -1,0 +1,19 @@
+{
+  "elapsed_ms": 41,
+  "is_error": true,
+  "protocol": {
+    "negotiated_protocol_version": "2026-07-28",
+    "server_info": {
+      "name": "agentnet",
+      "version": "0.1.0"
+    }
+  },
+  "result": {
+    "error": {
+      "code": "policy_denied",
+      "message": "triggers are disabled by host policy (policy.auto_trigger = false)",
+      "retryable": false
+    }
+  },
+  "tool": "create_trigger"
+}

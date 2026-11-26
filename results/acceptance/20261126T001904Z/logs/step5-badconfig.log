@@ -1,0 +1,16 @@
+$ timeout 30 /Users/dennison/develop/FIC-elipsis/target/release/agentnet --data-dir /tmp/an-acc.QyyNfM/bad-public_discovery serve
+
+[stderr] error: invalid configuration: network.public_discovery = true is not allowed in private mode
+[exit 4]
+$ timeout 30 /Users/dennison/develop/FIC-elipsis/target/release/agentnet --data-dir /tmp/an-acc.QyyNfM/bad-public_fallback serve
+
+[stderr] error: invalid configuration: network.public_fallback = true is never allowed: there is no public fallback
+[exit 4]
+$ timeout 30 /Users/dennison/develop/FIC-elipsis/target/release/agentnet --data-dir /tmp/an-acc.QyyNfM/bad-public_node_url serve
+
+[stderr] error: invalid configuration: network: isolation violation: private mode: node_url host must be loopback, RFC1918, 100.64.0.0/10, IPv6 loopback/ULA or the literal 'localhost' (names are not resolved)
+[exit 4]
+$ timeout 30 /Users/dennison/develop/FIC-elipsis/target/release/agentnet --data-dir /tmp/an-acc.QyyNfM/bad-cluster_id_1 serve
+
+[stderr] error: invalid configuration: network: isolation violation: private mode: cluster id 1 selects a public preset
+[exit 4]

@@ -1,0 +1,8 @@
+2026-11-26T00:19:15.890470Z  INFO agentnet_daemon::daemon: agentnet daemon started agent=an15qfdijdtobcuaqe2gfcx5pbnfxzrwz5ufxqopv7p2aqax3msbmuq66nk7i socket=/tmp/an-acc.QyyNfM/a/agentnet.sock
+agentnet daemon running for an15qfdijdtobcuaqe2gfcx5pbnfxzrwz5ufxqopv7p2aqax3msbmuq66nk7i (socket /tmp/an-acc.QyyNfM/a/agentnet.sock); stop with Ctrl-C or SIGTERM
+2026-11-26T00:20:53.936638Z  INFO agentnet_daemon::daemon: SIGTERM received
+2026-11-26T00:20:53.943768Z  INFO agentnet_daemon::daemon: agentnet daemon stopped
+2026-11-26T00:23:11.506291Z  INFO agentnet_daemon::daemon: agentnet daemon started agent=an15qfdijdtobcuaqe2gfcx5pbnfxzrwz5ufxqopv7p2aqax3msbmuq66nk7i socket=/tmp/an-acc.QyyNfM/a/agentnet.sock
+agentnet daemon running for an15qfdijdtobcuaqe2gfcx5pbnfxzrwz5ufxqopv7p2aqax3msbmuq66nk7i (socket /tmp/an-acc.QyyNfM/a/agentnet.sock); stop with Ctrl-C or SIGTERM
+2026-11-26T00:35:48.474723Z  INFO agentnet_daemon::daemon: SIGTERM received
+2026-11-26T00:35:48.481954Z  INFO agentnet_daemon::daemon: agentnet daemon stopped

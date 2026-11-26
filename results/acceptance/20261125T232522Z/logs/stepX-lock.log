@@ -1,0 +1,4 @@
+$ /Users/dennison/develop/FIC-elipsis/target/release/agentnet --data-dir /tmp/an-acc.gbeoth/a serve
+
+[stderr] error: another AgentNet process is using this data directory (lock held on /tmp/an-acc.gbeoth/a/lock); stop it first (one data directory = one agent identity = one process)
+[exit 1]
