@@ -647,6 +647,7 @@ impl AgentApi for Node {
             connected_peers: u32::try_from(ts.peers.iter().filter(|p| p.connected).count())
                 .unwrap_or(u32::MAX),
             isolation_violation: ts.isolation_violation,
+            isolation_audited: self.config.isolation_audited,
             queue,
             last_live_poll_at: live,
             last_history_sync_at: watermark,

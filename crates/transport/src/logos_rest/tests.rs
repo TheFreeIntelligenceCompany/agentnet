@@ -207,8 +207,8 @@ async fn publish_sends_expected_request_and_returns_local_hash() {
     assert!(v.get("meta").is_none());
     assert_eq!(
         stub.count("/admin/v1/peers"),
-        1,
-        "audit cached across publishes"
+        2,
+        "one uncached audit per publish"
     );
 }
 
@@ -467,11 +467,12 @@ async fn audit_is_cached_then_refreshed_after_interval() {
     let mut c = cfg(&stub.url);
     c.audit_interval = Duration::from_millis(150);
     let t = LogosRestTransport::new(c).unwrap();
-    t.publish(&topic(), b"1").await.unwrap();
-    t.publish(&topic(), b"2").await.unwrap();
+    // poll uses the cached audit; publish never does
+    t.poll(&topic()).await.unwrap();
+    t.poll(&topic()).await.unwrap();
     assert_eq!(stub.count("/admin/v1/peers"), 1);
     tokio::time::sleep(Duration::from_millis(250)).await;
-    t.publish(&topic(), b"3").await.unwrap();
+    t.poll(&topic()).await.unwrap();
     assert_eq!(stub.count("/admin/v1/peers"), 2);
     assert_eq!(t.metrics().audits_run, 2);
 }
@@ -1051,4 +1052,84 @@ async fn plain_public_status_does_not_call_peers_allowed() {
     assert!(s.isolation_violation.is_none());
     assert!(s.detail.contains("not audited"), "{}", s.detail);
     assert!(!s.detail.contains("allowed peer"), "{}", s.detail);
+}
+
+/// A stub whose peer list turns foreign when the flag is set.
+async fn flip_stub(foreign: Arc<std::sync::atomic::AtomicBool>) -> Stub {
+    spawn_stub(move |req| {
+        if req.path == "/admin/v1/peers" {
+            ok(if foreign.load(Ordering::SeqCst) {
+                PEERS_FOREIGN
+            } else {
+                PEERS_OK
+            })
+        } else {
+            ok("OK")
+        }
+    })
+    .await
+}
+
+/// D1: a foreign peer appearing between two publishes, with no status call and
+/// well inside the cache lifetime, must stop the second publish.
+#[tokio::test]
+async fn publish_audits_immediately_before_every_publish_private() {
+    let foreign = Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let stub = flip_stub(foreign.clone()).await;
+    let mut c = cfg(&stub.url);
+    c.audit_interval = Duration::from_secs(3600);
+    let t = LogosRestTransport::new(c).unwrap();
+    t.publish(&topic(), b"1").await.unwrap();
+    foreign.store(true, Ordering::SeqCst);
+    assert!(matches!(
+        t.publish(&topic(), b"2").await,
+        Err(TransportError::Isolation(_))
+    ));
+    assert_eq!(stub.count("/relay/v1/auto/messages"), 1);
+    // the audit GET precedes each publish POST
+    let seq: Vec<String> = stub
+        .hits()
+        .into_iter()
+        .map(|r| format!("{} {}", r.method, r.path))
+        .collect();
+    assert_eq!(
+        seq,
+        vec![
+            "GET /admin/v1/peers",
+            "POST /relay/v1/auto/messages",
+            "GET /admin/v1/peers"
+        ]
+    );
+}
+
+#[tokio::test]
+async fn publish_audits_immediately_before_every_publish_enforced_public() {
+    let foreign = Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let stub = flip_stub(foreign.clone()).await;
+    let mut c = enforced_cfg(&stub.url);
+    c.audit_interval = Duration::from_secs(3600);
+    let t = LogosRestTransport::new(c).unwrap();
+    t.publish(&topic(), b"1").await.unwrap();
+    foreign.store(true, Ordering::SeqCst);
+    assert!(matches!(
+        t.publish(&topic(), b"2").await,
+        Err(TransportError::Isolation(_))
+    ));
+    assert_eq!(stub.count("/relay/v1/auto/messages"), 1);
+}
+
+#[tokio::test]
+async fn plain_public_publish_issues_no_audit_get() {
+    let stub = flip_stub(Arc::new(std::sync::atomic::AtomicBool::new(true))).await;
+    let c = LogosRestConfig {
+        node_url: stub.url.clone(),
+        mode: NetworkMode::Public,
+        cluster_id: 1,
+        ..Default::default()
+    };
+    let t = LogosRestTransport::new(c).unwrap();
+    t.publish(&topic(), b"1").await.unwrap();
+    t.publish(&topic(), b"2").await.unwrap();
+    assert_eq!(stub.count("/admin/v1/peers"), 0);
+    assert_eq!(stub.count("/relay/v1/auto/messages"), 2);
 }

@@ -1140,3 +1140,61 @@ fn wall_ns() -> i64 {
         .unwrap()
         .as_nanos() as i64
 }
+
+const PUBLIC_IP_PEER: &str =
+    "/ip4/203.0.113.7/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV";
+const WSS_PEER: &str =
+    "/dns4/relay.example.org/tcp/443/wss/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV";
+
+/// D3: a peer private mode rejects must fail `init`, write nothing and name the choices.
+#[test]
+fn init_with_a_public_peer_fails_and_names_the_public_relay_flag() {
+    let t = tempfile::tempdir().unwrap();
+    for (n, peer) in [PUBLIC_IP_PEER, WSS_PEER].into_iter().enumerate() {
+        let dir = t.path().join(format!("home{n}"));
+        let out = agentnet(&dir, &["init", "--peer", peer]);
+        assert!(!out.status.success(), "{}", stdout(&out));
+        let e = stderr(&out);
+        assert!(e.contains("--public-relay"), "{e}");
+        assert!(e.contains("private"), "{e}");
+        assert!(!dir.join("agentnet.toml").exists());
+        assert!(!dir.join("identity.json").exists());
+    }
+}
+
+#[test]
+fn init_public_relay_writes_the_audited_public_config_and_doctor_accepts_it() {
+    let t = tempfile::tempdir().unwrap();
+    for (n, peer) in [PUBLIC_IP_PEER, WSS_PEER].into_iter().enumerate() {
+        let dir = t.path().join(format!("home{n}"));
+        let out = agentnet(&dir, &["init", "--public-relay", "--peer", peer]);
+        assert!(out.status.success(), "{}", stderr(&out));
+        let cfg = agentnet_daemon::DaemonConfig::load(&dir.join("agentnet.toml")).unwrap();
+        assert_eq!(cfg.network.mode, agentnet_daemon::Mode::Public);
+        assert!(cfg.network.i_understand_public);
+        assert!(cfg.network.enforce_peer_allowlist);
+        assert_eq!(cfg.network.peers, vec![peer.to_owned()]);
+        let d = agentnet(&dir, &["doctor"]);
+        assert!(
+            stdout(&d).contains("[ok  ] config"),
+            "{}{}",
+            stdout(&d),
+            stderr(&d)
+        );
+    }
+}
+
+#[test]
+fn init_public_relay_needs_a_peer_and_private_peers_stay_private() {
+    let t = tempfile::tempdir().unwrap();
+    let a = t.path().join("a");
+    let out = agentnet(&a, &["init", "--public-relay"]);
+    assert!(!out.status.success());
+    assert!(stderr(&out).contains("--peer"), "{}", stderr(&out));
+    assert!(!a.join("agentnet.toml").exists());
+    let b = t.path().join("b");
+    ok(&b, &["init", "--peer", PEER]);
+    let cfg = agentnet_daemon::DaemonConfig::load(&b.join("agentnet.toml")).unwrap();
+    assert_eq!(cfg.network.mode, agentnet_daemon::Mode::Private);
+    assert!(!cfg.network.enforce_peer_allowlist);
+}

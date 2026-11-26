@@ -214,6 +214,10 @@ pub struct NodeConfig {
     pub discovery: DiscoveryConfig,
     /// Label reported by `network_status` (`private` / `public`).
     pub network_mode: String,
+    /// Whether the transport audits the node's peers (private mode, or public
+    /// mode with `enforce_peer_allowlist`). Reported by `network_status` so
+    /// that "no violation" is not read as "isolation ok" when nothing is audited.
+    pub isolation_audited: bool,
 }
 impl Default for NodeConfig {
     fn default() -> Self {
@@ -224,6 +228,7 @@ impl Default for NodeConfig {
             storage: StorageConfig::default(),
             discovery: DiscoveryConfig::default(),
             network_mode: "private".to_owned(),
+            isolation_audited: true,
         }
     }
 }

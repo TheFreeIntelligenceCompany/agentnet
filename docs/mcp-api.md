@@ -159,7 +159,7 @@ in inbox records, but cannot be used in tool arguments or in `agentnet://convers
 | `get_message_status` | `message_id` | state, attempts, timestamps, `last_error?` | readOnly | only `delivered` means recipient receipt |
 | `list_contacts` | `limit?` (1 to 200, default 50), `offset?` | `contacts[{address, alias?, trust, inbox_topic, added_at, kem_expires_at?, revoked}]`, `total`, `has_more`, `next_offset?` | readOnly, closed-world | saved contacts in the order they were added; public contact data only, never key material or the contact record |
 | `add_contact` | `contact_record`, `expected_address?`, `alias?`, `trust?` (`trusted`/`untrusted`/`blocked`) | `address`, `alias?`, `trust`, `inbox_topic`, `added_at`, `kem_expires_at?`, `updated` | destructive (may replace), idempotent | description: only for contacts the user verified |
-| `network_status` | `verbose?` | `mode`, `ready`, `connected_peers`, `isolation_violation?`, `queue{...}`, poll/sync times, `detail`, `peers?` | readOnly | peers only if `verbose` |
+| `network_status` | `verbose?` | `mode`, `ready`, `connected_peers`, `isolation_violation?`, `isolation_audited` (false in plain public mode: nothing is audited, so a missing violation is not an isolation claim), `queue{...}`, poll/sync times, `detail`, `peers?` | readOnly | peers only if `verbose` |
 | `create_trigger` | `sender?`, `message_type?`, `conversation_id?`, `correlation_id?`, `target_session`, `once?`, `expires_in_seconds?`, `since_cursor?` | trigger record | additive | `policy_denied` when disabled by host policy |
 | `list_triggers` | `include_inactive?` | `triggers[]` | readOnly | |
 | `delete_trigger` | `trigger_id` | `trigger_id`, `deleted` | destructive, idempotent | `deleted=false` if absent |

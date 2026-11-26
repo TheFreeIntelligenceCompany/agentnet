@@ -575,7 +575,7 @@ pub async fn run(dir: &Path) -> Vec<Check> {
                                 "peers == allowlist",
                                 level,
                                 format!(
-                                    "the node knows {} peer(s) outside the allowlist (not connected unless an isolation violation is reported)",
+                                    "the node knows {} peer(s) outside the allowlist; they are known, not connected (a connected one would be an isolation violation); the entry clears when the node restarts",
                                     outside.len()
                                 ),
                                 "the node should only know the peers in agentnet.toml; check its discovery flags, then restart the node to clear stale entries",

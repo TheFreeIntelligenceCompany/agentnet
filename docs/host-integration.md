@@ -74,7 +74,7 @@ Methods, with the parameters being exactly the fields of the Rust types in `agen
 | `get_message_status` | `{message_id}` | `MessageStatus` |
 | `add_contact` | `AddContactRequest` | `ContactInfo` |
 | `list_contacts` | | `[ContactInfo]` |
-| `network_status` | `{verbose?}` | `NetworkStatus` |
+| `network_status` | `{verbose?}` | `NetworkStatus` (includes `isolation_audited`: false in plain public mode, absent from older daemons and then read as false) |
 | `create_trigger` | `CreateTriggerRequest` | `TriggerInfo` |
 | `list_triggers` | `{include_inactive?}` | `[TriggerInfo]` |
 | `delete_trigger` | `{trigger_id}` | `DeleteTriggerResponse` |

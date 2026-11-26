@@ -161,7 +161,14 @@ unknown recipient key), `expired` (TTL passed without ack).
   periodically the daemon reads the node's peer list and **refuses to send or
   receive** (status `isolated_violation`) if the node is connected to any peer ID
   outside the allowlist, or if the node's cluster is a known public preset
-  (1, 2, 3, 16).
+  (1, 2, 3, 16). Subscribe, poll and history reuse an audit up to
+  `audit_interval` old; **every publish runs its own uncached audit** (one extra
+  `GET /admin/v1/peers` right before the publish request) and is refused with the
+  isolation error if it fails. The audit stays detective: a peer that connects
+  between the audit response and the publish request is not seen (the node API has
+  no atomic check-and-publish), so the window is one REST round trip, not the
+  cache lifetime. The extra GET per publish is accepted. Unit-tested only; the
+  real-relay re-verification of this fix is **UNTESTED**.
 * `public_discovery` and `public_fallback` must be false; setting either to true
   in private mode is a config error. There is no code path that adds peers.
 * The daemon cannot set the node's flags. `agentnet relay print-config` emits the
