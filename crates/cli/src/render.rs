@@ -4,7 +4,33 @@
 use agentnet_core::api::*;
 use serde_json::Value;
 
+use std::path::Path;
+
+use agentnet_daemon::client::agentnet_command;
+
 use crate::doctor::{Check, Level};
+
+/// `agentnet --data-dir <dir> <rest>` (directory shell-quoted).
+pub fn cmd(dir: &Path, rest: &str) -> String {
+    agentnet_command(dir, rest)
+}
+
+/// Make corrective hints in an error message fit the command line: they name the
+/// real data directory and the CLI command (the engine and MCP wording stays
+/// tool-oriented, so it is translated here, not in `agentnet_core`).
+pub fn present_error(dir: &Path, msg: &str) -> String {
+    let contact_add = format!("`{}`", cmd(dir, "contact add @<file> --expect <address>"));
+    if msg.contains("recipient is not a known contact") {
+        return format!(
+            "Recipient is not a known contact. Add their signed record with {contact_add}."
+        );
+    }
+    msg.replace(
+        "import it with add_contact",
+        &format!("import it with {contact_add}"),
+    )
+    .replace("`agentnet serve`", &format!("`{}`", cmd(dir, "serve")))
+}
 
 /// Replace control characters (except newline and tab) so remote text cannot
 /// drive the terminal.
@@ -271,4 +297,62 @@ pub fn discovered(a: &DiscoveredAgent) -> String {
         ));
     }
     out
+}
+
+#[cfg(test)]
+mod hint_tests {
+    use super::*;
+
+    #[test]
+    fn unknown_recipient_becomes_the_cli_command_with_the_real_directory() {
+        let m = present_error(
+            Path::new("/home/a b/.agentnet"),
+            "recipient is not a known contact; add_contact first",
+        );
+        assert_eq!(
+            m,
+            "Recipient is not a known contact. Add their signed record with `agentnet --data-dir '/home/a b/.agentnet' contact add @<file> --expect <address>`."
+        );
+    }
+
+    #[test]
+    fn expired_key_hint_names_the_cli_command() {
+        let m = present_error(
+            Path::new("/d"),
+            "the recipient's contact record has an expired encryption key; ask them for a fresh record and import it with add_contact",
+        );
+        assert!(
+            m.ends_with(
+                "import it with `agentnet --data-dir /d contact add @<file> --expect <address>`"
+            ),
+            "{m}"
+        );
+    }
+
+    #[test]
+    fn bare_serve_hint_gets_the_data_dir_and_other_text_is_unchanged() {
+        assert_eq!(
+            present_error(
+                Path::new("/d"),
+                "daemon down; start it with `agentnet serve`"
+            ),
+            "daemon down; start it with `agentnet --data-dir /d serve`"
+        );
+        assert_eq!(
+            present_error(Path::new("/d"), "something else"),
+            "something else"
+        );
+    }
+
+    #[test]
+    fn shell_quoting_handles_spaces_and_single_quotes() {
+        assert_eq!(
+            cmd(Path::new("/x/y"), "serve"),
+            "agentnet --data-dir /x/y serve"
+        );
+        assert_eq!(
+            cmd(Path::new("/x/it's"), "serve"),
+            "agentnet --data-dir '/x/it'\\''s' serve"
+        );
+    }
 }

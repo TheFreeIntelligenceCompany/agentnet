@@ -14,7 +14,7 @@ EXIT CODES:
   4  invalid argument or invalid configuration
   5  not found
   6  refused by policy (also: too large, conflict)
-  7  `agentnet doctor` found at least one failing check
+  7  `agentnet doctor` found at least one failing check (with `--ready`: or messaging is not ready)
 
 The data directory defaults to $AGENTNET_HOME, then ~/.agentnet. Logs go to
 stderr (RUST_LOG controls the level, default `warn`); stdout carries only
@@ -173,12 +173,20 @@ pub enum Command {
         #[command(subcommand)]
         action: NetworkCmd,
     },
-    /// Check permissions, config, node reachability, peer allowlist, isolation, store and clock.
+    /// Check permissions, config, node reachability, peer allowlist, isolation, local inbox database, relay Store sync and clock.
     ///
     /// Prints an actionable line per check; exits 7 if any check fails. Also
     /// reports the replay guard (after a store rollback, an unknown store
     /// history or an identity import) and whether the identity is revoked.
+    ///
+    /// Exit 0 means no check failed; warnings and skipped checks can still mean
+    /// messaging is unavailable. For readiness (supervisors, scripts) use `--ready`.
     Doctor {
+        /// Readiness mode: also exit 7 (and say why on stderr) when the daemon socket
+        /// is unavailable, the node is unreachable, the transport is not ready, the
+        /// isolation audit fails or a required check was skipped. Output is unchanged.
+        #[arg(long)]
+        ready: bool,
         /// Accept a detected store rollback / unknown history / import so the next
         /// start does not hold older messages, and release the held ones. Requires
         /// the daemon to be stopped. Messages that were received and acknowledged

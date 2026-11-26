@@ -50,7 +50,7 @@ agentnet relay print-config --ip <relay ip> --peer-id <relay peer id> --client-i
    ```
 
    `init` prints the address and the signed contact record. `--peer` is required before `serve`; the allowlist is derived from it.
-6. Start the daemon: `agentnet --data-dir <dir> serve` (foreground; use your own supervisor to keep it running, none ships with the repo).
+6. Start the daemon: `agentnet --data-dir <dir> serve` (foreground; use your own supervisor to keep it running, none ships with the repo; gate its health check on `agentnet --data-dir <dir> doctor --ready`).
 7. Exchange contact records over a channel you trust, and bind each record to the address you obtained out of band:
 
    ```sh
@@ -77,7 +77,8 @@ Add `--data-dir <dir>` (or set `AGENTNET_HOME`) to each command; `--json` gives 
 
 | Check | Command | Healthy |
 |---|---|---|
-| Everything | `agentnet doctor` | Exit 0 and `0 failing`. Lines `[ok  ]` for data dir permissions, config, identity, replay guard, daemon socket, node reachable, clock, isolation, `peers == allowlist`, transport ready, store query. |
+| Everything | `agentnet doctor` | Exit 0 and `0 failing`. Lines `[ok  ]` for data dir permissions, config, identity, replay guard, daemon socket, node reachable, clock, isolation, `peers == allowlist`, history sync, transport ready, local inbox database. |
+| Ready to message | `agentnet doctor --ready` | Exit 0. Use this one in supervisors, scripts and CI; exit 7 and a `NOT READY` list on stderr otherwise. |
 | Network | `agentnet network status --verbose` | `mode` private, `ready` true, no `isolation_violation`, `connected_peers` 1 and the peer id equals your service node. Also shows queue counters (`outbox_queued`, `outbox_sent_unacked`, `inbox_unread`, `inbox_quarantined`, `events_unacked`, `active_triggers`) and webhook counters (`delivered`, `retries`, `parked`, `last_error`). |
 | Outbox | `agentnet outbox --limit 20` | Messages end in `delivered`. Rows stuck in `queued` or `sent` need section 6.2. |
 | One message | `agentnet status <message id>` | `queued`, `sent`, `delivered`, `failed` or `expired`. Only `delivered` (an authenticated receipt) means received. |
@@ -89,7 +90,11 @@ Notes:
 
 * `doctor` always prints one `[warn] single instance` line (the same identity in two data directories cannot be detected). It is expected
   and counts as a warning, not a failure (`results/network-sim/wireguard/20261126T034919Z/evidence/doctor-a.txt`).
-* `doctor` exit codes: 0 all ok, 7 at least one failing check. Other exit codes (3 daemon or node unavailable, 4 invalid configuration,
+* Exit 0 means no checks failed; warnings and skipped checks can still mean messaging is unavailable. For readiness use `agentnet doctor --ready`: it prints the
+  same report, and additionally exits 7 (with the reasons on stderr, one line per condition and what to do next) when the daemon socket is unavailable, the node
+  is unreachable, the transport is not ready, the isolation audit fails or a required check was skipped or not run (`daemon socket`, `node reachable`,
+  `isolation`, `transport ready`, `local inbox database`). Warnings such as `single instance` and `history sync` do not affect it; `--json` output is unchanged.
+* `doctor` exit codes: 0 no failing check (with `--ready`: and ready), 7 at least one failing check (with `--ready`: or not ready). Other exit codes (3 daemon or node unavailable, 4 invalid configuration,
   6 refused by policy) are listed in `docs/cli-help.txt`.
 * Logs go to stderr; `RUST_LOG` sets the level (default `warn`). There is no documented log file or metrics endpoint; the socket method
   `metrics` exists (`docs/host-integration.md` section 1.2) but has no CLI command.
@@ -185,8 +190,13 @@ stop the daemon, replace the binary, start the daemon, then run `agentnet doctor
 * **Likely cause.** Relay down or restarting; client nodes reconnect, then live relay can stay broken for minutes (about 9 minutes observed once; in later
   acceptance runs the clients were usable in seconds, cause unknown). Store holds only what the retention window kept and what was published with a valid
   timestamp.
-* **Check.** `agentnet network status`; `agentnet doctor` (`node reachable`, `store query`); the relay container and its `/health`. Check that Store
+* **Check.** `agentnet network status`; `agentnet doctor` (`node reachable`, `history sync`); the relay container and its `/health`. Check that Store
   retention and the data volume are as intended (`docs/relay-setup.md` section 6).
+  Doctor's `local inbox database` line checks the local SQLite inbox, not relay Store retrieval; a green line there says nothing about the Store. The
+  Store is probed through the `history sync` line: it shows when the last history pass finished without a Store failure (the same time as
+  `last history sync` in `agentnet network status`). The line is `warn` when no pass has completed since the daemon started, when the last one is older than
+  four sync intervals (at least 60 s), or while recovery is pending, which means the Store has not answered recently. It cannot show whether the Store
+  still holds a particular message: inspect the service node's Store separately (`docs/relay-setup.md`).
 * **Action.** Restore the relay (start order: service node first). Wait for the clients to redial; do not restart the daemons unnecessarily. Messages in
   the senders' outboxes keep retrying; messages the relay retained are recovered by Store catch-up (up to `history_sync_interval_s`). With the Store unavailable,
   recovery comes from the sender's retry. If the Store lost its data (retention expiry, no volume), only senders still retrying can deliver; with the

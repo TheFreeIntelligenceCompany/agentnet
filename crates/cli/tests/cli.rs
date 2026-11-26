@@ -68,6 +68,75 @@ fn init_creates_private_files_and_refuses_to_overwrite() {
 }
 
 #[test]
+fn printed_next_steps_keep_the_data_dir_shell_quoted() {
+    let t = tempfile::tempdir().unwrap();
+    let dir = t.path().join("my agent");
+    let out = agentnet(&dir, &["init", "--peer", PEER]);
+    assert!(out.status.success(), "{}", stderr(&out));
+    let want = format!("Next: agentnet --data-dir '{}' serve", dir.display());
+    assert!(stdout(&out).contains(&want), "{}", stdout(&out));
+    // no peers: the warning names the config file in that directory
+    let dir2 = t.path().join("b");
+    let out = agentnet(&dir2, &["init"]);
+    assert!(
+        stdout(&out).contains(&format!("{}", dir2.join("agentnet.toml").display())),
+        "{}",
+        stdout(&out)
+    );
+    assert!(
+        stdout(&out).contains(&format!(
+            "Next: agentnet --data-dir {} serve",
+            dir2.display()
+        )),
+        "{}",
+        stdout(&out)
+    );
+}
+
+#[test]
+fn missing_daemon_error_names_the_data_dir() {
+    let t = tempfile::tempdir().unwrap();
+    let a = t.path().join("my agent");
+    ok(&a, &["init", "--peer", PEER]);
+    let o = agentnet(&a, &["inbox"]);
+    assert_eq!(o.status.code(), Some(3), "{}", stderr(&o));
+    let want = format!("`agentnet --data-dir '{}' serve`", a.display());
+    assert!(stderr(&o).contains(&want), "{}", stderr(&o));
+}
+
+#[tokio::test]
+async fn sending_to_an_unknown_recipient_prescribes_the_cli_command() {
+    let t = tempfile::tempdir().unwrap();
+    let (a, _) = init(t.path(), "a");
+    let (_, addr_b) = init(t.path(), "b");
+    let now_ns = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos() as i64;
+    let clock = MockClock::new(now_ns);
+    let net = MockNetwork::with_clock(clock.clone());
+    let cfg = DaemonConfig::load(&a.join("agentnet.toml")).unwrap();
+    let d = Daemon::start_with_transport(&a, cfg, Arc::new(net.endpoint()), Arc::new(clock))
+        .await
+        .unwrap();
+    let (a2, to) = (a.clone(), addr_b.clone());
+    let o = tokio::task::spawn_blocking(move || agentnet(&a2, &["send", &to, "hi"]))
+        .await
+        .unwrap();
+    assert_eq!(o.status.code(), Some(5), "{}", stderr(&o));
+    assert!(
+        stderr(&o).contains(&format!(
+            "error: Recipient is not a known contact. Add their signed record with `agentnet --data-dir {} contact add @<file> --expect <address>`.",
+            a.display()
+        )),
+        "{}",
+        stderr(&o)
+    );
+    assert!(!stderr(&o).contains("add_contact"), "{}", stderr(&o));
+    d.shutdown().await;
+}
+
+#[test]
 fn init_without_peers_warns_and_serve_refuses_until_configured() {
     let t = tempfile::tempdir().unwrap();
     let dir = t.path().join("home");
@@ -318,7 +387,7 @@ fn doctor_reports_problems_with_actions_and_exit_code_7() {
     assert!(s.contains("[ok  ] data dir permissions"), "{s}");
     assert!(s.contains("[ok  ] config"), "{s}");
     assert!(s.contains("[FAIL] node reachable"), "{s}");
-    assert!(s.contains("agentnet serve"), "{s}");
+    assert!(s.contains("--data-dir") && s.contains(" serve`"), "{s}");
     std::fs::set_permissions(&a, std::fs::Permissions::from_mode(0o755)).unwrap();
     let o = agentnet(&a, &["doctor"]);
     assert!(stdout(&o).contains("[FAIL] data dir permissions"));
@@ -331,6 +400,102 @@ fn doctor_reports_problems_with_actions_and_exit_code_7() {
         .unwrap()
         .iter()
         .any(|c| c["name"] == "config" && c["level"] == "ok"));
+}
+
+/// A node stand-in that answers every request with `200 OK` (doctor's /health probe).
+fn fake_node() -> String {
+    use std::io::{Read, Write};
+    let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let url = format!("http://{}", l.local_addr().unwrap());
+    std::thread::spawn(move || {
+        for s in l.incoming().flatten() {
+            let mut s = s;
+            let mut buf = [0u8; 1024];
+            let _ = s.read(&mut buf);
+            let _ =
+                s.write_all(b"HTTP/1.1 200 OK\r\ncontent-length: 2\r\nconnection: close\r\n\r\nok");
+        }
+    });
+    url
+}
+
+#[test]
+fn doctor_exit_zero_with_the_daemon_down_but_ready_mode_fails_and_says_why() {
+    let t = tempfile::tempdir().unwrap();
+    let a = t.path().join("a");
+    let node = fake_node();
+    ok(&a, &["init", "--peer", PEER, "--node-url", &node]);
+    // default mode: the unavailable daemon is only a warning
+    let o = agentnet(&a, &["doctor"]);
+    assert_eq!(o.status.code(), Some(0), "{}{}", stdout(&o), stderr(&o));
+    assert!(
+        stdout(&o).contains("[warn] daemon socket"),
+        "{}",
+        stdout(&o)
+    );
+    assert!(stdout(&o).contains("[skip] isolation"), "{}", stdout(&o));
+    // readiness mode: same stdout, exit 7, reasons on stderr
+    let r = agentnet(&a, &["doctor", "--ready"]);
+    assert_eq!(r.status.code(), Some(7), "{}{}", stdout(&r), stderr(&r));
+    assert_eq!(stdout(&r), stdout(&o));
+    let e = stderr(&r);
+    assert!(e.contains("NOT READY"), "{e}");
+    assert!(e.contains("daemon socket: warning"), "{e}");
+    assert!(e.contains("isolation: skipped"), "{e}");
+    assert!(e.contains("transport ready: not run"), "{e}");
+}
+
+#[tokio::test]
+async fn doctor_ready_mode_passes_for_a_running_daemon_with_a_ready_transport() {
+    let t = tempfile::tempdir().unwrap();
+    let a = t.path().join("a");
+    let node = fake_node();
+    ok(&a, &["init", "--peer", PEER, "--node-url", &node]);
+    let now_ns = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos() as i64;
+    let clock = MockClock::new(now_ns);
+    let net = MockNetwork::with_clock(clock.clone());
+    let cfg = DaemonConfig::load(&a.join("agentnet.toml")).unwrap();
+    let d =
+        Daemon::start_with_transport(&a, cfg, Arc::new(net.endpoint()), Arc::new(clock.clone()))
+            .await
+            .unwrap();
+    let a2 = a.clone();
+    let r = tokio::task::spawn_blocking(move || agentnet(&a2, &["doctor", "--ready"]))
+        .await
+        .unwrap();
+    assert_eq!(r.status.code(), Some(0), "{}{}", stdout(&r), stderr(&r));
+    assert!(
+        stdout(&r).contains("[ok  ] daemon socket"),
+        "{}",
+        stdout(&r)
+    );
+    assert!(
+        stdout(&r).contains("[ok  ] transport ready"),
+        "{}",
+        stdout(&r)
+    );
+    assert!(
+        stdout(&r).contains("[ok  ] local inbox database"),
+        "{}",
+        stdout(&r)
+    );
+    assert!(stdout(&r).contains("history sync"), "{}", stdout(&r));
+    assert!(stderr(&r).contains("ready:"), "{}", stderr(&r));
+    d.shutdown().await;
+}
+
+#[test]
+fn doctor_ready_mode_with_a_failing_check_still_exits_7_and_json_stays_a_check_array() {
+    let t = tempfile::tempdir().unwrap();
+    let (a, _) = init(t.path(), "a");
+    let r = agentnet(&a, &["--json", "doctor", "--ready"]);
+    assert_eq!(r.status.code(), Some(7));
+    let j: serde_json::Value = serde_json::from_str(stdout(&r).trim()).unwrap();
+    assert!(j.as_array().unwrap().iter().any(|c| c["name"] == "config"));
+    assert!(stderr(&r).contains("NOT READY"), "{}", stderr(&r));
 }
 
 #[test]
@@ -408,10 +573,7 @@ async fn mcp_without_a_daemon_starts_and_every_tool_says_unavailable() {
         let e = error_json(&r);
         assert_eq!(e["error"]["code"], "unavailable", "{tool}: {e}");
         assert!(
-            e["error"]["message"]
-                .as_str()
-                .unwrap()
-                .contains("agentnet serve"),
+            e["error"]["message"].as_str().unwrap().contains(" serve`"),
             "{tool}: {e}"
         );
     }

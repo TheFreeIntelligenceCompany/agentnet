@@ -659,7 +659,11 @@ async fn remote_agent_reports_unavailable_when_down_and_recovers() {
     let remote = RemoteAgent::new(&path);
     let e = remote.get_identity().await.unwrap_err();
     assert_eq!(e.code, ErrorCode::Unavailable);
-    assert!(e.message.contains("agentnet serve"), "{}", e.message);
+    assert!(
+        e.message.contains("--data-dir") && e.message.contains(" serve`"),
+        "{}",
+        e.message
+    );
     // Missing data dir entirely.
     let ghost = RemoteAgent::new(w.tmp.path().join("ghost"));
     let e = ghost.list_contacts().await.unwrap_err();
@@ -672,7 +676,7 @@ async fn remote_agent_reports_unavailable_when_down_and_recovers() {
     d.shutdown().await;
     let e = remote.get_identity().await.unwrap_err();
     assert_eq!(e.code, ErrorCode::Unavailable);
-    assert!(e.message.contains("agentnet serve"), "{}", e.message);
+    assert!(e.message.contains(" serve`"), "{}", e.message);
 
     // Daemon comes back: same client works again.
     let d = w.start(&path, cfg()).await;

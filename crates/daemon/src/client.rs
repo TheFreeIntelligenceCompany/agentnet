@@ -26,19 +26,45 @@ use crate::proto::{all_hints, read_line, Line, MAX_RESPONSE_LINE};
 /// Default time a single request may take.
 pub const REQUEST_TIMEOUT: Duration = Duration::from_secs(60);
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
-const NOT_RUNNING: &str = "start it with `agentnet serve`";
+
+/// Quote `s` for a POSIX shell: unchanged when it only has safe characters,
+/// otherwise single-quoted.
+pub fn shell_quote(s: &str) -> String {
+    let safe = !s.is_empty()
+        && s.chars()
+            .all(|c| c.is_ascii_alphanumeric() || "/._-+:=@%,".contains(c));
+    if safe {
+        s.to_owned()
+    } else {
+        format!("'{}'", s.replace('\'', "'\\''"))
+    }
+}
+
+/// `agentnet --data-dir <dir> <rest>` with the directory shell-quoted, so a
+/// printed next step targets the same identity.
+pub fn agentnet_command(dir: &Path, rest: &str) -> String {
+    format!(
+        "agentnet --data-dir {} {rest}",
+        shell_quote(&dir.to_string_lossy())
+    )
+}
 
 fn unavailable_not_running(sock: &Path) -> ApiError {
+    // The socket is `<data dir>/agentnet.sock`.
+    let start = match sock.parent() {
+        Some(dir) => agentnet_command(dir, "serve"),
+        None => "agentnet serve".to_owned(),
+    };
     ApiError::unavailable(format!(
-        "the AgentNet daemon is not running (cannot connect to {}); {NOT_RUNNING}",
+        "the AgentNet daemon is not running (cannot connect to {}); start it with `{start}`",
         sock.display()
     ))
 }
 
 fn lost() -> ApiError {
-    ApiError::unavailable(format!(
-        "the connection to the AgentNet daemon was lost; if it stopped, {NOT_RUNNING}"
-    ))
+    ApiError::unavailable(
+        "the connection to the AgentNet daemon was lost; if it stopped, start it again with `agentnet serve` on the same data directory",
+    )
 }
 
 /// An authenticated connection that has completed the hello exchange.
@@ -55,7 +81,7 @@ async fn open_raw(socket: &Path, token_path: &Path, client: &str) -> ApiResult<R
         Ok(t) => t,
         Err(e) => {
             return Err(ApiError::unavailable(format!(
-                "cannot read the control token ({e}); is --data-dir right and has `agentnet init` been run?"
+                "cannot read the control token ({e}); is --data-dir right and has `agentnet init` been run for it?"
             )))
         }
     };

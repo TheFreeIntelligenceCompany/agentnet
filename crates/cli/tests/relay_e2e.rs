@@ -266,7 +266,19 @@ async fn run(a: &std::path::Path, b: &std::path::Path, addr_a: &str, addr_b: &st
     let doc = agentnet(a, &["doctor"]);
     log!("doctor (A) exit={:?}\n{}", doc.status.code(), stdout(&doc));
     assert!(
-        stdout(&doc).contains("[ok  ] store query"),
-        "store query check must pass with the daemon running"
+        stdout(&doc).contains("[ok  ] local inbox database"),
+        "local inbox database check must pass with the daemon running"
+    );
+    let ready = agentnet(a, &["doctor", "--ready"]);
+    log!(
+        "doctor --ready (A) exit={:?}\n{}",
+        ready.status.code(),
+        stderr(&ready)
+    );
+    assert_eq!(
+        ready.status.code(),
+        Some(0),
+        "doctor --ready must pass against the live setup: {}",
+        stderr(&ready)
     );
 }
