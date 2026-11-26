@@ -1,0 +1,52 @@
+crates/transport/tests/logos_rest_relay.rs:6://! variable `AGENTNET_RELAY_TESTS=1` is set. Tests that disturb the topology
+crates/transport/tests/logos_rest_relay.rs:7://! (`#[ignore]`) additionally need `--ignored` and `AGENTNET_RELAY_DISRUPTIVE=1`.
+crates/transport/tests/logos_rest_relay.rs:27:    if std::env::var("AGENTNET_RELAY_TESTS").as_deref() == Ok("1") {
+crates/transport/tests/logos_rest_relay.rs:30:        println!("skipped (set AGENTNET_RELAY_TESTS=1 to run against the spike relay)");
+crates/transport/tests/logos_rest_relay.rs:36:    if let Ok(v) = std::env::var("AGENTNET_R1_PEER_ID") {
+crates/transport/tests/logos_rest_relay.rs:491:    std::env::var("AGENTNET_R1_PEER_ID").unwrap_or_else(|_| "16Uiu2HAmDummy".to_string())
+crates/transport/tests/logos_rest_relay.rs:495:// Disruptive tests: restart containers of the spike topology. #[ignore]d; run
+crates/transport/tests/logos_rest_relay.rs:512:    if enabled() && std::env::var("AGENTNET_RELAY_DISRUPTIVE").as_deref() == Ok("1") {
+crates/transport/tests/logos_rest_relay.rs:515:        println!("skipped (needs AGENTNET_RELAY_TESTS=1 and AGENTNET_RELAY_DISRUPTIVE=1)");
+crates/transport/tests/logos_rest_relay.rs:557:#[ignore = "restarts container an-na; run last with AGENTNET_RELAY_DISRUPTIVE=1 -- --ignored"]
+crates/transport/tests/logos_rest_relay.rs:588:#[ignore = "stops container an-r1; run last with AGENTNET_RELAY_DISRUPTIVE=1 -- --ignored"]
+crates/core/tests/engine_security.rs:543:    assert_eq!(a.metric("ack.ignored_wrong_party"), 1);
+crates/core/tests/engine_security.rs:544:    assert_eq!(a.metric("ack.ignored_unknown_id"), 1);
+crates/core/tests/engine_security.rs:545:    assert_eq!(a.metric("ack.ignored_untrusted"), 1);
+crates/core/tests/crypto.rs:470:    assert_eq!(max_body_len(cap, &env(&a, &b, "ignored body")), n_full);
+crates/core/src/ingest.rs:48:    /// An ack that was ignored (wrong party, unknown id, untrusted, duplicate).
+crates/core/src/ingest.rs:414:            self.metrics.inc("ack.ignored_untrusted");
+crates/core/src/ingest.rs:461:                self.metrics.inc(&format!("ack.ignored_{why}"));
+crates/core/src/envelope.rs:190:/// given the other fields of `envelope_without_body` (its `body` is ignored).
+crates/mcp/tests/common/mod.rs:232:        let cargo = std::env::var("CARGO").unwrap_or_else(|_| "cargo".into());
+crates/cli/tests/relay_e2e.rs:5://! Run with: `AGENTNET_RELAY_TESTS=1 cargo test -p agentnet-cli --test relay_e2e -- --nocapture`
+crates/cli/tests/relay_e2e.rs:84:    if std::env::var("AGENTNET_RELAY_TESTS").as_deref() != Ok("1") {
+crates/cli/tests/relay_e2e.rs:85:        println!("SKIPPED: set AGENTNET_RELAY_TESTS=1 (needs spike/relay running)");
+crates/mcp/examples/fake_server.rs:34:    let seed: usize = std::env::var("FAKE_SEED_INBOX")
+crates/mcp/examples/fake_server.rs:49:            let token = std::env::var("FAKE_TOKEN")?;
+crates/mcp/examples/fake_server.rs:51:            let allow_non_loopback = std::env::var("FAKE_ALLOW_NON_LOOPBACK").is_ok();
+crates/cli/src/main.rs:87:    match std::env::var_os("HOME") {
+crates/mcp/src/http.rs:46:    /// Accepted `Host` header values (host part only, port ignored). Empty means
+crates/daemon/tests/harness.rs:328:        if std::env::var("AGENTNET_REGEN_EXAMPLES").as_deref() == Ok("1") {
+crates/daemon/examples/mock_harness.rs:76:        data_dir: PathBuf::from(std::env::var("AGENTNET_HOME").unwrap_or_else(|_| {
+crates/daemon/examples/mock_harness.rs:77:            format!("{}/.agentnet", std::env::var("HOME").unwrap_or_default())
+crates/daemon/src/webhook.rs:17://!   checked address; redirects are never followed; proxies are ignored.
+.github/workflows/ci.yml:51:        # Relay-gated tests return early (and are reported as passed) unless AGENTNET_RELAY_TESTS=1.
+.github/workflows/ci.yml:88:          AGENTNET_RELAY_TESTS: "1"
+docs/mcp-api.md:144:  `Conversation{id}` to `agentnet://conversations/{id}`, `Events` is ignored.
+docs/mcp-api.md:180:* `allowed_hosts` (host part, port ignored): empty means `localhost`, `127.0.0.1`, `::1`. `allowed_origins`:
+docs/threat-model.md:132:| T18 | Webhook abuse: SSRF, forged or replayed calls | One URL from host config only; http/https, no credentials; literal loopback/private IP or `localhost` unless `allow_remote`; link-local/metadata (169.254.0.0/16, fe80::/10), multicast, unspecified **always** blocked; names re-resolved per attempt and the connection pinned to a checked address; redirects never followed; proxies ignored; HMAC-SHA256 over `timestamp.body` with +-300 s window and `event_id` idempotency; 5 s timeout | `crates/daemon/src/webhook.rs` (`is_blocked_ip`, `.redirect(Policy::none()).no_proxy()`, `verify_signature`); tests `blocklist`, `redirects_are_not_followed`, `signature_round_trip_and_failures`, `startup_rejects_unsafe_webhook_setups`, `retries_on_500_then_succeeds_with_one_effect_per_event_id` | Replay protection beyond +-300 s is **the receiver's duty** (remember `event_id`s; the shipped mock harness does). The HMAC secret is a shared secret in a 0600 file. With `allow_remote = true` the operator takes responsibility for the destination. A DNS-rebinding race between the check and the connect is addressed by pinning the checked address (tested for `localhost` only: `localhost_resolves_to_a_pinned_loopback_address`); public-name behaviour **UNTESTED** against a real resolver |
+docs/compatibility-matrix.md:13:| **agentnet Rust workspace: tests** | **OK** as recorded by the lead's run: all suites `ok` in `results/b-daemon/workspace-tests.log` (commit `0eb3d35`: fmt, clippy `-D warnings`, all tests, live-relay e2e). Caveat: relay-gated tests count as passed when skipped (see `docs/spike-report.md` section 15 item 3) | **OK**: `cargo test --workspace --locked` exit 0, 25 test suites, **308 passed, 0 failed, 2 ignored**, 41m59s wall (same log). Relay-gated tests were **skipped** (no relay inside the container) but are counted as passed | **UNTESTED** |
+docs/configuration.md:112:| `secret_file` | `""` | Shared HMAC secret, at least 32 bytes (a trailing newline is ignored), mode 0600; relative paths are relative to the data directory. Required when enabled. |
+docs/host-integration.md:186:  variables are ignored. Timeout per attempt: `timeout_ms` (default 5 s).
+docs/spike-report.md:25:`exclude = ["spike", "upstream"]`), scripts under `spike/relay/scripts/`, and raw outputs in `results/`. Upstream sources were cloned (gitignored) under `upstream/`.
+docs/spike-report.md:237:| G1 | Reproducible Rust build with at least one viable Delivery path | **GO (macOS arm64); Linux arm64: see result below; Linux x86_64 UNTESTED** | Path (3) builds and its tests pass on macOS arm64 (`results/b-daemon/workspace-tests.log`, lead re-ran per commit `0eb3d35`). Linux arm64 clean-checkout build and test: **OK** (`cargo build --workspace --locked` exit 0, 45m58s; `cargo test --workspace --locked` exit 0, 308 passed / 0 failed / 2 ignored in 25 suites, `results/audit/linux-arm64-build.log`; relay-gated tests skipped there). Clean checkout reproduction: the Linux run unpacks `git archive HEAD`, not the working tree. goal.md asks for Linux x86_64 first: not available (amd64 build under qemu: **not attempted**, UNTESTED) |
+docs/spike-report.md:303:3. `cargo test --workspace --locked` reports the relay-gated tests as **passed** when the environment variable is unset: they return early. `results/b-daemon/workspace-tests.log` shows `relay_e2e ... 1 passed ... finished in 0.00s` and `logos_rest_relay ... 6 passed; 2 ignored ... 0.00s`. Real relay results are only in `results/b-daemon/relay-e2e.log` and `results/b-transport/relay-tests.log`.
+docs/protocol.md:398:(`ack.ignored_*`) and ignored. Acks are never stored in the inbox, never
+docs/protocol.md:408:trust lookup (`Blocked` dropped; an ack from a non-Trusted sender is ignored,
+docs/spike/notes-ffi-bindings.md:111:- Results: `Box::into_raw(Box::new(tx))` per call (`api.rs:103`), reclaimed with `Box::from_raw` inside the terminal callback (`api.rs:61`) or immediately on `RET_MISSING_CALLBACK` (`api.rs:105-107`). `RET_STALE_WARN` (progress ping) is ignored without reclaiming (`api.rs:56-57`). If the awaiting future is dropped (timeout/`select!`), the box is still reclaimed by the late callback and the failed `send` is discarded (`api.rs:63-75`): sound. If a request is accepted but the callback **never** fires (context destroyed with the request in flight), the box leaks (no code path reclaims it): minor.
+docs/spike/notes-e2e-crypto.md:70:Implemented policy, decided and reported: unknown extra JSON fields are **ignored** (serde default; they are still covered by the signature because the exact received bytes are verified); unknown `v` rejected (`v=0`, `v=2`; `v` as string or missing -> `envelope_parse`). Skew: `created_at` accepted up to now+120 s (60 s ok, 130 s rejected; 10 min rejected), `expires_at` accepted until expires_at+120 s (60 s past ok, 130 s past rejected, 5 min past rejected), `expires_at <= created_at` rejected. No max-TTL rule is implemented (recommend adding one, e.g. 30 days, to bound dedupe growth). Also tested: non-uuid `message_id`, non-address sender, trailing garbage after JSON, empty envelope (`bad_padding`: inner length 64), a 50 000-deep nested unknown field (accepted: serde_json skips it iteratively, no stack overflow; bounded by the 160 KiB frame cap), a 50 000-deep array in `body` (`envelope_parse`), frame >160 KiB (`frame_too_large` before any crypto).
+README.md:194:  `AGENTNET_RELAY_TESTS=1 cargo test -p agentnet-cli --test relay_e2e -- --nocapture` and
+README.md:195:  `AGENTNET_RELAY_TESTS=1 cargo test -p agentnet-transport --test logos_rest_relay -- --nocapture`.
+README.md:196:  Two further transport tests stop or restart containers and are `#[ignore]`: add `AGENTNET_RELAY_DISRUPTIVE=1` and `-- --ignored` (run last; they restart `an-na` and stop `an-r1`).
+README.md:213:| `upstream/` | local clones of upstream repositories (gitignored) |
+docs/spike/notes-libchat-and-crypto.md:4:Host: macOS arm64 (Darwin 25.6.0). Evidence under `results/a1-libchat/`. Upstream clone: `upstream/libchat` (gitignored).

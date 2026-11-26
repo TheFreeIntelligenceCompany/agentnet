@@ -1,0 +1,58 @@
+1://! Documented input limits enforced at the MCP boundary.
+2://!
+3://! These are enforced before any call reaches [`AgentApi`](agentnet_core::api::AgentApi);
+4://! the engine may enforce stricter limits and report them as `too_large` /
+5://! `invalid_argument`. All lengths are in UTF-8 bytes unless stated otherwise
+6://! (the JSON Schema `maxLength` keyword counts characters, which never exceeds
+7://! the byte count, so the schema bound is never tighter than the runtime bound).
+8:
+9:/// Maximum `send_message.body` size in bytes.
+10:pub const MAX_BODY_BYTES: usize = 32_768;
+11:/// Address length bounds (`an1` + base32 payload; exact validation is the engine's).
+12:pub const MIN_ADDRESS_LEN: usize = 4;
+13:pub const MAX_ADDRESS_LEN: usize = 128;
+14:/// Maximum length of message, conversation, correlation, trigger and idempotency ids.
+15:pub const MAX_ID_LEN: usize = 128;
+16:/// Maximum opaque cursor length.
+17:pub const MAX_CURSOR_LEN: usize = 512;
+18:/// Page size bounds for `read_inbox` and the `limit` resource query parameter.
+19:pub const MIN_LIMIT: u32 = 1;
+20:pub const MAX_LIMIT: u32 = 200;
+21:/// Maximum requested TTL / trigger lifetime: 30 days.
+22:pub const MAX_SECONDS: u64 = 2_592_000;
+23:/// Maximum size of a pasted contact record.
+24:pub const MAX_CONTACT_RECORD_BYTES: usize = 16_384;
+25:/// Maximum contact alias length in characters.
+26:pub const MAX_ALIAS_CHARS: usize = 64;
+27:/// Maximum `target_session` length in bytes.
+28:pub const MAX_SESSION_LEN: usize = 256;
+29:/// Maximum size of an HTTP request body accepted by the Streamable HTTP endpoint.
+30:pub const MAX_HTTP_BODY_BYTES: usize = 1_048_576;
+31:
+32:/// JSON Schema `pattern` for ids (conversation, correlation, message, trigger,
+33:/// idempotency key). Unreserved URI characters only, so an id can be embedded in
+34:/// an `agentnet://conversations/{id}` URI without percent-encoding.
+35:pub const ID_PATTERN: &str = "^[A-Za-z0-9._~-]{1,128}$";
+36:/// JSON Schema `pattern` for agent addresses (loose; the engine validates the checksum).
+37:pub const ADDRESS_PATTERN: &str = "^an1[a-z2-7]{1,125}$";
+38:
+39:/// True if `s` is a syntactically valid id (see [`ID_PATTERN`]).
+40:pub fn is_valid_id(s: &str) -> bool {
+41:    !s.is_empty()
+42:        && s.len() <= MAX_ID_LEN
+43:        && s.bytes()
+44:            .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'.' | b'_' | b'~' | b'-'))
+45:}
+46:
+47:/// True if `s` looks like an agent address (see [`ADDRESS_PATTERN`]).
+48:pub fn is_valid_address(s: &str) -> bool {
+49:    s.len() >= MIN_ADDRESS_LEN
+50:        && s.len() <= MAX_ADDRESS_LEN
+51:        && s.strip_prefix("an1")
+52:            .is_some_and(|rest| rest.bytes().all(|b| matches!(b, b'a'..=b'z' | b'2'..=b'7')))
+53:}
+54:
+55:/// True if `s` is a plausible opaque cursor: 1..=512 visible ASCII bytes.
+56:pub fn is_valid_cursor(s: &str) -> bool {
+57:    !s.is_empty() && s.len() <= MAX_CURSOR_LEN && s.bytes().all(|b| (0x21..=0x7e).contains(&b))
+58:}

@@ -1,0 +1,15 @@
+{
+ "counters": {
+  "ack.applied": 100,
+  "ack.queued": 100,
+  "ack.reack_rate_limited": 27,
+  "frame.not_for_us": 528,
+  "frame.received": 801,
+  "frame.transport_seen": 46,
+  "history.completed": 1,
+  "message.accepted": 100,
+  "message.duplicate": 27,
+  "outbox.queued": 100,
+  "publish.ok": 232
+ }
+}

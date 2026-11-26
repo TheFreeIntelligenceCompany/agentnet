@@ -1,0 +1,99 @@
+   Compiling agentnet-transport v0.1.0 (/Users/dennison/develop/FIC-elipsis/crates/transport)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.83s
+     Running tests/logos_rest_relay.rs (target/debug/deps/logos_rest_relay-c9a72af5478f425b)
+
+running 5 tests
+test max_payload_len_is_accepted_and_delivered_and_one_more_is_rejected_locally ... FAILED
+test history_paginates_across_pages_and_dedupes_against_live ... FAILED
+test isolation_audit_passes_with_right_allowlist_and_fails_closed_with_wrong_one ... FAILED
+test a_to_b_and_b_to_a_with_identical_ids_in_live_and_history ... FAILED
+test adapter_redial_restores_a_disconnected_client ... FAILED
+
+failures:
+
+---- max_payload_len_is_accepted_and_delivered_and_one_more_is_rejected_locally stdout ----
+
+thread 'max_payload_len_is_accepted_and_delivered_and_one_more_is_rejected_locally' (28580012) panicked at crates/transport/tests/logos_rest_relay.rs:34:5:
+this test needs the local relay topology (spike/relay, `DNS_NS=127.0.0.1 ./scripts/up.sh`): run with AGENTNET_RELAY_TESTS=1 cargo test ... -- --ignored
+
+---- history_paginates_across_pages_and_dedupes_against_live stdout ----
+
+thread 'history_paginates_across_pages_and_dedupes_against_live' (28580010) panicked at crates/transport/tests/logos_rest_relay.rs:34:5:
+this test needs the local relay topology (spike/relay, `DNS_NS=127.0.0.1 ./scripts/up.sh`): run with AGENTNET_RELAY_TESTS=1 cargo test ... -- --ignored
+
+---- isolation_audit_passes_with_right_allowlist_and_fails_closed_with_wrong_one stdout ----
+
+thread 'isolation_audit_passes_with_right_allowlist_and_fails_closed_with_wrong_one' (28580011) panicked at crates/transport/tests/logos_rest_relay.rs:34:5:
+this test needs the local relay topology (spike/relay, `DNS_NS=127.0.0.1 ./scripts/up.sh`): run with AGENTNET_RELAY_TESTS=1 cargo test ... -- --ignored
+
+---- a_to_b_and_b_to_a_with_identical_ids_in_live_and_history stdout ----
+
+thread 'a_to_b_and_b_to_a_with_identical_ids_in_live_and_history' (28580008) panicked at crates/transport/tests/logos_rest_relay.rs:34:5:
+this test needs the local relay topology (spike/relay, `DNS_NS=127.0.0.1 ./scripts/up.sh`): run with AGENTNET_RELAY_TESTS=1 cargo test ... -- --ignored
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- adapter_redial_restores_a_disconnected_client stdout ----
+
+thread 'adapter_redial_restores_a_disconnected_client' (28580009) panicked at crates/transport/tests/logos_rest_relay.rs:34:5:
+this test needs the local relay topology (spike/relay, `DNS_NS=127.0.0.1 ./scripts/up.sh`): run with AGENTNET_RELAY_TESTS=1 cargo test ... -- --ignored
+
+
+failures:
+    a_to_b_and_b_to_a_with_identical_ids_in_live_and_history
+    adapter_redial_restores_a_disconnected_client
+    history_paginates_across_pages_and_dedupes_against_live
+    isolation_audit_passes_with_right_allowlist_and_fails_closed_with_wrong_one
+    max_payload_len_is_accepted_and_delivered_and_one_more_is_rejected_locally
+
+test result: FAILED. 0 passed; 5 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p agentnet-transport --test logos_rest_relay`
+EXIT=101
+   Compiling agentnet-cli v0.1.0 (/Users/dennison/develop/FIC-elipsis/crates/cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.34s
+     Running tests/relay_e2e.rs (target/debug/deps/relay_e2e-7d644b7ed79da0e9)
+
+running 1 test
+test two_agentnet_serve_processes_exchange_messages_over_the_private_relay ... FAILED
+
+failures:
+
+---- two_agentnet_serve_processes_exchange_messages_over_the_private_relay stdout ----
+
+thread 'two_agentnet_serve_processes_exchange_messages_over_the_private_relay' (28580445) panicked at crates/cli/tests/relay_e2e.rs:86:5:
+this test needs the local relay topology (spike/relay, `DNS_NS=127.0.0.1 ./scripts/up.sh`): run with AGENTNET_RELAY_TESTS=1 cargo test -p agentnet-cli --test relay_e2e -- --ignored
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    two_agentnet_serve_processes_exchange_messages_over_the_private_relay
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p agentnet-cli --test relay_e2e`
+EXIT=101
+--- list default features:
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.12s
+     Running tests/logos_rest_relay.rs (target/debug/deps/logos_rest_relay-c9a72af5478f425b)
+a_to_b_and_b_to_a_with_identical_ids_in_live_and_history: test
+adapter_redial_restores_a_disconnected_client: test
+history_paginates_across_pages_and_dedupes_against_live: test
+isolation_audit_passes_with_right_allowlist_and_fails_closed_with_wrong_one: test
+max_payload_len_is_accepted_and_delivered_and_one_more_is_rejected_locally: test
+private_mode_config_rejects_public_ip_and_hostnames: test
+
+6 tests, 0 benchmarks
+--- list with disruptive-tests feature:
+   Compiling agentnet-transport v0.1.0 (/Users/dennison/develop/FIC-elipsis/crates/transport)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.20s
+     Running tests/logos_rest_relay.rs (target/debug/deps/logos_rest_relay-6020c1671e47dea6)
+a_to_b_and_b_to_a_with_identical_ids_in_live_and_history: test
+adapter_redial_restores_a_disconnected_client: test
+history_paginates_across_pages_and_dedupes_against_live: test
+isolation_audit_passes_with_right_allowlist_and_fails_closed_with_wrong_one: test
+max_payload_len_is_accepted_and_delivered_and_one_more_is_rejected_locally: test
+node_restart_triggers_transparent_resubscribe: test
+private_mode_config_rejects_public_ip_and_hostnames: test
+r1_down_gives_unavailable_and_history_unavailable: test
+
+8 tests, 0 benchmarks

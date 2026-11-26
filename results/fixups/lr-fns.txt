@@ -1,0 +1,148 @@
+crates/transport/src/logos_rest/config.rs:29:fn de_duration<'de, D: Deserializer<'de>>(d: D) -> Result<Duration, D::Error> {
+crates/transport/src/logos_rest/config.rs:61:    pub request_timeout: Duration,
+crates/transport/src/logos_rest/config.rs:83:    fn default() -> Self {
+crates/transport/src/logos_rest/config.rs:91:            request_timeout: Duration::from_secs(5),
+crates/transport/src/logos_rest/config.rs:103:pub fn is_private_ipv4(ip: Ipv4Addr) -> bool {
+crates/transport/src/logos_rest/config.rs:113:pub fn is_private_ipv6(ip: Ipv6Addr) -> bool {
+crates/transport/src/logos_rest/config.rs:125:pub fn is_private_host(host: &Host<&str>) -> bool {
+crates/transport/src/logos_rest/config.rs:133:fn protocol(msg: impl Into<String>) -> TransportError {
+crates/transport/src/logos_rest/config.rs:137:fn valid_peer_id(s: &str) -> bool {
+crates/transport/src/logos_rest/config.rs:142:pub(crate) fn peer_id_of_multiaddr(addr: &str) -> Option<&str> {
+crates/transport/src/logos_rest/config.rs:153:fn check_peer_addr_private(
+crates/transport/src/logos_rest/config.rs:180:fn static_peer_shape_ok(addr: &str) -> bool {
+crates/transport/src/logos_rest/config.rs:190:    pub fn effective_allowed_peer_ids(&self) -> Vec<String> {
+crates/transport/src/logos_rest/config.rs:206:    pub fn validate(&self) -> Result<Url, TransportError> {
+crates/transport/src/logos_rest/config.rs:287:        if self.request_timeout.is_zero() {
+crates/transport/src/logos_rest/config.rs:288:            return Err(protocol("request_timeout must be positive"));
+crates/transport/src/logos_rest/config.rs:297:    pub fn pubsub_topic(&self) -> String {
+crates/transport/src/logos_rest/config.rs:306:    fn cfg(url: &str) -> LogosRestConfig {
+crates/transport/src/logos_rest/config.rs:315:    fn accepts_private_hosts() {
+crates/transport/src/logos_rest/config.rs:337:    fn rejects_public_hosts_in_private_mode() {
+crates/transport/src/logos_rest/config.rs:362:    fn rejects_malformed_urls() {
+crates/transport/src/logos_rest/config.rs:378:    fn private_mode_rejects_preset_clusters_and_empty_allowlist() {
+crates/transport/src/logos_rest/config.rs:402:    fn public_mode_rules() {
+crates/transport/src/logos_rest/config.rs:417:    fn shard_and_numeric_limits() {
+crates/transport/src/logos_rest/config.rs:430:        c.request_timeout = Duration::ZERO;
+crates/transport/src/logos_rest/config.rs:432:        c.request_timeout = Duration::from_secs(1);
+crates/transport/src/logos_rest/config.rs:441:    fn store_peer_must_be_private_and_allowlisted() {
+crates/transport/src/logos_rest/config.rs:459:    fn deserializes_with_defaults_and_durations() {
+crates/transport/src/logos_rest/config.rs:461:            r#"{"node_url":"http://10.0.0.5:8645","allowed_peer_ids":["A1"],"request_timeout":2.5,
+crates/transport/src/logos_rest/config.rs:465:        assert_eq!(c.request_timeout, Duration::from_millis(2500));
+crates/transport/src/logos_rest/config.rs:471:        assert!(serde_json::from_str::<LogosRestConfig>(r#"{"request_timeout":-1}"#).is_err());
+crates/transport/src/logos_rest/config.rs:473:        assert_eq!(d.request_timeout, Duration::from_secs(5));
+crates/transport/src/logos_rest/config.rs:482:    fn static_peers_validation_and_derived_allowlist() {
+crates/transport/src/logos_rest/config.rs:516:    fn multiaddr_peer_id_extraction() {
+crates/transport/src/logos_rest/mod.rs:4://! `GET /relay/v1/auto/messages/{contentTopic}` (the node keeps a 50-slot
+crates/transport/src/logos_rest/mod.rs:22:use std::sync::{Mutex as StdMutex, MutexGuard};
+crates/transport/src/logos_rest/mod.rs:28:use reqwest::Method;
+crates/transport/src/logos_rest/mod.rs:29:use tokio::sync::Mutex;
+crates/transport/src/logos_rest/mod.rs:54:fn next_timestamp_ns() -> i64 {
+crates/transport/src/logos_rest/mod.rs:110:fn lock<T>(m: &StdMutex<T>) -> MutexGuard<'_, T> {
+crates/transport/src/logos_rest/mod.rs:119:    http: reqwest::Client,
+crates/transport/src/logos_rest/mod.rs:120:    subscribed: StdMutex<HashSet<ContentTopic>>,
+crates/transport/src/logos_rest/mod.rs:121:    audit: Mutex<AuditState>,
+crates/transport/src/logos_rest/mod.rs:128:    pub fn new(cfg: LogosRestConfig) -> Result<Self, TransportError> {
+crates/transport/src/logos_rest/mod.rs:132:        let http = reqwest::Client::builder()
+crates/transport/src/logos_rest/mod.rs:133:            .redirect(reqwest::redirect::Policy::none())
+crates/transport/src/logos_rest/mod.rs:135:            .timeout(cfg.request_timeout)
+crates/transport/src/logos_rest/mod.rs:136:            .connect_timeout(cfg.request_timeout)
+crates/transport/src/logos_rest/mod.rs:137:            .pool_max_idle_per_host(0)
+crates/transport/src/logos_rest/mod.rs:146:            subscribed: StdMutex::new(HashSet::new()),
+crates/transport/src/logos_rest/mod.rs:147:            audit: Mutex::new(AuditState::default()),
+crates/transport/src/logos_rest/mod.rs:153:    pub fn config(&self) -> &LogosRestConfig {
+crates/transport/src/logos_rest/mod.rs:158:    pub fn pubsub_topic(&self) -> &str {
+crates/transport/src/logos_rest/mod.rs:163:    pub fn metrics(&self) -> LogosRestMetrics {
+crates/transport/src/logos_rest/mod.rs:175:    async fn call(
+crates/transport/src/logos_rest/mod.rs:187:        let mut resp = req.send().await.map_err(describe_reqwest_error)?;
+crates/transport/src/logos_rest/mod.rs:199:                Err(e) => return Err(describe_reqwest_error(e)),
+crates/transport/src/logos_rest/mod.rs:209:    async fn fetch_audit(&self) -> Result<(Vec<PeerInfo>, Option<String>), TransportError> {
+crates/transport/src/logos_rest/mod.rs:231:    async fn refresh_audit(&self, st: &mut AuditState) -> Result<(), TransportError> {
+crates/transport/src/logos_rest/mod.rs:240:    async fn refresh_audit_once(&self, st: &mut AuditState) -> Result<(), TransportError> {
+crates/transport/src/logos_rest/mod.rs:257:    fn redial_wanted(&self, st: &AuditState) -> bool {
+crates/transport/src/logos_rest/mod.rs:268:    async fn redial(&self, st: &mut AuditState) -> bool {
+crates/transport/src/logos_rest/mod.rs:286:    pub async fn audit(&self) -> Result<(), TransportError> {
+crates/transport/src/logos_rest/mod.rs:299:    async fn ensure_audit(&self) -> Result<(), TransportError> {
+crates/transport/src/logos_rest/mod.rs:321:    async fn post_subscribe(&self, topic: &ContentTopic) -> Result<(), TransportError> {
+crates/transport/src/logos_rest/mod.rs:347:fn describe_reqwest_error(e: reqwest::Error) -> NetErr {
+crates/transport/src/logos_rest/mod.rs:349:    NetErr(if e.is_timeout() {
+crates/transport/src/logos_rest/mod.rs:360:    async fn subscribe(&self, topic: &ContentTopic) -> Result<(), TransportError> {
+crates/transport/src/logos_rest/mod.rs:365:    async fn publish(
+crates/transport/src/logos_rest/mod.rs:399:    async fn poll(&self, topic: &ContentTopic) -> Result<Vec<InboundFrame>, TransportError> {
+crates/transport/src/logos_rest/mod.rs:439:    async fn history(&self, query: &HistoryQuery) -> Result<HistoryPage, TransportError> {
+crates/transport/src/logos_rest/mod.rs:511:    async fn status(&self) -> TransportStatus {
+crates/transport/src/logos_rest/mod.rs:559:    fn max_payload_len(&self, topic: &ContentTopic) -> usize {
+crates/transport/src/logos_rest/mod.rs:563:    fn max_history_window_ns(&self) -> i64 {
+crates/transport/src/logos_rest/mod.rs:570:    async fn fetch_audit_public(&self) -> Option<Vec<PeerInfo>> {
+crates/transport/src/logos_rest/mod.rs:591:pub fn transport_id_hex(id: &[u8; 32]) -> String {
+crates/transport/src/logos_rest/wire.rs:14:pub(crate) fn hex(b: &[u8]) -> String {
+crates/transport/src/logos_rest/wire.rs:19:pub(crate) fn parse_hash(s: &str) -> Option<[u8; 32]> {
+crates/transport/src/logos_rest/wire.rs:37:pub fn waku_message_hash(
+crates/transport/src/logos_rest/wire.rs:54:pub(crate) fn varint_len(mut v: u64) -> usize {
+crates/transport/src/logos_rest/wire.rs:68:pub(crate) fn framing_overhead(payload_len: usize, topic_len: usize) -> usize {
+crates/transport/src/logos_rest/wire.rs:89:pub(crate) fn max_payload_for(max_message_bytes: usize, topic_len: usize) -> usize {
+crates/transport/src/logos_rest/wire.rs:98:pub(crate) fn encode_component(s: &str) -> String {
+crates/transport/src/logos_rest/wire.rs:112:pub(crate) fn snippet(body: &[u8]) -> String {
+crates/transport/src/logos_rest/wire.rs:126:pub(crate) fn map_publish_failure(
+crates/transport/src/logos_rest/wire.rs:179:fn decode_message(m: &WireMessage, max_bytes: usize) -> Option<Decoded> {
+crates/transport/src/logos_rest/wire.rs:197:pub(crate) fn parse_relay_messages(
+crates/transport/src/logos_rest/wire.rs:262:pub(crate) fn parse_store_page(
+crates/transport/src/logos_rest/wire.rs:343:pub(crate) fn parse_peers(body: &[u8]) -> Result<Vec<RawPeer>, String> {
+crates/transport/src/logos_rest/wire.rs:391:pub(crate) fn evaluate_peers(raw: &[RawPeer], allowed: &[String], shard: u16) -> AuditReport {
+crates/transport/src/logos_rest/wire.rs:455:    fn topic() -> ContentTopic {
+crates/transport/src/logos_rest/wire.rs:460:    fn hash_matches_real_node_vector() {
+crates/transport/src/logos_rest/wire.rs:493:    fn parse_hash_forms() {
+crates/transport/src/logos_rest/wire.rs:508:    fn store_page_with_real_vector() {
+crates/transport/src/logos_rest/wire.rs:524:    fn store_page_counts_mismatch_and_malformed() {
+crates/transport/src/logos_rest/wire.rs:546:    fn store_page_errors() {
+crates/transport/src/logos_rest/wire.rs:571:    fn relay_poll_parsing() {
+crates/transport/src/logos_rest/wire.rs:593:    fn relay_poll_meta_participates_in_hash_and_oversize_is_skipped() {
+crates/transport/src/logos_rest/wire.rs:606:    fn varints_and_size_arithmetic() {
+crates/transport/src/logos_rest/wire.rs:638:    fn publish_error_mapping() {
+crates/transport/src/logos_rest/wire.rs:684:    fn percent_encoding() {
+crates/transport/src/logos_rest/wire.rs:694:    fn peers_parsing_and_audit() {
+crates/transport/src/logos_rest/tests.rs:3:use std::sync::{Arc, Mutex};
+crates/transport/src/logos_rest/tests.rs:25:fn ok(body: &str) -> Reply {
+crates/transport/src/logos_rest/tests.rs:32:fn status(status: u16, body: &str) -> Reply {
+crates/transport/src/logos_rest/tests.rs:42:    hits: Arc<Mutex<Vec<Req>>>,
+crates/transport/src/logos_rest/tests.rs:46:    fn hits(&self) -> Vec<Req> {
+crates/transport/src/logos_rest/tests.rs:49:    fn count(&self, prefix: &str) -> usize {
+crates/transport/src/logos_rest/tests.rs:57:async fn spawn_stub(handler: impl Fn(&Req) -> Reply + Send + Sync + 'static) -> Stub {
+crates/transport/src/logos_rest/tests.rs:60:    let hits = Arc::new(Mutex::new(Vec::new()));
+crates/transport/src/logos_rest/tests.rs:138:fn cfg(url: &str) -> LogosRestConfig {
+crates/transport/src/logos_rest/tests.rs:142:        request_timeout: Duration::from_secs(2),
+crates/transport/src/logos_rest/tests.rs:147:fn topic() -> ContentTopic {
+crates/transport/src/logos_rest/tests.rs:152:fn healthy(req: &Req) -> Reply {
+crates/transport/src/logos_rest/tests.rs:163:async fn new_rejects_public_hosts_and_bad_config() {
+crates/transport/src/logos_rest/tests.rs:179:async fn publish_sends_expected_request_and_returns_local_hash() {
+crates/transport/src/logos_rest/tests.rs:216:async fn timestamps_are_unique_under_concurrency() {
+crates/transport/src/logos_rest/tests.rs:229:async fn too_large_is_rejected_locally_without_touching_the_node() {
+crates/transport/src/logos_rest/tests.rs:244:async fn publish_error_mapping_end_to_end() {
+crates/transport/src/logos_rest/tests.rs:269:        let reply = Arc::new(Mutex::new(Some(reply)));
+crates/transport/src/logos_rest/tests.rs:294:async fn long_error_bodies_are_truncated() {
+crates/transport/src/logos_rest/tests.rs:309:async fn connection_refused_and_timeout_are_unavailable() {
+crates/transport/src/logos_rest/tests.rs:337:    // timeout
+crates/transport/src/logos_rest/tests.rs:351:    c.request_timeout = Duration::from_millis(300);
+crates/transport/src/logos_rest/tests.rs:362:async fn foreign_connected_peer_fails_closed_everywhere() {
+crates/transport/src/logos_rest/tests.rs:407:async fn wrong_allowlist_is_a_violation() {
+crates/transport/src/logos_rest/tests.rs:419:async fn admin_unavailable_fails_closed_as_unavailable() {
+crates/transport/src/logos_rest/tests.rs:456:fn reply_clone(r: &Reply) -> Reply {
+crates/transport/src/logos_rest/tests.rs:465:async fn audit_is_cached_then_refreshed_after_interval() {
+crates/transport/src/logos_rest/tests.rs:480:async fn violation_clears_when_peers_recover_after_interval() {
+crates/transport/src/logos_rest/tests.rs:508:async fn public_mode_skips_the_audit() {
+crates/transport/src/logos_rest/tests.rs:529:async fn subscribe_and_poll_with_resubscribe_on_404() {
+crates/transport/src/logos_rest/tests.rs:530:    let polls = Arc::new(Mutex::new(0u32));
+crates/transport/src/logos_rest/tests.rs:580:async fn poll_subscribes_lazily_and_maps_errors() {
+crates/transport/src/logos_rest/tests.rs:635:async fn history_request_shape_and_hash_verification() {
+crates/transport/src/logos_rest/tests.rs:679:async fn history_window_and_error_mapping() {
+crates/transport/src/logos_rest/tests.rs:680:    let reply = Arc::new(Mutex::new(status(
+crates/transport/src/logos_rest/tests.rs:682:        "No history response received (timeout)",
+crates/transport/src/logos_rest/tests.rs:745:async fn status_reports_peers_and_readiness() {
+crates/transport/src/logos_rest/tests.rs:768:async fn no_redirects_and_no_proxy_env() {
+crates/transport/src/logos_rest/tests.rs:796:fn redial_cfg(url: &str) -> LogosRestConfig {
+crates/transport/src/logos_rest/tests.rs:800:        request_timeout: Duration::from_secs(2),
+crates/transport/src/logos_rest/tests.rs:806:async fn redial_stub(dial_works: bool) -> Stub {
+crates/transport/src/logos_rest/tests.rs:827:fn dials(stub: &Stub) -> Vec<Req> {
+crates/transport/src/logos_rest/tests.rs:835:async fn redial_issued_when_disconnected_and_only_static_peers_in_body() {
+crates/transport/src/logos_rest/tests.rs:855:async fn no_dial_when_peer_already_connected_or_no_static_peers() {
+crates/transport/src/logos_rest/tests.rs:877:async fn redial_is_rate_limited_and_failures_are_not_fatal() {
+crates/transport/src/logos_rest/tests.rs:900:async fn redial_also_runs_from_poll_and_history_with_cached_audit() {

@@ -1,0 +1,12 @@
+crates/mcp/src/limits.rs:10:pub const MAX_BODY_BYTES: usize = 32_768;
+crates/mcp/src/limits.rs:30:pub const MAX_HTTP_BODY_BYTES: usize = 1_048_576;
+crates/mcp/src/server.rs:254:            not have. Body limit: 32768 bytes.",
+crates/mcp/src/server.rs:268:        if input.body.is_empty() || input.body.len() > MAX_BODY_BYTES {
+crates/mcp/src/server.rs:270:                "`body` must be 1 to {MAX_BODY_BYTES} bytes (UTF-8)"
+crates/mcp/src/http.rs:32:use crate::{limits::MAX_HTTP_BODY_BYTES, AgentNetMcp, ServeError};
+crates/mcp/src/http.rs:140:        .with_max_request_body_bytes(MAX_HTTP_BODY_BYTES)
+crates/mcp/src/dto.rs:12:    ADDRESS_PATTERN, ID_PATTERN, MAX_ADDRESS_LEN, MAX_ALIAS_CHARS, MAX_BODY_BYTES,
+crates/mcp/src/dto.rs:133:    /// Message text, UTF-8, 1 to 32768 bytes. It is delivered as data to the
+crates/mcp/src/dto.rs:135:    #[schemars(length(min = 1, max = 32768))]
+crates/mcp/src/dto.rs:691:    assert!(MAX_BODY_BYTES == 32_768);
+docs/mcp-api.md:81:| `body` | 1 to 32768 bytes (UTF-8) |

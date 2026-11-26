@@ -134,6 +134,13 @@ impl LogosRestTransport {
             .no_proxy()
             .timeout(cfg.request_timeout)
             .connect_timeout(cfg.request_timeout)
+            // One TCP connection per request is deliberate, not an oversight: the node's REST
+            // server (nim-presto) answers EVERY response with `Connection: close`, even when the
+            // request says `Connection: keep-alive` (checked on v0.39.2, results/fixups/
+            // keepalive-curl-explicit.txt). A pooled idle connection would always be dead on reuse
+            // and cost a failed request, so pooling is disabled. Consequence: roughly one
+            // short-lived loopback connection per poll/publish (about 4 per second per topic at the
+            // default 250 ms poll interval), visible as many TIME_WAIT sockets on 127.0.0.1.
             .pool_max_idle_per_host(0)
             .build()
             .map_err(|_| TransportError::Protocol("could not initialise HTTP client".into()))?;

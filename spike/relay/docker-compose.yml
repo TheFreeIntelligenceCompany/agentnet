@@ -17,6 +17,8 @@ services:
       - --relay=true
       - --store=true
       - --store-message-db-url=sqlite:///data/r1-store.sqlite3
+      # SHORT on purpose for tests (retention experiments, small store). A real deployment keeps a week:
+      # `agentnet relay print-config` recommends time:604800;capacity:100000 (docs/relay-setup.md section 6).
       - --store-message-retention-policy=${R1_RETENTION:-time:3600;capacity:5000}
       - --filter=true
       - --lightpush=true
@@ -24,8 +26,8 @@ services:
       - --rest-address=0.0.0.0
       - --rest-port=8645
       - --rest-admin=true
-      - --rest-relay-cache-capacity=50
-      - --rest-messaging-cache-capacity=50
+      - --rest-relay-cache-capacity=${CLIENT_CACHE:-1000}
+      - --rest-messaging-cache-capacity=${CLIENT_CACHE:-1000}
       - --max-msg-size=${MAX_MSG_SIZE:-150KiB}
       - --cluster-id=66
       - --num-shards-in-network=1
@@ -39,7 +41,7 @@ services:
       - --mix=false
       - --rln-relay=false
       - --listen-address=0.0.0.0
-      - --dns-addrs-name-server=${DNS_NS:-1.1.1.1}  # online-monitor queries one.one.one.one via this server every 5s
+      - --dns-addrs-name-server=${DNS_NS:-127.0.0.1}  # online-monitor queries one.one.one.one via this server every 5s; 127.0.0.1 = no external contact (set DNS_NS=1.1.1.1 for upstream default)
       - --tcp-port=60000
       - --metrics-server=false
       - --peer-persistence=false
@@ -71,7 +73,10 @@ services:
       - --rest-address=0.0.0.0
       - --rest-port=8645
       - --rest-admin=true
-      - --rest-relay-cache-capacity=${CLIENT_CACHE:-50}
+      # the node default is 50 slots, destructive on read, silently dropping the oldest when full; 1000 is the recommended
+      # value (docs/relay-setup.md section 3a). CLIENT_CACHE=50 reproduces the upstream default.
+      - --rest-relay-cache-capacity=${CLIENT_CACHE:-1000}
+      - --rest-messaging-cache-capacity=${CLIENT_CACHE:-1000}
       - --max-msg-size=${MAX_MSG_SIZE:-150KiB}
       - --cluster-id=66
       - --num-shards-in-network=1
@@ -85,7 +90,7 @@ services:
       - --mix=false
       - --rln-relay=false
       - --listen-address=0.0.0.0
-      - --dns-addrs-name-server=${DNS_NS:-1.1.1.1}  # online-monitor queries one.one.one.one via this server every 5s
+      - --dns-addrs-name-server=${DNS_NS:-127.0.0.1}  # online-monitor queries one.one.one.one via this server every 5s; 127.0.0.1 = no external contact (set DNS_NS=1.1.1.1 for upstream default)
       - --tcp-port=60000
       - --metrics-server=false
       - --peer-persistence=false
@@ -116,7 +121,10 @@ services:
       - --rest-address=0.0.0.0
       - --rest-port=8645
       - --rest-admin=true
-      - --rest-relay-cache-capacity=${CLIENT_CACHE:-50}
+      # the node default is 50 slots, destructive on read, silently dropping the oldest when full; 1000 is the recommended
+      # value (docs/relay-setup.md section 3a). CLIENT_CACHE=50 reproduces the upstream default.
+      - --rest-relay-cache-capacity=${CLIENT_CACHE:-1000}
+      - --rest-messaging-cache-capacity=${CLIENT_CACHE:-1000}
       - --max-msg-size=${MAX_MSG_SIZE:-150KiB}
       - --cluster-id=66
       - --num-shards-in-network=1
@@ -130,7 +138,7 @@ services:
       - --mix=false
       - --rln-relay=false
       - --listen-address=0.0.0.0
-      - --dns-addrs-name-server=${DNS_NS:-1.1.1.1}  # online-monitor queries one.one.one.one via this server every 5s
+      - --dns-addrs-name-server=${DNS_NS:-127.0.0.1}  # online-monitor queries one.one.one.one via this server every 5s; 127.0.0.1 = no external contact (set DNS_NS=1.1.1.1 for upstream default)
       - --tcp-port=60000
       - --metrics-server=false
       - --peer-persistence=false

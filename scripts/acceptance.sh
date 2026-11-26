@@ -269,13 +269,20 @@ republish() {
 
 # ------------------------------------------------------------------ cleanup / summary
 cleanup() {
-  local rc=$? n
+  local rc=$? n capd
   set +e +u
   log "cleanup (exit status of script body: $rc)"
   for n in $(ls "$WORK/pids" 2>/dev/null); do stop_daemon "$n"; done
   [ -f "$WORK/harness.pid" ] && kill "$(cat "$WORK/harness.pid")" 2>/dev/null
   docker rm -f "$CAP" >/dev/null 2>&1
-  rm -rf "$ROOT/results/acceptance/.cap.$$"
+  # tcpdump runs as root in the container: if the host cannot remove its files, remove them from inside a container
+  capd="$ROOT/results/acceptance/.cap.$$"
+  if [ -d "$capd" ]; then
+    rm -rf "$capd" 2>/dev/null
+    [ -d "$capd" ] && docker run --rm -v "$capd":/out nicolaka/netshoot sh -c 'rm -rf /out/* /out/.[!.]*' >/dev/null 2>&1
+    [ -d "$capd" ] && rm -rf "$capd" 2>/dev/null
+    [ -d "$capd" ] && log "WARNING: could not remove $capd"
+  fi
   for n in "$WORK"/*.stderr; do [ -e "$n" ] && save_daemon_log "$(basename "$n" .stderr)"; done
   # leave the topology healthy, normal retention, R1 first
   if [ "$R1_SHORT" = 1 ] || ! docker ps --format '{{.Names}}' | grep -qx an-r1; then r1_recreate ""; fi

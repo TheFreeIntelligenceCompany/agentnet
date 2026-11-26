@@ -1,0 +1,14 @@
+spike/relay/docker-compose.messaging.yml:30:      - --dns-addrs-name-server=${DNS_NS:-1.1.1.1}
+spike/relay/docker-compose.messaging.yml:66:      - --dns-addrs-name-server=${DNS_NS:-1.1.1.1}
+spike/relay/docker-compose.r2.yml:35:      - --dns-addrs-name-server=${DNS_NS:-1.1.1.1}
+spike/relay/README.md:4:`docs/spike/notes-daemon-rest.md`: the default online-monitor DNS lookup to 1.1.1.1; override with `DNS_NS`).
+spike/relay/README.md:36:./scripts/internal-net.sh [DNS_NS]  # E8 `internal: true` network (sidecar client; docker does not publish ports there)
+spike/relay/README.md:43:clients, default 50), `NET_INTERNAL`, `DNS_NS` (default `1.1.1.1`).
+spike/relay/docker-compose.yml:42:      - --dns-addrs-name-server=${DNS_NS:-1.1.1.1}  # online-monitor queries one.one.one.one via this server every 5s
+spike/relay/docker-compose.yml:88:      - --dns-addrs-name-server=${DNS_NS:-1.1.1.1}  # online-monitor queries one.one.one.one via this server every 5s
+spike/relay/docker-compose.yml:133:      - --dns-addrs-name-server=${DNS_NS:-1.1.1.1}  # online-monitor queries one.one.one.one via this server every 5s
+spike/relay/scripts/internal-net.sh:4:# Usage: internal-net.sh [DNS_NS]   (default DNS_NS=1.1.1.1 = upstream default)
+spike/relay/scripts/internal-net.sh:6:export NET_INTERNAL=true; export DNS_NS=${1:-1.1.1.1}
+spike/relay/scripts/internal-net.sh:10:if [ "$DNS_NS" = 172.28.66.53 ]; then  # start the stub resolver on the internal net first
+spike/relay/scripts/internal-net.sh:15:echo "network internal flag: $(docker network inspect agentnet-relay_relaynet --format '{{.Internal}}'), DNS_NS=$DNS_NS; host-published port reachable? $(curl -s -m 3 -o /dev/null -w '%{http_code}' http://127.0.0.1:18641/health)"
+spike/relay/scripts/internal-net.sh:18:inet sh -c 'nc -zv -w 3 1.1.1.1 53; echo rc=$?; nc -zv -w 3 1.1.1.1 443; echo rc=$?'

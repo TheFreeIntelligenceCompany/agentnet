@@ -1,0 +1,10 @@
+crates/mcp/tests/tools.rs:175:        json!({"recipient": BOB, "body": "x".repeat(32_769)}),
+crates/mcp/tests/tools.rs:191:    assert!(!inbox.is_valid(&json!({"cursor": "x".repeat(513)})));
+crates/mcp/tests/tools.rs:402:    let long_id = "a".repeat(129);
+crates/mcp/tests/tools.rs:415:            json!({"recipient": BOB, "body": "x".repeat(32_769)}),
+crates/mcp/tests/tools.rs:421:            json!({"recipient": BOB, "body": "é".repeat(16_385)}),
+crates/mcp/tests/tools.rs:451:        ("add_contact", json!({"contact_record": "x".repeat(16_385)})),
+crates/mcp/tests/tools.rs:462:            json!({"contact_record": "record:x", "alias": "a".repeat(65)}),
+crates/mcp/tests/tools.rs:493:                .contains(&"x".repeat(100)),
+crates/mcp/tests/common/fake_agent.rs:184:            if req.body.len() > 40_000 {
+crates/mcp/src/server.rs:268:        if input.body.is_empty() || input.body.len() > MAX_BODY_BYTES {

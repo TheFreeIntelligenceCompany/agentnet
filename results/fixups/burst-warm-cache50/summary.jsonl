@@ -1,0 +1,5 @@
+{"run":1,"probe":{"na_to_nb_ms":null,"nb_to_na_ms":null},"a_to_b":{"p50":25317,"p95":54976,"p99":60119,"max":60174,"samples":100},"b_to_a":{"p50":22622,"p95":52680,"p99":61068,"max":61123,"samples":100}}
+{"run":2,"probe":{"na_to_nb_ms":124,"nb_to_na_ms":35},"a_to_b":{"p50":364,"p95":477,"p99":493,"max":503,"samples":100},"b_to_a":{"p50":247,"p95":550,"p99":571,"max":578,"samples":100}}
+{"run":3,"probe":{"na_to_nb_ms":119,"nb_to_na_ms":119},"a_to_b":{"p50":405,"p95":617,"p99":756,"max":759,"samples":100},"b_to_a":{"p50":456,"p95":709,"p99":750,"max":783,"samples":100}}
+{"run":4,"probe":{"na_to_nb_ms":117,"nb_to_na_ms":9},"a_to_b":{"p50":1723,"p95":58020,"p99":61358,"max":61519,"samples":100},"b_to_a":{"p50":1392,"p95":35217,"p99":49963,"max":59078,"samples":100}}
+{"run":5,"probe":{"na_to_nb_ms":13,"nb_to_na_ms":113},"a_to_b":{"p50":1054,"p95":1740,"p99":2196,"max":2252,"samples":100},"b_to_a":{"p50":1068,"p95":1438,"p99":2011,"max":2478,"samples":100}}

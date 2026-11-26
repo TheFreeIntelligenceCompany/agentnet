@@ -169,10 +169,13 @@ async fn input_schemas_encode_the_documented_limits() {
     let send = validator(&schema("send_message"));
     let ok = json!({"recipient": BOB, "body": "hi"});
     assert!(send.is_valid(&ok));
+    // The MCP cap equals the engine's default `delivery.max_body_bytes` (65536).
+    assert_eq!(agentnet_mcp::limits::MAX_BODY_BYTES, 65_536);
+    assert!(send.is_valid(&json!({"recipient": BOB, "body": "x".repeat(65_536)})));
     for bad in [
         json!({"recipient": BOB}),
         json!({"recipient": BOB, "body": ""}),
-        json!({"recipient": BOB, "body": "x".repeat(32_769)}),
+        json!({"recipient": BOB, "body": "x".repeat(65_537)}),
         json!({"recipient": "bob", "body": "hi"}),
         json!({"recipient": BOB, "body": "hi", "ttl_seconds": 0}),
         json!({"recipient": BOB, "body": "hi", "ttl_seconds": 2_592_001}),
@@ -412,13 +415,14 @@ async fn boundary_validation_rejects_before_reaching_the_engine() {
         ("send_message", json!({"recipient": BOB, "body": ""})),
         (
             "send_message",
-            json!({"recipient": BOB, "body": "x".repeat(32_769)}),
+            json!({"recipient": BOB, "body": "x".repeat(65_537)}),
         ),
-        // 16385 two-byte characters: under the schema's character bound only by
-        // luck of counting, over the documented byte bound.
+        // 32769 two-byte characters (65538 bytes): under the schema's character
+        // bound (65536 characters) only by luck of counting, over the documented
+        // byte bound.
         (
             "send_message",
-            json!({"recipient": BOB, "body": "é".repeat(16_385)}),
+            json!({"recipient": BOB, "body": "é".repeat(32_769)}),
         ),
         (
             "send_message",

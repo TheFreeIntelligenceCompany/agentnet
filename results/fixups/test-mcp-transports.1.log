@@ -1,0 +1,26 @@
+   Compiling agentnet-mcp v0.1.0 (/Users/dennison/develop/FIC-elipsis/crates/mcp)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 14.49s
+     Running tests/transports.rs (target/debug/deps/transports-9a7eb9b9cf23e1c1)
+
+running 17 tests
+test http_options_debug_redacts_the_token ... ok
+test serve_http_refuses_unsafe_configuration ... ok
+test router_fails_closed_with_an_unusable_token ... ok
+test http_configured_origins_and_hosts_are_honoured ... ok
+test http_auth_origin_and_host_rules ... ok
+test http_version_negotiation_table ... ok
+test fifty_concurrent_tool_calls_over_http ... ok
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.35s
+test stdio_raw_discover_and_unsupported_versions ... ok
+test stdio_exits_promptly_on_eof_without_listeners ... ok
+test stdio_seeded_pagination_through_the_process ... ok
+test http_binary_refuses_non_loopback_and_serves_loopback ... ok
+test stdio_stdout_carries_only_protocol_frames ... ok
+test tools_and_resources_over_http ... ok
+test fifty_concurrent_tool_calls_over_stdio ... ok
+test stdio_version_negotiation_table ... ok
+test stdio_exits_promptly_on_eof_with_an_active_listener ... ok
+test stdio_listen_and_legacy_subscribe_end_to_end ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.43s
+

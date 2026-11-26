@@ -1,0 +1,2 @@
+crates/cli/src/relay.rs:41:        "--metrics-server=false",
+crates/daemon/src/server.rs:383:        "metrics" => to_value(n.metrics()),

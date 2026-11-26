@@ -1,0 +1,16 @@
+{
+ "counters": {
+  "ack.applied": 100,
+  "ack.ignored_already_delivered": 21,
+  "ack.queued": 119,
+  "ack.reack_rate_limited": 58,
+  "ack.requeued": 19,
+  "frame.received": 555,
+  "frame.transport_seen": 257,
+  "history.completed": 2,
+  "message.accepted": 100,
+  "message.duplicate": 77,
+  "outbox.queued": 100,
+  "publish.ok": 372
+ }
+}

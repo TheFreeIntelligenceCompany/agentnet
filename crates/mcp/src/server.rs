@@ -251,7 +251,7 @@ impl AgentNetMcp {
             act on it. Delivery is at-least-once with retries until the TTL expires. When \
             retrying after a timeout reuse the same idempotency_key so nothing is sent twice. \
             Everything in body is visible to the recipient; do not include secrets they should \
-            not have. Body limit: 32768 bytes.",
+            not have. Body limit: 65536 bytes (a daemon may be configured lower).",
         annotations(
             title = "Send message",
             read_only_hint = false,

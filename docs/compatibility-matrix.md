@@ -68,7 +68,8 @@ HTTP session headers (none for 2026-07-28; `Mcp-Session-Id` for legacy). Capabil
 
 | Item | Declared minimum Rust | Source |
 |---|---|---|
-| **This workspace** (`Cargo.toml` `workspace.package.rust-version`) | **1.88** | `Cargo.toml` |
+| **This workspace** (`Cargo.toml` `workspace.package.rust-version`) | **1.89** (was 1.88, which the locked dependencies do not satisfy; fixed in working tree) | `Cargo.toml` |
+| Result of building the locked workspace with rustc 1.89.0 | **OK**: `cargo build --workspace --locked` (dev profile, all 6 workspace crates incl. `tests/acceptance`) in `rust:1.89-bookworm` (rustc 1.89.0, cargo 1.89.0, linux/arm64 container), exit 0, 3m19s; source = `git archive HEAD` plus the one-line `rust-version` change. Only the build was run with 1.89.0, not the test suite | `results/fixups/msrv-1.89-build.log` |
 | Highest MSRV among locked dependencies | **1.89.0**: `rusqlite 0.42.0` and `uuid 1.29.3` (also 1.88: `libsqlite3-sys 0.40.0`, `rmcp 3.11.0`, `proptest 1.12.0`, `sha2 0.11.2`, `darling 0.24.1`, `icu_* 2.4.0`) | `cargo metadata` of `Cargo.lock`; `results/audit/crates-io-versions.txt` |
 | Result of building the locked workspace with rustc 1.88 | **FAILED**, `cargo check --workspace --locked` in `rust:1.88-bookworm` (rustc 1.88.0): "error: rustc 1.88.0 is not supported by the following packages: rusqlite@0.42.0 requires rustc 1.89.0; uuid@1.29.3 requires rustc 1.89.0", exit 101 (no compilation happened) | `results/audit/msrv-1.88-check.log` |
 | `rmcp` 3.11.0 | 1.88 | crates.io API, `docs/spike/notes-mcp.md` s2 |
@@ -78,12 +79,12 @@ HTTP session headers (none for 2026-07-28; `Mcp-Session-Id` for legacy). Capabil
 | `openmls` 0.9.2 / 0.10.0-rc.1 (not used) | 1.91 / 1.94 | notes-libchat s2 |
 | libchat (`de-mls` 4.0.0, not used) | **1.95**; host rustc is 1.92, so it does not build on the host | `results/a1-libchat/cargo-build-summary.txt` |
 | Host used for every Phase A/B run | rustc 1.92.0, cargo 1.92.0 | `results/a1-daemon/toolchain.txt` |
-| CI pin | 1.92.0 (`.github/workflows/ci.yml`; workflow **UNTESTED** on GitHub) | the workflow |
+| CI pin | 1.92.0 for fmt/clippy/test, plus an `msrv` job building with 1.89.0 (`.github/workflows/ci.yml`; workflow **UNTESTED** on GitHub) | the workflow |
 | Native FFI build | Rust 1.92 (container), Nim 2.2.6 built natively on aarch64, nimble 0.26.0, cmake 3.25.1, gcc/g++ 12.2.0, GNU Make 4.3, patchelf 0.14.3; build about 2 h wall including layer commits (CPU-bound part 45-50 min) | `results/a1-ffi/toolchain-versions.log`, `lib-build-6-clean.log` |
 | C toolchain needed by the Rust workspace | a C compiler for bundled SQLite (`libsqlite3-sys`) and `ring`; `cmake` is additionally needed by `aws-lc-sys`, which is only in the **dev/test** feature graph (via the `reqwest 0.13` dev-dependency of `agentnet-mcp` with `rustls` enabling `aws-lc-rs`): not in the release binary's graph (`results/audit/cargo-tree-inverse.txt`) | `results/audit/cargo-tree-inverse.txt`; the Linux container had **no cmake installed** and the test build still compiled `aws-lc-sys 0.47.0` successfully (`linux-arm64-build.log`), so cmake was not needed there |
 | Docker | client 29.8.1, server 29.5.2; standalone `docker-compose` 5.6.0 | `results/a1-daemon/toolchain.txt` |
 
 ## 5. Inconsistencies found while building this matrix
 
-* The declared MSRV 1.88 is not what the locked dependency set requires (1.89.0); verified by running the check (section 4, `results/audit/msrv-1.88-check.log`): the build stops at dependency resolution on rustc 1.88.0. Either raise `rust-version` to 1.89 or pin `rusqlite`/`uuid` to older versions (`cargo update <name>@<ver> --precise <ver>`); the README prerequisite says 1.89 until the owner decides.
+* **Fixed in working tree:** `rust-version` is now 1.89 (it was 1.88, which the locked dependency set does not satisfy; the 1.88 failure below is the evidence for the change, and the 1.89.0 build is `results/fixups/msrv-1.89-build.log`). Original finding: the declared MSRV 1.88 is not what the locked dependency set requires (1.89.0); verified by running the check (section 4, `results/audit/msrv-1.88-check.log`): the build stops at dependency resolution on rustc 1.88.0. Either raise `rust-version` to 1.89 or pin `rusqlite`/`uuid` to older versions (`cargo update <name>@<ver> --precise <ver>`); the README prerequisite says 1.89 until the owner decides.
 * `docs/mcp-api.md` s8 and `docs/examples/mcp-client-stdio.json` order the CLI arguments differently (`mcp --data-dir X` versus `--data-dir X mcp`); both forms returned a valid `server/discover` answer in this report's quickstart run (`results/audit/readme-quickstart-transcript.log`, step 7).

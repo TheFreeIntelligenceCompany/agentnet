@@ -1,0 +1,14 @@
+r1 args:
+--store-message-retention-policy=time:604800;capacity:100000
+--rest-relay-cache-capacity=1000
+--rest-messaging-cache-capacity=1000
+OK
+OK
+peers:
+["Connected"]
+["Connected"]
+INF 2026-11-26 01:27:08.322+00:00 starting message store's sqlite database migration topics="waku archive migration" tid=1 file=migrations.nim:57
+INF 2026-11-26 01:27:08.334+00:00 finished message store's sqlite database migration topics="waku archive migration" tid=1 file=migrations.nim:70
+
+store query on R1 (7-day retention policy active): messages stored for the test topic:
+{"statusCode":200,"messages":3}

@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 # Experiment E7: what does a node with ALL discovery disabled actually talk to? Capture on the docker bridge from the VM
 # netns (--net host inside the colima VM) while the whole stack is (re)started and exercised for DUR seconds.
-# Usage: egress-capture.sh [DUR=150]. Writes pcap + summaries to $OUT.
+# Usage: [DNS_NS=...] egress-capture.sh [DUR=150]. Writes pcap + summaries to $OUT.
+# DNS_NS defaults to 1.1.1.1 HERE ON PURPOSE: this experiment documents the upstream default behaviour (the node's online
+# monitor contacts 1.1.1.1 every 5 s). The compose files themselves default to 127.0.0.1 (no external contact); run with
+# DNS_NS=127.0.0.1 to capture the hardened configuration instead (expected: 0 packets outside 172.28.66.0/24).
 set -u; . "$(dirname "$0")/common.sh"; cd "$(dirname "$0")/.."
+export DNS_NS="${DNS_NS:-1.1.1.1}"
+echo "DNS_NS=$DNS_NS"
 DUR=${1:-150}; TAG=${TAG:-egress}
 NETID=$(docker network inspect agentnet-relay_relaynet --format '{{.Id}}'); BR=br-${NETID:0:12}
 echo "bridge=$BR dur=$DUR"

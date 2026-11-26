@@ -1,0 +1,14 @@
+cache capacity: na=1000 nb=1000
+[01:20:10] live relay probe before run 1: null
+[01:20:10] run 1: burst N=100 pace=25ms cache=1000
+{"run":1,"probe":null,"a_to_b":{"p50":382,"p95":489,"p99":498,"max":502,"samples":100},"b_to_a":{"p50":351,"p95":485,"p99":514,"max":536,"samples":100}}
+[01:20:18] live relay probe before run 2: null
+[01:20:18] run 2: burst N=100 pace=25ms cache=1000
+{"run":2,"probe":null,"a_to_b":{"p50":9837,"p95":11034,"p99":11142,"max":11170,"samples":100},"b_to_a":{"p50":18835,"p95":20028,"p99":20134,"max":20162,"samples":100}}
+[01:20:44] live relay probe before run 3: null
+[01:20:44] run 3: burst N=100 pace=25ms cache=1000
+{"run":3,"probe":null,"a_to_b":{"p50":18336,"p95":19550,"p99":19659,"max":19685,"samples":100},"b_to_a":{"p50":9811,"p95":10999,"p99":11113,"max":11141,"samples":100}}
+[01:21:09] live relay probe before run 4: null
+[01:21:10] run 4: burst N=100 pace=25ms cache=1000
+{"run":4,"probe":null,"a_to_b":{"p50":9917,"p95":10909,"p99":11018,"max":11046,"samples":100},"b_to_a":{"p50":9976,"p95":11180,"p99":11288,"max":11316,"samples":100}}
+[01:21:24] done: results/fixups/burst-cold-hist10

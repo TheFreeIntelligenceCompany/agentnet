@@ -19,6 +19,18 @@ FRESH_TOPOLOGY=1 scripts/acceptance.sh                   # docker-compose down -
 SKIP_BUILD=1 scripts/acceptance.sh                       # reuse target/release
 ```
 
+The relay-gated cargo tests are separate and `#[ignore]`d, so a plain `cargo test --workspace --locked` shows them as **ignored**, never as passed. Run them against the live topology with
+
+```
+cd spike/relay && DNS_NS=127.0.0.1 ./scripts/up.sh
+AGENTNET_RELAY_TESTS=1 cargo test --workspace --locked -- --ignored          # only the relay-gated tests are #[ignore]d in this workspace
+# running them with --ignored but without AGENTNET_RELAY_TESTS=1 FAILS with a message; it never passes silently
+# the tests that restart/stop containers are not compiled by default; run them last, alone:
+AGENTNET_RELAY_TESTS=1 AGENTNET_RELAY_DISRUPTIVE=1 cargo test -p agentnet-transport --features disruptive-tests --test logos_rest_relay -- --ignored --test-threads=1
+```
+
+Logs of the last such runs: `results/fixups/test-plain.log` (ignored count visible) and `results/fixups/test-relay-ignored.log`.
+
 Needs docker + standalone `docker-compose`, colima, cargo, `jq`, `curl`, `python3`, `openssl`, `lsof`, `perl`. The script
 builds `agentnet`, `agentnet-acceptance` and the daemon examples in release mode, creates data dirs under
 `/tmp/an-acc.XXXXXX` (unix socket paths must be short), writes everything to `results/acceptance/<UTC timestamp>/`
@@ -186,18 +198,18 @@ swapping in `LogosRestTransport` is a two-line change but still needs the sideca
 
 ## FAIL, UNTESTED and flakiness (candid)
 
-* **6.embed FAIL (product defect, not worked around).** `target/release/examples/embed` (MockNetwork, two in-process engines, frozen `MockClock`) fails with
-  `the message was not delivered in time`: 2/5 attempts passed in run 1, 0/5 in runs 2 and 3 (and 0/3 and 2/5 in two ad hoc loops); the debug build passed 5/5 and in my first manual tries.
-  Reproduction: `cargo build --release -p agentnet-daemon --examples && for i in 1 2 3 4 5; do target/release/examples/embed; echo rc=$?; done`. Failing logs: `evidence/step6-embed-output.txt` in each run. Cause not investigated.
-  My guess, unverified: the first publish races engine start-up on the mock network, and with a clock that never advances the retry backoff never elapses.
+* **6.embed FAIL: fixed in working tree.** Root cause (in the example, not in `crates/core`): `embed` spawned the two `Node::run` loops and sent immediately. `Node::run` subscribes lazily inside its receive task,
+  so a frame published before the recipient's first poll is accepted by the (mock) network but never reaches its live queue ("accepted but lost"), and recovery needs a retry (the backoff never elapses: the example's `MockClock` is frozen) or a
+  history pass (every `history_sync_interval_s` of real time): the release build, which starts the tasks fast enough to lose the race, failed most runs; the debug build mostly won it. Fix: call `step_receive()` once on both engines (which subscribes) before
+  spawning `run` and sending. Evidence: the old variant without it passed 12/20 in release; the fixed example passes 50/50 in release and 50/50 in debug (`results/fixups/embed-loop.log`).
 * **Run 2, step 1 FAIL (my script, fixed).** Run 2 reused the topology after run 1's isolation test. That test points a daemon at a wrong peer id; the adapter POSTs the configured static peer to the shared
   node NA, whose peer store then kept a `CannotConnect` entry (`/ip4/172.28.66.10/tcp/60000/p2p/<R2 id>`). In run 2 agent A's `doctor` therefore failed `peers == allowlist` (exit 7) and
   `network status` listed two peers. Fix in the script: restart `an-na`/`an-nb` after the isolation test and before a run if a node knows any peer other than R1. Logs: run 2 `logs/step1-doctor-a.log`, `evidence/network-status-a.json`.
-  Product-side observation: a daemon whose config lists a peer pollutes the shared node's peer store; a second agent on the same node then sees that peer.
-* **Burst latency is bimodal and unexplained.** The same 100-per-direction burst gave p50 about 25 s and 24 s (run 1), 0.24 s and 0.34 s (run 2), 30.6 s and 10 s (run 3), and in an earlier development run 38.8 s and 29.7 s (not kept).
-  Paced at 400 ms it was fast in runs 2 and 3, but run 1 paced had p95 10 s and p99 34 s. All messages were always delivered with no duplicates. Hypothesis, not tested: the client nodes' relay cache is 50 messages
-  (`CLIENT_CACHE`, `--rest-relay-cache-capacity=50`) and a burst of 100 messages plus 100 acks per inbox topic overflows it, after which delivery depends on sender retry back-off (2 s doubling) and the 60 s history sync.
-  I did not vary `CLIENT_CACHE` to confirm. Treat the burst percentiles as "worst case observed", not as a typical figure.
+  Product-side observation: a daemon whose config lists a peer pollutes the shared node's peer store; a second agent on the same node then sees that peer. This is why sharing one node between agents is unsupported (**one node per agent**, `docs/relay-setup.md` sections 1 and 4a): the same cache and peer set are shared, and two daemons whose inbox buckets collide on one node drain each other's frames from the destructive REST cache (delayed delivery through history sync, not loss). `doctor`'s `peers == allowlist` check should flag only *connected* non-allowlisted peers as failures (the adapter's audit already does) and list not-connected unknown entries as a warning: a change in `crates/cli/src/doctor.rs`, pending.
+* **Burst latency is bimodal: explained, see `results/fixups/burst-latency.md`.** The bimodality (p50 0.2 to 0.5 s versus 24 to 31 s, p95/p99 about 60 s) is a warm versus a recently restarted topology: after a client node is
+  (re)created, live relay between client nodes does not work for about 62 s (3 of 3 trials), so a burst in that window is delivered only by sender retries or by the recipient's 60 s history sync. The 50-slot node cache
+  overflows when 100 frames arrive between polls (30 to 50 survive in a node-level probe) and was raised to 1000, but it was a secondary cause. `history_sync_interval_s = 10` brought the cold-start p50 from 59.5 s to 10 to 19 s.
+  All 100/100 were delivered in every run. The percentiles in the table above are therefore "cold topology" in runs 1 and 3 and "warm" in run 2; do not quote any of them as typical.
 * **Host-side evidence.** `lsof -nP -i -a -p <pid>` shows nothing for the daemons: their loopback connections are short-lived (the REST adapter opened a new TCP connection per request, thousands of TIME_WAIT sockets per
   run on 127.0.0.1:18641/18642). The script therefore uses `netstat -anv -p tcp|udp`, which names the owning process, sampled about every second (5000+ socket lines per run, all 127.0.0.1); `lsof` snapshots are kept in `net/lsof-*.txt` as the empty cross-check.
   Daemons only prove their own sockets; the node containers' egress is covered by the bridge capture (0 packets outside 172.28.66.0/24, 0 DNS queries, with `DNS_NS=127.0.0.1`).

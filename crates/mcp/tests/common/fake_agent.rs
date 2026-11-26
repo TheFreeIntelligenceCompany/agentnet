@@ -181,7 +181,7 @@ impl AgentApi for FakeAgent {
                     return Ok(again);
                 }
             }
-            if req.body.len() > 40_000 {
+            if req.body.len() > 65_536 {
                 return Err(ApiError::new(ErrorCode::TooLarge, "message too large"));
             }
             if !s.contacts.contains_key(&req.recipient) && !echo && req.recipient != BOB {

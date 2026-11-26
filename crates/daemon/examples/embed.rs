@@ -84,6 +84,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     })
     .await?;
 
+    // Subscribe both engines BEFORE anything is published. The first
+    // `step_receive` subscribes the content topic (then polls an empty queue).
+    // Without this, `Node::run` subscribes lazily inside its receive task, so
+    // the spawned tasks race the `send_message` below: a frame published
+    // before the recipient is subscribed is accepted by the network but never
+    // reaches its live queue ("accepted but lost"). Recovery then needs either
+    // a retry (backoff elapses only when the clock advances, and this example's
+    // `MockClock` is frozen) or a history pass (every `history_sync_interval_s`
+    // of real time), so the example would sporadically time out. A real
+    // deployment avoids the race the same way: start the daemon, wait for its
+    // first successful poll, then send.
+    alice.step_receive().await?;
+    bob.step_receive().await?;
+
     // Drive both engines (receive loop, send/retry loop, history, maintenance).
     let stop = CancellationToken::new();
     let (a, b) = (alice.clone(), bob.clone());

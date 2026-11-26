@@ -2,9 +2,10 @@
 //! local relay topology in `spike/relay` (nodes na/nb on 127.0.0.1:18641/18642,
 //! service node R1, cluster 66).
 //!
-//! Run with: `AGENTNET_RELAY_TESTS=1 cargo test -p agentnet-cli --test relay_e2e -- --nocapture`
+//! `#[ignore]`d (a plain `cargo test` reports it as ignored, not passed). Run with:
+//! `AGENTNET_RELAY_TESTS=1 cargo test -p agentnet-cli --test relay_e2e -- --ignored --nocapture`
 //! (start the topology first: `cd spike/relay && DNS_NS=127.0.0.1 ./scripts/up.sh`).
-//! Without the environment variable the test is skipped.
+//! Run with `--ignored` but without the environment variable it FAILS with a clear message.
 //!
 //! LOCALHOST / CONTAINER-NETWORK test: both agents and both Logos Delivery
 //! client nodes run on this one host; the relay is a container on a docker
@@ -80,11 +81,13 @@ fn ready(dir: &std::path::Path) -> bool {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+#[ignore = "needs the local relay topology: run with AGENTNET_RELAY_TESTS=1 -- --ignored"]
 async fn two_agentnet_serve_processes_exchange_messages_over_the_private_relay() {
-    if std::env::var("AGENTNET_RELAY_TESTS").as_deref() != Ok("1") {
-        println!("SKIPPED: set AGENTNET_RELAY_TESTS=1 (needs spike/relay running)");
-        return;
-    }
+    assert!(
+        std::env::var("AGENTNET_RELAY_TESTS").as_deref() == Ok("1"),
+        "this test needs the local relay topology (spike/relay, `DNS_NS=127.0.0.1 ./scripts/up.sh`): \
+         run with AGENTNET_RELAY_TESTS=1 cargo test -p agentnet-cli --test relay_e2e -- --ignored"
+    );
     log!("relay e2e: topology = spike/relay (localhost / docker bridge, NOT cross-machine)");
     let (url_a, url_b) = ("http://127.0.0.1:18641", "http://127.0.0.1:18642");
     wait_for("node A health", 120, || health(url_a));

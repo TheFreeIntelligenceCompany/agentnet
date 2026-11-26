@@ -10,6 +10,8 @@ publish.workspace = true
 [features]
 default = ["logos-rest"]
 # Adapter to a separately running Logos Delivery node over its REST API.
+# Compiles the relay tests that restart/stop containers of spike/relay (still #[ignore]d and env-gated).
+disruptive-tests = ["logos-rest"]
 logos-rest = ["dep:reqwest", "dep:base64", "dep:url", "dep:serde_json", "dep:tokio"]
 
 [dependencies]

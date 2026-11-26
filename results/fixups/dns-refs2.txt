@@ -1,0 +1,24 @@
+scripts/burst-bench.sh:36:  ( cd "$RELAY_DIR" && CLIENT_CACHE="$CACHE" DNS_NS=127.0.0.1 docker-compose up -d --force-recreate na nb ) >> "$OUT/docker.log" 2>&1
+scripts/acceptance.sh:31:export DNS_NS=127.0.0.1                     # never let compose fall back to the 1.1.1.1 default (E7)
+scripts/acceptance.sh:207:dc() { ( cd "$RELAY_DIR" && DNS_NS=127.0.0.1 docker-compose "$@" ); }
+scripts/acceptance.sh:228:    ( cd "$RELAY_DIR" && DNS_NS=127.0.0.1 ./scripts/up.sh ) > "$RES/logs/topology-up.log" 2>&1 || true
+scripts/acceptance.sh:233:    ( cd "$RELAY_DIR" && DNS_NS=127.0.0.1 ./scripts/up.sh ) >> "$RES/logs/topology-up.log" 2>&1 || true
+scripts/acceptance.sh:238:  if [ -n "${1:-}" ]; then R1_SHORT=1; ( cd "$RELAY_DIR" && R1_RETENTION="$1" DNS_NS=127.0.0.1 docker-compose up -d --force-recreate r1 ) >> "$RES/logs/docker.log" 2>&1
+scripts/acceptance.sh:239:  else R1_SHORT=0; ( cd "$RELAY_DIR" && unset R1_RETENTION; DNS_NS=127.0.0.1 docker-compose up -d --force-recreate r1 ) >> "$RES/logs/docker.log" 2>&1; fi
+scripts/acceptance.sh:284:  for n in 1 2 3; do topology_ok && break; ( cd "$RELAY_DIR" && DNS_NS=127.0.0.1 ./scripts/up.sh ) >> "$RES/logs/topology-up.log" 2>&1; done
+scripts/acceptance.sh:393:    pass "1.topology" "R1 (an-r1), NA (an-na), NB (an-nb) healthy; NA and NB connected to R1 only; compose project agentnet-relay, DNS_NS=127.0.0.1" \
+scripts/acceptance.sh:394:      "cd spike/relay && DNS_NS=127.0.0.1 ./scripts/up.sh   # R1 first, then na+nb"
+scripts/acceptance.sh:395:  else fail "1.topology" "relay topology could not be brought up" "cd spike/relay && DNS_NS=127.0.0.1 ./scripts/up.sh"; return 1; fi
+scripts/acceptance.sh:636:  ( cd "$RELAY_DIR" && DNS_NS=127.0.0.1 docker-compose start r1 ) >> "$RES/logs/docker.log" 2>&1 || docker start an-r1 >> "$RES/logs/docker.log" 2>&1
+scripts/acceptance.sh:887:  else fail "5.node_flags" "node flags unexpected (see evidence/node-flags.txt); containers probably started without DNS_NS=127.0.0.1" "docker inspect"; fi
+docs/spike-report.md:305:5. `spike/relay/docker-compose.yml` defaults `DNS_NS` to `1.1.1.1`, `agentnet relay print-config`, `docs/configuration.md` and the relay tests require `127.0.0.1`. `./scripts/up.sh` without `DNS_NS` starts a topology that contacts 1.1.1.1.
+docs/relay-setup.md:111:* **The spike compose file defaults `DNS_NS` to `1.1.1.1`** (`spike/relay/docker-compose.yml`, `${DNS_NS:-1.1.1.1}`), while
+docs/relay-setup.md:112:  `agentnet relay print-config` prints `127.0.0.1`. Start the spike topology with `DNS_NS=127.0.0.1 ./scripts/up.sh`.
+docs/acceptance.md:15:cd spike/relay && DNS_NS=127.0.0.1 ./scripts/up.sh      # optional: the script starts/repairs the topology itself
+docs/acceptance.md:59:| 1.topology | PASS | R1 (an-r1), NA (an-na), NB (an-nb) healthy; NA and NB connected to R1 only; compose project agentnet-relay, DNS_NS=127.0.0.1 |
+docs/acceptance.md:203:  Daemons only prove their own sockets; the node containers' egress is covered by the bridge capture (0 packets outside 172.28.66.0/24, 0 DNS queries, with `DNS_NS=127.0.0.1`).
+README.md:55:**2. Start the local relay topology** (service node first, then the two client nodes; REST ports 18641 and 18642 on 127.0.0.1). `DNS_NS=127.0.0.1` matters: the node's default DNS server is 1.1.1.1 and it would contact it every 5 s even in private mode (see [docs/relay-setup.md](docs/relay-setup.md) section 5).
+README.md:58:(cd spike/relay && DNS_NS=127.0.0.1 ./scripts/up.sh)
+crates/cli/tests/relay_e2e.rs:6://! (start the topology first: `cd spike/relay && DNS_NS=127.0.0.1 ./scripts/up.sh`).
+.github/workflows/ci.yml:84:        # DNS_NS=127.0.0.1: without it the nodes query 1.1.1.1 every 5 s (docs/relay-setup.md section 5).
+.github/workflows/ci.yml:85:        run: cd spike/relay && DNS_NS=127.0.0.1 ./scripts/up.sh

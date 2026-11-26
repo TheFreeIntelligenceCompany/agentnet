@@ -130,9 +130,9 @@ pub struct SendMessageInput {
     /// this address must already exist (see `add_contact`).
     #[schemars(length(min = 4, max = 128), regex(pattern = ADDRESS_PATTERN))]
     pub recipient: String,
-    /// Message text, UTF-8, 1 to 32768 bytes. It is delivered as data to the
+    /// Message text, UTF-8, 1 to 65536 bytes (a daemon may be configured lower). It is delivered as data to the
     /// recipient and must not contain secrets you would not give the recipient.
-    #[schemars(length(min = 1, max = 32768))]
+    #[schemars(length(min = 1, max = 65536))]
     pub body: String,
     /// Conversation to attach the message to (letters, digits, `.`, `_`, `~`, `-`;
     /// 1 to 128 characters). Omit to start a new conversation; the response returns
@@ -688,7 +688,7 @@ impl From<core::ConversationPage> for ConversationPageOutput {
 
 // Keep the limit constants referenced so doc/regex changes stay in one place.
 const _: () = {
-    assert!(MAX_BODY_BYTES == 32_768);
+    assert!(MAX_BODY_BYTES == 65_536);
     assert!(MIN_ADDRESS_LEN == 4 && MAX_ADDRESS_LEN == 128);
     assert!(MAX_ID_LEN == 128 && MAX_CURSOR_LEN == 512);
     assert!(MIN_LIMIT == 1 && MAX_LIMIT == 200);

@@ -7,3 +7,4 @@ upstream/
 *.key
 results/**/data/
 results/a2-e2e-crypto/work/
+.claude/

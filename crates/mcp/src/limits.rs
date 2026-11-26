@@ -6,8 +6,12 @@
 //! (the JSON Schema `maxLength` keyword counts characters, which never exceeds
 //! the byte count, so the schema bound is never tighter than the runtime bound).
 
-/// Maximum `send_message.body` size in bytes.
-pub const MAX_BODY_BYTES: usize = 32_768;
+/// Maximum `send_message.body` size in bytes. Equal to the engine's default
+/// `delivery.max_body_bytes` (`agentnet_core::config::DeliveryConfig`, 65 536), so the
+/// MCP layer is never stricter than a default daemon. The effective limit is the
+/// smaller of this cap and the daemon's configured `delivery.max_body_bytes`
+/// (the engine answers `too_large` above its own limit).
+pub const MAX_BODY_BYTES: usize = 65_536;
 /// Address length bounds (`an1` + base32 payload; exact validation is the engine's).
 pub const MIN_ADDRESS_LEN: usize = 4;
 pub const MAX_ADDRESS_LEN: usize = 128;

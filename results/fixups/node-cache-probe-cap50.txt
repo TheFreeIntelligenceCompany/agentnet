@@ -1,0 +1,4 @@
+{"published": 100, "publish_phase_s": 0.5, "pace_ms": 0.0, "returned_by_single_poll": 40, "second_poll": 0, "missing": 60}
+{"published": 100, "publish_phase_s": 0.29, "pace_ms": 0.0, "returned_by_single_poll": 30, "second_poll": 0, "missing": 70}
+{"published": 100, "publish_phase_s": 4.13, "pace_ms": 25.0, "returned_by_single_poll": 50, "second_poll": 0, "missing": 50}
+{"published": 40, "publish_phase_s": 0.11, "pace_ms": 0.0, "returned_by_single_poll": 30, "second_poll": 0, "missing": 10}

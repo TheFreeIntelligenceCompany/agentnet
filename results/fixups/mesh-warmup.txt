@@ -1,0 +1,4 @@
+jq: parse error: Invalid numeric literal at line 1, column 7
+{"trial":1,"seconds_from_connected_to_first_live_frame":62.3}
+{"trial":2,"seconds_from_connected_to_first_live_frame":62.3}
+{"trial":3,"seconds_from_connected_to_first_live_frame":61.9}

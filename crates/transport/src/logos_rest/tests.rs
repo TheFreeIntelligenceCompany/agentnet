@@ -907,3 +907,38 @@ async fn redial_also_runs_from_poll_and_history_with_cached_audit() {
     assert_eq!(dials(&stub).len(), 1);
     assert_eq!(t.metrics().audits_run, 2, "audit, dial, re-audit");
 }
+
+/// A configuration that private mode rejects must fail in `new` before any I/O:
+/// in particular the node never receives a `POST /admin/v1/peers` for it (a
+/// rejected or foreign static peer must not end up in a shared node's peer store).
+#[tokio::test]
+async fn rejected_config_never_contacts_the_node_or_dials() {
+    let stub = redial_stub(true).await;
+    let cases: Vec<(Vec<String>, Vec<String>)> = vec![
+        // public literal IP
+        (
+            vec!["/ip4/8.8.8.8/tcp/60000/p2p/16Uiu2HAmPublicPeer".into()],
+            vec![],
+        ),
+        // hostname instead of a literal private IP
+        (
+            vec!["/dns4/relay.example/tcp/60000/p2p/16Uiu2HAmNamedPeer".into()],
+            vec![],
+        ),
+        // private IP but the peer id is not in the explicit allowlist
+        (vec![STATIC.into()], vec!["16Uiu2HAmSomebodyElse".into()]),
+        // no peer id at all
+        (vec!["/ip4/10.0.0.5/tcp/60000".into()], vec![]),
+    ];
+    for (static_peers, allowed) in cases {
+        let mut c = redial_cfg(&stub.url);
+        c.static_peers = static_peers;
+        c.allowed_peer_ids = allowed;
+        assert!(LogosRestTransport::new(c).is_err());
+    }
+    assert!(
+        stub.hits().is_empty(),
+        "a rejected configuration must not cause any request: {:?}",
+        stub.hits().len()
+    );
+}

@@ -2,9 +2,14 @@
 //! (R1 service node + clients A=18641 and B=18642). LOCALHOST / container-network
 //! tests only.
 //!
-//! Gated: every test returns early (printing "skipped") unless the environment
-//! variable `AGENTNET_RELAY_TESTS=1` is set. Tests that disturb the topology
-//! (`#[ignore]`) additionally need `--ignored` and `AGENTNET_RELAY_DISRUPTIVE=1`.
+//! Gated: every topology test is `#[ignore]`d, so a plain `cargo test` reports
+//! them as ignored (never as passed). Run them with
+//! `AGENTNET_RELAY_TESTS=1 cargo test -p agentnet-transport --test logos_rest_relay -- --ignored`.
+//! Running them with `--ignored` but without `AGENTNET_RELAY_TESTS=1` FAILS with a
+//! clear message instead of silently passing. Tests that disturb the topology
+//! (restart containers) are compiled only with the cargo feature `disruptive-tests`
+//! and additionally need `AGENTNET_RELAY_DISRUPTIVE=1`; the workspace-wide
+//! `-- --ignored` run never includes them.
 #![cfg(feature = "logos-rest")]
 
 use std::collections::{BTreeSet, HashSet};
@@ -23,13 +28,14 @@ const R1_MULTIADDR_PREFIX: &str = "/ip4/172.28.66.10/tcp/60000/p2p/";
 /// The tests share two nodes with 50-slot caches: run them one at a time.
 static SERIAL: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 
-fn enabled() -> bool {
-    if std::env::var("AGENTNET_RELAY_TESTS").as_deref() == Ok("1") {
-        true
-    } else {
-        println!("skipped (set AGENTNET_RELAY_TESTS=1 to run against the spike relay)");
-        false
-    }
+/// These tests are `#[ignore]`d; being run at all (`--ignored`) without the
+/// topology variable is an error, never a silent pass.
+fn require_relay_env() {
+    assert!(
+        std::env::var("AGENTNET_RELAY_TESTS").as_deref() == Ok("1"),
+        "this test needs the local relay topology (spike/relay, `DNS_NS=127.0.0.1 ./scripts/up.sh`): \
+         run with AGENTNET_RELAY_TESTS=1 cargo test ... -- --ignored"
+    );
 }
 
 fn r1_peer_id() -> String {
@@ -184,10 +190,9 @@ async fn subscribe_both(a: &LogosRestTransport, b: &LogosRestTransport, topic: &
 }
 
 #[tokio::test]
+#[ignore = "needs the local relay topology: run with AGENTNET_RELAY_TESTS=1 -- --ignored"]
 async fn a_to_b_and_b_to_a_with_identical_ids_in_live_and_history() {
-    if !enabled() {
-        return;
-    }
+    require_relay_env();
     let _g = SERIAL.lock().await;
     let (a, b) = (adapter(NODE_A), adapter(NODE_B));
     let topic = unique_topic();
@@ -245,10 +250,9 @@ async fn a_to_b_and_b_to_a_with_identical_ids_in_live_and_history() {
 }
 
 #[tokio::test]
+#[ignore = "needs the local relay topology: run with AGENTNET_RELAY_TESTS=1 -- --ignored"]
 async fn history_paginates_across_pages_and_dedupes_against_live() {
-    if !enabled() {
-        return;
-    }
+    require_relay_env();
     let _g = SERIAL.lock().await;
     let (a, b) = (adapter(NODE_A), adapter(NODE_B));
     let topic = unique_topic();
@@ -311,10 +315,9 @@ fn payload_of(len: usize) -> Vec<u8> {
 }
 
 #[tokio::test]
+#[ignore = "needs the local relay topology: run with AGENTNET_RELAY_TESTS=1 -- --ignored"]
 async fn max_payload_len_is_accepted_and_delivered_and_one_more_is_rejected_locally() {
-    if !enabled() {
-        return;
-    }
+    require_relay_env();
     let _g = SERIAL.lock().await;
     let (a, b) = (adapter(NODE_A), adapter(NODE_B));
     let topic = unique_topic();
@@ -390,10 +393,9 @@ async fn max_payload_len_is_accepted_and_delivered_and_one_more_is_rejected_loca
 }
 
 #[tokio::test]
+#[ignore = "needs the local relay topology: run with AGENTNET_RELAY_TESTS=1 -- --ignored"]
 async fn isolation_audit_passes_with_right_allowlist_and_fails_closed_with_wrong_one() {
-    if !enabled() {
-        return;
-    }
+    require_relay_env();
     let _g = SERIAL.lock().await;
     let topic = unique_topic();
     let good = adapter(NODE_A);
@@ -492,10 +494,14 @@ fn r1_peer_id_or_dummy() -> String {
 }
 
 // ---------------------------------------------------------------------------
-// Disruptive tests: restart containers of the spike topology. #[ignore]d; run
-// last, only when nobody else is using the topology.
+// Disruptive tests: restart containers of the spike topology. Compiled only with
+// `--features disruptive-tests`, #[ignore]d, and they need AGENTNET_RELAY_DISRUPTIVE=1;
+// run them last, only when nobody else is using the topology:
+//   AGENTNET_RELAY_TESTS=1 AGENTNET_RELAY_DISRUPTIVE=1 cargo test -p agentnet-transport \
+//     --features disruptive-tests --test logos_rest_relay -- --ignored --test-threads=1
 // ---------------------------------------------------------------------------
 
+#[cfg(feature = "disruptive-tests")]
 fn docker(args: &[&str]) {
     let out = std::process::Command::new("docker")
         .args(args)
@@ -508,13 +514,13 @@ fn docker(args: &[&str]) {
     );
 }
 
-fn disruptive_enabled() -> bool {
-    if enabled() && std::env::var("AGENTNET_RELAY_DISRUPTIVE").as_deref() == Ok("1") {
-        true
-    } else {
-        println!("skipped (needs AGENTNET_RELAY_TESTS=1 and AGENTNET_RELAY_DISRUPTIVE=1)");
-        false
-    }
+#[cfg(feature = "disruptive-tests")]
+fn require_disruptive_env() {
+    require_relay_env();
+    assert!(
+        std::env::var("AGENTNET_RELAY_DISRUPTIVE").as_deref() == Ok("1"),
+        "this test restarts or stops containers of the shared topology: also set AGENTNET_RELAY_DISRUPTIVE=1"
+    );
 }
 
 /// Waits until `t` reports ready (connected to R1); can take about two minutes.
@@ -541,10 +547,9 @@ async fn wait_ready(t: &LogosRestTransport) -> Duration {
 /// Not disruptive: if a client lost R1 (it never redials by itself), the adapter must
 /// restore the link through its own redial.
 #[tokio::test]
+#[ignore = "needs the local relay topology: run with AGENTNET_RELAY_TESTS=1 -- --ignored"]
 async fn adapter_redial_restores_a_disconnected_client() {
-    if !enabled() {
-        return;
-    }
+    require_relay_env();
     let _g = SERIAL.lock().await;
     for url in [NODE_A, NODE_B] {
         let t = adapter(url);
@@ -554,11 +559,10 @@ async fn adapter_redial_restores_a_disconnected_client() {
 }
 
 #[tokio::test]
-#[ignore = "restarts container an-na; run last with AGENTNET_RELAY_DISRUPTIVE=1 -- --ignored"]
+#[cfg(feature = "disruptive-tests")]
+#[ignore = "restarts container an-na; needs AGENTNET_RELAY_TESTS=1 AGENTNET_RELAY_DISRUPTIVE=1 and --features disruptive-tests"]
 async fn node_restart_triggers_transparent_resubscribe() {
-    if !disruptive_enabled() {
-        return;
-    }
+    require_disruptive_env();
     let _g = SERIAL.lock().await;
     let (a, b) = (adapter(NODE_A), adapter(NODE_B));
     let topic = unique_topic();
@@ -585,11 +589,10 @@ async fn node_restart_triggers_transparent_resubscribe() {
 }
 
 #[tokio::test]
-#[ignore = "stops container an-r1; run last with AGENTNET_RELAY_DISRUPTIVE=1 -- --ignored"]
+#[cfg(feature = "disruptive-tests")]
+#[ignore = "stops container an-r1; needs AGENTNET_RELAY_TESTS=1 AGENTNET_RELAY_DISRUPTIVE=1 and --features disruptive-tests"]
 async fn r1_down_gives_unavailable_and_history_unavailable() {
-    if !disruptive_enabled() {
-        return;
-    }
+    require_disruptive_env();
     let _g = SERIAL.lock().await;
     let a = adapter(NODE_A);
     let topic = unique_topic();

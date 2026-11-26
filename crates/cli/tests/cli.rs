@@ -282,6 +282,25 @@ fn relay_print_config_has_the_verified_flags_and_marks_tailscale_untested() {
     ] {
         assert!(s.contains(flag), "missing {flag}");
     }
+    // retention: 7 days (the daemon's default recovery horizon), not the 1 h spike test default
+    assert!(s.contains("--store-message-retention-policy=time:604800;capacity:100000"));
+    assert!(!s.contains("--store-message-retention-policy=time:3600"));
+    // receive-cache capacity raised from the node default of 50 on both flags
+    assert!(s.contains("--rest-relay-cache-capacity=1000"));
+    assert!(s.contains("--rest-messaging-cache-capacity=1000"));
+    // the bridge snippet publishes REST on the host loopback only, and the host-network snippet keeps REST on 127.0.0.1
+    assert!(s.contains("\"127.0.0.1:18640:8645\""));
+    assert!(s.contains("safe only with the 127.0.0.1: port mapping"));
+    let host = s
+        .split("## docker-compose: relay node, host network")
+        .nth(1)
+        .and_then(|t| t.split("## agentnet.toml").next())
+        .expect("host-network compose snippet");
+    assert!(host.contains("network_mode: host"));
+    assert!(host.contains("--rest-address=127.0.0.1"));
+    assert!(!host.contains("--rest-address=0.0.0.0"));
+    assert!(!host.contains("ports:"));
+    assert!(s.contains("ONE Logos Delivery client node PER AGENT"));
     assert!(s.contains("Tailscale variant (UNTESTED)"));
     assert!(s.contains("UNTESTED - not run"));
     let j = json_ok(t.path(), &["relay", "print-config"]);

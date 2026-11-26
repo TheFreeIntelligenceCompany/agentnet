@@ -5,10 +5,11 @@
 # see results/audit/ci-local-validation.log for what was and was not run. Treat the first GitHub run as the real test.
 #
 # Jobs
-#   check       ubuntu-latest: fmt, clippy -D warnings, tests (relay-gated tests skip without a relay).
+#   check       ubuntu-latest: fmt, clippy -D warnings, tests (relay-gated tests are #[ignore]d and show as "ignored").
+#   msrv        ubuntu-latest: `cargo build --workspace --locked` with the declared rust-version (1.89.0).
 #   deny        cargo-deny (licences, bans, advisories, sources) using deny.toml.
 #   relay-tests MANUAL DISPATCH ONLY: starts the local relay topology (spike/relay) with docker-compose and runs the
-#               relay-gated tests. The node image is linux/amd64; GitHub's ubuntu-latest runners are amd64, so the
+#               relay-gated tests with `-- --ignored` (AGENTNET_RELAY_TESTS=1). The node image is linux/amd64; GitHub's ubuntu-latest runners are amd64, so the
 #               image runs natively there (no qemu).
 name: CI
 
@@ -28,9 +29,10 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
-  # Pinned toolchain. Cargo.toml declares rust-version 1.88, but the locked dependencies (rusqlite 0.42.0, uuid 1.29.3)
-  # declare 1.89.0, so the pin must be >= 1.89. 1.92.0 is the version all local runs used.
+  # Pinned toolchain. Cargo.toml declares rust-version 1.89 (the locked rusqlite 0.42.0 and uuid 1.29.3 declare 1.89.0).
+  # 1.92.0 is the version all local runs used; the `msrv` job builds with the declared minimum.
   RUST_TOOLCHAIN: "1.92.0"
+  RUST_MSRV: "1.89.0"
 
 jobs:
   check:
@@ -48,8 +50,20 @@ jobs:
       - name: Clippy
         run: cargo clippy --workspace --all-targets --all-features -- -D warnings
       - name: Test
-        # Relay-gated tests return early (and are reported as passed) unless AGENTNET_RELAY_TESTS=1.
+        # Relay-gated tests are #[ignore]d (reported as "ignored", never as passed); the `relay-tests` job runs them.
         run: cargo test --workspace --locked
+
+  msrv:
+    name: build with the declared MSRV
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_MSRV }}
+      - uses: Swatinem/rust-cache@v2
+      - name: Build (locked)
+        run: cargo build --workspace --locked
 
   deny:
     name: cargo deny
@@ -86,9 +100,9 @@ jobs:
       - name: Relay-gated tests
         env:
           AGENTNET_RELAY_TESTS: "1"
-        run: |
-          cargo test --locked -p agentnet-transport --test logos_rest_relay -- --nocapture
-          cargo test --locked -p agentnet-cli --test relay_e2e -- --nocapture
+        # Only the relay-gated tests are #[ignore]d in this workspace, so `--ignored` selects exactly them. The tests that
+        # restart containers need the cargo feature `disruptive-tests` and AGENTNET_RELAY_DISRUPTIVE=1 and are not run here.
+        run: cargo test --workspace --locked -- --ignored --nocapture
       - name: Node logs on failure
         if: failure()
         run: docker logs an-r1 --tail 100; docker logs an-na --tail 100; docker logs an-nb --tail 100

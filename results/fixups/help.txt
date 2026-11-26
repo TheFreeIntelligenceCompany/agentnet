@@ -1,0 +1,59 @@
+AgentNet: private, asynchronous, end-to-end encrypted messaging for agents.
+
+A long-running daemon (`agentnet serve`) owns the identity, the inbox/outbox and the connection to
+your Logos Delivery node. Every other command talks to that daemon over its control socket, except
+the few that manage the data directory while no daemon runs (`init`, `identity
+export|import|rotate-kem`).
+
+Usage: agentnet [OPTIONS] <COMMAND>
+
+Commands:
+  init        Create a data directory with a new identity, a private-mode config and access tokens
+  serve       Run the daemon in the foreground until Ctrl-C or SIGTERM
+  mcp         Serve MCP over stdio as a thin client of the running daemon
+  identity    Show, export, import and rotate the identity (daemon must be stopped for all but
+              `show`)
+  contact     Manage contacts (verified peer records)
+  quarantine  Inspect and release messages from unknown or untrusted senders
+  send        Send a message to a contact
+  inbox       Read received messages (cursor-paginated, oldest first)
+  ack         Mark a received message as processed locally (idempotent; unrelated to the delivery
+              receipt)
+  status      Show the delivery state of a sent message (queued, sent, delivered, failed, expired)
+  outbox      List sent messages and their delivery state
+  trigger     Manage triggers: durable predicates that turn matching inbound messages into events
+  events      Follow the host-integration event stream
+  network     Network and queue status
+  doctor      Check permissions, config, node reachability, peer allowlist, isolation, store and
+              clock
+  relay       Instructions for running your own relay/store node
+  help        Print this message or the help of the given subcommand(s)
+
+Options:
+      --data-dir <DIR>
+          Data directory (identity, config, database, socket, tokens)
+          
+          [env: AGENTNET_HOME=]
+
+      --json
+          Print machine-readable JSON instead of human text
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
+
+EXIT CODES:
+  0  success
+  1  other error (I/O, internal, a second daemon on the same data dir, ...)
+  2  usage error (bad command line)
+  3  the daemon or the network node is unavailable (is `agentnet serve` running?)
+  4  invalid argument or invalid configuration
+  5  not found
+  6  refused by policy (also: too large, conflict)
+  7  `agentnet doctor` found at least one failing check
+
+The data directory defaults to $AGENTNET_HOME, then ~/.agentnet. Logs go to
+stderr (RUST_LOG controls the level, default `warn`); stdout carries only
+command output (and, for `agentnet mcp`, MCP protocol frames).

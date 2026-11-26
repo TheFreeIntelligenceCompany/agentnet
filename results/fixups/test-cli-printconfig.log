@@ -1,0 +1,9 @@
+   Compiling agentnet-cli v0.1.0 (/Users/dennison/develop/FIC-elipsis/crates/cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.67s
+     Running tests/cli.rs (target/debug/deps/cli-dbc4161b44e93329)
+
+running 1 test
+test relay_print_config_has_the_verified_flags_and_marks_tailscale_untested ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 10 filtered out; finished in 1.53s
+

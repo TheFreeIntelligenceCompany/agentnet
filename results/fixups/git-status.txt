@@ -1,0 +1,33 @@
+ M .github/workflows/ci.yml
+ M Cargo.toml
+ M crates/cli/src/relay.rs
+ M crates/cli/tests/relay_e2e.rs
+ M crates/daemon/examples/embed.rs
+ M crates/mcp/src/dto.rs
+ M crates/mcp/src/limits.rs
+ M crates/mcp/src/server.rs
+ M crates/mcp/tests/common/fake_agent.rs
+ M crates/mcp/tests/tools.rs
+ M crates/transport/Cargo.toml
+ M crates/transport/src/logos_rest/mod.rs
+ M crates/transport/src/logos_rest/tests.rs
+ M crates/transport/tests/logos_rest_relay.rs
+ M docs/compatibility-matrix.md
+ M docs/dependency-audit.md
+ M docs/mcp-api.md
+ M docs/relay-setup.md
+ M docs/spike-report.md
+ M scripts/acceptance.sh
+ M spike/relay/README.md
+ M spike/relay/docker-compose.messaging.yml
+ M spike/relay/docker-compose.r2.yml
+ M spike/relay/docker-compose.yml
+ M spike/relay/scripts/egress-capture.sh
+ M tests/acceptance/src/main.rs
+?? .claude/
+?? results/fixups/
+?? scripts/an-metrics.py
+?? scripts/burst-bench.sh
+?? scripts/burst-node-probe.py
+?? scripts/mesh-warmup.sh
+?? scripts/relay-live-probe.py

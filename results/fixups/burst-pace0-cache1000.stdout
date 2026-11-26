@@ -1,0 +1,15 @@
+[00:58:06] recreating an-na/an-nb with --rest-relay-cache-capacity=1000
+cache capacity: na=1000 nb=1000
+[00:58:48] live relay probe before run 1: {"na_to_nb_ms": null, "nb_to_na_ms": null}
+[00:58:49] run 1: burst N=100 pace=0ms cache=1000
+{"run":1,"probe":{"na_to_nb_ms":null,"nb_to_na_ms":null},"a_to_b":{"p50":47823,"p95":61955,"p99":61969,"max":61970,"samples":100},"b_to_a":{"p50":2278,"p95":2350,"p99":2356,"max":2357,"samples":100}}
+[00:59:55] live relay probe before run 2: {"na_to_nb_ms": 114, "nb_to_na_ms": 115}
+[00:59:55] run 2: burst N=100 pace=0ms cache=1000
+{"run":2,"probe":{"na_to_nb_ms":114,"nb_to_na_ms":115},"a_to_b":{"p50":1194,"p95":1336,"p99":1342,"max":1343,"samples":100},"b_to_a":{"p50":1551,"p95":1686,"p99":1692,"max":1693,"samples":100}}
+[01:00:02] live relay probe before run 3: {"na_to_nb_ms": 122, "nb_to_na_ms": 120}
+[01:00:02] run 3: burst N=100 pace=0ms cache=1000
+{"run":3,"probe":{"na_to_nb_ms":122,"nb_to_na_ms":120},"a_to_b":{"p50":2196,"p95":2416,"p99":2421,"max":2422,"samples":100},"b_to_a":{"p50":2760,"p95":2830,"p99":2837,"max":2837,"samples":100}}
+[01:00:09] live relay probe before run 4: {"na_to_nb_ms": 111, "nb_to_na_ms": 114}
+[01:00:10] run 4: burst N=100 pace=0ms cache=1000
+{"run":4,"probe":{"na_to_nb_ms":111,"nb_to_na_ms":114},"a_to_b":{"p50":1222,"p95":1609,"p99":1613,"max":1613,"samples":100},"b_to_a":{"p50":1261,"p95":1633,"p99":1639,"max":1640,"samples":100}}
+[01:00:15] done: results/fixups/burst-pace0-cache1000

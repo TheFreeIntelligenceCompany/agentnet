@@ -19,6 +19,15 @@ network (see section 9 and `docs/spike-report.md`).
 * The **service node** is reachable by all clients, relays frames between them and stores them for later retrieval.
   Clients dial it; clients need no inbound port (this is the design; **cross-machine/NAT outbound-only operation is UNTESTED**).
 * AgentNet talks only to the **client** node's REST API (`network.node_url`), never to the service node.
+* **Hard rule: one Logos Delivery client node per agent (one `agentnet serve` per node). Sharing a node between agents is unsupported.**
+  The node's REST receive path is a single in-memory cache per node and `GET` is destructive (returns *and deletes*). Two daemons
+  polling one node therefore drain each other's frames: if their inbox buckets (16 by default, `docs/protocol.md` section 3) are
+  the same, they poll the same content topic and each message is delivered to whichever daemon polls first, the other never sees
+  it live; even with different buckets they share the 50-slot cache, the node's peer list and its subscriptions. What the user sees
+  is **delayed delivery, not loss**: the starved recipient only gets the frame through the next history sync (up to
+  `history_sync_interval_s` = 60 s, from the service node's Store) or the sender's retry. The acceptance script
+  (`scripts/acceptance.sh`, `new_agent`) had to re-draw identities until their buckets differed to keep two test agents on one node apart;
+  that is a test workaround, not a supported deployment. A wrongly configured daemon also leaves its peer in the shared node (section 4a).
 
 ## 2. Image
 
@@ -44,13 +53,14 @@ Service node (from `agentnet relay print-config`; replace the placeholders):
 --nat=extip:<service node IP>  # the address clients dial; avoids UPnP/PMP probing
 --relay=true --store=true --filter=true --lightpush=true
 --store-message-db-url=sqlite:///data/store.sqlite3
---store-message-retention-policy=time:3600;capacity:5000    # see section 6
+--store-message-retention-policy=time:604800;capacity:100000   # 7 days; see section 6
 --cluster-id=66 --num-shards-in-network=1 --shard=0
 --discv5-discovery=false --peer-exchange=false --relay-peer-exchange=false --rendezvous=false
 --enable-kad-discovery=false --quic-support=false --mix=false --rln-relay=false
 --dns-addrs-name-server=127.0.0.1                           # section 5
 --listen-address=0.0.0.0 --tcp-port=60000 --peer-persistence=false --metrics-server=false
 --max-msg-size=150KiB --rest=true --rest-admin=true --rest-address=127.0.0.1 --rest-port=8645
+--rest-relay-cache-capacity=1000 --rest-messaging-cache-capacity=1000                 # section 3a
 --local-storage-path=/data --log-level=INFO
 ```
 
@@ -74,8 +84,35 @@ Notes grounded in the spike (`docs/spike/notes-daemon-rest.md` s1.2):
 * REST has **no authentication**. `--rest-address=127.0.0.1` is the right setting when the node runs on the host. In the compose
   snippets the in-container address is `0.0.0.0` and the published port is bound to the host loopback
   (`127.0.0.1:<port>:8645`); keep it that way.
-* Receive path limits that shape sizing: the node's REST relay cache is 50 slots shared by all topics and `GET` is destructive
+* Receive path limits that shape sizing: the node's REST relay cache is 50 slots by default, shared by all topics, and `GET` is destructive
   (`--rest-relay-cache-capacity`); AgentNet polls every 250 ms by default (`delivery.poll_interval_ms`) and uses Store for recovery.
+  The recommended value is **1000** (section 3a).
+* **Connection churn is expected.** The node's REST server (nim-presto) answers every request with `Connection: close`, even when the
+  request asks for `keep-alive` (`results/fixups/keepalive-curl-explicit.txt`), so the adapter cannot reuse connections: it deliberately
+  disables pooling (`pool_max_idle_per_host(0)`, commented in `crates/transport/src/logos_rest/mod.rs`) and opens one short-lived loopback
+  connection per poll or publish (about 4 polls per second per daemon plus publishes). Thousands of `TIME_WAIT` sockets on
+  `127.0.0.1:<REST port>` after a busy run are normal, not a leak. If it matters (very high rates), shorten
+  `net.inet.tcp.msl` on macOS or `tcp_tw_reuse` on Linux; do not poll slower than the cache can absorb.
+
+### 3a. REST cache capacity and burst latency (measured)
+
+The measurements are in `results/fixups/burst-latency.md` (single host, amd64 nodes under qemu; **not representative of a real network**).
+
+* `--rest-relay-cache-capacity` (and `--rest-messaging-cache-capacity`, unused by AgentNet) is recommended at **1000** instead of the node default 50.
+  The cache is volatile, destructive on read and silently evicts the oldest entries when full. Measured on the client node without AgentNet:
+  100 messages published back to back reached a single poll as only 30 to 50 entries with the default capacity
+  (`results/fixups/node-cache-probe-cap50.txt`). Memory worst case is capacity x `--max-msg-size` (1000 x 150 KiB = 150 MiB), typical use is far less.
+  This is cheap insurance for the moments a daemon cannot poll (restart, stall, a long SQLite transaction), not the main cause of slow bursts.
+* **The dominant cause of a slow burst on the test topology was not the cache: it was a cold relay mesh.** After a client node is (re)created, live relay between
+  two client nodes did not work until about **62 s** after the node reported itself connected to the service node, 3 of 3 trials
+  (`results/fixups/mesh-warmup.txt`; mechanism not verified, consistent with libp2p gossipsub's 60 s prune backoff and with E12). A message sent during that window is accepted by the node
+  (`publish` returns 200) and then never reaches the recipient's live queue; it arrives through the sender's retries (first retry delay uniform in
+  [1 ms, 2 s], doubling) or, at the latest, the recipient's next history sync, up to `history_sync_interval_s` = 60 s later. That is the 24 to 31 s p50
+  (and about 60 s p95/p99) seen in two of three acceptance runs, and the 0.3 s in the third is the same burst on a node that was already warm.
+* Operational consequence: **after restarting a client node or the service node, expect up to about a minute in which delivery depends on retries and Store**
+  (messages are delayed, not lost, inside the retention and TTL windows). Do not restart nodes casually while agents are exchanging time-critical traffic.
+  A shorter `delivery.history_sync_interval_s` on the recipient (for example 10 to 15 s) shortens that tail at the cost of one Store query per interval
+  (measured effect in `results/fixups/burst-latency.md`).
 
 ## 4. Static peer identities (nodekey to peer ID)
 
@@ -89,6 +126,16 @@ Notes grounded in the spike (`docs/spike/notes-daemon-rest.md` s1.2):
    `docs/configuration.md`). The allowlist of peer ids used by the runtime audit is derived from them.
 4. Order of start: service node, then client node, then `agentnet serve`. A client that starts before the service node is listening
    waits for its peer manager's backoff (about 2 minutes observed in E5/E8); AgentNet's redial shortens this (section 5).
+
+## 4a. A wrong static peer pollutes the node (and `doctor` of whoever shares it)
+
+On startup and whenever no allowlisted peer is connected, the adapter POSTs exactly its configured `peers` to the node's `/admin/v1/peers`
+(only after the configuration passed validation: private literal IP, peer id in the allowlist; a rejected configuration never touches the node,
+`rejected_config_never_contacts_the_node_or_dials` in `crates/transport/src/logos_rest/tests.rs`). A configuration that is valid but names the
+**wrong peer id** (the acceptance run's isolation test) is therefore dialled: the node remembers that peer as `CannotConnect` (peers are not
+persisted: `--peer-persistence=false`, so restarting the client node clears it). Another agent's `agentnet doctor` on the same node then reports
+`peers == allowlist` as failed, although the adapter's isolation audit, which only considers **connected** peers, is satisfied.
+This is one more reason for the one-node-per-agent rule in section 1. If it happens: `docker restart <client node>`.
 
 ## 5. The DNS online-monitor setting (E7, E8, E12)
 
@@ -108,17 +155,22 @@ With every discovery option disabled the node still resolves `one.one.one.one` v
 * **Reconnecting is not the mesh being usable.** After that service-node restart live relay delivery stayed broken for about 9 minutes
   (empty or flapping gossipsub mesh; cause not found, E12). AgentNet recovers those messages through Store catch-up (up to
   `history_sync_interval_s` = 60 s later) **if the Store holds them**. History during that specific gap was not separately tested.
-* **The spike compose file defaults `DNS_NS` to `1.1.1.1`** (`spike/relay/docker-compose.yml`, `${DNS_NS:-1.1.1.1}`), while
-  `agentnet relay print-config` prints `127.0.0.1`. Start the spike topology with `DNS_NS=127.0.0.1 ./scripts/up.sh`.
+* The spike compose files now default `DNS_NS` to `127.0.0.1` (`${DNS_NS:-127.0.0.1}`), matching `agentnet relay print-config`; they used to
+  default to the upstream `1.1.1.1`. `DNS_NS=1.1.1.1` can still be set explicitly to reproduce the upstream behaviour
+  (`spike/relay/scripts/egress-capture.sh` does, to document it); `DNS_NS=127.0.0.1 ./scripts/up.sh` remains valid.
 
 ## 6. Retention and what it means for offline delivery
 
 * Store retention is set on the **service node**: `--store-message-retention-policy=time:<seconds>;capacity:<n>` (node default
-  `time:172800`). **The verified flag set uses `time:3600;capacity:5000`: one hour, 5000 messages.** AgentNet's own
-  `storage.retention_hours` (default 168) only bounds the client's database and how far back its history sync asks; it cannot extend the relay's retention.
-  A recipient that is offline longer than the Store retention loses the message unless the sender is still retrying (sender retries
+  `time:172800`). **Recommended for a real deployment: `time:604800;capacity:100000` (7 days)**, which is what `agentnet relay print-config` prints. It matches the
+  daemon's default `storage.retention_hours = 168` and the maximum message TTL (7 days). `capacity` counts frames (every message and every receipt is one frame, so 100000 frames are
+  roughly 50000 delivered messages); bodies are padded and a stored frame may be up to `--max-msg-size`, so check disk use if your agents send large bodies.
+  `spike/relay` keeps the SHORT `time:3600;capacity:5000` as its test default on purpose (the retention experiments and a small store; a comment in the compose file says so).
+  The 7-day value was started on the test topology as described in `results/fixups/retention-7d-check.txt`; long-term behaviour (pruning at 7 days) was **not** exercised.
+* **What is actually recoverable is the MINIMUM of three windows**: the relay's Store retention, the message TTL (`delivery.default_ttl_s`, default 24 h, at most `max_ttl_s` = 7 days) and the daemon's own
+  `storage.retention_hours` (default 168), which bounds the client's database and how far back its history sync asks. Raising one of them alone changes nothing:
+  with the old one-hour relay retention, `retention_hours = 168` still only recovered one hour from Store. A recipient that is offline longer than that window loses the message unless the sender is still retrying (sender retries
   republish with a fresh timestamp up to `max_attempts` = 20 over a bounded backoff, `docs/protocol.md` s8.2).
-  Other retention values were **not tested** (`print-config` says the same).
 * The node applies the policy **only at start and then every 30 minutes** (hardcoded): measured, `time:60` pruned nothing 70 s later
   without a restart (`results/a1-daemon/e6-retention.txt`). Expired history returns `200` with an empty list; there is no "expired" indicator.
 * Store data persists across restarts only if `/data` is a volume (the SQLite file). Messages published with `ephemeral:true` are never stored.
@@ -177,9 +229,11 @@ Reproducible steps (to be executed and verified by whoever has the hosts):
 1. On the service host and each client host: install Tailscale, `tailscale up`. Note each tailnet IPv4: `tailscale ip -4` (100.x.y.z).
 2. Tag the machines in the admin console, for example `tag:agentnet-relay` and `tag:agentnet-client`.
 3. Service node: the flags of section 3 but `--listen-address=<service tailnet IP> --nat=extip:<service tailnet IP>`. Run it with host networking so the
-   container sees the tailnet interface (`network_mode: host`). **Caution:** the compose snippet printed by `print-config` sets
-   `--rest-address=0.0.0.0` (needed for port publishing). With host networking that would bind the unauthenticated REST API on **every host interface, including the tailnet**.
-   Use `--rest-address=127.0.0.1` instead when using host networking. (This is a hazard found by reading the snippet; it was not exercised.)
+   container sees the tailnet interface (`network_mode: host`). **`agentnet relay print-config` prints a separate "docker-compose: relay node, host network" snippet for this**
+   with `--rest-address=127.0.0.1` and no `ports:`: with host networking, `0.0.0.0` would bind the unauthenticated REST API on **every host interface, including the tailnet**.
+   The ordinary (bridge-network) snippet uses `--rest-address=0.0.0.0` *inside the container*, which is safe **only because** its REST port is published as
+   `"127.0.0.1:<host port>:8645"`: the container's `0.0.0.0` is its own namespace, and Docker forwards only the host's loopback to it. Remove the `127.0.0.1:` prefix and the REST API is
+   reachable from your network. (The host-network snippet was generated and read, not run: UNTESTED.)
 4. Client node: the client flags with `--staticnode/--storenode/--filternode/--lightpushnode=/ip4/<service tailnet IP>/tcp/60000/p2p/<service peer id>` and
    `--nat=extip:<client tailnet IP>`.
 5. `agentnet.toml`: `node_url = "http://127.0.0.1:<client REST>"`, `peers = ["/ip4/<service tailnet IP>/tcp/60000/p2p/<service peer id>"]`, `cluster_id = 66`.
@@ -196,6 +250,7 @@ Reproducible steps (to be executed and verified by whoever has the hosts):
 - [ ] REST ports reachable only from the local host; service tcp/60000 reachable only from known clients.
 - [ ] `agentnet doctor` on each client: `0 failing`, `peers == allowlist: ... all in the allowlist`.
 - [ ] NTP running everywhere; `doctor` clock check ok.
-- [ ] Store retention chosen deliberately and communicated (the verified default is 1 hour).
+- [ ] Store retention chosen deliberately and communicated (recommended 7 days, `time:604800;capacity:100000`; the spike test default is 1 hour). Remember the recovery window is the minimum of relay retention, message TTL and `storage.retention_hours`.
+- [ ] One client node per agent; `--rest-relay-cache-capacity=1000`.
 - [ ] You know that restarting the service node causes minutes of degraded live delivery and that recovery depends on Store.
 - [ ] You accept that all of this was only tested on a single host.

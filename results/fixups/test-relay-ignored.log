@@ -1,0 +1,165 @@
+   Compiling agentnet-cli v0.1.0 (/Users/dennison/develop/FIC-elipsis/crates/cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.67s
+     Running unittests src/main.rs (target/debug/deps/agentnet_acceptance-4a930d6b8766df72)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/deps/agentnet-fd8bbb7ad82bea9c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/cli.rs (target/debug/deps/cli-d1a36aedb94da311)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.00s
+
+     Running tests/relay_e2e.rs (target/debug/deps/relay_e2e-abaee0421478aaf5)
+
+running 1 test
+test two_agentnet_serve_processes_exchange_messages_over_the_private_relay ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 22.96s
+
+     Running unittests src/lib.rs (target/debug/deps/agentnet_core-6977f6af65678f01)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 31 filtered out; finished in 0.00s
+
+     Running tests/crypto.rs (target/debug/deps/crypto-303704a1a39431ac)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 34 filtered out; finished in 0.00s
+
+     Running tests/engine_delivery.rs (target/debug/deps/engine_delivery-17b075cd2ae760d9)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 23 filtered out; finished in 0.00s
+
+     Running tests/engine_random.rs (target/debug/deps/engine_random-8883aa83f1e260fe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/engine_run.rs (target/debug/deps/engine_run-c779d54156392101)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/engine_security.rs (target/debug/deps/engine_security-458681e9dd8b9898)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s
+
+     Running tests/engine_triggers.rs (target/debug/deps/engine_triggers-45bb160c71576436)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/agentnet_daemon-7307097c4490787c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 17 filtered out; finished in 0.00s
+
+     Running tests/harness.rs (target/debug/deps/harness-2faaa5229df1318f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/socket_api.rs (target/debug/deps/socket_api-ceaf5370461bbd83)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s
+
+     Running tests/webhook_triggers.rs (target/debug/deps/webhook_triggers-04da65785f7b30c7)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/agentnet_mcp-c889cfbc4d3bedcd)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+     Running tests/resources.rs (target/debug/deps/resources-9d8a5da18176936e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.00s
+
+     Running tests/subscriptions.rs (target/debug/deps/subscriptions-607eb28eed3c1b33)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 17 filtered out; finished in 0.00s
+
+     Running tests/tools.rs (target/debug/deps/tools-48e058b9bdbd863c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.00s
+
+     Running tests/transports.rs (target/debug/deps/transports-015055071dc56d51)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 17 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/agentnet_transport-982b1d358273e06d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 70 filtered out; finished in 0.00s
+
+     Running tests/logos_rest_relay.rs (target/debug/deps/logos_rest_relay-3be48f08846c5ffb)
+
+running 5 tests
+test history_paginates_across_pages_and_dedupes_against_live ... ok
+test adapter_redial_restores_a_disconnected_client ... ok
+test a_to_b_and_b_to_a_with_identical_ids_in_live_and_history ... ok
+test max_payload_len_is_accepted_and_delivered_and_one_more_is_rejected_locally ... ok
+test isolation_audit_passes_with_right_allowlist_and_fails_closed_with_wrong_one ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 14.63s
+
+   Doc-tests agentnet_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests agentnet_daemon
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests agentnet_mcp
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests agentnet_transport
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+EXIT=0

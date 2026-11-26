@@ -1,0 +1,244 @@
+# AgentNet private relay configuration (verified flag set)
+
+Image: wakuorg/nwaku@sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73
+
+## Relay / store node flags (user-owned service node)
+  --nodekey=${RELAY_NODEKEY}
+  --nat=extip:<RELAY_IP>
+  --relay=true
+  --store=true
+  --store-message-db-url=sqlite:///data/store.sqlite3
+  --store-message-retention-policy=time:604800;capacity:100000
+  --filter=true
+  --lightpush=true
+  --cluster-id=66
+  --num-shards-in-network=1
+  --shard=0
+  --discv5-discovery=false
+  --peer-exchange=false
+  --relay-peer-exchange=false
+  --rendezvous=false
+  --enable-kad-discovery=false
+  --quic-support=false
+  --mix=false
+  --rln-relay=false
+  --dns-addrs-name-server=127.0.0.1
+  --listen-address=0.0.0.0
+  --tcp-port=60000
+  --peer-persistence=false
+  --metrics-server=false
+  --max-msg-size=150KiB
+  --rest=true
+  --rest-admin=true
+  --rest-address=127.0.0.1
+  --rest-port=8645
+  --local-storage-path=/data
+  --log-level=INFO
+  --rest-relay-cache-capacity=1000
+  --rest-messaging-cache-capacity=1000
+
+## Client node flags (the node `agentnet serve` talks to)
+  --nodekey=${CLIENT_NODEKEY}
+  --nat=extip:<CLIENT_IP>
+  --relay=true
+  --store=false
+  --filter=false
+  --lightpush=false
+  --staticnode=/ip4/<RELAY_IP>/tcp/60000/p2p/<RELAY_PEER_ID>
+  --storenode=/ip4/<RELAY_IP>/tcp/60000/p2p/<RELAY_PEER_ID>
+  --filternode=/ip4/<RELAY_IP>/tcp/60000/p2p/<RELAY_PEER_ID>
+  --lightpushnode=/ip4/<RELAY_IP>/tcp/60000/p2p/<RELAY_PEER_ID>
+  --cluster-id=66
+  --num-shards-in-network=1
+  --shard=0
+  --discv5-discovery=false
+  --peer-exchange=false
+  --relay-peer-exchange=false
+  --rendezvous=false
+  --enable-kad-discovery=false
+  --quic-support=false
+  --mix=false
+  --rln-relay=false
+  --dns-addrs-name-server=127.0.0.1
+  --listen-address=0.0.0.0
+  --tcp-port=60000
+  --peer-persistence=false
+  --metrics-server=false
+  --max-msg-size=150KiB
+  --rest=true
+  --rest-admin=true
+  --rest-address=127.0.0.1
+  --rest-port=8645
+  --local-storage-path=/data
+  --log-level=INFO
+  --rest-relay-cache-capacity=1000
+  --rest-messaging-cache-capacity=1000
+
+## docker-compose: relay / store node (RELAY_NODEKEY from the environment)
+services:
+  relay:
+    image: wakuorg/nwaku@sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73   # v0.39.2, linux/amd64 only (runs under qemu on arm64 hosts)
+    platform: linux/amd64
+    restart: unless-stopped
+    command:
+      - "--nodekey=${RELAY_NODEKEY}"
+      - "--nat=extip:<RELAY_IP>"
+      - "--relay=true"
+      - "--store=true"
+      - "--store-message-db-url=sqlite:///data/store.sqlite3"
+      - "--store-message-retention-policy=time:604800;capacity:100000"
+      - "--filter=true"
+      - "--lightpush=true"
+      - "--cluster-id=66"
+      - "--num-shards-in-network=1"
+      - "--shard=0"
+      - "--discv5-discovery=false"
+      - "--peer-exchange=false"
+      - "--relay-peer-exchange=false"
+      - "--rendezvous=false"
+      - "--enable-kad-discovery=false"
+      - "--quic-support=false"
+      - "--mix=false"
+      - "--rln-relay=false"
+      - "--dns-addrs-name-server=127.0.0.1"
+      - "--listen-address=0.0.0.0"
+      - "--tcp-port=60000"
+      - "--peer-persistence=false"
+      - "--metrics-server=false"
+      - "--max-msg-size=150KiB"
+      - "--rest=true"
+      - "--rest-admin=true"
+      - "--rest-address=0.0.0.0"   # container-internal; safe only with the 127.0.0.1: port mapping below
+      - "--rest-port=8645"
+      - "--local-storage-path=/data"
+      - "--log-level=INFO"
+      - "--rest-relay-cache-capacity=1000"
+      - "--rest-messaging-cache-capacity=1000"
+    ports: ["60000:60000", "127.0.0.1:18640:8645"]   # REST: host loopback only ("127.0.0.1:..."); tcp/60000 binds all host interfaces, firewall it
+    volumes: ["relaydata:/data"]
+volumes:
+  relaydata: {}
+
+## docker-compose: client node (CLIENT_NODEKEY from the environment)
+services:
+  client:
+    image: wakuorg/nwaku@sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73   # v0.39.2, linux/amd64 only (runs under qemu on arm64 hosts)
+    platform: linux/amd64
+    restart: unless-stopped
+    command:
+      - "--nodekey=${CLIENT_NODEKEY}"
+      - "--nat=extip:<CLIENT_IP>"
+      - "--relay=true"
+      - "--store=false"
+      - "--filter=false"
+      - "--lightpush=false"
+      - "--staticnode=/ip4/<RELAY_IP>/tcp/60000/p2p/<RELAY_PEER_ID>"
+      - "--storenode=/ip4/<RELAY_IP>/tcp/60000/p2p/<RELAY_PEER_ID>"
+      - "--filternode=/ip4/<RELAY_IP>/tcp/60000/p2p/<RELAY_PEER_ID>"
+      - "--lightpushnode=/ip4/<RELAY_IP>/tcp/60000/p2p/<RELAY_PEER_ID>"
+      - "--cluster-id=66"
+      - "--num-shards-in-network=1"
+      - "--shard=0"
+      - "--discv5-discovery=false"
+      - "--peer-exchange=false"
+      - "--relay-peer-exchange=false"
+      - "--rendezvous=false"
+      - "--enable-kad-discovery=false"
+      - "--quic-support=false"
+      - "--mix=false"
+      - "--rln-relay=false"
+      - "--dns-addrs-name-server=127.0.0.1"
+      - "--listen-address=0.0.0.0"
+      - "--tcp-port=60000"
+      - "--peer-persistence=false"
+      - "--metrics-server=false"
+      - "--max-msg-size=150KiB"
+      - "--rest=true"
+      - "--rest-admin=true"
+      - "--rest-address=0.0.0.0"   # container-internal; safe only with the 127.0.0.1: port mapping below
+      - "--rest-port=8645"
+      - "--local-storage-path=/data"
+      - "--log-level=INFO"
+      - "--rest-relay-cache-capacity=1000"
+      - "--rest-messaging-cache-capacity=1000"
+    ports: ["127.0.0.1:8645:8645"]   # REST: host loopback only ("127.0.0.1:..."); tcp/60000 binds all host interfaces, firewall it
+    volumes: ["clientdata:/data"]
+volumes:
+  clientdata: {}
+
+## docker-compose: relay node, host network (Tailscale variant, UNTESTED; REST on 127.0.0.1)
+services:
+  relay:
+    image: wakuorg/nwaku@sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73   # v0.39.2, linux/amd64 only (runs under qemu on arm64 hosts)
+    platform: linux/amd64
+    restart: unless-stopped
+    network_mode: host   # REST stays on 127.0.0.1 below; never use 0.0.0.0 with host networking
+    command:
+      - "--nodekey=${RELAY_NODEKEY}"
+      - "--nat=extip:<RELAY_IP>"
+      - "--relay=true"
+      - "--store=true"
+      - "--store-message-db-url=sqlite:///data/store.sqlite3"
+      - "--store-message-retention-policy=time:604800;capacity:100000"
+      - "--filter=true"
+      - "--lightpush=true"
+      - "--cluster-id=66"
+      - "--num-shards-in-network=1"
+      - "--shard=0"
+      - "--discv5-discovery=false"
+      - "--peer-exchange=false"
+      - "--relay-peer-exchange=false"
+      - "--rendezvous=false"
+      - "--enable-kad-discovery=false"
+      - "--quic-support=false"
+      - "--mix=false"
+      - "--rln-relay=false"
+      - "--dns-addrs-name-server=127.0.0.1"
+      - "--listen-address=<RELAY_IP>"
+      - "--tcp-port=60000"
+      - "--peer-persistence=false"
+      - "--metrics-server=false"
+      - "--max-msg-size=150KiB"
+      - "--rest=true"
+      - "--rest-admin=true"
+      - "--rest-address=127.0.0.1"
+      - "--rest-port=8645"
+      - "--local-storage-path=/data"
+      - "--log-level=INFO"
+      - "--rest-relay-cache-capacity=1000"
+      - "--rest-messaging-cache-capacity=1000"
+    volumes: ["relaydata:/data"]
+volumes:
+  relaydata: {}
+
+## agentnet.toml
+peers = ["/ip4/<RELAY_IP>/tcp/60000/p2p/<RELAY_PEER_ID>"]
+
+## Tailscale variant (UNTESTED)
+UNTESTED - not run on this project's test hosts; reproduce and verify before relying on it.
+1. On every machine: `tailscale up`; note the relay's tailnet IPv4 with `tailscale ip -4` (100.x.y.z).
+2. Relay node: use the relay flags above but bind and advertise the tailnet address only:
+--listen-address=<relay tailnet IP>  --nat=extip:<relay tailnet IP>
+(with Docker use `network_mode: host`, otherwise the container cannot see the tailnet interface; the
+"docker-compose: relay node, host network" snippet below does this and keeps --rest-address=127.0.0.1:
+with host networking 0.0.0.0 would expose the unauthenticated REST API on every interface, tailnet included).
+3. Client node: same flags as above with --staticnode/--storenode/--filternode/--lightpushnode =
+/ip4/<relay tailnet IP>/tcp/60000/p2p/<relay peer id>, --nat=extip:<client tailnet IP>.
+4. agentnet.toml: node_url = "http://127.0.0.1:8645"; peers = ["/ip4/<relay tailnet IP>/tcp/60000/p2p/<relay peer id>"]
+(100.64.0.0/10 passes the private-address check).
+5. Tailnet ACL: allow only your client nodes (by tag) to reach tcp/60000 on the relay and deny everything else, e.g.
+{"acls": [{"action": "accept", "src": ["tag:agentnet-client"], "dst": ["tag:agentnet-relay:60000"]}]}
+Tailscale gives encrypted connectivity and machine-level policy only. It is not application identity or message
+encryption (AgentNet does that end to end), and its coordination service sees connection metadata.
+
+## Notes
+- Flags are the set verified in spike/relay (docs/spike/notes-daemon-rest.md). Values that differ from what was run there are UNTESTED as such: the 7-day store retention below and --rest-relay-cache-capacity=1000 (spike/relay itself runs time:3600;capacity:5000 and, per default, 50-slot caches on purpose).
+- Store retention is set on the service node (time:604800;capacity:100000: 7 days, 100000 frames; every message and every receipt is one frame, so 100000 frames is about 50000 delivered messages, a few tens of MB for small bodies; a stored frame can be up to --max-msg-size, so add a disk quota if bodies are large). The node applies the policy only at start and every 30 minutes. A daemon's recovery window is the MINIMUM of the relay's retention, the message TTL (default 24 h, max 7 days) and the daemon's own storage.retention_hours (default 168); raising one of them alone changes nothing.
+- --rest-relay-cache-capacity / --rest-messaging-cache-capacity: the node's REST receive cache is volatile, destructive on read and silently drops the oldest entries when full (default 50 slots, shared by all topics). 1000 keeps a burst of several hundred frames between two polls; worst-case memory is 1000 x --max-msg-size.
+- ONE Logos Delivery client node PER AGENT (one `agentnet serve` per node): two agents on one node drain each other's frames from the destructive REST cache (each GET returns and deletes), which delays delivery until history sync and is unsupported.
+- Generate node keys with `openssl rand -hex 32` (one per node); the relay's peer id is printed in its log and by GET /info on its REST port.
+- Start the relay first, then the client node, then `agentnet serve`.
+- --dns-addrs-name-server=127.0.0.1 stops the node's online-monitor from querying 1.1.1.1 every 5 s (the only external contact seen with discovery off). On a no-egress network the node may consider itself offline until its first peer connects.
+- Cluster ids 1, 2, 3 and 16 select public presets (public bootstrap, RLN) and are rejected by agentnet. Cluster/shard separation is not access control: restrict who can reach tcp/60000 with firewall rules.
+- REST has no authentication: bind it to loopback only. In a bridge-network compose file the container-internal --rest-address=0.0.0.0 is safe only together with a "127.0.0.1:<port>:8645" port mapping; with `network_mode: host` keep --rest-address=127.0.0.1.
+- The node's REST server answers every request with `Connection: close`, so the agentnet adapter opens one short-lived loopback connection per request (many TIME_WAIT sockets on 127.0.0.1 are expected, not a leak).

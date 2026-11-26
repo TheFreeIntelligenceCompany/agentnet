@@ -1,0 +1,5 @@
+docs/acceptance.md:133:| 100 per direction, burst (25 ms pacing, both directions concurrently): p50 / p95 / p99 ms A to B | 25544 / 76261 / 76964 | 237 / 386 / 492 | 30648 / 31899 / 32007 |
+docs/acceptance.md:197:* **Burst latency is bimodal and unexplained.** The same 100-per-direction burst gave p50 about 25 s and 24 s (run 1), 0.24 s and 0.34 s (run 2), 30.6 s and 10 s (run 3), and in an earlier development run 38.8 s and 29.7 s (not kept).
+docs/acceptance.md:199:  (`CLIENT_CACHE`, `--rest-relay-cache-capacity=50`) and a burst of 100 messages plus 100 acks per inbox topic overflows it, after which delivery depends on sender retry back-off (2 s doubling) and the 60 s history sync.
+docs/acceptance.md:200:  I did not vary `CLIENT_CACHE` to confirm. Treat the burst percentiles as "worst case observed", not as a typical figure.
+scripts/acceptance.sh:1072:  # paced variant: 400 ms between sends per direction (about 5 msg/s total) to separate burst effects from steady state

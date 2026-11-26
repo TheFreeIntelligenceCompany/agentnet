@@ -1,0 +1,18 @@
+[00:52:13] recreating an-na/an-nb with --rest-relay-cache-capacity=1000
+cache capacity: na=1000 nb=1000
+[00:52:55] live relay probe before run 1: {"na_to_nb_ms": null, "nb_to_na_ms": null}
+[00:52:56] run 1: burst N=100 pace=25ms cache=1000
+{"run":1,"probe":{"na_to_nb_ms":null,"nb_to_na_ms":null},"a_to_b":{"p50":23812,"p95":58823,"p99":60282,"max":60387,"samples":100},"b_to_a":{"p50":25505,"p95":58604,"p99":59847,"max":60318,"samples":100}}
+[00:54:01] live relay probe before run 2: {"na_to_nb_ms": 115, "nb_to_na_ms": 32}
+[00:54:02] run 2: burst N=100 pace=25ms cache=1000
+{"run":2,"probe":{"na_to_nb_ms":115,"nb_to_na_ms":32},"a_to_b":{"p50":462,"p95":1139,"p99":1223,"max":1248,"samples":100},"b_to_a":{"p50":486,"p95":1102,"p99":1151,"max":1154,"samples":100}}
+[00:54:10] live relay probe before run 3: {"na_to_nb_ms": 11, "nb_to_na_ms": 17}
+[00:54:10] run 3: burst N=100 pace=25ms cache=1000
+{"run":3,"probe":{"na_to_nb_ms":11,"nb_to_na_ms":17},"a_to_b":{"p50":3778,"p95":4268,"p99":4399,"max":4421,"samples":100},"b_to_a":{"p50":3494,"p95":3891,"p99":3939,"max":3970,"samples":100}}
+[00:54:22] live relay probe before run 4: {"na_to_nb_ms": 124, "nb_to_na_ms": 17}
+[00:54:22] run 4: burst N=100 pace=25ms cache=1000
+{"run":4,"probe":{"na_to_nb_ms":124,"nb_to_na_ms":17},"a_to_b":{"p50":479,"p95":743,"p99":820,"max":827,"samples":100},"b_to_a":{"p50":567,"p95":732,"p99":752,"max":772,"samples":100}}
+[00:54:30] live relay probe before run 5: {"na_to_nb_ms": 119, "nb_to_na_ms": 235}
+[00:54:31] run 5: burst N=100 pace=25ms cache=1000
+{"run":5,"probe":{"na_to_nb_ms":119,"nb_to_na_ms":235},"a_to_b":{"p50":1120,"p95":3740,"p99":3861,"max":3886,"samples":100},"b_to_a":{"p50":1092,"p95":3974,"p99":4035,"max":4064,"samples":100}}
+[00:54:41] done: results/fixups/burst-warm-cache1000

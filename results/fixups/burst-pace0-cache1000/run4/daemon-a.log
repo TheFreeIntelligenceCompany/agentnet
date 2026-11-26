@@ -1,0 +1,4 @@
+2026-11-26T01:00:09.853426Z  INFO agentnet_daemon::daemon: agentnet daemon started agent=an16qkjirqsle6orka6bozk7ische4zjwgflli3avab22ilisuozmhubx4d6q socket=/tmp/an-burst.qyVjss/a/agentnet.sock
+agentnet daemon running for an16qkjirqsle6orka6bozk7ische4zjwgflli3avab22ilisuozmhubx4d6q (socket /tmp/an-burst.qyVjss/a/agentnet.sock); stop with Ctrl-C or SIGTERM
+2026-11-26T01:00:12.176761Z  INFO agentnet_daemon::daemon: SIGTERM received
+2026-11-26T01:00:12.179226Z  INFO agentnet_daemon::daemon: agentnet daemon stopped

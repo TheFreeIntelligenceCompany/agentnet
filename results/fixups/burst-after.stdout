@@ -1,0 +1,9 @@
+[00:46:58] recreating an-na/an-nb with --rest-relay-cache-capacity=1000
+cache capacity: na=1000 nb=1000
+[00:47:01] run 1: burst N=100 pace=25ms cache=1000
+{"run":1,"a_to_b":{"p50":59535,"p95":60222,"p99":60333,"max":60359,"samples":100},"b_to_a":{"p50":59369,"p95":60194,"p99":60275,"max":60306,"samples":100}}
+[00:48:06] run 2: burst N=100 pace=25ms cache=1000
+{"run":2,"a_to_b":{"p50":361,"p95":488,"p99":490,"max":492,"samples":100},"b_to_a":{"p50":328,"p95":462,"p99":488,"max":520,"samples":100}}
+[00:48:13] run 3: burst N=100 pace=25ms cache=1000
+{"run":3,"a_to_b":{"p50":476,"p95":917,"p99":980,"max":999,"samples":100},"b_to_a":{"p50":475,"p95":740,"p99":795,"max":860,"samples":100}}
+[00:48:20] done: results/fixups/burst-after

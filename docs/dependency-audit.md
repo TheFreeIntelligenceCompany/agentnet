@@ -16,6 +16,8 @@ output of the automated checks. Raw files: `results/audit/cargo-deny.log`, `carg
 
 ## 2. Direct dependencies
 
+MSRV note: the highest declared MSRV among the locked crates is **1.89.0** (`rusqlite 0.42.0`, `uuid 1.29.3`; most others 1.88 or lower). The workspace `rust-version` was 1.88 and is now **1.89** (fixed in working tree; evidence `results/audit/msrv-1.88-check.log` for the failure and `results/fixups/msrv-1.89-build.log` for the 1.89.0 build; CI builds with 1.89.0 in its `msrv` job).
+
 Resolved version, licence as declared in the crate's metadata (SPDX-like strings are as the crates wrote them, e.g. `MIT/Apache-2.0`), declared MSRV, and which workspace crate uses it. "dev" = dev-dependency only.
 
 | Crate | Version | Licence (crate metadata) | Declared MSRV | Used by (kind) |

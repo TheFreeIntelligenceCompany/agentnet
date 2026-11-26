@@ -1,0 +1,41 @@
+39:    fn get_info(&self) -> ClientConfig {
+49:    fn get(&self, name: &str) -> Option<String> {
+55:    fn req(&self, name: &str) -> Result<String> {
+60:fn now_ms() -> i64 {
+67:async fn mcp_client(bin: &Path, dir: &Path) -> Result<Client> {
+70:        c.arg("--data-dir").arg(&dir).arg("mcp");
+76:async fn spawn_client(cmd: tokio::process::Command) -> Result<Client> {
+93:fn protocol_of(c: &Client) -> Value {
+107:async fn call(c: &Client, name: &str, args: Value) -> Result<(bool, Value)> {
+126:async fn call_ok(c: &Client, name: &str, args: Value) -> Result<Value> {
+134:fn filter(uris: &[&str]) -> SubscriptionFilter {
+142:async fn cmd_mcp_call(a: &Args) -> Result<Value> {
+143:    let bin = PathBuf::from(a.req("--bin")?);
+144:    let dir = PathBuf::from(a.req("--data-dir")?);
+145:    let tool = a.req("--tool")?;
+146:    let args: Value = serde_json::from_str(&a.get("--args").unwrap_or_else(|| "{}".into()))?;
+158:async fn cmd_step2(a: &Args) -> Result<Value> {
+159:    let bin = PathBuf::from(a.req("--bin")?);
+160:    let (da, db) = (PathBuf::from(a.req("--a")?), PathBuf::from(a.req("--b")?));
+161:    let b_addr = a.req("--b-addr")?;
+162:    let timeout_s: u64 = a.get("--timeout").map(|s| s.parse()).transpose()?.unwrap_or(180);
+267:fn count_by<'a>(it: impl Iterator<Item = &'a str>) -> BTreeMap<String, u64> {
+275:async fn cmd_dump(a: &Args) -> Result<Value> {
+276:    let dir = PathBuf::from(a.req("--data-dir")?);
+277:    let idle = Duration::from_millis(a.get("--idle-ms").map(|s| s.parse()).transpose()?.unwrap_or(1500));
+391:fn pct(sorted: &[i64], p: f64) -> Option<i64> {
+399:async fn bench_dir(from: PathBuf, to_addr: String, tag: String, n: usize, timeout_s: u64, pace_ms: u64) -> Result<Value> {
+464:async fn cmd_bench(a: &Args) -> Result<Value> {
+465:    let (da, db) = (PathBuf::from(a.req("--a")?), PathBuf::from(a.req("--b")?));
+466:    let (aa, ba) = (a.req("--a-addr")?, a.req("--b-addr")?);
+467:    let n: usize = a.get("--n").map(|s| s.parse()).transpose()?.unwrap_or(100);
+468:    let timeout: u64 = a.get("--timeout").map(|s| s.parse()).transpose()?.unwrap_or(300);
+469:    let tag = a.get("--tag").unwrap_or_else(|| "bench".into());
+470:    let pace: u64 = a.get("--pace-ms").map(|s| s.parse()).transpose()?.unwrap_or(25);
+480:async fn cmd_config_check(a: &Args) -> Result<Value> {
+481:    let cfg: Value = serde_json::from_str(&std::fs::read_to_string(a.req("--config")?)?)?;
+482:    let name = a.req("--server")?;
+483:    let expect = a.req("--expect-address")?;
+507:async fn main() {
+526:            if let Some(out) = a.get("--out") {
+534:            if let Some(out) = a.get("--out") {

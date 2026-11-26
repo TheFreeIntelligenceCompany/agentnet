@@ -109,7 +109,11 @@ async fn call(c: &Client, name: &str, args: Value) -> Result<(bool, Value)> {
     if let Some(o) = args.as_object() {
         p = p.with_arguments(o.clone());
     }
-    let r = c.peer().call_tool(p).await.context("tool call (protocol error)")?;
+    let r = c
+        .peer()
+        .call_tool(p)
+        .await
+        .context("tool call (protocol error)")?;
     let is_err = r.is_error == Some(true);
     let payload = if is_err {
         let block = serde_json::to_value(r.content.first()).unwrap_or(Value::Null);
@@ -150,7 +154,9 @@ async fn cmd_mcp_call(a: &Args) -> Result<Value> {
     let (is_error, result) = call(&c, &tool, args).await?;
     let elapsed = t0.elapsed().as_millis() as u64;
     let _ = c.cancel().await;
-    Ok(json!({"tool": tool, "protocol": proto, "is_error": is_error, "result": result, "elapsed_ms": elapsed}))
+    Ok(
+        json!({"tool": tool, "protocol": proto, "is_error": is_error, "result": result, "elapsed_ms": elapsed}),
+    )
 }
 
 // ------------------------------------------------------------------- step2
@@ -159,7 +165,11 @@ async fn cmd_step2(a: &Args) -> Result<Value> {
     let bin = PathBuf::from(a.req("--bin")?);
     let (da, db) = (PathBuf::from(a.req("--a")?), PathBuf::from(a.req("--b")?));
     let b_addr = a.req("--b-addr")?;
-    let timeout_s: u64 = a.get("--timeout").map(|s| s.parse()).transpose()?.unwrap_or(180);
+    let timeout_s: u64 = a
+        .get("--timeout")
+        .map(|s| s.parse())
+        .transpose()?
+        .unwrap_or(180);
     let ca = mcp_client(&bin, &da).await?;
     let cb = mcp_client(&bin, &db).await?;
     let id_a = call_ok(&ca, "get_identity", json!({})).await?;
@@ -184,7 +194,8 @@ async fn cmd_step2(a: &Args) -> Result<Value> {
     .await?;
     let t_send = t0.elapsed().as_millis() as u64;
     let mid = sent["message_id"].as_str().unwrap_or_default().to_owned();
-    let mut timeline = vec![json!({"state": sent["status"], "t_ms": t_send, "source": "send_message response"})];
+    let mut timeline =
+        vec![json!({"state": sent["status"], "t_ms": t_send, "source": "send_message response"})];
 
     // Concurrently: wait for the subscription notification, poll status.
     let notify = async {
@@ -274,7 +285,12 @@ fn count_by<'a>(it: impl Iterator<Item = &'a str>) -> BTreeMap<String, u64> {
 
 async fn cmd_dump(a: &Args) -> Result<Value> {
     let dir = PathBuf::from(a.req("--data-dir")?);
-    let idle = Duration::from_millis(a.get("--idle-ms").map(|s| s.parse()).transpose()?.unwrap_or(1500));
+    let idle = Duration::from_millis(
+        a.get("--idle-ms")
+            .map(|s| s.parse())
+            .transpose()?
+            .unwrap_or(1500),
+    );
     let agent = RemoteAgent::new(&dir);
     // inbox (incl. quarantined)
     let mut inbox = vec![];
@@ -396,7 +412,14 @@ fn pct(sorted: &[i64], p: f64) -> Option<i64> {
     Some(sorted[rank.min(sorted.len()) - 1])
 }
 
-async fn bench_dir(from: PathBuf, to_addr: String, tag: String, n: usize, timeout_s: u64, pace_ms: u64) -> Result<Value> {
+async fn bench_dir(
+    from: PathBuf,
+    to_addr: String,
+    tag: String,
+    n: usize,
+    timeout_s: u64,
+    pace_ms: u64,
+) -> Result<Value> {
     let agent = RemoteAgent::new(&from);
     let t0 = Instant::now();
     let mut ids = vec![];
@@ -433,7 +456,9 @@ async fn bench_dir(from: PathBuf, to_addr: String, tag: String, n: usize, timeou
                         lat.push(st.delivered_at.unwrap_or(0) - st.created_at)
                     }
                     DeliveryState::Failed | DeliveryState::Expired => {
-                        *other.entry(format!("{:?}", st.state).to_lowercase()).or_insert(0) += 1
+                        *other
+                            .entry(format!("{:?}", st.state).to_lowercase())
+                            .or_insert(0) += 1
                     }
                     _ => still.push(id),
                 },
@@ -465,14 +490,24 @@ async fn cmd_bench(a: &Args) -> Result<Value> {
     let (da, db) = (PathBuf::from(a.req("--a")?), PathBuf::from(a.req("--b")?));
     let (aa, ba) = (a.req("--a-addr")?, a.req("--b-addr")?);
     let n: usize = a.get("--n").map(|s| s.parse()).transpose()?.unwrap_or(100);
-    let timeout: u64 = a.get("--timeout").map(|s| s.parse()).transpose()?.unwrap_or(300);
+    let timeout: u64 = a
+        .get("--timeout")
+        .map(|s| s.parse())
+        .transpose()?
+        .unwrap_or(300);
     let tag = a.get("--tag").unwrap_or_else(|| "bench".into());
-    let pace: u64 = a.get("--pace-ms").map(|s| s.parse()).transpose()?.unwrap_or(25);
+    let pace: u64 = a
+        .get("--pace-ms")
+        .map(|s| s.parse())
+        .transpose()?
+        .unwrap_or(25);
     let (r1, r2) = tokio::join!(
         bench_dir(da, ba, format!("{tag}-a2b"), n, timeout, pace),
         bench_dir(db, aa, format!("{tag}-b2a"), n, timeout, pace)
     );
-    Ok(json!({"a_to_b": r1?, "b_to_a": r2?, "n_per_direction": n, "direction_mode": format!("both directions concurrently, {pace} ms pacing")}))
+    Ok(
+        json!({"a_to_b": r1?, "b_to_a": r2?, "n_per_direction": n, "direction_mode": format!("both directions concurrently, {pace} ms pacing")}),
+    )
 }
 
 // ------------------------------------------------------------ config-check
@@ -482,7 +517,10 @@ async fn cmd_config_check(a: &Args) -> Result<Value> {
     let name = a.req("--server")?;
     let expect = a.req("--expect-address")?;
     let s = cfg["mcpServers"][&name].clone();
-    let command = s["command"].as_str().ok_or_else(|| anyhow!("no command"))?.to_owned();
+    let command = s["command"]
+        .as_str()
+        .ok_or_else(|| anyhow!("no command"))?
+        .to_owned();
     let args: Vec<String> = s["args"]
         .as_array()
         .ok_or_else(|| anyhow!("no args"))?
@@ -495,12 +533,18 @@ async fn cmd_config_check(a: &Args) -> Result<Value> {
     });
     let c = spawn_client(cmd).await?;
     let proto = protocol_of(&c);
-    let tools = c.peer().list_tools(Default::default()).await.context("tools/list")?;
+    let tools = c
+        .peer()
+        .list_tools(Default::default())
+        .await
+        .context("tools/list")?;
     let names: Vec<String> = tools.tools.iter().map(|t| t.name.to_string()).collect();
     let id = call_ok(&c, "get_identity", json!({})).await?;
     let _ = c.cancel().await;
     let ok = id["agent_id"] == expect.as_str();
-    Ok(json!({"ok": ok, "command": command, "args": s["args"], "protocol": proto, "tools": names, "get_identity": id}))
+    Ok(
+        json!({"ok": ok, "command": command, "args": s["args"], "protocol": proto, "tools": names, "get_identity": id}),
+    )
 }
 
 #[tokio::main]

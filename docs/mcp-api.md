@@ -78,7 +78,7 @@ Limits (`crates/mcp/src/limits.rs`; the engine may be stricter and answers `too_
 
 | Item | Limit |
 |---|---|
-| `body` | 1 to 32768 bytes (UTF-8) |
+| `body` | 1 to 65536 bytes (UTF-8); the effective limit is the **smaller** of this cap and the daemon's `delivery.max_body_bytes` (default 65536), above which the engine answers `too_large` |
 | address (`recipient`, `sender`, `expected_address`) | `an1` + lowercase base32 `[a-z2-7]`, total 4 to 128 chars (loose syntax; the engine checks the checksum) |
 | ids (`conversation_id`, `correlation_id`, `idempotency_key`, `message_id`, `trigger_id`) | `[A-Za-z0-9._~-]{1,128}` |
 | cursors | 1 to 512 visible ASCII chars (opaque) |
