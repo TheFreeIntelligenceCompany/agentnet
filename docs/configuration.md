@@ -1,8 +1,20 @@
 # Configuration (`agentnet.toml`)
 
 The file lives in the data directory (`$AGENTNET_HOME`, default `~/.agentnet`, or `--data-dir`).
-`agentnet init` writes a private-mode file. Unknown keys and unknown values are errors. Every section is
-optional; an omitted key takes the default shown. The daemon validates the file at start and refuses to run
+`agentnet init` writes a private-mode file. Unknown keys and unknown values are errors.
+
+Omitted keys use defaults, but private mode requires at least one relay address in `[network].peers`. A minimal runnable file:
+
+```toml
+[network]
+node_url = "http://127.0.0.1:8645"
+peers = ["/ip4/172.28.66.10/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV"]
+```
+
+(`node_url` is your own Logos Delivery node; `peers` is your own relay's multiaddr; the values above are the local spike topology's. Everything
+else takes the default shown in the tables below. `agentnet init --node-url <url> --peer <multiaddr>` writes the full file for you.)
+
+Every section is optional; an omitted key takes the default shown. The daemon validates the file at start and refuses to run
 on any error (fail closed). `agentnet doctor` checks it too. Examples: `docs/examples/private.toml`,
 `docs/examples/public.toml` (generated from `agentnet_daemon::sample_private_config()` /
 `sample_public_config()` and checked by a test).

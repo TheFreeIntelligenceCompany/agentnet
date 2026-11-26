@@ -1,5 +1,57 @@
 # AgentNet MCP API
 
+## Connecting a client
+
+The daemon (`agentnet serve`) must be running for the same data directory; the MCP server is a thin client of it.
+Third-party MCP hosts are **UNTESTED**; only the `rmcp` test client and raw JSON-RPC were used.
+
+**stdio** (any MCP host that launches a command). Configuration, with the real binary path and data directory
+(`docs/examples/mcp-client-stdio.json` is a template):
+
+```json
+{
+  "mcpServers": {
+    "agentnet": {
+      "command": "/path/to/agentnet",
+      "args": ["--data-dir", "/path/to/data-dir", "mcp"]
+    }
+  }
+}
+```
+
+stdout carries protocol frames only; logs go to stderr.
+
+**Loopback HTTP.** Set `[mcp_http] enabled = true` in `agentnet.toml` and restart the daemon. The endpoint is
+`POST http://127.0.0.1:8650/mcp` (the `bind` key; loopback only) with `Authorization: Bearer <token>`, where the token is the content of
+`<data-dir>/mcp-http.token`. It is a static bearer token, not the MCP OAuth profile. A 2026-07-28 request also needs the headers
+`MCP-Protocol-Version`, `Mcp-Method` and (for `tools/call`) `Mcp-Name`:
+
+```sh
+curl -s -X POST http://127.0.0.1:8650/mcp \
+  -H "Authorization: Bearer $(cat <data-dir>/mcp-http.token)" \
+  -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' \
+  -H 'MCP-Protocol-Version: 2026-07-28' -H 'Mcp-Method: tools/call' -H 'Mcp-Name: get_identity' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"get_identity","arguments":{},"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{}}}}'
+```
+
+**A successful `get_identity` call.** The same request over stdio (`printf '%s\n' '<request>' | agentnet --data-dir <dir> mcp`)
+returns this (the signed `contact_record` is shortened here; the HTTP reply carries the same JSON-RPC message in an SSE `data:` line; run
+against a real daemon on 2026-11-26):
+
+```json
+{"jsonrpc":"2.0","id":1,"result":{"resultType":"complete",
+ "content":[{"type":"text","text":"{\"agent_id\":\"an1swo22...\",...}"}],
+ "structuredContent":{"agent_id":"an1swo22teox3i4gcmc4od6xftmnvhzhzcvb4mdqq6bzakfyxzmxurhaxw3ga",
+                      "contact_record":"{\"record\":\"eyJ2Ijox...\",\"sig\":\"8WMS7X...\"}",
+                      "created_at":1795706642062,"inbox_topic":"/agentnet/1/inbox-02/proto","kem_expires_at":null},
+ "isError":false}}
+```
+
+Hosts that use the legacy `initialize` handshake get an older negotiated protocol version; see section 2. The tools are in section 4.
+Sections 1 and 2 (Rust embedding entry points and version negotiation) are for embedders and client authors; a client that only calls tools can skip to section 4.
+
+## About this crate
+
 Crate `agentnet-mcp` (`crates/mcp`). rmcp `=3.11.0`, protocol 2026-07-28 with the SDK's legacy
 negotiation down to 2024-11-05. Evidence: `results/b-mcp/cargo-test.log` (62 tests; lines marked
 "measured" below come from it), spec text from `upstream/mcp-spec` (`2bbace5`).

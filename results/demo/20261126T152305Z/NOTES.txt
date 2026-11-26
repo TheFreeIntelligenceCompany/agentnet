@@ -1,0 +1,8 @@
+scripts/demo.sh run against the already-running local relay topology (an-r1, an-na, an-nb were up and were reused, untouched).
+Host: Darwin 25.6.0 arm64, single host; node image linux/amd64 under qemu in colima; machine heavily loaded (load average about 139 at run time).
+Commit base: 3d82d99 plus the uncommitted scripts/demo.sh.
+run1.log, run2.log, run3.log: three successful runs (exit 0). Wall times: run1 9.1 s, run2 6.0 s, run3 7.8 s.
+In every run the nodes were already warm and peered, so readiness took 0-2 s and each delivery 2-3 s. These are NOT cold-start numbers.
+failure-path-ready-timeout0.log: DEMO_READY_TIMEOUT=0 forces the readiness failure path (exit 1, actionable message, daemons stopped, temp dir removed, relay untouched).
+NOT exercised: starting the relay from cold (that would require tearing down the shared topology), building the binary (built beforehand with cargo build --release --locked -p agentnet-cli, 2m40s), missing-prerequisite messages.
+This is a single-host test, not a cross-machine test.

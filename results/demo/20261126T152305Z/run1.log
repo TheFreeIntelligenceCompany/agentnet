@@ -1,0 +1,62 @@
+[demo 15:23:05] checking prerequisites
+[demo 15:23:06] using agentnet 0.1.0 at /Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-ad50c699d08456f4b/target/release/agentnet
+[demo 15:23:06] relay topology is already up (reusing it; it will not be touched): r1 na nb
+[demo 15:23:06] temp directory: /tmp/an-demo.IULhL3
+[demo 15:23:06] agent A = an1dqiyvk377j2qxfzwgmzlf75gc2kb6xxak6mrs6s2335erobfmmqam4r3lu
+[demo 15:23:06] agent B = an1q5csoegqrdxoeyvbjpx25sfyndm3agucc65o4w3ua3ao22xofibybxwepy
+[demo 15:23:06] daemons started: A pid 44564, B pid 44565
+[demo 15:23:08] ok: daemon A ready (after 2 s)
+[demo 15:23:08] ok: daemon B ready (after 0 s)
+[demo 15:23:08] contacts exchanged and verified
+[demo 15:23:08] A sent 251f13d0-301e-492b-9f1f-d5d22c27795d (queued/sent is not receipt)
+[demo 15:23:10] ok: message visible in B's inbox (after 2 s)
+[demo 15:23:10] ok: A has the authenticated receipt (state delivered) (after 0 s)
+[demo 15:23:10] A -> B delivered in 2 s
+[demo 15:23:11] B sent b72a6c37-ee19-4c63-b3ad-2c756676e8b2
+[demo 15:23:13] ok: reply visible in A's inbox (after 2 s)
+[demo 15:23:13] ok: B has the authenticated receipt (state delivered) (after 0 s)
+[demo 15:23:13] B -> A delivered in 3 s
+
+=== A's inbox (the reply) ===
+b72a6c37-ee19-4c63-b3ad-2c756676e8b2 from an1q5csoegqrdxoeyvbjpx25sfyndm3agucc65o4w3ua3ao22xofibybxwepy [trusted] message
+    reply from B
+next_cursor=aW5ib3g6MQ
+
+=== B's inbox (the first message) ===
+251f13d0-301e-492b-9f1f-d5d22c27795d from an1dqiyvk377j2qxfzwgmzlf75gc2kb6xxak6mrs6s2335erobfmmqam4r3lu [trusted] message
+    hello from A
+next_cursor=aW5ib3g6MQ
+
+=== status of A -> B (251f13d0-301e-492b-9f1f-d5d22c27795d) ===
+delivered  message_id=251f13d0-301e-492b-9f1f-d5d22c27795d to an1q5csoegqrdxoeyvbjpx25sfyndm3agucc65o4w3ua3ao22xofibybxwepy attempts=1
+  sent at 2026-11-26 15:23:08 UTC
+  delivered (authenticated receipt) at 2026-11-26 15:23:09 UTC
+  expires 2026-11-27 15:23:08 UTC
+
+=== status of B -> A (b72a6c37-ee19-4c63-b3ad-2c756676e8b2) ===
+delivered  message_id=b72a6c37-ee19-4c63-b3ad-2c756676e8b2 to an1dqiyvk377j2qxfzwgmzlf75gc2kb6xxak6mrs6s2335erobfmmqam4r3lu attempts=1
+  sent at 2026-11-26 15:23:11 UTC
+  delivered (authenticated receipt) at 2026-11-26 15:23:11 UTC
+  expires 2026-11-27 15:23:11 UTC
+
+=== receipt for A -> B (JSON) ===
+{
+  "message_id": "251f13d0-301e-492b-9f1f-d5d22c27795d",
+  "recipient": "an1q5csoegqrdxoeyvbjpx25sfyndm3agucc65o4w3ua3ao22xofibybxwepy",
+  "message_type": "message",
+  "conversation_id": "48c21469-3127-4c76-840b-fc130f3bc09f",
+  "state": "delivered",
+  "attempts": 1,
+  "created_at": 1795706588816,
+  "expires_at": 1795792988816,
+  "last_attempt_at": 1795706588817,
+  "next_attempt_at": null,
+  "sent_at": 1795706588817,
+  "delivered_at": 1795706589216,
+  "last_error": null
+}
+
+[demo 15:23:13] success: two agents exchanged a message and a reply over the local relay (single host, not a cross-machine test); total 8 s
+[demo 15:23:14] relay containers were already running before this script: left untouched
+[demo 15:23:14] done
+scripts/demo.sh  0.27s user 0.37s system 7% cpu 9.072 total
