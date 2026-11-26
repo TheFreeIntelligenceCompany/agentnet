@@ -116,6 +116,16 @@ pub fn build(ip: &str, peer_id: &str, client_ip: &str) -> RelayConfig {
         if host_network {
             s.push_str("    network_mode: host   # REST stays on 127.0.0.1 below; never use 0.0.0.0 with host networking\n");
         }
+        if name == "relay" {
+            // A client whose path died silently leaves a half-open tcp connection on the relay; with the kernel default
+            // (tcp_retries2=15) it lives 15+ min and the client cannot reconnect meanwhile (results/reconnect, docs/runbook.md 6.3).
+            if host_network {
+                s.push_str("    # host networking: docker cannot set sysctls here. On the host run `sysctl -w net.ipv4.tcp_retries2=6`\n");
+                s.push_str("    # (persist in /etc/sysctl.d/) so half-open client sockets are dropped after ~25 s, not 15+ min.\n");
+            } else {
+                s.push_str("    sysctls: {net.ipv4.tcp_retries2: \"6\"}   # drop half-open client sockets after ~25 s, not 15+ min\n");
+            }
+        }
         s.push_str("    command:\n");
         for f in flags {
             let f = if f == "--rest-address=127.0.0.1" && !host_network {
@@ -200,6 +210,7 @@ pub fn build(ip: &str, peer_id: &str, client_ip: &str) -> RelayConfig {
             "ONE Logos Delivery client node PER AGENT (one `agentnet serve` per node): two agents on one node drain each other's frames from the destructive REST cache (each GET returns and deletes), which delays delivery until history sync and is unsupported.".into(),
             "Generate node keys with `openssl rand -hex 32` (one per node); the relay's peer id is printed in its log and by GET /info on its REST port.".into(),
             "Start the relay first, then the client node, then `agentnet serve`.".into(),
+            "Half-open connections after a silent path loss: a client whose path died silently (dropped tunnel, lost NAT mapping, laptop sleep) leaves a tcp socket on the relay that the relay's kernel only gives up after 15+ min (tcp_retries2=15); in the simulation the client's node could not reconnect meanwhile. The relay compose above lowers net.ipv4.tcp_retries2 to 6 (~25 s). Alternatively let the client machine's firewall answer stale relay segments with a tcp reset instead of dropping them silently. Measured on a single-host simulation only: results/reconnect/*/SUMMARY.md; the one-connection-per-peer rejection that may explain it is UNTESTED.".into(),
             "--dns-addrs-name-server=127.0.0.1 stops the node's online-monitor from querying 1.1.1.1 every 5 s (the only external contact seen with discovery off). On a no-egress network the node may consider itself offline until its first peer connects.".into(),
             "Cluster ids 1, 2, 3 and 16 select public presets (public bootstrap, RLN) and are rejected by agentnet. Cluster/shard separation is not access control: restrict who can reach tcp/60000 with firewall rules.".into(),
             "REST has no authentication: bind it to loopback only. In a bridge-network compose file the container-internal --rest-address=0.0.0.0 is safe only together with a \"127.0.0.1:<port>:8645\" port mapping; with `network_mode: host` keep --rest-address=127.0.0.1.".into(),

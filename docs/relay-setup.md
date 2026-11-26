@@ -201,6 +201,24 @@ With every discovery option disabled the node still resolves `one.one.one.one` v
 Also: if the compose snippet is used as printed, `ports: ["60000:60000", ...]` binds tcp/60000 on **all host interfaces**; restrict with the host firewall or bind to
 a specific address (`"<ip>:60000:60000"`).
 
+## 8a. Half-open sockets on the relay after a silent path loss (measured in simulation)
+
+A client whose path dies silently (tunnel interrupted, NAT mapping lost, machine asleep) closes its connections after ~48 s but the close does not
+reach the relay. The service node only pings peers it dialled itself (`node_health_monitor.nim`, `keepAliveLoop`: `connectedPeers()[1]`, the
+outbound ones), so it keeps a half-open tcp socket to the client until its kernel's `tcp_retries2` (15 by default; 21.8 min measured once) is exhausted.
+While that socket exists the relay closes every new connection from the same client, and the client cannot reconnect, whatever it POSTs to
+`/admin/v1/peers` (`results/reconnect/20261126T065412Z/SUMMARY.md`; the reason it closes them, probably one connection per peer id, is UNTESTED).
+
+* **Relay:** `sysctls: {net.ipv4.tcp_retries2: "6"}` in the relay's compose service (what `agentnet relay print-config` prints; with `network_mode: host`
+  set it on the host with `sysctl -w net.ipv4.tcp_retries2=6` and `/etc/sysctl.d/`). Measured: the stale socket was gone 31 to 32 s after the path
+  was lost and the client was connected 3.4 to 9.5 s after the path returned (4 of 4 trials). Side effect not studied: the relay also gives up on any
+  connection whose peer has not acknowledged for about 25 s.
+* **Client machine:** make the firewall answer stale relay segments with a reset instead of dropping them, after the accept rules:
+  `iptables -A INPUT -i <overlay interface> -s <relay ip> -p tcp -j REJECT --reject-with tcp-reset`. Measured 2.3 to 9.7 s (4 of 4). This helps only
+  while the client's firewall or NAT still sees the relay's retransmits; a lost NAT mapping on a router stays UNTESTED.
+* Without either, expect recovery only when the relay's socket finally times out (see the measured time in the SUMMARY), or restart the **relay's** node.
+* Single-host WireGuard simulation only; real Tailscale and real NATs are UNTESTED.
+
 ## 9. Two service nodes (E9): no automatic Store failover
 
 `spike/relay/docker-compose.r2.yml` + `./scripts/up.sh r2` add R2. Clients list both service nodes as `--staticnode` (and AgentNet `peers`), R2 peers with R1.

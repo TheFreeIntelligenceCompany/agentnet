@@ -1,0 +1,38 @@
+t_ms	event	detail
+0	path_removed
+52945	redial	http=400 dur_ms=10066 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+65148	redial	http=400 dur_ms=10050 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+77327	redial	http=400 dur_ms=10049 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+89501	redial	http=400 dur_ms=10065 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+101704	redial	http=400 dur_ms=10075 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+114011	redial	http=400 dur_ms=10137 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+126455	path_restored
+126318	redial	http=400 dur_ms=185 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+137464	redial	http=400 dur_ms=54 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+148105	redial	http=400 dur_ms=48 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+158786	redial	http=400 dur_ms=46 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+169441	redial	http=400 dur_ms=45 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+180152	redial	http=400 dur_ms=46 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+190794	redial	http=400 dur_ms=45 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+201433	redial	http=400 dur_ms=45 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+212075	redial	http=400 dur_ms=45 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+222785	redial	http=400 dur_ms=46 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+233386	redial	http=400 dur_ms=43 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+244056	redial	http=400 dur_ms=47 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+254743	redial	http=400 dur_ms=47 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+265409	redial	http=400 dur_ms=46 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+276015	redial	http=400 dur_ms=45 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+286696	redial	http=400 dur_ms=44 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+297334	redial	http=400 dur_ms=44 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+307998	redial	http=400 dur_ms=47 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+318626	redial	http=400 dur_ms=48 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+329324	redial	http=400 dur_ms=45 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+339958	redial	http=400 dur_ms=49 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+350663	redial	http=400 dur_ms=45 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+361272	redial	http=400 dur_ms=45 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+371913	redial	http=400 dur_ms=45 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+382532	redial	http=400 dur_ms=46 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+393216	redial	http=400 dur_ms=46 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+403822	redial	http=400 dur_ms=47 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+414433	redial	http=400 dur_ms=45 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+425100	redial	http=400 dur_ms=45 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 

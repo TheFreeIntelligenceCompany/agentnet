@@ -171,18 +171,33 @@ stop the daemon, replace the binary, start the daemon, then run `agentnet doctor
 
 * **Symptom.** After a silent network failure (dropped tunnel, NAT mapping loss, firewall change) `network status` shows `ready` false with 0
   connected allowed peers, and messages stay `queued`.
-* **Likely cause.** Known and not understood. In the single-host simulations the node noticed the dead path after about 48 s (health monitor log line
-  `Too many consecutive ping failures, node likely disconnected. Killing all connections`), then reconnected anywhere from 42 s to over 16 minutes
-  with the path restored; in one run it did not reconnect within 600 s. The root cause is under investigation (peer-manager backoff, SYN retransmission
-  backoff, or the online monitor with `--dns-addrs-name-server=127.0.0.1`: `docs/network-simulations.md`, Findings 1, and E12 in `docs/spike/notes-daemon-rest.md`).
-  A connection that dies by an RST is noticed in under a second but is just as slow to return.
-* **Check.** First confirm the path itself works again (WireGuard/Tailscale handshake, firewall, NAT, relay up). Then watch `agentnet network status --verbose`
-  for `connected_peers` and the peer id. The adapter already POSTs the static peer to the node every 10 s while no allowlisted peer is connected; that did not
-  reliably shorten recovery.
-* **Action.** Wait; messages are not lost, they are delivered from the sender's queue and Store within TTL (every message was delivered once in the
-  simulations). The workaround to offer is restarting the client's sidecar node (`docker restart <client node>` or your equivalent) and expecting
-  about 62 s before live relay works again. **The effect of that restart on this specific failure is UNTESTED.** Real Tailscale and real NAT behaviour
-  are UNTESTED.
+* **Likely cause (measured in the single-host WireGuard simulation; real networks UNTESTED).** The client's node notices the dead path after about
+  48 s (`Too many consecutive ping failures, node likely disconnected. Killing all connections`) and closes its connections, but the close
+  never reaches the relay. The relay (nwaku) only pings peers it dialled itself, so it never notices; its kernel keeps a half-open tcp socket
+  to the client and retransmits into the void. When the path returns, those retransmits reach the client's firewall, which drops them silently
+  (default-deny, or a NAT/firewall mapping that has expired) instead of answering with a reset, so the relay's socket survives until its
+  `tcp_retries2` runs out (15 by default; 1307 s = 21.8 min in the one trial that measured it). While it exists, every dial from the client completes the tcp handshake and the
+  security handshake and is then closed by the **relay** with a FIN within about 10 ms (tcpdump on the client's tunnel interface,
+  `results/reconnect/20261126T065412Z/evidence/b-wg0-tcpdump-two-redials-while-stale.txt`); the client sees `Failed to connect to peer ...`
+  (HTTP 400 from `POST /admin/v1/peers`, after about 50 ms). In 4 of 4 fresh-topology trials the client was
+  still not connected 300 s after the path was back, and in a 1300 s trial the stale socket died only after 1307 s, after which one POST connected in 50 ms
+  (`results/reconnect/20261126T065412Z/SUMMARY.md`). Why the relay closes it (probably its limit of one connection per peer id, `MaxConnectionsPerPeer = 1` in
+  `logos_delivery/waku/node/waku_switch.nim`, nim-libp2p's connection manager not read) is **UNTESTED**; the observations are that the relay is
+  the side that closes, and that the dial succeeds within seconds as soon as the relay's socket is gone. The earlier suspects were not the cause: the 10 s redial does not make it worse (the node's own peer
+  manager, with the offline monitor, did not reconnect at all without it) and `POST /admin/v1/peers` does dial (it bypasses the node's backoff).
+* **Check.** Confirm the path works again (WireGuard/Tailscale handshake, firewall, NAT, relay up). On the relay machine
+  `ss -tn state established '( sport = :60000 )'` lists a socket to the client's overlay address with a non-empty Send-Q and a retransmit timer
+  (`timer:(on,...)`): that is the stale socket. `agentnet network status --verbose` shows `connected_peers` 0. The adapter already POSTs the static
+  peer every 10 s; that reconnects within seconds once the stale socket is gone, and cannot remove it from the client side.
+* **Fix (measured, simulation only).** On the **relay**, lower `net.ipv4.tcp_retries2` to 6 (the stale socket then died 31 to 32 s after the path
+  was lost; reconnect after the path returned: 3.4, 5.5, 9.5 and 3.6 s, 4 of 4 trials). `agentnet relay print-config` emits this as `sysctls:` in
+  the relay compose (bridge networking) and as a comment with the host `sysctl -w` for `network_mode: host`. Or, on the **client** machine, make
+  the firewall answer stale relay segments with a reset: `iptables -A INPUT -i <overlay if> -s <relay ip> -p tcp -j REJECT --reject-with tcp-reset`
+  after the accept rules (reconnect 9.6, 9.7, 9.6 and 2.3 s, 4 of 4 trials). Both can be combined. Lowering `tcp_retries2` also makes the relay drop
+  any connection whose peer has been silent for about 25 s of retransmits; that side effect was not studied.
+* **Action without the fix.** Wait (up to about 22 min); messages are not lost, they are delivered from the sender's queue and Store within TTL
+  (every message was delivered once in the simulations). Restarting the **relay's** node closes its stale sockets at once; restarting the client's
+  node does not (the stale socket is on the relay). Real Tailscale and real NAT behaviour are UNTESTED.
 
 ### 6.4 Relay restarted or relay Store unavailable
 

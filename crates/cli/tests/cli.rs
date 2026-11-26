@@ -372,6 +372,10 @@ fn relay_print_config_has_the_verified_flags_and_marks_tailscale_untested() {
     assert!(s.contains("ONE Logos Delivery client node PER AGENT"));
     assert!(s.contains("Tailscale variant (UNTESTED)"));
     assert!(s.contains("UNTESTED - not run"));
+    // relay-side half-open socket mitigation (results/reconnect): bridge compose sets the sysctl, host-network compose says to set it on the host
+    assert!(s.contains("sysctls: {net.ipv4.tcp_retries2: \"6\"}"));
+    assert!(s.contains("sysctl -w net.ipv4.tcp_retries2=6"));
+    assert!(s.contains("half-open"));
     let j = json_ok(t.path(), &["relay", "print-config"]);
     assert!(j["relay_flags"].as_array().unwrap().len() > 20);
 }

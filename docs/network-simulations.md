@@ -97,7 +97,7 @@ captures to a path the colima VM cannot see was discarded and replaced by these.
 | 4.idle_nodes_only | PASS | daemons stopped (no Store sync): same, largest gap 6.0 / 9.0 s; after restarting the daemons one message each way delivered after 30.6 / 14.0 s (A->B) and 30.7 / 32.4 s (B->A), counted from the daemon restart |
 
 The same action gives very different times between runs (e.g. 55 s versus 655 s to reconnect after the same flush); there are only two runs of
-each and the cause of the spread was not isolated.
+each; the W-topology spread was explained afterwards by a half-open socket on the relay (Findings 1, `results/reconnect/20261126T065412Z/SUMMARY.md`). That the N runs had the same cause was not checked (UNTESTED).
 
 What this shows: two clients with no inbound path (verified from R, from the other LAN and from the other gateway) exchange authenticated
 messages and recover offline messages through a relay that sees them at their gateways' addresses; with conntrack timeout 120 s a 10-minute
@@ -117,10 +117,18 @@ does **not** tell what happens with a NAT whose timeout is shorter than the ~9 s
    RST the node notices within 0.1 to 0.9 s. What is slow is the way back: with the path restored (WireGuard handshake after ~6 s, or a fresh
    SYN allowed by the gateway) the node listed R again after **163 s and 363 s** (W, two runs), **655 s and 55 s** (N flush, two runs) and
    **466 s and 42 s** (N RST variant); after the RST flush of run 2 the daemon was ready again only after **964 s**, and the messages queued
-   meanwhile were delivered after up to **1096 s**. The adapter POSTs the static peer to `/admin/v1/peers` every 10 s while no allowlisted
-   peer is connected; that did not reliably shorten it. The node log shows `Node is offline` / `Node is online` flips and
-   `notConnectedPeers=1` for minutes. The cause (node peer-manager backoff, SYN retransmission backoff of a dial started while the path was
-   dead, or the online monitor with `--dns-addrs-name-server=127.0.0.1`) was **not isolated**. This is the same family as E12 in
+   meanwhile were delivered after up to **1096 s**. **Cause isolated afterwards** (`results/reconnect/20261126T065412Z/SUMMARY.md`, W topology, single host): the node kills its
+   own connections after ~48 s but the close never reaches the relay. nwaku pings only peers it dialled, so the relay never notices and its
+   kernel keeps a half-open tcp socket to the client, retransmitting. When the path is back, the client's default-deny firewall drops those
+   retransmits silently (no reset), so the socket lives until the relay's `tcp_retries2` is exhausted (15 by default: 21.8 min in the one trial that measured it, the "up to 16
+   minutes" above). While it exists every redial completes tcp and the security handshake and is then closed by the relay (tcpdump on B's
+   `wg0`), so the adapter's 10 s redial cannot help; it does reconnect within seconds once the socket is gone, and without any redial the
+   node did not reconnect on its own (the earlier suspects, peer-manager backoff and the online monitor, are not what delays it).
+   In 4 of 4 fresh-topology trials with the relay holding that socket at the restore point, the client had not reconnected after 300 s; with `net.ipv4.tcp_retries2=6` on the
+   relay the stale socket died 31 to 32 s after the path was lost and the client was back 3.4 to 9.5 s after the path returned (4 of 4);
+   with a tcp-reset REJECT rule on the client for stale relay segments, 2.3 to 9.7 s (4 of 4). Why the relay closes the new connection
+   (probably one connection per peer id) is UNTESTED, as are real Tailscale and NAT devices.
+   This is the same family as E12 in
    `docs/spike/notes-daemon-rest.md` (a client that loses its relay does not simply reconnect). It is the realistic failure for outbound-only
    clients: expect anywhere from under a minute to a quarter of an hour after a NAT mapping loss or a tunnel interruption. Messages were
    not lost: every one was delivered, within its TTL, from the sender's queue and Store. Reconnect after a gateway restart (53 to 67 s) and
