@@ -203,9 +203,7 @@ pub fn network(st: &NetworkStatus, daemon: Option<&Value>) -> String {
     );
     match &st.isolation_violation {
         Some(v) => s.push_str(&format!("ISOLATION VIOLATION: {}\n", clean(v))),
-        None if !st.isolation_audited => {
-            s.push_str("isolation: not audited (public mode)\n")
-        }
+        None if !st.isolation_audited => s.push_str("isolation: not audited (public mode)\n"),
         None => s.push_str("isolation: ok\n"),
     }
     let q = &st.queue;
