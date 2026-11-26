@@ -1,0 +1,3 @@
+06:19:47.323162 IP 172.29.70.21.56912 > 10.66.0.3.60000: Flags [S], seq 1840471182, win 64240, options [mss 1460,sackOK,TS val 1645907668 ecr 0,nop,wscale 7], length 0
+06:19:48.368434 IP 172.29.70.21.56912 > 10.66.0.3.60000: Flags [S], seq 1840471182, win 64240, options [mss 1460,sackOK,TS val 1645908714 ecr 0,nop,wscale 7], length 0
+06:19:49.383728 IP 172.29.70.21.56912 > 10.66.0.3.60000: Flags [S], seq 1840471182, win 64240, options [mss 1460,sackOK,TS val 1645909728 ecr 0,nop,wscale 7], length 0

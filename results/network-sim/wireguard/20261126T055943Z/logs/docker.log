@@ -1,0 +1,110 @@
+couldn't find env file: /Users/dennison/develop/FIC-elipsis/spike/relay-wireguard/.run/env
+ Network an-wg_underlay Creating 
+ Volume an-wg_rdata Creating 
+ Volume an-wg_rdata Creating 
+ Network an-wg_underlay Creating 
+ Volume an-wg_rdata Created 
+ Volume an-wg_rdata Created 
+ Network an-wg_underlay Created 
+ Network an-wg_underlay Created 
+ Container an-wg-a Creating 
+ Container an-wg-r Creating 
+ Container an-wg-b Creating 
+ Container an-wg-a Created 
+ Container an-wg-b Created 
+ Container an-wg-r Created 
+ Container an-wg-r-node Creating 
+ Container an-wg-r-node Created 
+2bbcefd3d86b453cc9041e23fa9247d6598c09d934dd287752702d5496349e55
+ Container an-wg-a Starting 
+ Container an-wg-r Starting 
+ Container an-wg-b Starting 
+ Container an-wg-a Started 
+ Container an-wg-r Started 
+ Container an-wg-b Started 
+ Container an-wg-r Running 
+ Container an-wg-r Waiting 
+ Container an-wg-r Healthy 
+ Container an-wg-r-node Starting 
+ Container an-wg-r-node Started 
+ Container an-wg-a Running 
+ Container an-wg-b Running 
+ Container an-wg-b-node Creating 
+ Container an-wg-a-node Creating 
+ Container an-wg-a-node Created 
+ Container an-wg-b-node Created 
+ Container an-wg-a Waiting 
+ Container an-wg-b Waiting 
+ Container an-wg-a Healthy 
+ Container an-wg-a-node Starting 
+ Container an-wg-b Healthy 
+ Container an-wg-b-node Starting 
+ Container an-wg-a-node Started 
+ Container an-wg-b-node Started 
+an-wg-cap-main-an-wg-br0
+a40aa96faf93bbe564fe521dbcf22333eeb7f3fea9cc506a0f0c4e2c399e4b18
+an-wg-cap-paths-unguarded-an-wg-br0
+2a907ed4affdcc966cb6a3646b52e3224defa4e82b19f7ed221b3be521e125d6
+an-wg-cap-paths-guarded-an-wg-br0
+f7dde7d4ce2bc474259fc99920f33f74b40922092de675df29aadf578253de38
+ Container an-wg-intruder Creating 
+ Container an-wg-intruder Created 
+ Container an-wg-intruder Starting 
+ Container an-wg-intruder Started 
+ Container an-wg-intruder Running 
+ Container an-wg-intruder-node Creating 
+ Container an-wg-intruder-node Created 
+ Container an-wg-intruder-node Starting 
+ Container an-wg-intruder-node Started 
+an-wg-cap-s4a-an-wg-br0
+dcd7df06b4782439946be9b1718b761a52bab6615a20da169f8989153a626c93
+an-wg-cap-s4b-an-wg-br0
+a6779f85cb287c648a232ccee4bcf06b41006d414efcf7eabee285c794882eff
+ Container an-wg-intruder-node Stopping 
+ Container an-wg-intruder-node Stopped 
+an-wg-cap-s4c-an-wg-br0
+ Container an-wg-intruder-node Stopping 
+ Container an-wg-intruder-node Stopped 
+ Container an-wg-intruder Stopping 
+ Container an-wg-intruder Stopped 
+Going to remove an-wg-intruder-node, an-wg-intruder
+ Container an-wg-intruder-node Removing 
+ Container an-wg-intruder Removing 
+ Container an-wg-intruder-node Removed 
+ Container an-wg-intruder Removed 
+40198274614f374ec8ad9f6c1c9e18e50adeebee9828fd6201ec1bfa6256924d
+an-wg-cap-s5-an-wg-br0
+7c4c2ffa6abdd6f3102962bf1184b3f04053ee0f379e457b755cdebcb05c4e71
+an-wg-cap-s5b-an-wg-br0
+580407b6aefaca12ad812f3e965f1383aa467b37aa87cf6ed65e8efdbae26171
+an-wg-r-node
+an-wg-r-node
+an-wg-cap-s6-an-wg-br0
+ Container an-wg-r-node Stopping 
+ Container an-wg-b-node Stopping 
+ Container an-wg-a-node Stopping 
+ Container an-wg-r-node Stopped 
+ Container an-wg-r-node Removing 
+ Container an-wg-r-node Removed 
+ Container an-wg-r Stopping 
+ Container an-wg-b-node Stopped 
+ Container an-wg-b-node Removing 
+ Container an-wg-b-node Removed 
+ Container an-wg-b Stopping 
+ Container an-wg-a-node Stopped 
+ Container an-wg-a-node Removing 
+ Container an-wg-a-node Removed 
+ Container an-wg-a Stopping 
+ Container an-wg-r Stopped 
+ Container an-wg-r Removing 
+ Container an-wg-r Removed 
+ Container an-wg-b Stopped 
+ Container an-wg-b Removing 
+ Container an-wg-b Removed 
+ Container an-wg-a Stopped 
+ Container an-wg-a Removing 
+ Container an-wg-a Removed 
+ Volume an-wg_rdata Removing 
+ Network an-wg_underlay Removing 
+ Volume an-wg_rdata Removed 
+ Network an-wg_underlay Removed 

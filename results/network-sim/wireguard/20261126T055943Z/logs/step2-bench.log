@@ -1,0 +1,88 @@
+$ /Users/dennison/develop/FIC-elipsis/target/release/agentnet-acceptance bench --a /tmp/an-net.0j7Z1J/a --b /tmp/an-net.0j7Z1J/b --a-addr an1szpfsl4kwp33ntxdhbgxhkjpokovz2al23bzelizo6kvjaoz7ix75qimoa --b-addr an12tqi7an2ms6rhmvqguf77oajmahay2cpj6klhnlmdkqul5ovxrcw25b6ye --n 20 --timeout 600 --pace-ms 400 --tag w --out /Users/dennison/develop/FIC-elipsis/results/network-sim/wireguard/20261126T055943Z/evidence/bench.json
+{
+  "a_to_b": {
+    "delivered": 20,
+    "latency_ms_send_to_delivered": {
+      "definition": "delivered_at - created_at from the sender's own outbox row (same host clock)",
+      "max": 2318,
+      "min": 425,
+      "p50": 1067,
+      "p95": 2012,
+      "p99": 2318,
+      "samples": 20
+    },
+    "not_delivered_at_timeout": 0,
+    "raw_latencies_ms": [
+      425,
+      453,
+      499,
+      551,
+      614,
+      635,
+      788,
+      886,
+      966,
+      1067,
+      1111,
+      1303,
+      1303,
+      1563,
+      1617,
+      1883,
+      2007,
+      2012,
+      2012,
+      2318
+    ],
+    "send_failures": 0,
+    "send_phase_ms": 9806,
+    "sent": 20,
+    "tag": "w-a2b",
+    "terminal_other": {},
+    "total_ms": 9858
+  },
+  "b_to_a": {
+    "delivered": 20,
+    "latency_ms_send_to_delivered": {
+      "definition": "delivered_at - created_at from the sender's own outbox row (same host clock)",
+      "max": 2021,
+      "min": 441,
+      "p50": 963,
+      "p95": 2002,
+      "p99": 2021,
+      "samples": 20
+    },
+    "not_delivered_at_timeout": 0,
+    "raw_latencies_ms": [
+      441,
+      522,
+      589,
+      611,
+      708,
+      726,
+      820,
+      894,
+      950,
+      963,
+      1333,
+      1390,
+      1439,
+      1453,
+      1579,
+      1658,
+      1716,
+      1738,
+      2002,
+      2021
+    ],
+    "send_failures": 0,
+    "send_phase_ms": 9492,
+    "sent": 20,
+    "tag": "w-b2a",
+    "terminal_other": {},
+    "total_ms": 9752
+  },
+  "direction_mode": "both directions concurrently, 400 ms pacing",
+  "n_per_direction": 20
+}
+[exit 0]

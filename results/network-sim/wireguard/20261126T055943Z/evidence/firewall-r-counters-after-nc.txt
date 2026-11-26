@@ -1,0 +1,10 @@
+Chain INPUT (policy DROP 5 packets, 300 bytes)
+    pkts      bytes target     prot opt in     out     source               destination         
+       8      600 ACCEPT     0    --  lo     *       0.0.0.0/0            0.0.0.0/0           
+      15      900 DROP       6    --  eth0   *       0.0.0.0/0            0.0.0.0/0            tcp dpt:60000 /* wgsim-underlay-libp2p-drop */
+    4763   672322 ACCEPT     0    --  *      *       0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+       7      497 ACCEPT     17   --  eth0   *       0.0.0.0/0            0.0.0.0/0            udp dpt:51820 /* wgsim-wireguard-udp */
+      15      900 ACCEPT     6    --  eth0   *       172.29.70.1          0.0.0.0/0            tcp dpt:8645 /* wgsim-rest-from-docker-host-only */
+       3      180 ACCEPT     6    --  wg0    *       10.66.0.2            0.0.0.0/0            tcp dpt:60000 /* wgsim-libp2p-from-A */
+       1       60 ACCEPT     6    --  wg0    *       10.66.0.3            0.0.0.0/0            tcp dpt:60000 /* wgsim-libp2p-from-B */
+       0        0 ACCEPT     1    --  wg0    *       0.0.0.0/0            0.0.0.0/0           

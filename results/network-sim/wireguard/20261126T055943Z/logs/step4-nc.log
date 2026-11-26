@@ -1,0 +1,20 @@
+$ docker exec an-wg-intruder nc -zv -w 5 172.29.70.10 60000
+
+[stderr] nc: connect to 172.29.70.10 port 60000 (tcp) timed out: Operation in progress
+[exit 1]
+$ docker exec an-wg-intruder nc -zv -w 5 172.29.70.21 60000
+
+[stderr] nc: connect to 172.29.70.21 port 60000 (tcp) timed out: Operation in progress
+[exit 1]
+$ docker exec an-wg-intruder nc -zv -w 5 172.29.70.10 8645
+
+[stderr] nc: connect to 172.29.70.10 port 8645 (tcp) timed out: Operation in progress
+[exit 1]
+$ docker exec an-wg-intruder nc -zvu -w 3 172.29.70.10 51820
+
+[stderr] Connection to 172.29.70.10 51820 port [udp/*] succeeded!
+[exit 0]
+$ docker exec an-wg-intruder nc -zv -w 5 172.29.70.10 60000
+
+[stderr] nc: connect to 172.29.70.10 port 60000 (tcp) timed out: Operation in progress
+[exit 1]
