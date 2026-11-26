@@ -20,6 +20,9 @@ services:
     <<: *wg
     container_name: an-wg-r
     command: ["sh", "/scripts/wg-entry.sh", "r"]
+    # Relay side: give up on a half-open tcp connection after ~25 s of unanswered retransmits instead of ~15 min (kernel default 15).
+    # A client whose path died silently leaves such a socket on the relay (results/reconnect/*/SUMMARY.md). R_TCP_RETRIES2=15 reproduces the default.
+    sysctls: {net.ipv4.ip_forward: "0", net.ipv4.tcp_retries2: "${R_TCP_RETRIES2:-6}"}
     ports: ["127.0.0.1:18650:8645"]          # operator diagnostics only (R's REST); the firewall admits it only from the docker host gateway
     networks: {underlay: {ipv4_address: 172.29.70.10}}
 

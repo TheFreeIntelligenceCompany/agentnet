@@ -13,6 +13,7 @@ services:
     image: *node-image
     platform: linux/amd64
     container_name: an-nat-r
+    sysctls: {net.ipv4.tcp_retries2: "6"}   # drop half-open client sockets after ~25 s, not ~15 min (spike/relay-wireguard, results/reconnect)
     command:
       - --nodekey=${R_KEY}
       - --nat=extip:172.30.80.10                # R announces its PUBLIC-network address

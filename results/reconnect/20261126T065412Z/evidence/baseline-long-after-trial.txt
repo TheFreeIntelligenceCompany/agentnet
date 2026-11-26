@@ -1,0 +1,5 @@
+After the 1300 s baseline trial (baseline-long/redial-1; adapter-style redial every 10 s, relay tcp_retries2=15, trial script stopped redialing at t=1305 s):
+ - t=1305 s after path loss: ss on R still showed the stale socket to B (Send-Q 6069, timer (on,2.3ms,15) = 15th retransmit).
+ - R's socket to B was gone within ~2 s of that; B's node (no client action, polled 60 s) stayed CannotConnect.
+ - then ONE POST /admin/v1/peers with the static peer: HTTP 200 OK in 0.050 s; B listed R Connected.
+So the stale socket lived about 1307 s (21.8 min) here (retransmit RTO caps at 120 s; 15 retransmits), and the node did not reconnect by itself.

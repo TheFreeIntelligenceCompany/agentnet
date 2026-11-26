@@ -1,0 +1,10 @@
+t_ms	event	detail
+0	path_removed
+52672	redial	http=400 dur_ms=10047 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+64861	redial	http=400 dur_ms=10067 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+77064	redial	http=400 dur_ms=10058 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+89263	redial	http=400 dur_ms=10064 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+101467	redial	http=400 dur_ms=10055 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+113647	redial	http=400 dur_ms=10066 body=Failed to connect to peer at index: 0 - /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmB8QfeybmeKaNuTbJnAfkBViBRMqgayoywmvEQwn4j6ch 
+125943	path_restored
+125863	redial	http=200 dur_ms=7248 body=OK 

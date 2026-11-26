@@ -1,0 +1,8 @@
+net.ipv4.tcp_retries2 = 6
+{"variant":"redial","trial":1,"outage_s":120,"restored_at_ms":125753,"recovery_ms_after_restore":3433,"redials":7,"r_sockets_to_B_at_restore":0}
+net.ipv4.tcp_retries2 = 6
+{"variant":"redial","trial":2,"outage_s":120,"restored_at_ms":127280,"recovery_ms_after_restore":5498,"redials":7,"r_sockets_to_B_at_restore":0}
+net.ipv4.tcp_retries2 = 6
+{"variant":"redial","trial":3,"outage_s":120,"restored_at_ms":125943,"recovery_ms_after_restore":9499,"redials":7,"r_sockets_to_B_at_restore":0}
+net.ipv4.tcp_retries2 = 6
+{"variant":"redial","trial":4,"outage_s":120,"restored_at_ms":126677,"recovery_ms_after_restore":3630,"redials":7,"r_sockets_to_B_at_restore":0}
