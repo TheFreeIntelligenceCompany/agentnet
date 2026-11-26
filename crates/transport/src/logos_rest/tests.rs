@@ -942,3 +942,113 @@ async fn rejected_config_never_contacts_the_node_or_dials() {
         stub.hits().len()
     );
 }
+
+fn enforced_cfg(url: &str) -> LogosRestConfig {
+    LogosRestConfig {
+        node_url: url.into(),
+        mode: NetworkMode::Public,
+        enforce_peer_allowlist: true,
+        static_peers: vec![format!("/dns4/relay.example.com/tcp/443/wss/p2p/{RELAY}")],
+        request_timeout: Duration::from_secs(2),
+        ..Default::default()
+    }
+}
+
+#[tokio::test]
+async fn enforced_public_mode_fails_closed_with_a_foreign_peer() {
+    let stub = spawn_stub(|req| match req.path.as_str() {
+        "/admin/v1/peers" => ok(PEERS_FOREIGN),
+        _ => ok("OK"),
+    })
+    .await;
+    let t = LogosRestTransport::new(enforced_cfg(&stub.url)).unwrap();
+    assert!(matches!(
+        t.publish(&topic(), b"x").await,
+        Err(TransportError::Isolation(_))
+    ));
+    assert!(matches!(t.audit().await, Err(TransportError::Isolation(_))));
+    assert_eq!(stub.count("/relay/"), 0);
+    let s = t.status().await;
+    assert!(!s.ready);
+    assert!(s.isolation_violation.unwrap().contains("16Uiu2HAmStranger"));
+}
+
+#[tokio::test]
+async fn enforced_public_mode_fails_closed_without_the_admin_api() {
+    let stub = spawn_stub(|req| match req.path.as_str() {
+        "/admin/v1/peers" => status(404, ""),
+        _ => ok("OK"),
+    })
+    .await;
+    let t = LogosRestTransport::new(enforced_cfg(&stub.url)).unwrap();
+    assert!(matches!(
+        t.publish(&topic(), b"x").await,
+        Err(TransportError::Unavailable(_))
+    ));
+    assert!(!t.status().await.ready);
+}
+
+#[tokio::test]
+async fn enforced_public_mode_publishes_with_only_the_allowlisted_peer() {
+    let stub = spawn_stub(|req| match req.path.as_str() {
+        "/admin/v1/peers" => ok(PEERS_OK),
+        _ => ok("OK"),
+    })
+    .await;
+    let t = LogosRestTransport::new(enforced_cfg(&stub.url)).unwrap();
+    assert!(t.publish(&topic(), b"x").await.is_ok());
+    assert!(stub.count("/admin/v1/peers") >= 1);
+    let s = t.status().await;
+    assert!(s.ready, "{}", s.detail);
+    assert!(s.detail.contains("allowed peer"), "{}", s.detail);
+}
+
+#[tokio::test]
+async fn enforced_public_mode_redials_the_static_peers() {
+    let up = Arc::new(Mutex::new(false));
+    let up2 = up.clone();
+    let stub = spawn_stub(move |req| match (req.method.as_str(), req.path.as_str()) {
+        ("POST", "/admin/v1/peers") => {
+            *up2.lock().unwrap() = true;
+            ok("OK")
+        }
+        ("GET", "/admin/v1/peers") => {
+            if *up2.lock().unwrap() {
+                ok(PEERS_OK)
+            } else {
+                ok(PEERS_DOWN)
+            }
+        }
+        _ => ok("OK"),
+    })
+    .await;
+    let t = LogosRestTransport::new(enforced_cfg(&stub.url)).unwrap();
+    assert!(t.publish(&topic(), b"x").await.is_ok());
+    let dial = stub
+        .hits()
+        .into_iter()
+        .find(|r| r.method == "POST" && r.path == "/admin/v1/peers")
+        .unwrap();
+    assert!(String::from_utf8_lossy(&dial.body).contains("/dns4/relay.example.com/tcp/443/wss"));
+}
+
+#[tokio::test]
+async fn plain_public_status_does_not_call_peers_allowed() {
+    let stub = spawn_stub(|req| match req.path.as_str() {
+        "/admin/v1/peers" => ok(PEERS_FOREIGN),
+        _ => ok("OK"),
+    })
+    .await;
+    let c = LogosRestConfig {
+        node_url: stub.url.clone(),
+        mode: NetworkMode::Public,
+        cluster_id: 1,
+        ..Default::default()
+    };
+    let t = LogosRestTransport::new(c).unwrap();
+    let s = t.status().await;
+    assert!(s.ready);
+    assert!(s.isolation_violation.is_none());
+    assert!(s.detail.contains("not audited"), "{}", s.detail);
+    assert!(!s.detail.contains("allowed peer"), "{}", s.detail);
+}

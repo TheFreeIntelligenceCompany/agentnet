@@ -55,7 +55,8 @@ this data directory". The socket path must fit a Unix socket (about 100 bytes): 
 | `public_discovery` | `false` | `true` is a config error in private mode. The daemon cannot switch discovery on the node; this key only records intent in public mode. |
 | `public_fallback` | `false` | `true` is **always** a config error: there is no public fallback and no code path that adds peers. |
 | `i_understand_public` | `false` | Must be `true` for `mode = "public"` |
-| `store_peer` | unset | Optional explicit Store peer multiaddr (private mode: private IP + allowlisted peer id) |
+| `enforce_peer_allowlist` | `false` | Only valid with `mode = "public"` (a config error in private mode, which always audits). Keeps the peer-id allowlist audit for **your own relay on a public address**; needs `peers`. See "Public mode with the allowlist audit kept" below. **UNTESTED against a real public relay.** |
+| `store_peer` | unset | Optional explicit Store peer multiaddr (private mode: private IP + allowlisted peer id; with `enforce_peer_allowlist`: the same address forms as `peers`) |
 
 ### Private mode (default)
 
@@ -73,6 +74,51 @@ Explicit opt-in (`mode = "public"` and `i_understand_public = true`), skips the 
 otherwise identical. **UNTESTED against any public network.** Known limitation: the REST adapter supports
 only single-shard networks (shard 0), which the shared public networks are not. Public and private
 traffic are never bridged: one daemon talks to one node in one mode.
+
+Which mode to pick:
+
+| Mode | Peers accepted | Allowlist audit | `doctor` isolation line |
+|---|---|---|---|
+| `private` (default) | one literal private-range IP, tcp, one `/p2p/` id; no DNS, no relay hops | yes, fail closed | `[ok]` / `[FAIL]` |
+| `public` + `enforce_peer_allowlist = true` | public or private IP, or dns4/dns6; tcp; optional `tls`, `ws`, `wss`; exactly one `/p2p/` id; no `/p2p-circuit`, no `dnsaddr` | yes, fail closed | `[ok]` / `[FAIL]` |
+| `public` (plain) | any multiaddr ending in `/p2p/<id>` | **no** | `[skip] not audited in public mode` |
+
+In plain public mode `network status` and `doctor` do not call peers "allowed" (nothing is audited), and
+`doctor --ready` still reports ready when the transport is ready: the `isolation` line stays a skip that
+says "not audited", it is never reported `[ok]`.
+
+### Public mode with the allowlist audit kept (`enforce_peer_allowlist`)
+
+For a relay that you run yourself but that is reached over a public address (a public IP, or a DNS name,
+possibly behind a TLS/WebSocket front end). Set `mode = "public"`, `i_understand_public = true` and
+`enforce_peer_allowlist = true`. Then:
+
+* `peers` (and `store_peer`) may be `/ip4|ip6|dns4|dns6/<host>/tcp/<port>[/tls][/ws|/wss]/p2p/<peerId>`.
+  `/p2p-circuit` relay hops, `dnsaddr`, any other component and a second `/p2p/` are rejected.
+* The allowlist is derived exactly as in private mode: the peer ids of `peers`. `peers` must not be empty.
+* The node's peer list is audited every `audit_interval` (15 s). A connected peer outside the allowlist, or an
+  unauditable node, sets `isolation_violation`, the transport is not ready and sends are not published
+  (same fail-closed behaviour as private mode). The adapter redials the configured peers as in private mode.
+* `cluster_id` must still not be a public preset (1, 2, 3, 16); `node_url` plain http is still only for
+  loopback/private hosts.
+
+```toml
+[network]
+mode = "public"
+i_understand_public = true
+enforce_peer_allowlist = true
+node_url = "http://127.0.0.1:8645"
+cluster_id = 66
+peers = ["/dns4/relay.example.org/tcp/443/wss/p2p/16Uiu2HAm..."]
+```
+
+What this does **not** give you: the node itself may resolve names through a public DNS resolver
+(`--dns-addrs-name-server` cannot be loopback when it has to resolve your relay's name), so "zero public
+egress" no longer holds; the relay endpoint is reachable by anyone, and cluster/shard ids are not access
+control (`docs/threat-model.md` T13), so strangers can join your relay and read ciphertext and metadata.
+It only guarantees that this agent's node is not meshed with peers outside `peers`; like the private-mode
+audit it is detective, not preventive. **UNTESTED against a real public relay**: so far it is covered by
+unit tests only.
 
 ## `[storage]`
 
@@ -158,6 +204,9 @@ Protocol, signature scheme and receiver duties: `docs/host-integration.md`.
 |---|---|
 | defaults without `peers` | error: `network.peers` required |
 | `mode = "public"` without `i_understand_public` | error |
+| `enforce_peer_allowlist = true` in private mode | error (says to use `mode = "public"`) |
+| `enforce_peer_allowlist = true` with empty `peers` | error |
+| `enforce_peer_allowlist = true` with `/p2p-circuit`, `dnsaddr`, a second `/p2p/`, a bad port or host, or a preset `cluster_id` | error (`network: ...`) |
 | `public_fallback = true` (any mode) | error |
 | `public_discovery = true` in private mode | error |
 | `discovery.enabled = true` without `topics`; invalid or duplicate topic name; `default_advert_ttl_s > max_advert_ttl_s`; `max_capabilities` outside 1..=64 | error (`engine: ...`) |

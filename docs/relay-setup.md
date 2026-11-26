@@ -124,6 +124,7 @@ The measurements are in `results/fixups/burst-latency.md` (single host, amd64 no
    The `/p2p/<peerId>` part is what goes into `--staticnode`, `--storenode` and `peers = [...]`.
 3. `agentnet.toml` `peers` must be **literal private IPs** with the peer id (private mode rejects hostnames and public IPs,
    `docs/configuration.md`). The allowlist of peer ids used by the runtime audit is derived from them.
+   For a relay on a public address see "Your own relay on a public address" below.
 4. Order of start: service node, then client node, then `agentnet serve`. A client that starts before the service node is listening
    waits for its peer manager's backoff (about 2 minutes observed in E5/E8); AgentNet's redial shortens this (section 5).
 
@@ -276,3 +277,15 @@ Recovery note: after a silently dropped connection the node noticed after about 
 - [ ] One client node per agent; `--rest-relay-cache-capacity=1000`.
 - [ ] You know that restarting the service node causes minutes of degraded live delivery and that recovery depends on Store.
 - [ ] You accept that all of this was only tested on a single host.
+
+## Your own relay on a public address
+
+Private mode only accepts a literal private IP. If your own relay is reached over the public internet (a public IP,
+or a name such as a TLS/WebSocket endpoint `/dns4/relay.example.org/tcp/443/wss/p2p/<id>`), use
+`mode = "public"`, `i_understand_public = true` and `enforce_peer_allowlist = true` (`docs/configuration.md`,
+"Public mode with the allowlist audit kept"). The allowlist of peer ids and the periodic isolation audit are kept.
+Notes from the public-endpoint run (`results/public-relay/20261126T203405Z/SUMMARY.md`, which used plain public mode):
+the client node needs `--websocket-support=true` for `ws`/`wss` addresses, `--nat=extip:<ip>`, and a real DNS resolver
+to resolve the relay's name. Restrict who can reach the relay where you can: the endpoint is open to anyone who
+knows the cluster id (T13). **UNTESTED**: the `enforce_peer_allowlist` mode has unit tests only and has not been run
+against a real public relay.

@@ -22,7 +22,9 @@ pub enum NetworkMode {
     /// Fail closed: loopback/private node URL, peer allowlist audited at runtime.
     #[default]
     Private,
-    /// Explicit public mode: no allowlist audit. UNTESTED against any public network.
+    /// Explicit public mode: no allowlist audit unless
+    /// [`LogosRestConfig::enforce_peer_allowlist`] is set. UNTESTED against any
+    /// public network.
     Public,
 }
 
@@ -77,6 +79,12 @@ pub struct LogosRestConfig {
     /// Minimum time between redial attempts.
     #[serde(deserialize_with = "de_duration")]
     pub redial_interval: Duration,
+    /// Only valid with `mode = public`: keep the peer-id allowlist audit for a
+    /// user-owned relay on a public address. Peers may then be public IPs or
+    /// dns4/dns6 names (tcp, optional tls/ws/wss, one /p2p/ id, no relay hops).
+    /// Private mode always audits and rejects this flag. UNTESTED against a
+    /// real public relay.
+    pub enforce_peer_allowlist: bool,
 }
 
 impl Default for LogosRestConfig {
@@ -95,6 +103,7 @@ impl Default for LogosRestConfig {
             audit_interval: Duration::from_secs(15),
             static_peers: Vec::new(),
             redial_interval: Duration::from_secs(10),
+            enforce_peer_allowlist: false,
         }
     }
 }
@@ -188,6 +197,77 @@ fn check_peer_addr_private(
     }
 }
 
+/// Peer address in public mode with `enforce_peer_allowlist`: one dialled
+/// address `/(ip4|ip6|dns4|dns6)/<host>/tcp/<port>[/tls][/ws|/wss]/p2p/<id>`.
+/// Public IPs and DNS names are fine; relay hops (`/p2p-circuit`), `dnsaddr`,
+/// a second `/p2p/` or any other component are not. Names are never resolved
+/// here.
+fn check_peer_addr_public_audited(
+    what: &str,
+    addr: &str,
+    allowed: &[String],
+) -> Result<(), TransportError> {
+    let iso = |m: &str| {
+        TransportError::Isolation(format!(
+            "{what} rejected (enforce_peer_allowlist): {m}; expected \
+             /<ip4|ip6|dns4|dns6>/<host>/tcp/<port>[/tls][/ws|/wss]/p2p/<peerId> \
+             (no /p2p-circuit relay hops, no dnsaddr, exactly one /p2p/)"
+        ))
+    };
+    let comps: Vec<&str> = addr.split('/').collect();
+    if comps.first() != Some(&"") || addr.len() > 512 {
+        return Err(protocol(format!(
+            "{what} must be a multiaddr starting with '/'"
+        )));
+    }
+    let mut it = comps.into_iter().skip(1);
+    let host_ok = match (it.next(), it.next()) {
+        (Some("ip4"), Some(a)) => a.parse::<Ipv4Addr>().is_ok(),
+        (Some("ip6"), Some(a)) => a.parse::<Ipv6Addr>().is_ok(),
+        (Some("dns4" | "dns6"), Some(n)) => valid_dns_name(n),
+        _ => false,
+    };
+    if !host_ok {
+        return Err(iso("bad or unsupported host component"));
+    }
+    match (it.next(), it.next().map(str::parse::<u16>)) {
+        (Some("tcp"), Some(Ok(p))) if p != 0 => {}
+        _ => return Err(iso("a /tcp/<port> component must follow the host")),
+    }
+    let mut next = it.next();
+    if next == Some("tls") {
+        next = it.next();
+        if next == Some("ws") {
+            next = it.next();
+        }
+    } else if matches!(next, Some("ws" | "wss")) {
+        next = it.next();
+    }
+    if next != Some("p2p") {
+        return Err(iso("unsupported component between /tcp and /p2p/"));
+    }
+    let id = it.next().filter(|i| valid_peer_id(i));
+    if id.is_none() || it.next().is_some() {
+        return Err(iso("exactly one /p2p/<peerId> must end the address"));
+    }
+    match id {
+        Some(id) if allowed.iter().any(|a| a == id) => Ok(()),
+        _ => Err(iso("peer id not in allowed_peer_ids")),
+    }
+}
+
+fn valid_dns_name(n: &str) -> bool {
+    !n.is_empty()
+        && n.len() <= 253
+        && n.split('.').all(|l| {
+            !l.is_empty()
+                && l.len() <= 63
+                && !l.starts_with('-')
+                && !l.ends_with('-')
+                && l.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-')
+        })
+}
+
 /// `/.../p2p/<id>` with the peer id as the final segment.
 fn static_peer_shape_ok(addr: &str) -> bool {
     addr.len() <= 512
@@ -210,6 +290,12 @@ impl LogosRestConfig {
         }
     }
 
+    /// True when the peer-id allowlist is audited: always in private mode, and
+    /// in public mode only with `enforce_peer_allowlist`.
+    pub fn audits_peers(&self) -> bool {
+        self.mode == NetworkMode::Private || self.enforce_peer_allowlist
+    }
+
     /// Validates the configuration and returns the parsed node URL.
     ///
     /// Isolation failures (public host, preset cluster id, empty allowlist,
@@ -230,6 +316,12 @@ impl LogosRestConfig {
         }
         let host = url.host().ok_or_else(|| protocol("node_url has no host"))?;
         let private = is_private_host(&host);
+        if self.mode == NetworkMode::Private && self.enforce_peer_allowlist {
+            return Err(protocol(
+                "enforce_peer_allowlist is only valid with mode = public: private mode \
+                 always audits the allowlist (remove the setting)",
+            ));
+        }
         match self.mode {
             NetworkMode::Private => {
                 if !private {
@@ -268,6 +360,45 @@ impl LogosRestConfig {
                         ));
                     }
                     check_peer_addr_private("static_peers entry", sp, &allowed)?;
+                }
+            }
+            NetworkMode::Public if self.enforce_peer_allowlist => {
+                if url.scheme() == "http" && !private {
+                    return Err(protocol(
+                        "plain http is only accepted for private/loopback hosts (the node has no TLS)",
+                    ));
+                }
+                if PUBLIC_PRESET_CLUSTER_IDS.contains(&self.cluster_id) {
+                    return Err(TransportError::Isolation(format!(
+                        "enforce_peer_allowlist: cluster id {} selects a public preset; use your \
+                         own relay's cluster id",
+                        self.cluster_id
+                    )));
+                }
+                let allowed = self.effective_allowed_peer_ids();
+                if allowed.is_empty() {
+                    return Err(TransportError::Isolation(
+                        "enforce_peer_allowlist needs at least one peer (network.peers / \
+                         static_peers or allowed_peer_ids): the allowlist is derived from them"
+                            .into(),
+                    ));
+                }
+                if let Some(bad) = allowed.iter().find(|p| !valid_peer_id(p)) {
+                    return Err(protocol(format!(
+                        "invalid peer id in allowed_peer_ids: {:?}",
+                        bad.chars().take(40).collect::<String>()
+                    )));
+                }
+                if let Some(sp) = &self.store_peer {
+                    check_peer_addr_public_audited("store_peer", sp, &allowed)?;
+                }
+                for sp in &self.static_peers {
+                    if !static_peer_shape_ok(sp) {
+                        return Err(protocol(
+                            "static_peers must be multiaddrs ending in /p2p/<id>",
+                        ));
+                    }
+                    check_peer_addr_public_audited("static_peers entry", sp, &allowed)?;
                 }
             }
             NetworkMode::Public => {
@@ -562,5 +693,118 @@ mod tests {
         );
         assert_eq!(peer_id_of_multiaddr("/ip4/1.2.3.4/tcp/1"), None);
         assert_eq!(peer_id_of_multiaddr("/p2p/"), None);
+    }
+
+    fn audited(peer: &str) -> LogosRestConfig {
+        LogosRestConfig {
+            node_url: "http://127.0.0.1:8645".into(),
+            mode: NetworkMode::Public,
+            enforce_peer_allowlist: true,
+            static_peers: vec![peer.into()],
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn enforced_public_mode_accepts_public_ip_and_dns_forms() {
+        for ok in [
+            "/ip4/203.0.113.7/tcp/60000/p2p/16Uiu2HAmRelay",
+            "/ip4/10.0.0.5/tcp/60000/p2p/16Uiu2HAmRelay",
+            "/ip6/2001:db8::1/tcp/60000/p2p/16Uiu2HAmRelay",
+            "/dns4/relay.example.com/tcp/60000/p2p/16Uiu2HAmRelay",
+            "/dns6/relay.example.com/tcp/60000/p2p/16Uiu2HAmRelay",
+            "/dns4/relay.example.com/tcp/443/wss/p2p/16Uiu2HAmRelay",
+            "/dns4/relay.example.com/tcp/443/tls/ws/p2p/16Uiu2HAmRelay",
+            "/dns4/relay.example.com/tcp/8000/ws/p2p/16Uiu2HAmRelay",
+            "/dns4/relay.example.com/tcp/443/tls/p2p/16Uiu2HAmRelay",
+        ] {
+            let c = audited(ok);
+            c.validate().unwrap_or_else(|e| panic!("{ok}: {e}"));
+            assert_eq!(
+                c.effective_allowed_peer_ids(),
+                vec!["16Uiu2HAmRelay".to_string()]
+            );
+        }
+        let mut c = audited("/dns4/r.example.com/tcp/443/wss/p2p/16Uiu2HAmRelay");
+        c.store_peer = Some("/dns4/r.example.com/tcp/443/wss/p2p/16Uiu2HAmRelay".into());
+        c.validate().unwrap();
+    }
+
+    #[test]
+    fn enforced_public_mode_rejects_bad_forms() {
+        for bad in [
+            "/dns4/r.example.com/tcp/443/wss/p2p/16Uiu2HAmRelay/p2p-circuit/p2p/16Uiu2HAmRelay",
+            "/dns4/r.example.com/tcp/443/p2p/16Uiu2HAmRelay/p2p/16Uiu2HAmRelay",
+            "/dnsaddr/r.example.com/p2p/16Uiu2HAmRelay",
+            "/dns/r.example.com/tcp/443/p2p/16Uiu2HAmRelay",
+            "/dns4/r.example.com/tcp/443/wss",
+            "/dns4/r.example.com/tcp/0/p2p/16Uiu2HAmRelay",
+            "/dns4/r.example.com/tcp/99999/p2p/16Uiu2HAmRelay",
+            "/dns4/r.example.com/udp/443/p2p/16Uiu2HAmRelay",
+            "/dns4/bad_name.example.com/tcp/443/p2p/16Uiu2HAmRelay",
+            "/dns4/-x.example.com/tcp/443/p2p/16Uiu2HAmRelay",
+            "/ip4/999.1.1.1/tcp/443/p2p/16Uiu2HAmRelay",
+            "/ip4/1.2.3.4/dns4/r.example.com/tcp/443/p2p/16Uiu2HAmRelay",
+            "/dns4/r.example.com/tcp/443/quic/p2p/16Uiu2HAmRelay",
+            "/dns4/r.example.com/tcp/443/p2p/16Uiu2HAmRelay/ws",
+            "dns4/r.example.com/tcp/443/p2p/16Uiu2HAmRelay",
+            "",
+        ] {
+            assert!(audited(bad).validate().is_err(), "{bad}");
+        }
+        // peer id not in an explicit allowlist
+        let mut c = audited("/dns4/r.example.com/tcp/443/wss/p2p/16Uiu2HAmRelay");
+        c.allowed_peer_ids = vec!["16Uiu2HAmOther".into()];
+        assert!(matches!(c.validate(), Err(TransportError::Isolation(_))));
+        // store peer outside the allowlist
+        let mut c = audited("/dns4/r.example.com/tcp/443/wss/p2p/16Uiu2HAmRelay");
+        c.store_peer = Some("/dns4/r.example.com/tcp/443/wss/p2p/16Uiu2HAmOther".into());
+        assert!(c.validate().is_err());
+    }
+
+    #[test]
+    fn enforced_public_mode_needs_peers_and_a_private_cluster() {
+        let mut c = audited("/dns4/r.example.com/tcp/443/wss/p2p/16Uiu2HAmRelay");
+        c.static_peers.clear();
+        assert!(matches!(c.validate(), Err(TransportError::Isolation(_))));
+        let mut c = audited("/dns4/r.example.com/tcp/443/wss/p2p/16Uiu2HAmRelay");
+        c.cluster_id = 1;
+        assert!(matches!(c.validate(), Err(TransportError::Isolation(_))));
+        // plain http to a public node_url is still refused
+        let mut c = audited("/dns4/r.example.com/tcp/443/wss/p2p/16Uiu2HAmRelay");
+        c.node_url = "http://node.example.com".into();
+        assert!(c.validate().is_err());
+        assert!(c.audits_peers());
+    }
+
+    #[test]
+    fn enforce_flag_is_rejected_in_private_mode_and_plain_public_is_unchanged() {
+        let mut c = cfg("http://127.0.0.1:1");
+        c.enforce_peer_allowlist = true;
+        let e = c.validate().unwrap_err();
+        assert!(
+            e.to_string().contains("only valid with mode = public"),
+            "{e}"
+        );
+        // Private mode keeps rejecting public forms.
+        let mut c = cfg("http://127.0.0.1:1");
+        for bad in [
+            "/dns4/r.example.com/tcp/443/wss/p2p/16Uiu2HAmPeerA",
+            "/ip4/203.0.113.7/tcp/60000/p2p/16Uiu2HAmPeerA",
+        ] {
+            c.static_peers = vec![bad.into()];
+            assert!(matches!(c.validate(), Err(TransportError::Isolation(_))));
+        }
+        assert!(!c.enforce_peer_allowlist && c.audits_peers());
+        // Plain public mode: no audit, no address rules beyond the shape.
+        let p = LogosRestConfig {
+            node_url: "http://127.0.0.1:8645".into(),
+            mode: NetworkMode::Public,
+            cluster_id: 1,
+            static_peers: vec!["/dns4/r.example.com/tcp/443/wss/p2p/16Uiu2HAmRelay".into()],
+            ..Default::default()
+        };
+        p.validate().unwrap();
+        assert!(!p.audits_peers());
     }
 }

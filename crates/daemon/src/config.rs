@@ -69,6 +69,11 @@ pub struct NetworkSection {
     pub i_understand_public: bool,
     /// Optional explicit Store peer (multiaddr) passed to the node.
     pub store_peer: Option<String>,
+    /// Only with `mode = "public"`: keep the peer-id allowlist audit for your
+    /// own relay on a public address (peers may be public IPs or dns4/dns6
+    /// names). Needs `peers`. Private mode always audits and rejects this key.
+    /// UNTESTED against a real public relay.
+    pub enforce_peer_allowlist: bool,
 }
 
 impl Default for NetworkSection {
@@ -82,6 +87,7 @@ impl Default for NetworkSection {
             public_fallback: false,
             i_understand_public: false,
             store_peer: None,
+            enforce_peer_allowlist: false,
         }
     }
 }
@@ -226,6 +232,7 @@ impl DaemonConfig {
             cluster_id: self.network.cluster_id,
             static_peers: self.network.peers.clone(),
             store_peer: self.network.store_peer.clone(),
+            enforce_peer_allowlist: self.network.enforce_peer_allowlist,
             ..LogosRestConfig::default()
         }
     }
@@ -251,11 +258,27 @@ impl DaemonConfig {
                          (multiaddr ending in /p2p/<peerId>)",
                     ));
                 }
+                if n.enforce_peer_allowlist {
+                    return Err(cfg_err(
+                        "network.enforce_peer_allowlist is only valid with mode = \"public\": \
+                         private mode always audits the allowlist and accepts only literal \
+                         private IPs. To use your own relay on a public address, set \
+                         mode = \"public\", i_understand_public = true and \
+                         enforce_peer_allowlist = true",
+                    ));
+                }
             }
             Mode::Public => {
                 if !n.i_understand_public {
                     return Err(cfg_err(
                         "network.mode = \"public\" requires network.i_understand_public = true",
+                    ));
+                }
+                if n.enforce_peer_allowlist && n.peers.is_empty() {
+                    return Err(cfg_err(
+                        "network.enforce_peer_allowlist = true needs network.peers: the \
+                         allowlist is the peer ids of the listed peers (multiaddrs such as \
+                         /dns4/<host>/tcp/443/wss/p2p/<peerId>)",
                     ));
                 }
             }
@@ -413,7 +436,9 @@ pub fn sample_public_config() -> String {
     r#"# agentnet.toml -- PUBLIC mode. UNTESTED against any public network.
 #
 # Public mode must be chosen explicitly. It skips the peer allowlist audit, so
-# the node may be connected to anyone. Public and private traffic are never
+# the node may be connected to anyone. (To keep the audit for your OWN relay on
+# a public address, set enforce_peer_allowlist = true and list the relay in
+# peers; see docs/relay-setup.md.) Public and private traffic are never
 # bridged: one daemon talks to exactly one node in exactly one mode. The daemon
 # cannot configure the node: discovery, bootstrap nodes, RLN and rate limits are
 # flags of the Logos Delivery node you run yourself.
@@ -429,6 +454,7 @@ peers = []                       # optional in public mode
 cluster_id = 1                   # the node must be started with the matching preset
 public_discovery = false
 public_fallback = false          # always an error when true
+enforce_peer_allowlist = false   # true: audit peers against the ids in `peers` (needs peers)
 
 [storage]
 retention_hours = 168
@@ -606,5 +632,61 @@ mod tests {
         assert_eq!(t.static_peers, vec![PEER.to_owned()]);
         assert_eq!(t.cluster_id, 66);
         assert_eq!(t.effective_allowed_peer_ids().len(), 1);
+        assert!(!t.enforce_peer_allowlist);
+    }
+
+    const WSS: &str = "/dns4/relay.example.com/tcp/443/wss/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV";
+
+    fn audited_public() -> DaemonConfig {
+        let mut c = DaemonConfig::default();
+        c.network.mode = Mode::Public;
+        c.network.i_understand_public = true;
+        c.network.enforce_peer_allowlist = true;
+        c.network.cluster_id = 66;
+        c.network.peers = vec![WSS.into()];
+        c
+    }
+
+    #[test]
+    fn enforce_peer_allowlist_with_a_public_wss_relay() {
+        let c = audited_public();
+        c.validate().unwrap();
+        let t = c.to_logos_config();
+        assert!(t.enforce_peer_allowlist && t.audits_peers());
+        assert_eq!(t.effective_allowed_peer_ids().len(), 1);
+        let parsed = DaemonConfig::parse_validated(&format!(
+            "[network]\nmode = \"public\"\ni_understand_public = true\nenforce_peer_allowlist = true\ncluster_id = 66\npeers = [\"{WSS}\"]\n"
+        ))
+        .unwrap();
+        assert!(parsed.network.enforce_peer_allowlist);
+    }
+
+    #[test]
+    fn enforce_peer_allowlist_rejections_are_actionable() {
+        let mut c = private();
+        c.network.enforce_peer_allowlist = true;
+        let e = err(&c);
+        assert!(
+            e.contains("only valid with mode") && e.contains("i_understand_public"),
+            "{e}"
+        );
+        let mut c = audited_public();
+        c.network.peers.clear();
+        assert!(err(&c).contains("needs network.peers"));
+        let mut c = audited_public();
+        c.network.peers = vec!["/dns4/r.example.com/tcp/443/p2p-circuit/p2p/16Uiu2HAmX".into()];
+        assert!(err(&c).contains("network:"));
+        let mut c = audited_public();
+        c.network.cluster_id = 1;
+        assert!(err(&c).contains("public preset"));
+        // plain public mode keeps accepting the same peer without auditing it
+        let mut c = audited_public();
+        c.network.enforce_peer_allowlist = false;
+        c.validate().unwrap();
+        assert!(!c.to_logos_config().audits_peers());
+        // private mode with a wss peer is still refused
+        let mut c = private();
+        c.network.peers = vec![WSS.into()];
+        assert!(err(&c).contains("network:"));
     }
 }

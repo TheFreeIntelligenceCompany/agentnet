@@ -206,7 +206,36 @@ pub fn history_sync_check(
     }
 }
 
-/// Checks that must be `ok` for messaging to work (`doctor --ready`).
+/// Detail prefix of the `isolation` check in plain public mode. `--ready`
+/// accepts this one skip: the check is not applicable there, but the line still
+/// says plainly that nothing is audited.
+const NOT_AUDITED: &str = "not audited in public mode";
+
+/// The `isolation` line. `audited` is true in private mode and in public mode
+/// with `network.enforce_peer_allowlist`.
+fn isolation_check(audited: bool, violation: Option<&str>) -> Check {
+    if let Some(v) = violation {
+        check("isolation", Level::Fail, v.to_owned(), "the node is connected to a peer outside agentnet.toml: restart it with the verified flags")
+    } else if audited {
+        check(
+            "isolation",
+            Level::Ok,
+            "no isolation violation reported",
+            "",
+        )
+    } else {
+        check(
+            "isolation",
+            Level::Skip,
+            format!("{NOT_AUDITED}; the node may be connected to any peer"),
+            "to audit your own relay on a public address set network.enforce_peer_allowlist = true (and list the relay in network.peers)",
+        )
+    }
+}
+
+/// Checks that must be `ok` for messaging to work (`doctor --ready`). In plain
+/// public mode the `isolation` line is a deliberate skip (see [`NOT_AUDITED`])
+/// and does not block readiness; it never counts as `ok`.
 const REQUIRED: [&str; 5] = [
     "daemon socket",
     "node reachable",
@@ -223,6 +252,10 @@ pub fn readiness_failures(dir: &Path, checks: &[Check]) -> Vec<String> {
     for name in REQUIRED {
         match checks.iter().find(|c| c.name == name) {
             Some(c) if c.level == Level::Ok => {}
+            Some(c)
+                if name == "isolation"
+                    && c.level == Level::Skip
+                    && c.detail.starts_with(NOT_AUDITED) => {}
             Some(c) => {
                 let state = match c.level {
                     Level::Skip => "skipped",
@@ -512,17 +545,10 @@ pub async fn run(dir: &Path) -> Vec<Check> {
         if daemon_up {
             match remote.network_status(true).await {
                 Ok(st) => {
-                    if let Some(v) = &st.isolation_violation {
-                        out.push(check("isolation", Level::Fail, v.clone(), "the node is connected to a peer outside agentnet.toml: restart it with the verified flags"));
-                    } else {
-                        out.push(check(
-                            "isolation",
-                            Level::Ok,
-                            "no isolation violation reported",
-                            "",
-                        ));
-                    }
-                    if cfg.network.mode == agentnet_daemon::Mode::Private {
+                    let audited = cfg.network.mode == agentnet_daemon::Mode::Private
+                        || cfg.network.enforce_peer_allowlist;
+                    out.push(isolation_check(audited, st.isolation_violation.as_deref()));
+                    if audited {
                         let allow: Vec<&str> = cfg
                             .network
                             .peers
@@ -573,7 +599,7 @@ pub async fn run(dir: &Path) -> Vec<Check> {
                         out.push(check(
                             "peers == allowlist",
                             Level::Skip,
-                            "public mode: no allowlist audit",
+                            "public mode: no allowlist audit (set network.enforce_peer_allowlist to audit)",
                             "",
                         ));
                     }
@@ -715,6 +741,38 @@ mod tests {
         );
         assert!(
             f.iter().any(|l| l.starts_with("node reachable: not run")),
+            "{f:?}"
+        );
+    }
+
+    #[test]
+    fn isolation_line_in_each_mode() {
+        let a = isolation_check(true, None);
+        assert_eq!(
+            (a.level, a.detail.as_str()),
+            (Level::Ok, "no isolation violation reported")
+        );
+        let v = isolation_check(true, Some("peer X outside"));
+        assert_eq!(v.level, Level::Fail);
+        let p = isolation_check(false, None);
+        assert_eq!(p.level, Level::Skip);
+        assert!(p.detail.starts_with(NOT_AUDITED) && !p.detail.contains("no isolation violation"));
+        assert!(p.fix.contains("enforce_peer_allowlist"), "{}", p.fix);
+    }
+
+    #[test]
+    fn ready_in_plain_public_mode_never_claims_isolation_ok() {
+        let mut h = healthy();
+        let p = isolation_check(false, None);
+        h.iter_mut().find(|x| x.name == "isolation").unwrap().level = p.level;
+        h.iter_mut().find(|x| x.name == "isolation").unwrap().detail = p.detail.clone();
+        assert!(readiness_failures(Path::new("/d"), &h).is_empty());
+        // The generic "needs the running daemon" skip still blocks readiness.
+        let mut h = healthy();
+        set(&mut h, "isolation", Level::Skip);
+        let f = readiness_failures(Path::new("/d"), &h);
+        assert!(
+            f.iter().any(|l| l.starts_with("isolation: skipped")),
             "{f:?}"
         );
     }
