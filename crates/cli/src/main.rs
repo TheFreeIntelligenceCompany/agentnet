@@ -780,7 +780,10 @@ async fn run(cli: Cli) -> CliResult<i32> {
                 emit(json, &out, |_| render::network(&st, daemon.as_ref()));
             }
         },
-        Command::Doctor { accept_rollback } => {
+        Command::Doctor {
+            ready,
+            accept_rollback,
+        } => {
             if accept_rollback {
                 let had = offline::accept_rollback(&dir)?;
                 eprintln!(
@@ -795,6 +798,17 @@ async fn run(cli: Cli) -> CliResult<i32> {
             let checks = doctor::run(&dir).await;
             let failed = checks.iter().any(|c| c.level == doctor::Level::Fail);
             emit(json, &checks, |cs| render::doctor(cs));
+            if ready {
+                let not_ready = doctor::readiness_failures(&checks);
+                if !not_ready.is_empty() {
+                    eprintln!("NOT READY: messaging is not operational:");
+                    for l in &not_ready {
+                        eprintln!("  - {}", render::clean(l));
+                    }
+                    return Ok(exit::DOCTOR_FAILED);
+                }
+                eprintln!("ready: daemon, node, isolation and transport checks are ok");
+            }
             if failed {
                 return Ok(exit::DOCTOR_FAILED);
             }

@@ -146,6 +146,107 @@ fn replay_guard_check(dd: &DataDir) -> Check {
     )
 }
 
+fn now_ms() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| i64::try_from(d.as_millis()).unwrap_or(0))
+        .unwrap_or(0)
+}
+
+/// Probe of the relay Store path through what the daemon already reports: the
+/// time of the last history pass that read every page without a Store failure
+/// (`last_history_sync_at`). The watermark does not advance after a failed
+/// pass, so an old value means the Store has not answered recently.
+pub fn history_sync_check(
+    last_ok_ms: Option<i64>,
+    now_ms: i64,
+    interval_s: u64,
+    recovery_pending: bool,
+) -> Check {
+    let name = "history sync";
+    let fix = "check the relay's Store (docs/runbook.md section 6.4): the node's /health, its store flags and `agentnet network status`; until a pass completes, messages sent while this daemon was offline are not recovered";
+    let stale_after_s = interval_s.saturating_mul(4).max(60);
+    match last_ok_ms {
+        None => check(
+            name,
+            Level::Warn,
+            "no history sync has completed yet (just started, or the relay Store has not answered)",
+            fix,
+        ),
+        Some(t) => {
+            let age_s = (now_ms - t).max(0) / 1000;
+            let stale = u64::try_from(age_s).unwrap_or(0) > stale_after_s;
+            if stale || recovery_pending {
+                check(
+                    name,
+                    Level::Warn,
+                    format!(
+                        "last successful relay Store sync {age_s} s ago (interval {interval_s} s){}",
+                        if recovery_pending {
+                            "; recovery pending"
+                        } else {
+                            ""
+                        }
+                    ),
+                    fix,
+                )
+            } else {
+                check(
+                    name,
+                    Level::Ok,
+                    format!(
+                        "last successful relay Store sync {age_s} s ago (interval {interval_s} s)"
+                    ),
+                    "",
+                )
+            }
+        }
+    }
+}
+
+/// Checks that must be `ok` for messaging to work (`doctor --ready`).
+const REQUIRED: [&str; 5] = [
+    "daemon socket",
+    "node reachable",
+    "isolation",
+    "transport ready",
+    "local inbox database",
+];
+
+/// The conditions that make the instance not ready: one line per required
+/// check that is not `ok` (warned, skipped, failed or not run), plus every
+/// other failed check. Empty means ready.
+pub fn readiness_failures(checks: &[Check]) -> Vec<String> {
+    let mut out = Vec::new();
+    for name in REQUIRED {
+        match checks.iter().find(|c| c.name == name) {
+            Some(c) if c.level == Level::Ok => {}
+            Some(c) => {
+                let state = match c.level {
+                    Level::Skip => "skipped",
+                    Level::Warn => "warning",
+                    Level::Fail => "FAILED",
+                    Level::Ok => "ok",
+                };
+                let mut line = format!("{name}: {state}: {}", c.detail);
+                if !c.fix.is_empty() {
+                    line.push_str(&format!(" -> {}", c.fix));
+                }
+                out.push(line);
+            }
+            None => out.push(format!(
+                "{name}: not run (it needs a readable config and a running daemon) -> fix the failing or skipped checks above, then run `agentnet doctor --ready` again"
+            )),
+        }
+    }
+    for c in checks {
+        if c.level == Level::Fail && !REQUIRED.contains(&c.name) {
+            out.push(format!("{}: FAILED: {}", c.name, c.detail));
+        }
+    }
+    out
+}
+
 pub async fn run(dir: &Path) -> Vec<Check> {
     let dd = DataDir::new(dir);
     let mut out = Vec::new();
@@ -463,6 +564,12 @@ pub async fn run(dir: &Path) -> Vec<Check> {
                             "",
                         ));
                     }
+                    out.push(history_sync_check(
+                        st.last_history_sync_at,
+                        now_ms(),
+                        cfg.delivery.history_sync_interval_s,
+                        st.detail.contains("history recovery pending"),
+                    ));
                     if st.ready {
                         out.push(check("transport ready", Level::Ok, st.detail.clone(), ""));
                     } else {
@@ -483,16 +590,26 @@ pub async fn run(dir: &Path) -> Vec<Check> {
                 })
                 .await
             {
-                Ok(_) => out.push(check("store query", Level::Ok, "inbox query works", "")),
+                Ok(_) => out.push(check(
+                    "local inbox database",
+                    Level::Ok,
+                    "inbox query works (this tests the local database, not the relay Store)",
+                    "",
+                )),
                 Err(e) => out.push(check(
-                    "store query",
+                    "local inbox database",
                     Level::Fail,
                     e.message,
                     "check disk space and permissions of agentnet.db",
                 )),
             }
         } else {
-            for n in ["isolation", "peers == allowlist", "store query"] {
+            for n in [
+                "isolation",
+                "peers == allowlist",
+                "history sync",
+                "local inbox database",
+            ] {
                 out.push(check(
                     n,
                     Level::Skip,
@@ -517,6 +634,97 @@ mod tests {
             Some(1_795_608_000)
         );
         assert_eq!(parse_http_date("nonsense"), None);
+    }
+
+    fn c(name: &'static str, level: Level) -> Check {
+        check(name, level, "d", "do x")
+    }
+
+    fn healthy() -> Vec<Check> {
+        REQUIRED
+            .iter()
+            .map(|n| c(n, Level::Ok))
+            .chain([
+                c("single instance", Level::Warn),
+                c("history sync", Level::Ok),
+            ])
+            .collect()
+    }
+
+    fn set(h: &mut [Check], name: &str, level: Level) {
+        h.iter_mut().find(|x| x.name == name).unwrap().level = level;
+    }
+
+    #[test]
+    fn ready_when_every_required_check_is_ok_even_with_the_single_instance_warning() {
+        assert!(readiness_failures(&healthy()).is_empty());
+    }
+
+    #[test]
+    fn not_ready_when_the_daemon_socket_is_unavailable() {
+        let mut h = healthy();
+        set(&mut h, "daemon socket", Level::Warn);
+        let f = readiness_failures(&h);
+        assert_eq!(f.len(), 1, "{f:?}");
+        assert!(f[0].starts_with("daemon socket: warning"), "{f:?}");
+        assert!(f[0].contains("do x"), "{f:?}");
+    }
+
+    #[test]
+    fn not_ready_when_the_transport_is_not_ready() {
+        let mut h = healthy();
+        set(&mut h, "transport ready", Level::Warn);
+        let f = readiness_failures(&h);
+        assert!(f.iter().any(|l| l.starts_with("transport ready")), "{f:?}");
+    }
+
+    #[test]
+    fn not_ready_when_the_isolation_audit_fails() {
+        let mut h = healthy();
+        set(&mut h, "isolation", Level::Fail);
+        let f = readiness_failures(&h);
+        assert!(
+            f.iter().any(|l| l.starts_with("isolation: FAILED")),
+            "{f:?}"
+        );
+    }
+
+    #[test]
+    fn not_ready_when_a_required_check_was_skipped_or_not_run() {
+        let mut h = healthy();
+        set(&mut h, "local inbox database", Level::Skip);
+        h.retain(|x| x.name != "node reachable");
+        let f = readiness_failures(&h);
+        assert!(
+            f.iter()
+                .any(|l| l.starts_with("local inbox database: skipped")),
+            "{f:?}"
+        );
+        assert!(
+            f.iter().any(|l| l.starts_with("node reachable: not run")),
+            "{f:?}"
+        );
+    }
+
+    #[test]
+    fn history_sync_probe_levels() {
+        let now = 10_000_000;
+        let fresh = history_sync_check(Some(now - 20_000), now, 15, false);
+        assert_eq!(fresh.level, Level::Ok);
+        assert!(fresh.detail.contains("20 s ago"), "{}", fresh.detail);
+        // 15 s interval: stale after max(4 * 15, 60) = 60 s
+        let stale = history_sync_check(Some(now - 61_000), now, 15, false);
+        assert_eq!(stale.level, Level::Warn);
+        assert!(stale.fix.contains("Store"), "{}", stale.fix);
+        assert_eq!(
+            history_sync_check(Some(now - 100_000), now, 60, false).level,
+            Level::Ok
+        );
+        assert_eq!(history_sync_check(None, now, 15, false).level, Level::Warn);
+        assert_eq!(
+            history_sync_check(Some(now - 1000), now, 15, true).level,
+            Level::Warn
+        );
     }
 
     #[test]
