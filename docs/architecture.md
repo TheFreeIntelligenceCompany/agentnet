@@ -67,7 +67,7 @@ and never on `rmcp`, `reqwest` or any harness.
 * Contact record (public, shareable): a JSON document
   `{"record": "<base64url of record bytes>", "sig": "<base64url of 64-byte signature>"}`
   where the record bytes are JSON
-  `{"v":1,"address":…,"signing_pk":…,"kem_pk":…,"inbox_buckets":16,"created_at":<unix ms>,"kem_expires_at":<unix ms or null>}`
+  `{"v":1,"address":…,"signing_pk":…,"kem_pk":…,"key_epoch":1,"revoked_kem_epochs_below":1,"suites":[1],"inbox_buckets":16,"created_at":<unix ms>,"kem_expires_at":<unix ms or null>}`
   and `sig = Ed25519(signing_sk, "agentnet/v1/contact-record\0" || record_bytes)`.
   Verification: address decodes and checksums, equals the record's
   `address`/`signing_pk`, signature verifies. The signature is what binds the
@@ -79,11 +79,19 @@ and never on `rmcp`, `reqwest` or any harness.
   empty data dir. Migration = export, import, start. Running the same identity
   in two places at once is not supported (each would ack and dedupe
   independently); the lock only protects one data directory.
-* Rotation: `agentnet identity rotate-kem` generates a new agreement key, keeps
-  the previous one for decryption until `retention_hours` have passed, and issues
-  a new contact record (same address). Peers must re-import the record. There is
-  no revocation channel: signing-key compromise means a new address. These limits
-  are documented, not solved.
+* Rotation and revocation (details and limits: `docs/protocol.md` section 9):
+  `agentnet identity rotate-kem` generates a new agreement key and increments
+  `key_epoch`; by default the previous key keeps decrypting until
+  `retention_hours` have passed, with `--revoke-previous` every earlier agreement
+  key is destroyed at once. At the next start the daemon sends the new signed
+  record to every Trusted contact (`contact.update`) and the contacts re-seal
+  their pending messages. `agentnet identity revoke` writes a signed tombstone
+  and the daemon then only delivers it (`identity.revoked`). There is no
+  directory and no global revocation list: revocation reaches only peers that
+  receive the notice.
+* The cryptography sits behind `agentnet_core::crypto` and the
+  `MessageProtection` trait (`docs/crypto-interface.md`); the engine, transport,
+  MCP server and daemon do not touch the cryptographic crates.
 
 ## 5. Message protocol
 

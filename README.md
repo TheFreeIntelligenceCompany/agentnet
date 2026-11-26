@@ -2,7 +2,7 @@
 
 > **Status: MVP, validated on a single host only. Not audited. Provisional name.**
 > Every test run so far used one macOS arm64 machine with containers on one VM. Cross-machine, NAT, Tailscale and public-network behaviour are **UNTESTED**.
-> The cryptographic composition has had no independent review. The name "AgentNet" and the licence choice (`MIT OR Apache-2.0`) are provisional and subject to the owner's confirmation before any publication.
+> The cryptographic composition has had no independent review: **an independent cryptographic review is required before any production use involving sensitive information.** The scheme is **not audited, not production-secure and not forward-secret.** The name "AgentNet" and the licence choice (`MIT OR Apache-2.0`) are provisional and subject to the owner's confirmation before any publication.
 > The CI workflow has **never run on GitHub** (UNTESTED there; the individual commands were run locally, see "Running the tests").
 
 AgentNet is a Rust service that gives an autonomous agent a durable cryptographic address and lets agents on different machines exchange encrypted, asynchronous messages through relays the user chooses.
@@ -154,9 +154,11 @@ Reference configs: [docs/examples/private.toml](docs/examples/private.toml), [do
 ## Security summary
 
 * Each message is sealed with HPKE (RFC 9180 base mode, X25519 / HKDF-SHA256 / ChaCha20-Poly1305) to the recipient's key and carries an inner Ed25519 signature that names the recipient; sender, type, ids and body are inside the ciphertext. Relays see the recipient's inbox bucket (1 of 16 by default), time, and padded size.
-* **No forward secrecy, no post-compromise security, no deniability, no key revocation.** Secrets are stored in a mode-0600 plaintext file; a compromised host loses everything. No anonymity is claimed.
+* **No forward secrecy, no post-compromise security, no deniability.** Key rotation (with optional destruction of earlier KEM keys) and a signed identity tombstone exist, but there is no directory and no global revocation list: they reach only peers that receive the notice ([docs/protocol.md](docs/protocol.md) section 9). Secrets are stored in a mode-0600 plaintext file; a compromised host loses everything. No anonymity is claimed.
+* Cryptography sits behind one module boundary (`agentnet_core::crypto`, [docs/crypto-interface.md](docs/crypto-interface.md)); the owner's acceptance conditions and their status are in [docs/crypto-requirements.md](docs/crypto-requirements.md). The cipher-suite list is signed into contact records (no silent downgrade), every cryptographic dependency is exact-pinned, and the primitives are checked against published RFC test vectors.
+* Replay protection survives restarts and detects a rolled-back store (replay guard); it cannot detect the same identity running in two data directories.
 * Remote message bodies are data. Nothing executes them; remote senders cannot create triggers, change policy or set webhook targets. Unknown senders are quarantined by default.
-* **Unaudited**: the composition (not just the code) needs an independent cryptographic review before real use; `hpke` has no public third-party audit.
+* **Unaudited**: the composition (not just the code) needs an **independent cryptographic review before production use involving sensitive information**; `hpke` has no public third-party audit. Do not describe this implementation as audited, production-secure or forward-secret.
 
 Full analysis: [docs/threat-model.md](docs/threat-model.md). ADR: [docs/adr/0002-end-to-end-encryption.md](docs/adr/0002-end-to-end-encryption.md).
 
@@ -167,7 +169,9 @@ Read these before relying on anything here.
 * **Single-host validation only.** All tests ran on one macOS arm64 machine; containers on one VM; the node image under CPU emulation. Cross-machine, NAT traversal, Tailscale and public networks are **UNTESTED**. Linux builds: see [docs/compatibility-matrix.md](docs/compatibility-matrix.md) (Linux x86_64 is UNTESTED).
 * **A node sidecar is required.** There is no single static binary and no embedded node. Native FFI embedding was only partially explored and is not part of the MVP ([docs/spike-report.md](docs/spike-report.md) section 5, [ADR 0001](docs/adr/0001-transport.md)).
 * **The node image is linux/amd64 only**, unsigned as far as verified, pinned by digest, and runs as root in its container. It is `v0.39.2`; newer node releases are untested with the adapter.
-* **No forward secrecy, no post-compromise security, no deniability; no revocation.** Unaudited cryptographic composition.
+* **No forward secrecy, no post-compromise security, no deniability; no global revocation.** Unaudited cryptographic composition. A forward-secret scheme (vodozemac, MLS) is a documented upgrade path that is **not implemented** ([docs/crypto-interface.md](docs/crypto-interface.md)).
+* **Revocation is best effort.** KEM rotation/revocation and identity tombstones reach only contacts that are reachable within the TTL/retry limits or receive the document out of band; messages sealed to a destroyed KEM key are lost unless re-sealed by their senders. A thief of the signing key can impersonate the owner until peers learn of the tombstone and can issue the tombstone itself.
+* **Restoring an old database or importing an identity into a new data directory starts the replay guard**: older messages are held until `max_ttl + clock_skew` has passed or `agentnet doctor --accept-rollback` is run; messages received between the restored copy and the rollback are lost.
 * **No groups, no multi-device, no discovery or advertisement, no task-delegation tools.** One data directory is one identity; the same identity in two places is not detected and would split state.
 * **Recovery is bounded** by the relay's Store retention (the verified relay flags keep **1 hour**; the client's 168 h does not extend it), by the message TTL (default 24 h, max 7 d) and by a 20 s clock-skew rule in the Store. After a relay restart live delivery degraded for about 9 minutes in the one observation; recovery then relies on Store catch-up.
 * **REST cache polling model.** The node's relay cache holds 50 messages shared across topics and is read destructively; the daemon polls every 250 ms and loses live frames if it cannot keep up (Store catch-up then recovers within retention). Observed delivery in a 100-client single-process load test ranged from 40.8 % to 100 % depending on poll interval and publish concurrency.
@@ -223,7 +227,9 @@ cargo test --workspace --locked
 | [docs/threat-model.md](docs/threat-model.md) | assets, adversaries, mitigations, residual risk, not-claimed list |
 | [docs/dependency-audit.md](docs/dependency-audit.md) | dependencies, licences, advisories, native code |
 | [docs/architecture.md](docs/architecture.md) | MVP architecture |
-| [docs/protocol.md](docs/protocol.md) | normative wire protocol and delivery semantics |
+| [docs/protocol.md](docs/protocol.md) | normative wire protocol (not yet frozen), delivery semantics, rotation/revocation, replay protection |
+| [docs/crypto-interface.md](docs/crypto-interface.md) | the cryptographic module boundary and what a replacement scheme must provide |
+| [docs/crypto-requirements.md](docs/crypto-requirements.md) | the owner's 13 conditions on ADR 0002: how each is met, tests, residual gaps |
 | [docs/mcp-api.md](docs/mcp-api.md) | MCP tools, resources, versions, limits |
 | [docs/host-integration.md](docs/host-integration.md) | control socket, events, webhook |
 | [docs/configuration.md](docs/configuration.md) | every `agentnet.toml` key |

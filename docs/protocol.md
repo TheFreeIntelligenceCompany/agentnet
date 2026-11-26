@@ -1,7 +1,19 @@
 # AgentNet wire protocol, version 1
 
-Status: normative for the MVP. Implemented by `crates/core` (`address`,
-`contact`, `identity`, `envelope`). Design rationale is in
+Status: normative for the MVP, **not yet frozen**. There are no released peers,
+so the version numbers below (`v: 1`, frame version 1, suite id 1) were kept
+while the format changed during the cryptographic hardening that followed the
+owner's conditions on ADR 0002 (new contact-record fields `key_epoch`,
+`revoked_kem_epochs_below`, `suites`; new signed envelope fields `suite` and
+`recipient_key_epoch`; reserved message types `contact.update` and
+`identity.revoked`). Until a first release the wire format may still change
+without a version bump. Nothing here has been independently reviewed: this is
+**not an audited, not a production-secure and not a forward-secret protocol**
+(section 7); an independent cryptographic review is required before any
+production use involving sensitive information. Implemented by `crates/core`
+behind the `crypto` module (`crypto::{address, contact, envelope, identity,
+revocation}` and the `MessageProtection` trait; see `docs/crypto-interface.md`).
+Design rationale is in
 `docs/architecture.md` sections 4 and 5; why HPKE is used rather than a
 messaging library is in `docs/spike/notes-libchat-and-crypto.md`. RFC 9180
 (HPKE) section numbers below were checked against the RFC text.
@@ -15,10 +27,18 @@ error that carries no plaintext, and do not act on the input.
 
 | Purpose | Primitive | Library (exact pins in `Cargo.lock`) |
 |---|---|---|
-| Signatures | Ed25519, verified with the *strict* rules (`verify_strict`: rejects small-order keys and non-canonical signatures) | `ed25519-dalek` 3.x |
-| Hash | SHA-256 | `sha2` |
+| Signatures | Ed25519, verified with the *strict* rules (`verify_strict`: rejects small-order keys and non-canonical signatures) | `ed25519-dalek` =3.0.0 |
+| Hash | SHA-256 | `sha2` =0.10.9 |
 | Encryption | HPKE (RFC 9180) Base mode, DHKEM(X25519, HKDF-SHA256) = 0x0020, HKDF-SHA256 = 0x0001, ChaCha20-Poly1305 = 0x0003 (RFC 9180 section 7.1, 7.2, 7.3) | `hpke` =0.15.1 |
-| Passphrase export | age (scrypt recipient), ASCII armor | `age` 0.12 |
+| Passphrase export | age (scrypt recipient), ASCII armor | `age` =0.12.1 |
+
+Every direct dependency on the cryptographic path (`hpke`, `ed25519-dalek`,
+`sha2`, `age`, `getrandom`, `zeroize`, `data-encoding`, `base64`, `uuid`) is
+pinned with an exact `=x.y.z` requirement; the transitive cryptographic crates
+(`curve25519-dalek`, `x25519-dalek`, `chacha20poly1305`, `hkdf`, ...) are pinned
+by the committed `Cargo.lock` (CI builds with `--locked`). The suite is checked
+against published vectors (RFC 9180 Appendix A.2.1, RFC 8032 section 7.1,
+RFC 6234, RFC 4648; `crates/core/tests/vectors.rs`).
 
 There is no hand-written cryptography. The Ed25519 signing key and the X25519
 KEM key are generated independently; neither is derived from the other.
@@ -31,6 +51,7 @@ All domain-separation strings are ASCII and are used byte-exactly:
 | `agentnet/v1/inbox-topic` | inbox bucket hash input prefix |
 | `agentnet/v1/contact-record\0` | contact record signature input prefix |
 | `agentnet/v1/envelope\0` | envelope signature input prefix |
+| `agentnet/v1/identity-revocation\0` | identity-revocation tombstone signature input prefix |
 | `agentnet/v1/hpke\0` | HPKE `info` prefix |
 
 (`\0` is a single NUL byte.)
@@ -69,13 +90,16 @@ Record bytes are UTF-8 JSON with exactly these fields, in this order, no
 whitespace:
 
 ```json
-{"v":1,"address":"an1…","signing_pk":"<b64url>","kem_pk":"<b64url>","inbox_buckets":16,"created_at":1700000000000,"kem_expires_at":null}
+{"v":1,"address":"an1…","signing_pk":"<b64url>","kem_pk":"<b64url>","key_epoch":1,"revoked_kem_epochs_below":1,"suites":[1],"inbox_buckets":16,"created_at":1700000000000,"kem_expires_at":null}
 ```
 
 * `b64url` is RFC 4648 section 5 base64url without padding; decoders MUST reject padding and non-canonical trailing bits.
 * `signing_pk`: 32 bytes. `kem_pk`: 32-byte X25519 public key.
+* `key_epoch`: integer >= 1, starts at 1, incremented by every KEM rotation. This (not `created_at`) orders records of one address (section 9).
+* `revoked_kem_epochs_below`: integer in 1..=`key_epoch`. KEM key epochs strictly below it are revoked by the owner (1 = nothing revoked). A rotation with revocation sets it to the new `key_epoch`.
+* `suites`: the cipher suite ids the owner accepts, a non-empty strictly ascending list of 1..=255, at most 16 entries (today `[1]`). A sender seals only to a suite in this signed list (section 5, "No silent downgrade").
 * `inbox_buckets`: integer in 1..=256 (default 16).
-* `created_at`: when this record (this KEM key) was created. After a KEM rotation the record's `created_at` is the rotation time, so a newer record for the same address has a larger `created_at`.
+* `created_at`: when this record (this KEM key) was created, for information only; ordering uses `key_epoch`.
 * `kem_expires_at`: Unix ms or `null`. Senders MUST NOT seal to a key at or after this time.
 
 Signature: `sig = Ed25519(signing_sk, "agentnet/v1/contact-record\0" || record_bytes)`.
@@ -90,8 +114,9 @@ Verification (`parse_and_verify(doc, now_ms)`), in this order. Any failure rejec
 4. `address` parses (section 2) and equals the address derived from `signing_pk`.
 5. The signature verifies with `verify_strict` under the address's key over the domain-prefixed record bytes.
 6. `kem_pk` is 32 bytes, is not the all-zero value, and is not a low-order point (see below).
-7. `inbox_buckets` in 1..=256; `created_at` and `kem_expires_at` non-negative; `created_at` not more than 24 h after `now_ms`.
-8. `kem_expires_at`, if present, is greater than `now_ms`; otherwise `KemKeyExpired`. (Re-loading a persisted contact may use the variant that skips this check; sealing then re-checks it.)
+7. `key_epoch >= 1` and `1 <= revoked_kem_epochs_below <= key_epoch` (`InvalidKeyEpoch`); `suites` non-empty, strictly ascending, no zero, at most 16 (`InvalidSuites`).
+8. `inbox_buckets` in 1..=256; `created_at` and `kem_expires_at` non-negative; `created_at` not more than 24 h after `now_ms`.
+9. `kem_expires_at`, if present, is greater than `now_ms`; otherwise `KemKeyExpired`. (Re-loading a persisted contact may use the variant that skips this check; sealing then re-checks it.)
 
 KEM key validation. In `hpke` 0.15.1, `PublicKey::from_bytes` for X25519 only
 checks the length, so validation is explicit: the all-zero key is rejected
@@ -116,16 +141,7 @@ inside the signed record so senders cannot pick the wrong topic. Example:
 the address above with 16 buckets is `/agentnet/1/inbox-06/proto`, with 256
 buckets `/agentnet/1/inbox-c6/proto`.
 
-### Rotation and revocation limits
-
-`rotate-kem` creates a new KEM key under the same address and issues a new
-contact record. The old key remains usable for decryption until a configured
-`retire_at`; after that (or after pruning) frames sealed to it can no longer
-be opened. Peers must obtain and import the new record; there is no
-push-update channel. There is **no revocation**: if the signing key is
-compromised the address is compromised and a new identity (new address) is
-required. Compromise of a KEM key is repaired only by rotation; frames sealed
-to it before rotation stay readable to whoever holds it.
+Rotation, revocation and their limits are specified in section 9.
 
 ## 4. Envelope
 
@@ -139,6 +155,8 @@ exact received bytes (nothing is re-serialized).
 | `message_id` | string | lowercase hyphenated UUIDv4 (version 4, RFC 4122 variant) |
 | `sender` | string | address (section 2) |
 | `recipient` | string | address (section 2) |
+| `suite` | integer | the suite id the envelope was sealed under; MUST equal the frame header's suite byte |
+| `recipient_key_epoch` | integer | the `key_epoch` of the recipient KEM key the frame was sealed to; MUST equal the epoch of the key that actually decrypted it |
 | `type` | string | 1..=64 characters of `[a-z0-9._-]` |
 | `conversation_id` | string, optional | 1..=128 printable ASCII characters 0x21..0x7e (no spaces); omitted when absent |
 | `correlation_id` | string, optional | same rule |
@@ -163,6 +181,10 @@ data with their type string; they never receive special handling.
 * `message`: ordinary message. Receipt is acknowledged with `ack.received`.
 * `ack.received`: authenticated receipt acknowledgement. It is an ordinary sealed envelope from the recipient of the original message back to its sender, with `correlation_id` = the original `message_id` (and normally the original `conversation_id`). It means "the recipient's engine durably persisted the message with that id", sent only after persistence (`docs/architecture.md` section 5). Acks are never acknowledged. It is *not* evidence the message was read or acted on, and a transport accepting a publish is not receipt.
 * `task.request`, `task.result`: request and response correlated by `correlation_id`. Their bodies are untrusted data like every other body; a receiver never executes them as code or instructions.
+* `contact.update` (reserved, engine only): body is the sender's new signed contact-record document (section 9.3).
+* `identity.revoked` (reserved, engine only): body is the sender's, or a contact's, signed identity-revocation tombstone (section 9.5).
+
+`ack.received`, `contact.update` and `identity.revoked` cannot be sent through `send_message`; the engine creates them.
 
 ### Dedupe
 
@@ -186,6 +208,36 @@ The signature is inside the ciphertext. The receiver verifies with
 the signed bytes, a recipient cannot re-seal a message it received to a third
 party and have it accepted there (surreptitious forwarding): the third party
 sees `WrongRecipient`.
+
+### Field protection audit: field -> protected by
+
+Audited against `crypto/hpke_suite.rs`: the signature is over the exact
+serialized envelope (every envelope field), and the 4-byte frame header is
+HPKE `aad`.
+
+| Field / data | Protected by |
+|---|---|
+| frame magic, frame version, suite byte (header) | HPKE `aad`: any change makes the AEAD tag fail; the suite is additionally signed (`envelope.suite`) and compared with the header |
+| `enc` (HPKE encapsulated key) | HPKE key schedule: a changed `enc` yields a different key, so the AEAD fails |
+| ciphertext, length prefix, padding | AEAD tag (ChaCha20-Poly1305); after decryption the prefix is range-checked and padding must be all zero |
+| recipient KEM key | HPKE `info` = `"agentnet/v1/hpke\0" \|\| recipient_kem_pk` |
+| `v` (envelope version) | signature (and read first by a minimal parser) |
+| `message_id` | signature |
+| `sender` | signature (the verifying key is the one named by this field; `verify_strict`) |
+| `recipient` | signature; compared with the receiver's own address (`WrongRecipient`) |
+| `suite` | signature; compared with the frame header suite (`SuiteMismatch`) |
+| `recipient_key_epoch` | signature; compared with the epoch of the KEM key that decrypted (`KeyEpochMismatch`) |
+| `type`, `conversation_id`, `correlation_id` | signature |
+| `created_at`, `expires_at` | signature; time checks at open |
+| `body` | signature |
+| contact record: `address`, `signing_pk`, `kem_pk`, `key_epoch`, `revoked_kem_epochs_below`, `suites`, `inbox_buckets`, `created_at`, `kem_expires_at` | signature by the address key (`agentnet/v1/contact-record\0`) |
+| tombstone: `v`, `address`, `revoked_at`, `reason` | signature by the address key (`agentnet/v1/identity-revocation\0`) |
+
+Not protected by any key and therefore untrusted: the content topic a frame
+arrives on (a sender derives it from the signed `inbox_buckets`, but a relay or
+attacker can republish a frame anywhere, which at worst makes it undeliverable),
+the transport's timestamp, transport id and publisher identity. The engine never
+relies on them for a security decision.
 
 ### Padding
 
@@ -250,12 +302,19 @@ for the header because it is per-message data.)
 Open order (each failure rejects without further work):
 
 1. `len(frame) <= max_frame_len`, else `FrameTooLarge`. Fewer than 4 bytes: `Truncated`.
-2. Magic (`BadMagic`), frame version (`UnknownFrameVersion(v)`), suite (`UnknownSuite(s)`); fewer than 36 + 16 + 69 bytes: `Truncated`.
-3. HPKE open with the current KEM key, then with every retired key whose `retire_at` is still in the future. If none opens it: `NotForUs`. This is the normal outcome for other agents' frames sharing the bucket; it costs one decapsulation per candidate key and MUST NOT be logged above debug level.
+2. Magic (`BadMagic`), frame version (`UnknownFrameVersion(v)`), suite: not registered `UnknownSuite(s)`; registered but not in this agent's own advertised `suites` list `SuiteNotAdvertised(s)`; fewer than 36 + 16 + 69 bytes: `Truncated`.
+3. HPKE open with the current KEM key, then with every retired key whose `retire_at` is still in the future and whose epoch is not below `revoked_kem_epochs_below`. If none opens it: `NotForUs`. This is the normal outcome for other agents' frames sharing the bucket; it costs one decapsulation per candidate key and MUST NOT be logged above debug level. The epoch of the key that opened the frame is remembered.
 4. Length prefix and zero-padding check (section 4).
 5. Parse the envelope (version first, then strict).
-6. Verify the signature under `envelope.sender`, then `recipient == self` (`WrongRecipient`), then field validation, then the time checks.
+6. Verify the signature under `envelope.sender`, then `recipient == self` (`WrongRecipient`), then `envelope.suite == header suite` (`SuiteMismatch`) and `envelope.recipient_key_epoch == epoch of the decrypting key` (`KeyEpochMismatch`), then field validation, then the time checks.
 7. (Engine, outside `open`) dedupe on `(sender, message_id)`.
+
+Every `seal` performs one HPKE single-shot encapsulation, which generates a
+**fresh ephemeral X25519 key and a fresh HPKE context per message**; nothing is
+cached or reused, and the sequence number is never advanced beyond 0. Tested:
+two seals of the same envelope to the same recipient differ in `enc` and in
+ciphertext, and 64 seals never repeat an `enc`
+(`crates/core/tests/crypto.rs`, module `hardening`).
 
 A frame that is "for us" but fails after step 3 is authentic-ciphertext
 garbage: only the sender (or someone holding the recipient's public KEM key,
@@ -265,10 +324,33 @@ which is public) can produce it, so it is rejected without being stored.
 
 Unknown frame version, suite, envelope version or contact record version are
 rejected with a distinct error and are never partially processed. A new
-cipher suite or format gets a new frame version or suite id; there is no
-in-band negotiation (RFC 9180 section 9.7.2 notes HPKE gives no downgrade
-prevention; here the suite is fixed per frame version and authenticated in
-`aad`).
+cipher suite or format gets a new frame version or suite id.
+
+#### No silent downgrade
+
+There is no in-band negotiation; the suite choice comes from signed data:
+
+* The recipient's signed contact record lists its `suites`. The sender chooses
+  the highest suite that it supports and the record lists
+  (`SuiteRegistry::seal`); if there is none, sealing fails with `NoCommonSuite`
+  and the engine reports an error to the caller. It never falls back to a suite
+  the record does not list, and a record cannot be edited without breaking its
+  signature.
+* The frame header (magic, frame version, suite) is HPKE `aad`, so altering any
+  of those bytes makes the AEAD fail (tested bit by bit,
+  `frame_version_and_suite_bytes_are_authenticated_as_aad`).
+* The suite and the recipient key epoch are also inside the signed envelope and
+  are checked against the frame header and the decrypting key (steps 6 above):
+  an attacker that holds an old recipient key cannot re-wrap a message into a
+  different suite or epoch unnoticed.
+* The receiver rejects frames whose suite is not in its *own* currently
+  advertised list (`SuiteNotAdvertised`), so a suite that was removed from the
+  record is not accepted any more (tested with a second, test-only suite
+  registered in a `SuiteRegistry`; no second real suite exists yet).
+
+RFC 9180 section 9.7.2 notes that HPKE itself gives no downgrade prevention;
+the measures above are the application-level answer. They are only as strong as
+the integrity of the contact record the sender holds (section 9).
 
 ### Size limits
 
@@ -287,8 +369,8 @@ prevention; here the suite is fixed per frame version and authenticated in
 `identity.json` (mode 0600; the library creates it with that mode, writes a
 temp file in the same directory, fsyncs, then renames; it refuses to replace
 an existing file unless asked) is JSON
-`{"v":1,"address","signing_sk","kem_sk","kem_created_at","inbox_buckets","created_at","kem_expires_at","previous_kems":[{"kem_sk","created_at","retire_at"}]}`
-with base64url secrets. On unix, load refuses a file readable by group or
+`{"v":1,"address","signing_sk","kem_sk","kem_created_at","inbox_buckets","created_at","kem_expires_at","previous_kems":[{"kem_sk","created_at","retire_at","epoch"}],"kem_epoch","min_valid_epoch"}`
+with base64url secrets. `kem_epoch`, `min_valid_epoch` and each previous key's `epoch` are optional when reading (files written before epochs existed: retired keys are numbered 1..n, the current key n+1, `min_valid_epoch` 1). A rotation with revocation writes an empty `previous_kems`. A revoked identity additionally has `revocation.json` (the tombstone) next to it. On unix, load refuses a file readable by group or
 others. Load validates everything (keys parse, the stored address equals the
 address derived from the signing key). An export is the same JSON encrypted
 with age's scrypt passphrase recipient and ASCII-armored; a wrong passphrase
@@ -305,7 +387,7 @@ compromised:
 * **Integrity**: any bit change anywhere in a frame is rejected (header by AEAD aad, the rest by the AEAD tag); tested exhaustively on a 564-byte frame.
 * **Key binding**: a peer's KEM key is trusted only through a contact record signed by the address key.
 * **Length hiding** within power-of-two buckets (RFC 9180 section 9.7.6 notes HPKE alone does not hide length).
-* **Replay rejection**: *not* done here. HPKE provides none (RFC 9180 section 9.7.3); the time window bounds it and the engine's persisted `(sender, message_id)` set removes it.
+* **Replay rejection**: *not* done here. HPKE provides none (RFC 9180 section 9.7.3); the time window bounds it and the engine's persisted `(sender, message_id)` set removes it, with the limits listed in section 10.
 
 Not provided:
 
@@ -315,7 +397,7 @@ Not provided:
 * **Metadata privacy** beyond bucket k-anonymity: relays see the content topic (the inbox bucket, hence "this recipient is one of the agents sharing bucket N"), timing, the padded frame size (power-of-two buckets, so sizes leak roughly log2 of the length), and the publishing node's network identity. The sender and recipient addresses are inside the ciphertext. Anyone watching a bucket sees every frame addressed to it, and bandwidth and trial-decryption cost grow with the bucket population. Bucket assignment is a public function of the address, so a third party who knows an address knows its bucket. The recipient's KEM key and address are not hidden from anyone who has the contact record.
 * **Key-compromise impersonation**: RFC 9180 section 9.1.1 notes that HPKE messages can be forged "from" a sender by anyone who knows the recipient's private key unless the application adds a signature (it suggests one over `(enc, ct)`). Here the sender's Ed25519 signature covers the envelope bytes (not `enc`/`ct`), so holding a recipient's KEM key does not let an attacker create a *new* envelope that verifies as coming from the sender. It does let them re-seal an envelope the sender really signed (same bytes, same recipient field) to that recipient; the time window and the engine's dedupe bound that. Compromise of the recipient's KEM key still reveals content, and compromise of a sender's signing key allows impersonating that sender to everyone.
 * **Protection against a compromised host**: secrets are stored unencrypted in `identity.json` (protected only by file mode 0600) and live in process memory; zeroization on drop is best-effort (copies made by the allocator, the OS, serde buffers or the HPKE library's temporaries are not tracked). Malware or a root user on the host can read them. The passphrase export protects the exported file only.
-* **Revocation**: none (section 3).
+* **Revocation**: only what section 9 describes: KEM-key revocation propagated to contacts that are reachable (or that import the signed record), and a signed identity tombstone that reaches only the contacts that receive it. There is no directory, no global revocation list and no way to force a peer to learn of a revocation; a revoked-but-not-yet-informed peer keeps trusting the old keys. A thief of the signing key can impersonate the owner until peers learn of the tombstone and can issue the tombstone itself (denial of service).
 * **Availability and ordering**: no ordering, no delivery guarantee; at-least-once delivery attempts by the engine.
 * **Clock security**: time checks rely on the local clock, with a configurable skew. A host with a wrong clock may accept expired messages or reject valid ones.
 * **Random number generation**: HPKE seal uses the operating system RNG (`getrandom`); if it is subverted or broken, confidentiality of Base mode can be lost completely (RFC 9180 section 9.7.5).
@@ -341,8 +423,9 @@ jitter) in `crates/core/tests/engine_*.rs`.
 | `failed` | Permanent: the transport said the frame can never be accepted (`TooLarge`). |
 | `expired` | `expires_at` passed without an ack. |
 
-`send_message` validates (known, non-blocked recipient whose KEM key is not
-expired; type in `message`, `task.request`, `task.result`; body <=
+`send_message` validates (identity not revoked; known, non-blocked, non-revoked
+recipient whose KEM key is not expired and whose signed record shares a suite
+with us; type in `message`, `task.request`, `task.result`; body <=
 `max_body_bytes` and fits one frame; TTL defaulted and capped at `max_ttl_s`;
 fewer than `max_outbox_pending` non-ack rows in `queued`/`sent`), seals the
 frame **once**, and inserts the row in one transaction. Retries re-publish the
@@ -362,6 +445,10 @@ works through the relay echo (the engine synthesizes our own contact record).
   `next_attempt_at = now + d`, `d` uniform in `[1, min(retry_max_ms, retry_base_ms * 2^(n-1))]`
   milliseconds (full jitter; defaults 2000 / 300000; seedable via
   `delivery.jitter_seed`).
+* System rows (`contact.update`, `identity.revoked`) are ordinary outbox rows
+  (retried, acked, expired like user messages) with `hidden = 1`: they are
+  excluded from `read_outbox`, `get_message_status`, `read_conversation`,
+  queue counts and the pending limit.
 * After `max_attempts` (20) accepted publishes the row is no longer published;
   it stays `sent` until it is acked or expires. Consequence: a recipient that
   stays unreachable for longer than the retry budget, or whose ack is lost for
@@ -381,6 +468,15 @@ works through the relay echo (the engine synthesizes our own contact record).
   `failed`) to `delivered`. Because an ack's `expires_at` never exceeds the
   original's, a post-expiry ack can only be processed after a backwards clock
   correction; the code path exists and is tested that way.
+
+A revoked local identity publishes only rows of type `identity.revoked`.
+When a recipient's contact record is replaced by a newer epoch (an imported
+record or a `contact.update`), every `queued` or `sent` row for that recipient
+whose TTL has not passed is **re-sealed** in the same transaction (same
+envelope fields and `message_id`, fresh signature and ciphertext for the new
+key, `next_attempt_at = now`), so pending messages survive the recipient's key
+rotation. A tombstone for the recipient fails all its pending rows
+(`recipient identity revoked`).
 
 ### 8.3 What an ack proves
 
@@ -404,9 +500,13 @@ sender under `unknown_senders = "accept"` is stored but **never acked**
 ### 8.4 Inbound processing and dedupe
 
 Order for each frame (live or history): skip if `transport_id` is in
-`transport_seen`; `open` (limits from config; `NotForUs` is silent and counted);
-trust lookup (`Blocked` dropped; an ack from a non-Trusted sender is ignored,
-never quarantined); `unknown_senders` policy for non-Trusted senders
+`transport_seen`; `open` through the `MessageProtection` registry (limits from
+config; `NotForUs` is silent and counted); trust lookup (`Blocked` dropped, which
+includes an address with a verified tombstone, also when it is not a contact; an
+ack from a non-Trusted sender is ignored, never quarantined); reserved system
+types (`identity.revoked` from any non-blocked sender, `contact.update` from a
+Trusted sender only; section 9) are handled in their own transaction and never
+stored in the inbox; `unknown_senders` policy for non-Trusted senders
 (`quarantine`: stored with `quarantined=1` up to `max_quarantined`, then dropped,
 no ack/event/trigger; `reject`: dropped; `accept`: normal, trust recorded as
 `unknown`/`untrusted`, triggers never match); then **one transaction**: insert
@@ -501,3 +601,192 @@ A store opened with a different identity than the one that created it is
 refused (`NodeError::IdentityMismatch`). The engine trusts its local clock for
 TTL, retry and pruning decisions; a wrong clock accepts or rejects messages
 accordingly.
+
+## 9. Key epochs, rotation and revocation
+
+No new cryptography is involved: only the existing Ed25519 signature with new
+domain-separation strings, and ordinary sealed envelopes. Implemented in
+`crates/core/src/crypto/{identity,contact,revocation}.rs` and
+`crates/core/src/system.rs`; tested in `crates/core/tests/engine_hardening.rs`
+and the `hardening` module of `crates/core/tests/crypto.rs`.
+
+### 9.1 Epochs
+
+`key_epoch` starts at 1 and each KEM rotation adds 1. For an address already in
+the contact store:
+
+| New record | Result |
+|---|---|
+| `key_epoch` lower than stored | rejected: `Conflict` "stale contact record"; the stored record is never replaced by an older one |
+| equal, same signed content | accepted, no change (idempotent) |
+| equal, different content | rejected: `Conflict` "conflicting contact record" |
+| higher | replaces the stored record (trust and alias are kept) and re-seals pending outbox rows (section 8.2) |
+
+`created_at` is informational. This replaces the earlier "older `created_at`
+cannot replace a newer record" rule.
+
+### 9.2 KEM rotation and KEM revocation
+
+`agentnet identity rotate-kem` (daemon stopped, it takes the data-dir lock)
+generates a new X25519 key, increments `key_epoch` and, by default, keeps the old
+secret key for decryption until `retire_at` (overlap). With `--revoke-previous`
+(`Identity::rotate_kem_with(.., revoke_previous = true)`) **every earlier KEM
+secret key is destroyed immediately** (dropped and zeroized, not written to the
+identity file) and the new record carries `revoked_kem_epochs_below = key_epoch`.
+Consequences, stated plainly:
+
+* Frames already sealed to a revoked epoch can never be opened again, including
+  undelivered ones in transit or in a peer's outbox. They are lost unless the
+  sender re-seals them after learning the new record (section 9.3, 9.4).
+* A receiver that sees a record with `revoked_kem_epochs_below = N` keeps only
+  records with `key_epoch >= N` (it discards older ones by the rule in 9.1) and
+  never seals to an epoch below `N`.
+* Revocation protects the future only: whoever already holds an old KEM secret
+  key can still read what was sealed to it earlier. Destroying the key on the
+  owner's side does not remove copies an attacker made.
+
+### 9.3 Propagation without a directory: `contact.update`
+
+At the next daemon start after a rotation (the engine compares
+`identity.key_epoch` with the `announced_key_epoch` it stored) it queues a hidden
+`contact.update` to every Trusted contact, sealed with the normal scheme, with
+the new signed contact-record document as body. The sender is acked like any
+message. A receiver applies it only if **all** hold: the sender is a Trusted,
+non-revoked contact; the body verifies as a contact record; its address equals
+the authenticated envelope sender (a Trusted contact cannot push someone else's
+record); and its `key_epoch` is strictly higher than the stored one (a replayed
+older update cannot roll a contact back; equal epochs with different content are
+ignored as conflicting). Otherwise it is ignored and counted
+(`contact_update.ignored_{invalid,wrong_address,stale,same,conflict,untrusted,no_contact,revoked}`).
+A `contact.update` from an Unknown or Untrusted sender is stored like any other
+message under the quarantine policy and is **not applied**. It is not stored in
+the user inbox of a Trusted receiver, creates no event, and cannot be sent via
+`send_message`.
+
+A contact that was offline when the update was sent, or whose retries ran out
+(section 8.2), never learns the new record this way and must be given the record
+out of band (`agentnet contact add`); until then their messages are sealed to the
+old epoch and, after `--revoke-previous`, are lost.
+
+### 9.4 Re-seal on contact update
+
+See section 8.2. The envelope (same `message_id`, `created_at`, `expires_at`,
+body) is signed again with the new `recipient_key_epoch` and sealed to the new
+key; the row's `frame` is replaced in the same transaction that replaces the
+contact.
+
+### 9.5 Identity (signing key) revocation
+
+`agentnet identity revoke --reason <text>` (daemon stopped) creates the
+tombstone and writes it to `revocation.json`:
+
+```
+record = {"v":1,"address":"an1…","revoked_at":<unix ms>,"reason":"<1..256 bytes, no control chars>"}
+sig    = Ed25519(signing_sk, "agentnet/v1/identity-revocation\0" || record_bytes)
+document = {"record":"<b64url(record_bytes)>","sig":"<b64url(sig)>"}      (at most 2048 bytes)
+```
+
+The tombstone is self-authenticating: the signature must verify under the very
+address it names, so any party may carry it.
+
+* **Local effect**: the identity is marked revoked. The daemon refuses
+  `send_message` (`PolicyDenied`), queues no acks and publishes nothing except
+  `identity.revoked` rows; `get_identity.revoked` and
+  `network_status.identity_revoked` report it. Pending outbox rows are not
+  sent. Revocation is irreversible for the address.
+* **Delivery**: at the next start the engine sends `identity.revoked` (body = the
+  tombstone) to every Trusted contact; `agentnet identity show-revocation`
+  prints it for distribution out of band, and `agentnet contact revoke <@file>`
+  imports one.
+* **Receipt**: an `identity.revoked` envelope from any non-blocked sender is
+  applied if the tombstone verifies and names the envelope sender **or** an
+  existing contact (so a Trusted contact can forward someone else's tombstone,
+  and a stranger can deliver only its own). A tombstone naming the receiving
+  identity itself is never applied to it. An imported tombstone (out of band)
+  needs no contact.
+* **Effect on the revoked address**: stored in the `revocations` table; the
+  contact is reported `Blocked` (inbound dropped as `drop.blocked`), sends to it
+  fail with `PolicyDenied`, pending sends fail, it cannot be re-trusted
+  (`set_contact_trust` -> `Conflict`) and `add_contact` for the address is
+  refused (`Conflict`).
+
+Honest limits: revocation reaches only contacts that are reachable within the
+TTL and retry limits, or that obtain the document out of band; there is no
+global revocation list and no way to find out who has not heard. Until a peer
+learns of it, a thief of the signing key can impersonate the owner. A thief can
+also issue a tombstone for the address, which is a denial of service (the owner
+cannot un-revoke); that is accepted as the safer failure.
+
+## 10. Replay protection: what is and is not guaranteed
+
+Replay protection is the engine's persisted set of `(sender, message_id)`
+(table `seen`, kept until `expires_at + clock_skew`) on top of the time checks
+in `open`. Outcomes by scenario (tests in `crates/core/tests/engine_hardening.rs`
+unless noted):
+
+| Scenario | Outcome | Test |
+|---|---|---|
+| Replay in the same process | `message.duplicate`; no inbox row, event or trigger; a re-ack is queued at most every `reack_min_interval_s` | `engine_security::replay_now_and_after_dedupe_pruning` |
+| Replay after a restart (same store reopened) | rejected as duplicate: `seen` is durable | `replay_after_restart_is_rejected` |
+| Replay after `seen` pruning | rejected by `open` as `Expired` (pruning is delayed to `expires_at + skew`) | `engine_security::replay_now_and_after_dedupe_pruning` |
+| Replay of a frame sealed to a revoked KEM epoch | cannot be opened at all (`NotForUs`) | `replay_across_kem_revocation_and_after_pruning` |
+| **Store rolled back** (older SQLite copy restored) | **guard mode**, below | `rollback_enters_the_replay_guard_and_holds_replayed_frames`, `accept_rollback_releases_unexpired_held_messages` |
+| **Sidecar missing next to a non-empty store** | unknown history: guard mode | `missing_sidecar_next_to_a_database_means_unknown_history` |
+| **Identity imported into a new data dir** | no dedupe history; guard mode by default, none with `--no-replay-guard` | `migration_guard_by_default_and_full_state_copy_keeps_history`, CLI `identity_import_starts_in_replay_guard_mode_unless_told_otherwise` |
+| Full-state migration (copy `agentnet.db` + `agentnet.generation`, daemon stopped) | history preserved, no guard | same engine test |
+| **Same identity live in two data dirs** | **not preventable, not detected** | `concurrent_identity_in_two_data_dirs_is_not_prevented` |
+| Two daemons on one data dir | second refused by the lock | `daemon/tests/socket_api.rs::lock_exclusivity_and_graceful_shutdown_cleanup` |
+
+### 10.1 Rollback guard
+
+The store keeps a monotonically increasing `store_generation` in its `kv` table,
+incremented in every transaction that records a received message or ack
+(`seen` insert). After the commit the engine rewrites the sidecar
+`<store>.generation` (`agentnet.generation` next to `agentnet.db`; JSON
+`{"v":1,"generation":N,"guard":null}`; temp file, fsync, rename, directory fsync).
+On open:
+
+* sidecar generation **greater** than the database's: the database is older than
+  something this installation has seen: **rollback**;
+* sidecar missing/unreadable but the database already belonged to an identity:
+  **unknown history** (this includes a data directory from before the sidecar
+  existed: it is guarded once on the first start after upgrade);
+* sidecar carries `"guard":"imported"` (written by `identity import`): **imported**;
+* a brand-new database with no sidecar is a fresh install: no guard.
+
+In guard mode (persisted in the database, so it survives restarts) an inbound
+message whose `created_at` is **older than the moment the guard started** and
+that would otherwise be delivered is *held*: stored in the inbox as quarantined
+with `hold_reason = replay_guard`, **not acknowledged, no event, no trigger**,
+counted (`guard.held`), and shown by `network status` (reason, held count,
+deadline) and `agentnet doctor`. Messages created after the guard started are
+delivered normally. The guard ends when `max_ttl + clock_skew` has elapsed (every
+held message has expired by then and is discarded) or when the operator runs
+`agentnet doctor --accept-rollback` (daemon stopped); at the next start the held
+messages that have not expired are released like quarantined ones (event + ack,
+no trigger matching). The sender keeps retrying a held message (it is not acked),
+so a message that was genuinely sent before the rollback and not yet received is
+held, not lost, until the guard ends or is accepted; acceptance, however, also
+releases any held *replay*, which is the exposure the operator accepts.
+
+What the guard cannot do: recover messages that were received and acknowledged
+between the restored copy and the rollback (the sender believes them delivered;
+they are gone); stop an attacker who can also roll back or delete the sidecar and
+the data-directory markers together with the database; or protect `ack.received`,
+`contact.update` and `identity.revoked` replays (these are idempotent by their own
+rules: an ack for a delivered row is ignored, an old record loses to a newer
+epoch, a tombstone is idempotent). Held messages from non-trusted senders are
+subject to the quarantine policy instead.
+
+### 10.2 Concurrent identity
+
+The same identity (signing key and KEM keys) running in two data directories
+cannot be prevented cryptographically in a stateless design, and no sound local
+detection exists (an own-address frame that this instance did not produce could
+equally come from a pruned outbox, a restored backup or the other instance).
+Observed behaviour: both instances receive and persist each message once each,
+both acknowledge, the sender marks the message delivered on the first ack and
+ignores the second (`ack.ignored_already_delivered`), each instance's replay
+state is independent (so a replay is accepted once per instance), and triggers
+may fire on both. `agentnet doctor` always prints this limitation. The data-dir
+lock covers only one directory on one host.
