@@ -1,3 +1,11 @@
+ Network agentnet-relay_relaynet Creating 
+ Network agentnet-relay_relaynet Creating 
+ Volume agentnet-relay_r1data Creating 
+ Volume agentnet-relay_r1data Creating 
+ Volume agentnet-relay_r1data Created 
+ Volume agentnet-relay_r1data Created 
+ Network agentnet-relay_relaynet Created 
+ Network agentnet-relay_relaynet Created 
  Container an-r1 Creating 
  Container an-r1 Created 
  Container an-r1 Starting 
@@ -5,8 +13,8 @@
  Container an-r1 Running 
  Container an-nb Creating 
  Container an-na Creating 
- Container an-nb Created 
  Container an-na Created 
+ Container an-nb Created 
  Container an-nb Starting 
  Container an-na Starting 
  Container an-nb Started 

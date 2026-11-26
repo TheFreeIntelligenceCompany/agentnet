@@ -85,8 +85,13 @@ results/           raw evidence; every claim in docs points here
 - Node flag `--dns-addrs-name-server=127.0.0.1` is required for zero public
   egress; with it a node never redials on its own, so the adapter redials its
   allowlisted static peers.
-- After a silently dropped connection a node notices after about 48 s and can
-  take from under a minute to 16 minutes to reconnect (`docs/network-simulations.md`).
+- After a silently dropped path a client node notices after about 48 s, but the
+  relay can keep a half-open socket for 15+ minutes and refuse the client's
+  redials meanwhile. Relays set `net.ipv4.tcp_retries2=6` (compose `sysctls`,
+  `agentnet relay print-config`); no client-side fix exists
+  (`results/reconnect/20261126T065412Z/SUMMARY.md`, `docs/runbook.md` 6.3).
+- Parallel cargo builds in separate worktrees filled the disk once: share one
+  `CARGO_TARGET_DIR` between worktrees and delete merged worktrees promptly.
 - Relay-dependent tests are `#[ignore]`d: `AGENTNET_RELAY_TESTS=1 cargo test
   --workspace --locked -- --ignored` with the topology in `spike/relay` up.
 - The full acceptance run is `scripts/acceptance.sh` (about 50 minutes).
