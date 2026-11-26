@@ -590,7 +590,7 @@ monotonic and cannot acknowledge events that do not yet exist.
 
 | Item | Rule |
 |---|---|
-| Inbox, outbox terminal rows | pruned after `retention_hours` (168) by maintenance (unread rows included) |
+| Inbox, outbox terminal rows (including published `ack.received` rows, which are never acknowledged themselves) | pruned after `retention_hours` (168) by maintenance (unread rows included) |
 | `seen` | until `expires_at + clock_skew_s` |
 | Events | see 8.7 |
 | Body | `max_body_bytes` (65536) and one frame (`transport.max_payload_len`) |

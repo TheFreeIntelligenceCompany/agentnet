@@ -1005,5 +1005,30 @@ async fn contact_management() {
     assert_eq!(idn.contact_record, a.record);
 }
 
+/// Review finding 4: published acks (and re-acks) are terminal and must be
+/// pruned after the retention window instead of staying `sent` forever.
+#[tokio::test]
+async fn published_acks_and_reacks_are_pruned_after_retention() {
+    let w = World::new();
+    let (a, b) = pair(&w).await;
+    a.send(&b, "hello").await;
+    a.node.step_send().await.unwrap();
+    b.node.step_receive().await.unwrap();
+    // the first ack is lost, so A retries and B re-acks once the interval passed
+    b.transport.drop_next_publishes(1);
+    b.node.step_send().await.unwrap();
+    w.advance(40_000);
+    a.node.step_send().await.unwrap();
+    b.node.step_receive().await.unwrap();
+    b.node.step_send().await.unwrap();
+    assert!(b.metric("ack.requeued") >= 1);
+    assert_eq!(b.n("outbox"), 2, "ack and re-ack rows exist");
+
+    // well past the retention window (and every TTL)
+    w.advance(200 * 3_600_000);
+    b.node.step_maintenance().unwrap();
+    assert_eq!(b.n("outbox"), 0, "published acks must be pruned");
+}
+
 #[allow(dead_code)]
 fn _t(_: &MockNetwork, _: &dyn Transport) {}

@@ -908,6 +908,12 @@ impl Node {
                  AND created_at < ?1",
                 [retention],
             )?;
+            // An ack is never acknowledged itself: once published (`sent`, no
+            // further attempt) it is terminal, so it ages out like the rest.
+            pruned += tx.execute(
+                "DELETE FROM outbox WHERE is_ack = 1 AND state = 'sent' AND created_at < ?1",
+                [retention],
+            )?;
             pruned += tx.execute(
                 "DELETE FROM triggers WHERE state != 'active' AND created_at < ?1",
                 [ev_ret],
