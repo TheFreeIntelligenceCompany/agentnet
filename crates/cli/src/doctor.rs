@@ -5,6 +5,7 @@ use std::path::Path;
 use std::time::Duration;
 
 use agentnet_core::api::{AgentApi, ErrorCode, ReadInboxRequest};
+use agentnet_daemon::client::agentnet_command;
 use agentnet_daemon::{DaemonConfig, DataDir, RemoteAgent};
 use serde::Serialize;
 
@@ -86,7 +87,8 @@ fn peer_id(maddr: &str) -> Option<&str> {
     last
 }
 
-fn replay_guard_check(dd: &DataDir) -> Check {
+fn replay_guard_check(dir: &Path, dd: &DataDir) -> Check {
+    let accept = format!("`{}`", agentnet_command(dir, "doctor --accept-rollback"));
     use agentnet_core::guard::{inspect, SidecarState};
     let name = "replay guard";
     let r = match inspect(&dd.db()) {
@@ -108,7 +110,7 @@ fn replay_guard_check(dd: &DataDir) -> Check {
                 "ACTIVE ({}): messages created before the guard started are held, not delivered or acknowledged; {} held now; it lapses by itself at unix ms {}",
                 g.reason, r.held, g.until
             ),
-            "if the store was restored on purpose: stop the daemon and run `agentnet doctor --accept-rollback` (accepts replay exposure for already-received messages)",
+            format!("if the store was restored on purpose: stop the daemon and run {accept} (accepts replay exposure for already-received messages)"),
         );
     }
     if r.rollback_suspected {
@@ -116,7 +118,7 @@ fn replay_guard_check(dd: &DataDir) -> Check {
             name,
             Level::Warn,
             "the database is OLDER than its generation sidecar: the store looks rolled back; the next start enters guard mode",
-            "if intended, run `agentnet doctor --accept-rollback` with the daemon stopped",
+            format!("if intended, run {accept} with the daemon stopped"),
         );
     }
     if r.unknown_history {
@@ -124,7 +126,7 @@ fn replay_guard_check(dd: &DataDir) -> Check {
             name,
             Level::Warn,
             "the generation sidecar is missing next to a non-empty database: store history is unknown; the next start enters guard mode",
-            "if intended, run `agentnet doctor --accept-rollback` with the daemon stopped",
+            format!("if intended, run {accept} with the daemon stopped"),
         );
     }
     if matches!(&r.sidecar, SidecarState::Present(s) if s.guard.is_some()) {
@@ -132,7 +134,7 @@ fn replay_guard_check(dd: &DataDir) -> Check {
             name,
             Level::Warn,
             "this data directory was created by `identity import`: the first start enters guard mode (no dedupe history)",
-            "wait for max_ttl + clock_skew after the first start, or run `agentnet doctor --accept-rollback`",
+            format!("wait for max_ttl + clock_skew after the first start, or run {accept}"),
         );
     }
     check(
@@ -164,7 +166,7 @@ pub fn history_sync_check(
     recovery_pending: bool,
 ) -> Check {
     let name = "history sync";
-    let fix = "check the relay's Store (docs/runbook.md section 6.4): the node's /health, its store flags and `agentnet network status`; until a pass completes, messages sent while this daemon was offline are not recovered";
+    let fix = "check the relay's Store (docs/runbook.md section 6.4): the node's /health, its store flags and the `last history sync` line of `network status`; until a pass completes, messages sent while this daemon was offline are not recovered";
     let stale_after_s = interval_s.saturating_mul(4).max(60);
     match last_ok_ms {
         None => check(
@@ -216,7 +218,7 @@ const REQUIRED: [&str; 5] = [
 /// The conditions that make the instance not ready: one line per required
 /// check that is not `ok` (warned, skipped, failed or not run), plus every
 /// other failed check. Empty means ready.
-pub fn readiness_failures(checks: &[Check]) -> Vec<String> {
+pub fn readiness_failures(dir: &Path, checks: &[Check]) -> Vec<String> {
     let mut out = Vec::new();
     for name in REQUIRED {
         match checks.iter().find(|c| c.name == name) {
@@ -235,7 +237,8 @@ pub fn readiness_failures(checks: &[Check]) -> Vec<String> {
                 out.push(line);
             }
             None => out.push(format!(
-                "{name}: not run (it needs a readable config and a running daemon) -> fix the failing or skipped checks above, then run `agentnet doctor --ready` again"
+                "{name}: not run (it needs a readable config and a running daemon) -> fix the failing or skipped checks above, then run `{}` again",
+                agentnet_command(dir, "doctor --ready")
             )),
         }
     }
@@ -258,7 +261,10 @@ pub async fn run(dir: &Path) -> Vec<Check> {
                 "data dir",
                 Level::Fail,
                 format!("{} is not accessible ({e})", dir.display()),
-                "run `agentnet init` or pass the right --data-dir",
+                format!(
+                    "run `{}` or pass the right --data-dir",
+                    agentnet_command(dir, "init")
+                ),
             ));
             return out;
         }
@@ -347,7 +353,11 @@ pub async fn run(dir: &Path) -> Vec<Check> {
                 "identity",
                 Level::Fail,
                 e.to_string(),
-                "run `agentnet init` or `agentnet identity import`",
+                format!(
+                    "run `{}` or `{}`",
+                    agentnet_command(dir, "init"),
+                    agentnet_command(dir, "identity import --in <FILE>")
+                ),
             ));
             None
         }
@@ -359,10 +369,13 @@ pub async fn run(dir: &Path) -> Vec<Check> {
             "identity revoked",
             Level::Warn,
             "this identity has been revoked (revocation.json): the daemon sends nothing except its revocation notice",
-            "use a new identity (`agentnet init` in a new data dir); `agentnet identity show-revocation` prints the notice to distribute out of band",
+            format!(
+                "use a new identity (`agentnet --data-dir <new dir> init`); `{}` prints the notice to distribute out of band",
+                agentnet_command(dir, "identity show-revocation")
+            ),
         ));
     }
-    out.push(replay_guard_check(&dd));
+    out.push(replay_guard_check(dir, &dd));
     out.push(check(
         "single instance",
         Level::Warn,
@@ -387,7 +400,7 @@ pub async fn run(dir: &Path) -> Vec<Check> {
                     "daemon socket",
                     Level::Fail,
                     "the running daemon has a different identity than identity.json",
-                    "stop it and run `agentnet serve` with this data dir",
+                    format!("stop it and run `{}`", agentnet_command(dir, "serve")),
                 ));
             }
             true
@@ -402,7 +415,7 @@ pub async fn run(dir: &Path) -> Vec<Check> {
                 "daemon socket",
                 lvl,
                 e.message,
-                "run `agentnet serve`",
+                format!("run `{}`", agentnet_command(dir, "serve")),
             ));
             false
         }
@@ -614,7 +627,7 @@ pub async fn run(dir: &Path) -> Vec<Check> {
                     n,
                     Level::Skip,
                     "needs the running daemon",
-                    "run `agentnet serve`",
+                    format!("run `{}`", agentnet_command(dir, "serve")),
                 ));
             }
         }
@@ -657,14 +670,14 @@ mod tests {
 
     #[test]
     fn ready_when_every_required_check_is_ok_even_with_the_single_instance_warning() {
-        assert!(readiness_failures(&healthy()).is_empty());
+        assert!(readiness_failures(Path::new("/d"), &healthy()).is_empty());
     }
 
     #[test]
     fn not_ready_when_the_daemon_socket_is_unavailable() {
         let mut h = healthy();
         set(&mut h, "daemon socket", Level::Warn);
-        let f = readiness_failures(&h);
+        let f = readiness_failures(Path::new("/d"), &h);
         assert_eq!(f.len(), 1, "{f:?}");
         assert!(f[0].starts_with("daemon socket: warning"), "{f:?}");
         assert!(f[0].contains("do x"), "{f:?}");
@@ -674,7 +687,7 @@ mod tests {
     fn not_ready_when_the_transport_is_not_ready() {
         let mut h = healthy();
         set(&mut h, "transport ready", Level::Warn);
-        let f = readiness_failures(&h);
+        let f = readiness_failures(Path::new("/d"), &h);
         assert!(f.iter().any(|l| l.starts_with("transport ready")), "{f:?}");
     }
 
@@ -682,7 +695,7 @@ mod tests {
     fn not_ready_when_the_isolation_audit_fails() {
         let mut h = healthy();
         set(&mut h, "isolation", Level::Fail);
-        let f = readiness_failures(&h);
+        let f = readiness_failures(Path::new("/d"), &h);
         assert!(
             f.iter().any(|l| l.starts_with("isolation: FAILED")),
             "{f:?}"
@@ -694,7 +707,7 @@ mod tests {
         let mut h = healthy();
         set(&mut h, "local inbox database", Level::Skip);
         h.retain(|x| x.name != "node reachable");
-        let f = readiness_failures(&h);
+        let f = readiness_failures(Path::new("/d"), &h);
         assert!(
             f.iter()
                 .any(|l| l.starts_with("local inbox database: skipped")),

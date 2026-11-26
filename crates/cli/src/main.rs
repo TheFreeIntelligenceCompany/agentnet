@@ -106,9 +106,11 @@ async fn main() {
     let cli = Cli::parse();
     init_tracing();
     let json = cli.json;
+    let dir = cli.data_dir.clone().unwrap_or_else(default_data_dir);
     let code = match run(cli).await {
         Ok(code) => code,
-        Err(e) => {
+        Err(mut e) => {
+            e.message = render::present_error(&dir, &e.message);
             if json {
                 println!(
                     "{}",
@@ -232,9 +234,9 @@ async fn run(cli: Cli) -> CliResult<i32> {
                     rep.identity.contact_record
                 );
                 if rep.peers_missing {
-                    s.push_str("\nWARNING: no peers configured. Private mode needs at least one static peer:\nadd `peers = [\"/ip4/<ip>/tcp/60000/p2p/<peerId>\"]` to agentnet.toml (see `agentnet relay print-config`).\n");
+                    s.push_str(&format!("\nWARNING: no peers configured. Private mode needs at least one static peer:\nadd `peers = [\"/ip4/<ip>/tcp/60000/p2p/<peerId>\"]` to {} (see `agentnet relay print-config`).\n", dir.join("agentnet.toml").display()));
                 }
-                s.push_str("\nNext: agentnet serve");
+                s.push_str(&format!("\nNext: {}", render::cmd(&dir, "serve")));
                 s
             });
         }
@@ -319,12 +321,14 @@ async fn run(cli: Cli) -> CliResult<i32> {
                     if no_replay_guard {
                         s.push_str("\nWARNING: --no-replay-guard: this directory has no dedupe history; frames captured before the import can be accepted again within their TTL.");
                     } else {
-                        s.push_str("\nReplay guard: messages created before the first start are held until max_ttl + clock_skew has passed (or `agentnet doctor --accept-rollback`). To keep dedupe history, copy agentnet.db and agentnet.generation instead.");
+                        s.push_str(&format!("\nReplay guard: messages created before the first start are held until max_ttl + clock_skew has passed (or `{}`). To keep dedupe history, copy agentnet.db and agentnet.generation instead.", render::cmd(&dir, "doctor --accept-rollback")));
                     }
                     if rep.peers_missing {
-                        s.push_str(
-                            "\nNo peers configured: edit agentnet.toml before `agentnet serve`.",
-                        );
+                        s.push_str(&format!(
+                            "\nNo peers configured: edit {} before `{}`.",
+                            dir.join("agentnet.toml").display(),
+                            render::cmd(&dir, "serve")
+                        ));
                     }
                     s
                 });
@@ -799,7 +803,7 @@ async fn run(cli: Cli) -> CliResult<i32> {
             let failed = checks.iter().any(|c| c.level == doctor::Level::Fail);
             emit(json, &checks, |cs| render::doctor(cs));
             if ready {
-                let not_ready = doctor::readiness_failures(&checks);
+                let not_ready = doctor::readiness_failures(&dir, &checks);
                 if !not_ready.is_empty() {
                     eprintln!("NOT READY: messaging is not operational:");
                     for l in &not_ready {
