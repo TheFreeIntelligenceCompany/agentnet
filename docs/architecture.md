@@ -167,8 +167,9 @@ unknown recipient key), `expired` (TTL passed without ack).
   isolation error if it fails. The audit stays detective: a peer that connects
   between the audit response and the publish request is not seen (the node API has
   no atomic check-and-publish), so the window is one REST round trip, not the
-  cache lifetime. The extra GET per publish is accepted. Unit-tested only; the
-  real-relay re-verification of this fix is **UNTESTED**.
+  cache lifetime. The extra GET per publish is accepted. Covered by unit tests and by a
+  real-node test on the local relay (3 of 3 runs, `results/audit-window/SUMMARY.md`);
+  not re-run against a public relay.
 * `public_discovery` and `public_fallback` must be false; setting either to true
   in private mode is a config error. There is no code path that adds peers.
 * The daemon cannot set the node's flags. `agentnet relay print-config` emits the
@@ -177,8 +178,10 @@ unknown recipient key), `expired` (TTL passed without ack).
   runtime check that the operator followed it.
 
 `mode = "public"` must be chosen explicitly, requires `i_understand_public = true`,
-skips the peer allowlist audit and is otherwise identical. It is UNTESTED against
-any public network. Public and private traffic are never bridged: one daemon has
+skips the peer allowlist audit unless `enforce_peer_allowlist = true` and is otherwise
+identical. It was run against the owner's own relays on public addresses
+(`results/public-relay/20261126T203405Z/`, `results/public-ip-relay/`); it is UNTESTED
+against public Waku / Logos infrastructure. Public and private traffic are never bridged: one daemon has
 exactly one node and one mode.
 
 ## 7. Host integration (events and triggers)
