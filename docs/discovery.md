@@ -98,7 +98,8 @@ max_capabilities = 16            # per advertisement, issued and accepted
 Record bytes (UTF-8 JSON, at most 8192 bytes, unknown fields rejected):
 
 ```json
-{"v":1,
+{"v":2,
+ "topic":"general",
  "address":"an1...",
  "contact_record":"<the advertiser's current signed contact-record document, as a string>",
  "capabilities":[{"name":"translate.de","description":"German to English"}],
@@ -108,6 +109,12 @@ Record bytes (UTF-8 JSON, at most 8192 bytes, unknown fields rejected):
  "seq":3}
 ```
 
+* `v`: `2`. Version 1 (no `topic`) is refused as `unknown_version`, never read as
+  "any topic"; a version 2 record without `topic` is `malformed`. The format is not frozen
+  (pre-release, no deployed peers), so version 1 was replaced rather than kept alongside.
+* `topic`: the discovery topic **name** (`[a-z0-9-]{1,32}`, the `general` of
+  `/agentnet/1/discovery-general/proto`) the advert is published on. It is covered by the
+  signature. Withdrawals (empty capability list) are ordinary records and carry it too.
 * `capabilities[].name`: `[a-z0-9._-]{1,64}`, unique within the record;
   `description`: at most 256 characters, no control characters (may be empty);
   at most `max_capabilities` entries (hard bound 64). An empty list is a **withdrawal**.
@@ -144,7 +151,11 @@ An advertisement is accepted only if all of these hold at the receiver's `now`:
    `expires_at - issued_at <= max_advert_ttl_s` (the **receiver's** value);
    `issued_at <= now + clock_skew_s` (a frame from slightly in the future is deferred,
    not recorded as seen, like an envelope);
-5. the field rules above, `seq <= 2^63 - 1`.
+5. the field rules above, `seq <= 2^63 - 1`;
+6. the signed `topic` equals the discovery topic the frame arrived on. A mismatch (a
+   genuine advert or withdrawal re-published by a third party on another enabled topic) is
+   dropped and counted `advert.invalid.topic_mismatch`; it never creates, replaces or
+   removes a row on the topic it arrived on.
 
 Everything else is dropped and counted. A valid signature proves only that the holder of
 the address key made the statement. It does not prove the capabilities are real, that the
@@ -256,6 +267,10 @@ advertise an address whose inbox topic must stay unlinked from an identity.
 
 ## 9. Known limitations and doubts
 
+* **Topic replay (prevented).** The topic is part of the signed record, so a relay-level
+  observer cannot make an agent appear on, or withdraw it from, a topic it did not sign
+  for. A replay on the same topic is handled by the sequence rule. The observer can still
+  re-publish, delay or drop frames on the topic they were signed for.
 * **Flooding.** A hostile participant of the relay can publish many valid adverts from
   many generated addresses. They are verified (a signature check each), bounded by
   `max_records`, and expire, but they can displace honest ones: eviction removes the
@@ -302,8 +317,10 @@ advertise an address whose inbox topic must stay unlinked from an identity.
 * `crates/core/src/store.rs`: `migrates_a_v2_database_to_v3`.
 * `crates/cli/tests/relay_discovery.rs` (`#[ignore]`, `AGENTNET_RELAY_TESTS=1`, needs
   `spike/relay` up): two real daemons on the local relay. It also shows the signed
-  record does not bind a topic: a valid advert replayed onto another configured topic is
-  accepted (it is public data, so this only matters for topic-scoped trust, which does
-  not exist).
+  record binds the topic: a real advert read from the relay Store and replayed onto
+  another configured topic is NOT listed, a same-topic replay changes nothing, and a
+  genuine advert for the second topic is listed
+  (`results/discovery-relay/20261126T160747Z/SUMMARY.md`; earlier unsigned-topic behaviour
+  in `results/discovery-relay/20261126T151341Z/SUMMARY.md`).
 * `crates/daemon/tests/discovery.rs`, `crates/cli/tests/cli.rs` (`discovery_*`),
   `crates/mcp/tests/tools.rs` (`discovery_*`).

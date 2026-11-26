@@ -819,7 +819,10 @@ touches the wire protocol.
   (`/agentnet/1/discovery-<name>/proto`): `b"AD" || 0x01 || document_bytes`. It is
   PLAINTEXT. The document is `{"record": b64url, "sig": b64url}` over the record described in
   `docs/discovery.md` section 3, signed by the address key with the domain
-  `agentnet/v1/capability-advert\0`. It embeds the advertiser's current signed contact record
+  `agentnet/v1/capability-advert\0`. The record is `v` 2 and carries the discovery topic name it
+  is published on, so the signature binds the topic; a receiver drops an advert (or withdrawal)
+  whose signed topic differs from the topic it arrived on (`advert.invalid.topic_mismatch`) and
+  refuses the earlier topic-less `v` 1. It embeds the advertiser's current signed contact record
   and is accepted only when that record verifies for the same address.
 * The sealed frame (section 5) starts with `b"AN"`; the two magics differ so that a frame of one
   kind can never parse as the other. The engine routes by topic: an `AD` frame on an inbox topic

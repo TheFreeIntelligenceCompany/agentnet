@@ -91,6 +91,8 @@ pub enum AdvertError {
     BadContact(ContactError),
     #[error("the embedded contact record is for a different address")]
     ContactAddressMismatch,
+    #[error("the advertisement was signed for a different discovery topic than it arrived on")]
+    TopicMismatch,
     #[error("advertisement timestamps are invalid")]
     InvalidTimestamp,
     #[error("advertisement has expired")]

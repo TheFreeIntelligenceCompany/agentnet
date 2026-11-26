@@ -373,7 +373,8 @@ async fn phase_enabled(
         &frame[..3]
     );
     assert_eq!(&frame[..3], b"AD\x01");
-    // control: the unmodified frame replayed on another configured topic is accepted
+    // cross-topic replay: the unmodified frame, republished on another configured topic,
+    // must NOT be listed (the topic is part of the signed record).
     inject(ctrl_topic, &frame);
     // tampered: flip one character in the middle of the signature (base64url) field
     let mut bad = frame.clone();
@@ -383,14 +384,50 @@ async fn phase_enabled(
     bad[pos] = if bad[pos] == b'A' { b'B' } else { b'A' };
     assert_ne!(bad, frame);
     inject(tamper_topic, &bad);
-    wait_for("control replay is listed at B", 240, || {
-        listed(b, ctrl_topic).len() == 1
-    });
+    // same-topic replay (positive control for the injection path): accepted as a duplicate
+    // of the live advert, so the listing stays at exactly one entry.
+    inject(topic, &frame);
     tokio::time::sleep(Duration::from_secs(20)).await;
+    assert!(
+        listed(b, ctrl_topic).is_empty(),
+        "an advert replayed onto another topic must not be listed (topic is signed)"
+    );
     assert!(
         listed(b, tamper_topic).is_empty(),
         "tampered advert must not be listed"
     );
+    assert_eq!(
+        listed(b, topic).len(),
+        1,
+        "same-topic replay changes nothing"
+    );
+    // positive control on the second topic: a genuine advert signed FOR that topic is
+    // listed there (different capability name, so it cannot be the replayed frame).
+    let ctrl_cap = format!("{cap}-ctrl");
+    let adv2 = json_ok(
+        a,
+        &[
+            "discovery",
+            "advertise",
+            "--topic",
+            ctrl_topic,
+            "--capability",
+            &ctrl_cap,
+            "--ttl",
+            "1800",
+        ],
+    );
+    assert_eq!(adv2["seq"], 1);
+    wait_for(
+        "B lists A's genuine advert on the second topic",
+        240,
+        || {
+            listed(b, ctrl_topic).iter().any(|x| {
+                x["address"] == addr_a && x["capabilities"][0]["name"] == ctrl_cap.as_str()
+            })
+        },
+    );
+    assert_eq!(listed(b, ctrl_topic).len(), 1);
     let counters = ok(b, &["network", "status", "--verbose"]);
     log!("B network status --verbose after injection:\n{counters}");
 

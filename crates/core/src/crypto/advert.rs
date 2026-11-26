@@ -8,7 +8,7 @@
 //!
 //! * document = `{"record": b64url(record_bytes), "sig": b64url(sig)}` (the same
 //!   wrapper as contact records and tombstones),
-//! * `record_bytes = {"v":1,"address":…,"contact_record":"<document>",
+//! * `record_bytes = {"v":2,"topic":"<discovery topic name>","address":…,"contact_record":"<document>",
 //!   "capabilities":[{"name":…,"description":…}],"display_name":…(optional),
 //!   "issued_at":ms,"expires_at":ms,"seq":n}`,
 //! * `sig = Ed25519(signing_sk, "agentnet/v1/capability-advert\0" || record_bytes)`,
@@ -33,7 +33,8 @@ use crate::error::{json_reason, AdvertError};
 /// Domain separation prefix of the advertisement signature.
 pub const ADVERT_DOMAIN: &[u8] = b"agentnet/v1/capability-advert\0";
 /// Advertisement format version.
-pub const ADVERT_VERSION: u64 = 1;
+/// Version 2 added the signed `topic`; version 1 documents are rejected.
+pub const ADVERT_VERSION: u64 = 2;
 /// Frame magic of an advertisement frame (sealed message frames use `AN`).
 pub const ADVERT_FRAME_MAGIC: [u8; 2] = *b"AD";
 /// Frame version byte of an advertisement frame.
@@ -68,8 +69,9 @@ pub struct Capability {
 
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct AdvertV1 {
+struct AdvertV2 {
     v: u64,
+    topic: String,
     address: String,
     contact_record: String,
     capabilities: Vec<Capability>,
@@ -208,8 +210,12 @@ impl SignedAdvert {
         if req.seq > i64::MAX as u64 {
             return Err(AdvertError::InvalidSeq);
         }
-        let rec = AdvertV1 {
+        if !crate::config::valid_discovery_topic_name(req.topic) {
+            return Err(AdvertError::Malformed("invalid topic name"));
+        }
+        let rec = AdvertV2 {
             v: ADVERT_VERSION,
+            topic: req.topic.to_owned(),
             address: id.address().to_string(),
             contact_record: id.contact_record().to_document(),
             capabilities: req.capabilities.to_vec(),
@@ -250,6 +256,9 @@ impl SignedAdvert {
 /// The content of an advertisement to sign.
 #[derive(Clone, Copy, Debug)]
 pub struct AdvertContent<'a> {
+    /// Discovery topic name the advert is published on (signed; receivers
+    /// reject the advert on any other topic).
+    pub topic: &'a str,
     /// Capabilities (empty = withdrawal).
     pub capabilities: &'a [Capability],
     /// Optional display name.
@@ -266,6 +275,9 @@ pub struct AdvertContent<'a> {
 /// field rules all verified. Everything in it is a CLAIM by the advertiser.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct VerifiedAdvert {
+    /// The discovery topic name the advertiser signed (equal to the topic the
+    /// frame arrived on, checked by `parse_and_verify`).
+    pub topic: String,
     /// The advertiser (signature verified under this address).
     pub address: Address,
     /// The advertiser's embedded contact record (verified, same address).
@@ -284,9 +296,13 @@ pub struct VerifiedAdvert {
 }
 
 impl VerifiedAdvert {
-    /// Parse and fully verify an advertisement document at `now_ms`.
+    /// Parse and fully verify an advertisement document at `now_ms`, received
+    /// on the discovery topic named `expected_topic`. An advert whose signed
+    /// topic differs is rejected with [`AdvertError::TopicMismatch`] (after its
+    /// signature verified).
     pub fn parse_and_verify(
         doc: &str,
+        expected_topic: &str,
         now_ms: i64,
         limits: &AdvertLimits,
     ) -> Result<Self, AdvertError> {
@@ -313,7 +329,7 @@ impl VerifiedAdvert {
         if ver.v != ADVERT_VERSION {
             return Err(AdvertError::UnknownVersion(ver.v));
         }
-        let r: AdvertV1 =
+        let r: AdvertV2 =
             serde_json::from_slice(&record).map_err(|e| AdvertError::Malformed(json_reason(&e)))?;
         let address: Address = r.address.parse().map_err(AdvertError::InvalidAddress)?;
         let mut msg = Vec::with_capacity(ADVERT_DOMAIN.len() + record.len());
@@ -324,6 +340,9 @@ impl VerifiedAdvert {
             .verify_strict(&msg, &Signature::from_bytes(&sig))
             .map_err(|_| AdvertError::BadSignature)?;
 
+        if r.topic != expected_topic {
+            return Err(AdvertError::TopicMismatch);
+        }
         let contact = VerifiedContact::parse_and_verify(&r.contact_record, now_ms)
             .map_err(AdvertError::BadContact)?;
         if contact.address != address {
@@ -347,6 +366,7 @@ impl VerifiedAdvert {
         check_capabilities(&r.capabilities, limits.max_capabilities)?;
         check_display_name(&r.display_name)?;
         Ok(Self {
+            topic: r.topic,
             address,
             contact,
             capabilities: r.capabilities,
@@ -383,6 +403,7 @@ pub fn error_kind(e: &AdvertError) -> &'static str {
         AdvertError::UnknownVersion(_) => "unknown_version",
         AdvertError::InvalidAddress(_) => "invalid_address",
         AdvertError::BadSignature => "bad_signature",
+        AdvertError::TopicMismatch => "topic_mismatch",
         AdvertError::BadContact(_) => "bad_contact",
         AdvertError::ContactAddressMismatch => "contact_address_mismatch",
         AdvertError::InvalidTimestamp => "invalid_timestamp",
@@ -448,6 +469,7 @@ pub mod testing {
 mod tests {
     use super::*;
 
+    const TOPIC: &str = "general";
     const NOW: i64 = 1_700_000_000_000;
     const LIM: AdvertLimits = AdvertLimits {
         max_ttl_ms: 86_400_000,
@@ -464,6 +486,7 @@ mod tests {
 
     fn content<'a>(caps: &'a [Capability], seq: u64) -> AdvertContent<'a> {
         AdvertContent {
+            topic: TOPIC,
             capabilities: caps,
             display_name: Some("Alice"),
             issued_at: NOW,
@@ -491,14 +514,15 @@ mod tests {
         let caps = [cap("translate.de", "German to English")];
         let a = id.create_advert(&content(&caps, 3), &LIM).unwrap();
         let s = std::str::from_utf8(a.record_bytes()).unwrap();
-        assert!(s.starts_with("{\"v\":1,\"address\":\"an1"));
+        assert!(s.starts_with("{\"v\":2,\"topic\":\"general\",\"address\":\"an1"));
         assert!(s.contains("\"capabilities\":[{\"name\":\"translate.de\",\"description\":\"German to English\"}],\"display_name\":\"Alice\",\"issued_at\":"));
         assert!(s.ends_with(&format!(
             "\"issued_at\":{NOW},\"expires_at\":{},\"seq\":3}}",
             NOW + 3_600_000
         )));
-        let v = VerifiedAdvert::parse_and_verify(&a.to_document(), NOW + 1, &LIM).unwrap();
+        let v = VerifiedAdvert::parse_and_verify(&a.to_document(), TOPIC, NOW + 1, &LIM).unwrap();
         assert_eq!(v.address, id.address());
+        assert_eq!(v.topic, TOPIC);
         assert_eq!(v.seq, 3);
         assert_eq!(v.capabilities, caps.to_vec());
         assert_eq!(v.display_name.as_deref(), Some("Alice"));
@@ -511,15 +535,42 @@ mod tests {
         assert!(!std::str::from_utf8(a2.record_bytes())
             .unwrap()
             .contains("display_name"));
-        let v2 = VerifiedAdvert::parse_and_verify(&a2.to_document(), NOW, &LIM).unwrap();
+        let v2 = VerifiedAdvert::parse_and_verify(&a2.to_document(), TOPIC, NOW, &LIM).unwrap();
         assert_eq!(v2.display_name, None);
         // withdrawal
         let w = id.create_advert(&content(&[], 4), &LIM).unwrap();
         assert!(
-            VerifiedAdvert::parse_and_verify(&w.to_document(), NOW, &LIM)
+            VerifiedAdvert::parse_and_verify(&w.to_document(), TOPIC, NOW, &LIM)
                 .unwrap()
                 .is_withdrawal()
         );
+    }
+
+    #[test]
+    fn the_signed_topic_must_equal_the_topic_received_on() {
+        let id = Identity::generate_default(NOW).unwrap();
+        let caps = [cap("a", "")];
+        let a = id.create_advert(&content(&caps, 1), &LIM).unwrap();
+        let doc = a.to_document();
+        assert!(VerifiedAdvert::parse_and_verify(&doc, TOPIC, NOW, &LIM).is_ok());
+        for other in ["other", "General", "general2", ""] {
+            assert_eq!(
+                VerifiedAdvert::parse_and_verify(&doc, other, NOW, &LIM),
+                Err(AdvertError::TopicMismatch),
+                "{other:?}"
+            );
+        }
+        assert_eq!(error_kind(&AdvertError::TopicMismatch), "topic_mismatch");
+        // a withdrawal is bound the same way
+        let w = id.create_advert(&content(&[], 2), &LIM).unwrap();
+        assert_eq!(
+            VerifiedAdvert::parse_and_verify(&w.to_document(), "other", NOW, &LIM),
+            Err(AdvertError::TopicMismatch)
+        );
+        // creation refuses an invalid topic name
+        let mut c = content(&caps, 1);
+        c.topic = "Bad Topic";
+        assert!(id.create_advert(&c, &LIM).is_err());
     }
 
     #[test]
@@ -554,7 +605,7 @@ mod tests {
         let caps = [cap("a", "d")];
         let a = id.create_advert(&content(&caps, 1), &LIM).unwrap();
         let rec = record_value(&a);
-        let verify = |d: &str| VerifiedAdvert::parse_and_verify(d, NOW, &LIM);
+        let verify = |d: &str| VerifiedAdvert::parse_and_verify(d, TOPIC, NOW, &LIM);
         // signed by another key
         assert_eq!(
             verify(&doc_of(&id, &rec, &other)),
@@ -603,13 +654,32 @@ mod tests {
             verify(&doc_of(&id, &r, &id)),
             Err(AdvertError::Malformed(_))
         ));
-        // unknown version
+        // unknown version (and the previous, topic-less version 1 is refused)
+        for ver in [1u64, 3] {
+            let mut r = rec.clone();
+            r["v"] = serde_json::json!(ver);
+            assert_eq!(
+                verify(&doc_of(&id, &r, &id)),
+                Err(AdvertError::UnknownVersion(ver))
+            );
+        }
+        // a record without a topic is malformed, never "any topic"
         let mut r = rec.clone();
-        r["v"] = serde_json::json!(2);
-        assert_eq!(
+        r.as_object_mut().unwrap().remove("topic");
+        assert!(matches!(
             verify(&doc_of(&id, &r, &id)),
-            Err(AdvertError::UnknownVersion(2))
-        );
+            Err(AdvertError::Malformed(_))
+        ));
+        // topic tampered after signing: the signature no longer verifies
+        let mut r = rec.clone();
+        r["topic"] = serde_json::json!("other");
+        let bytes = serde_json::to_vec(&r).unwrap();
+        let tampered_topic = serde_json::to_string(&Document {
+            record: B64.encode(&bytes),
+            sig: B64.encode(id.sign(ADVERT_DOMAIN, a.record_bytes())),
+        })
+        .unwrap();
+        assert_eq!(verify(&tampered_topic), Err(AdvertError::BadSignature));
         for bad in ["", "{}", "null", "[]", "{\"record\":\"!\",\"sig\":\"!\"}"] {
             assert!(verify(bad).is_err());
         }
@@ -625,7 +695,7 @@ mod tests {
             f(&mut r);
             doc_of(&id, &r, &id)
         };
-        let verify = |d: &str, now: i64| VerifiedAdvert::parse_and_verify(d, now, &LIM);
+        let verify = |d: &str, now: i64| VerifiedAdvert::parse_and_verify(d, TOPIC, now, &LIM);
         let ok = sign(&|_| {});
         assert!(verify(&ok, NOW).is_ok());
         // expired
@@ -728,12 +798,12 @@ mod tests {
             fn parsers_never_panic(bytes in proptest::collection::vec(any::<u8>(), 0..2048)) {
                 let _ = decode_frame(&bytes);
                 if let Ok(s) = std::str::from_utf8(&bytes) {
-                    prop_assert!(VerifiedAdvert::parse_and_verify(s, NOW, &LIM).is_err());
+                    prop_assert!(VerifiedAdvert::parse_and_verify(s, TOPIC, NOW, &LIM).is_err());
                 }
                 let mut framed = b"AD\x01".to_vec();
                 framed.extend_from_slice(&bytes);
                 if let Ok(doc) = decode_frame(&framed) {
-                    prop_assert!(VerifiedAdvert::parse_and_verify(doc, NOW, &LIM).is_err());
+                    prop_assert!(VerifiedAdvert::parse_and_verify(doc, TOPIC, NOW, &LIM).is_err());
                 }
             }
 
@@ -748,7 +818,7 @@ mod tests {
                     record: B64.encode(&record),
                     sig: B64.encode(&sig),
                 }).unwrap();
-                prop_assert!(VerifiedAdvert::parse_and_verify(&doc, NOW, &LIM).is_err());
+                prop_assert!(VerifiedAdvert::parse_and_verify(&doc, TOPIC, NOW, &LIM).is_err());
             }
         }
     }
