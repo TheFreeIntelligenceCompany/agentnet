@@ -884,3 +884,95 @@ async fn replay_across_kem_revocation_and_after_pruning() {
     // the pruning case is engine_security::replay_now_and_after_dedupe_pruning
     assert_eq!(b.inbox().await.len(), 1, "only the original, from before");
 }
+
+// ------------------------------------------- concurrent send vs. revocation
+
+/// Review finding 2: while the first publish of a batch awaits, a tombstone for
+/// a later recipient of the same batch is applied. The later (cached) frame must
+/// never reach the transport.
+#[tokio::test]
+async fn revocation_during_a_pending_publish_stops_later_frames_of_the_batch() {
+    let w = World::new();
+    let (s, gate) = w.agent_gated("s", cfg());
+    let mut v = started(&w, &["r1", "r2"]).await;
+    let (r2, r1) = (v.pop().unwrap(), v.pop().unwrap());
+    s.node.step_receive().await.unwrap();
+    s.add(&r1).await;
+    s.add(&r2).await;
+    let m1 = s.send(&r1, "first").await;
+    let m2 = s.send(&r2, "second").await;
+
+    gate.arm();
+    let n = s.node.clone();
+    let task = tokio::spawn(async move { n.step_send().await.unwrap() });
+    gate.wait_reached().await;
+    // the tombstone arrives while m1's publish is awaiting
+    s.node
+        .import_revocation(&tombstone(&w, &r2, "gone"))
+        .unwrap();
+    gate.release();
+    task.await.unwrap();
+
+    assert_eq!(s.state(&m2.message_id).await, DeliveryState::Failed);
+    let to_r2 = topic_of(&r2.record);
+    assert_eq!(
+        w.net.publish_count(&to_r2),
+        0,
+        "a revoked recipient's frame must not be published"
+    );
+    assert_eq!(w.net.publish_count(&topic_of(&r1.record)), 1);
+    assert_ne!(s.state(&m1.message_id).await, DeliveryState::Failed);
+}
+
+/// Review finding 2 (rotation): the re-sealed frame, not the cached old-key
+/// frame, is what a later batch entry publishes.
+#[tokio::test]
+async fn key_update_during_a_pending_publish_publishes_the_resealed_frame() {
+    let w = World::new();
+    let (s, gate) = w.agent_gated("s", cfg());
+    let mut v = started(&w, &["r1", "r2"]).await;
+    let (r2, r1) = (v.pop().unwrap(), v.pop().unwrap());
+    s.node.step_receive().await.unwrap();
+    s.add(&r1).await;
+    s.add(&r2).await;
+    // R2 also knows S so it can send the contact.update
+    r2.add(&s).await;
+    s.send(&r1, "first").await;
+    let m2 = s.send(&r2, "second").await;
+    let old_frame: Vec<u8> = {
+        let c = rusqlite::Connection::open(&s.store_path).unwrap();
+        c.query_row(
+            "SELECT frame FROM outbox WHERE message_id = ?1",
+            [&m2.message_id],
+            |r| r.get(0),
+        )
+        .unwrap()
+    };
+
+    // R2 rotates (old key revoked) and announces it, but S has not seen it yet
+    rotate(&w, &r2, true);
+    let r2 = w.reopen(r2, cfg());
+
+    gate.arm();
+    let n = s.node.clone();
+    let task = tokio::spawn(async move { n.step_send().await.unwrap() });
+    gate.wait_reached().await;
+    // R2 publishes its contact.update; S applies it and re-seals m2
+    r2.node.step_send().await.unwrap();
+    s.node.step_receive().await.unwrap();
+    assert!(s.metric("outbox.resealed") >= 1);
+    gate.release();
+    task.await.unwrap();
+
+    let to_r2 = topic_of(&r2.record);
+    let frames: Vec<_> = w
+        .net
+        .published_frames()
+        .into_iter()
+        .filter(|f| f.topic == to_r2 && f.publisher == Some(s.transport.index()))
+        .collect();
+    assert!(
+        frames.iter().all(|f| f.payload != old_frame),
+        "the obsolete old-key frame must never be published"
+    );
+}

@@ -676,6 +676,17 @@ body) is signed again with the new `recipient_key_epoch` and sealed to the new
 key; the row's `frame` is replaced in the same transaction that replaces the
 contact.
 
+The send loop selects a batch of due rows and publishes them one after another
+while a publish may take seconds. Immediately before each publish it therefore
+re-reads the row (state, topic, frame) and skips it if a tombstone made it
+unpublishable; the frame it publishes is always
+the current one. The result of a publish is recorded only if the stored frame
+is still the one that was published, so a re-seal that raced with a publish
+leaves the row due for an immediate re-publish. A publish that is already in
+flight when the tombstone or key update is applied cannot be recalled (tests
+`revocation_during_a_pending_publish_stops_later_frames_of_the_batch`,
+`key_update_during_a_pending_publish_publishes_the_resealed_frame`).
+
 ### 9.5 Identity (signing key) revocation
 
 `agentnet identity revoke --reason <text>` (daemon stopped) creates the

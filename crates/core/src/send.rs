@@ -263,12 +263,12 @@ impl Node {
     /// until it is acked or expires). Retryable transport errors keep the state
     /// and back off by the same schedule using a separate failure counter.
     pub async fn step_send(&self) -> Result<SendReport, NodeError> {
-        type Due = (String, String, Vec<u8>, i64, u32, u32, bool, bool);
+        type Due = (String, bool, bool);
         let now = self.now();
         let batch = i64::from(self.config.delivery.send_batch);
         let due: Vec<Due> = self.store.read(|c| {
             let mut st = c.prepare(
-                "SELECT message_id, topic, frame, expires_at, attempts, failures, is_ack, hidden
+                "SELECT message_id, is_ack, hidden
                  FROM outbox
                  WHERE state IN ('queued','sent') AND next_attempt_at IS NOT NULL AND next_attempt_at <= ?1
                    AND (?3 = 0 OR type = ?4)
@@ -279,13 +279,8 @@ impl Node {
             let rows = st.query_map(params![now, batch, only_tombstone, MESSAGE_TYPE_IDENTITY_REVOKED], |r| {
                 Ok((
                     r.get(0)?,
-                    r.get(1)?,
-                    r.get(2)?,
-                    r.get(3)?,
-                    r.get(4)?,
-                    r.get(5)?,
-                    r.get::<_, i64>(6)? != 0,
-                    r.get::<_, i64>(7)? != 0,
+                    r.get::<_, i64>(1)? != 0,
+                    r.get::<_, i64>(2)? != 0,
                 ))
             })?;
             let mut v = Vec::new();
@@ -296,10 +291,29 @@ impl Node {
         })?;
         let mut rep = SendReport::default();
         let max_attempts = self.config.delivery.max_attempts;
-        for (id, topic, frame, expires_at, attempts, failures, is_ack, hidden) in due {
+        for (id, is_ack, hidden) in due {
             // Acks and system messages are invisible to the user-facing outbox.
             let quiet = is_ack || hidden;
             let now = self.now();
+            // The batch was selected a while ago and earlier publishes await:
+            // a tombstone or a key update (re-seal) may have changed this row
+            // since. Re-read it and publish what is current, or nothing.
+            let only_tombstone = i64::from(self.local_revocation.is_some());
+            let cur: Option<(String, Vec<u8>, i64, u32, u32)> = self.store.read(|c| {
+                Ok(c.query_row(
+                    "SELECT topic, frame, expires_at, attempts, failures FROM outbox
+                     WHERE message_id = ?1 AND state IN ('queued','sent')
+                       AND next_attempt_at IS NOT NULL AND next_attempt_at <= ?2
+                       AND (?3 = 0 OR type = ?4)",
+                    params![id, now, only_tombstone, MESSAGE_TYPE_IDENTITY_REVOKED],
+                    |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?)),
+                )
+                .optional()?)
+            })?;
+            let Some((topic, frame, expires_at, attempts, failures)) = cur else {
+                self.metrics.inc("publish.skipped_stale");
+                continue;
+            };
             if now >= expires_at {
                 let n = self.store.tx(|tx| {
                     Ok(tx.execute(
@@ -318,7 +332,7 @@ impl Node {
                 continue;
             }
             let Ok(topic) = ContentTopic::new(topic) else {
-                self.fail_row(&id, "invalid stored topic", quiet)?;
+                self.fail_row(&id, &frame, "invalid stored topic", quiet)?;
                 rep.failed += 1;
                 continue;
             };
@@ -335,8 +349,8 @@ impl Node {
                             "UPDATE outbox SET state='sent', attempts=attempts+1, failures=0,
                                last_attempt_at=?2, sent_at=COALESCE(sent_at, ?2), last_error=NULL,
                                next_attempt_at=?3
-                             WHERE message_id=?1 AND state IN ('queued','sent')",
-                            params![id, now, next],
+                             WHERE message_id=?1 AND state IN ('queued','sent') AND frame=?4",
+                            params![id, now, next, frame],
                         )?)
                     })?;
                     rep.published += 1;
@@ -346,7 +360,7 @@ impl Node {
                     }
                 }
                 Err(TransportError::TooLarge { .. }) => {
-                    self.fail_row(&id, "frame too large for the transport", quiet)?;
+                    self.fail_row(&id, &frame, "frame too large for the transport", quiet)?;
                     rep.failed += 1;
                     self.metrics.inc("publish.too_large");
                 }
@@ -372,8 +386,8 @@ impl Node {
                     self.store.tx(|tx| {
                         tx.execute(
                             "UPDATE outbox SET failures=?2, last_attempt_at=?3, next_attempt_at=?4, last_error=?5
-                             WHERE message_id=?1 AND state IN ('queued','sent')",
-                            params![id, new_failures, now, next, msg],
+                             WHERE message_id=?1 AND state IN ('queued','sent') AND frame=?6",
+                            params![id, new_failures, now, next, msg, frame],
                         )?;
                         Ok(())
                     })?;
@@ -389,12 +403,13 @@ impl Node {
         Ok(rep)
     }
 
-    fn fail_row(&self, id: &str, why: &str, is_ack: bool) -> Result<(), StoreError> {
+    /// Fail the row, unless it was re-sealed since `frame` was read.
+    fn fail_row(&self, id: &str, frame: &[u8], why: &str, is_ack: bool) -> Result<(), StoreError> {
         self.store.tx(|tx| {
             tx.execute(
                 "UPDATE outbox SET state='failed', next_attempt_at=NULL, last_error=?2
-                 WHERE message_id=?1 AND state IN ('queued','sent')",
-                params![id, why],
+                 WHERE message_id=?1 AND state IN ('queued','sent') AND frame=?3",
+                params![id, why, frame],
             )?;
             Ok(())
         })?;
