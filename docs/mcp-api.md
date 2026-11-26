@@ -83,7 +83,7 @@ session or process.
 | `initialize` | 2024-11-05 | 2024-11-05 | 2024-11-05 |
 
 `server/discover` returns `supportedVersions: [2024-11-05, 2025-03-26, 2025-06-18, 2025-11-25, 2026-07-28]`.
-Each negotiated session did a tool call (and `tools/list` returned 10 tools at the time; it now returns 13, see section 4). A request whose `_meta`
+Each negotiated session did a tool call (and `tools/list` returned 10 tools at the time; it now returns 15, see section 4). A request whose `_meta`
 carries an unsupported version gets `-32022`; a modern request without `_meta` gets `-32602` (stdio, measured).
 A rmcp client built from `ClientConfig::default()` and `serve()` uses `initialize` and therefore lands on
 2025-11-25; use `serve_with_lifecycle(.., ClientLifecycleMode::Discover{..})` for 2026-07-28.
@@ -138,7 +138,7 @@ Limits (`crates/mcp/src/limits.rs`; the engine may be stricter and answers `too_
 | `ttl_seconds`, `expires_in_seconds` | 1 to 2592000 (30 days) |
 | `contact_record` | 1 to 16384 bytes |
 | `alias` | 1 to 64 chars, no control characters |
-| `target_session` | 1 to 256 bytes, no control characters |
+| `target_session` | host-allowlisted session identifier: 1-128 ASCII characters from `!` through `~`; no spaces (the engine's rule; the MCP layer rejects anything else with `invalid_argument`) |
 | trigger `message_type` | `[A-Za-z0-9._-]{1,64}` |
 | discovery `topic` | `[a-z0-9-]{1,32}` (the host may list fewer topics) |
 | capability `name` / `description` | `[a-z0-9._-]{1,64}` / 0 to 256 chars, no control characters |
@@ -152,10 +152,12 @@ in inbox records, but cannot be used in tool arguments or in `agentnet://convers
 | Tool | Input | Output (`structuredContent`) | Annotations | Notes |
 |---|---|---|---|---|
 | `get_identity` | none | `agent_id`, `contact_record`, `inbox_topic`, `created_at`, `kem_expires_at?` | readOnly, closed-world | never returns private keys |
-| `send_message` | `recipient`, `body`, `conversation_id?`, `correlation_id?`, `ttl_seconds?`, `idempotency_key?` | `message_id`, `status` (`queued`/`sent`/...), `conversation_id`, `expires_at`, `deduplicated` | additive, not idempotent, open-world | description states `queued`/`sent` is NOT receipt; `message_type` is not exposed (always `message`) |
+| `send_message` | `recipient`, `body`, `conversation_id?`, `correlation_id?`, `ttl_seconds?`, `idempotency_key?` | `message_id`, `status` (`queued`/`sent`/...), `conversation_id`, `expires_at`, `deduplicated` | additive, not idempotent, open-world | description states `queued`/`sent` is NOT receipt and that retries are bounded by the message TTL and the host's accepted-publish attempt limit, so a message can remain `sent` after retries stop (check `get_message_status`); `message_type` is not exposed (always `message`) |
 | `read_inbox` | `cursor?`, `limit?`, `unread_only?`, `conversation_id?`, `include_quarantined?` | `records[]`, `next_cursor?`, `has_more` | readOnly, closed-world | description and field docs mark bodies UNTRUSTED |
+| `get_message` | `message_id`, `sender?` | one inbox record (`cursor`, `message_id`, `sender`, `sender_trust`, `message_type`, `conversation_id?`, `correlation_id?`, timestamps, `body`, `acknowledged`, `quarantined`) | readOnly, closed-world | fetches the message a `message.received` event names. Same visibility as `read_inbox` without `include_quarantined`: quarantined and replay-guard-held messages are `not_found`. A sender-chosen id used by two senders is `conflict` until `sender` is given; a non-matching `sender` is `not_found`. Does not acknowledge. Description and field docs mark the content UNTRUSTED |
 | `acknowledge_message` | `message_id` | `message_id`, `newly_acknowledged` | idempotent | local state only; description says it sends nothing |
 | `get_message_status` | `message_id` | state, attempts, timestamps, `last_error?` | readOnly | only `delivered` means recipient receipt |
+| `list_contacts` | `limit?` (1 to 200, default 50), `offset?` | `contacts[{address, alias?, trust, inbox_topic, added_at, kem_expires_at?, revoked}]`, `total`, `has_more`, `next_offset?` | readOnly, closed-world | saved contacts in the order they were added; public contact data only, never key material or the contact record |
 | `add_contact` | `contact_record`, `expected_address?`, `alias?`, `trust?` (`trusted`/`untrusted`/`blocked`) | `address`, `alias?`, `trust`, `inbox_topic`, `added_at`, `kem_expires_at?`, `updated` | destructive (may replace), idempotent | description: only for contacts the user verified |
 | `network_status` | `verbose?` | `mode`, `ready`, `connected_peers`, `isolation_violation?`, `queue{...}`, poll/sync times, `detail`, `peers?` | readOnly | peers only if `verbose` |
 | `create_trigger` | `sender?`, `message_type?`, `conversation_id?`, `correlation_id?`, `target_session`, `once?`, `expires_in_seconds?`, `since_cursor?` | trigger record | additive | `policy_denied` when disabled by host policy |
@@ -297,7 +299,7 @@ host may restart the process at will and must re-send `subscriptions/listen` aft
    rather than 405 (spike notes 8 and 4); not re-tested here. rmcp #1395 (over-long stdio line gets no answer) is
    untested here.
 6. `send_message` does not expose `message_type` (always `message`); task delegation tools are not implemented.
-   `read_inbox` has no sender filter. Contact listing (`AgentApi::list_contacts`) has no tool or resource.
+   `read_inbox` has no sender filter (use `get_message` with `sender` for a known id). Contacts are listed by the `list_contacts` tool; there is no contacts resource.
 7. Resource-update URIs are exact: a subscription to `agentnet://inbox` does not cover `agentnet://inbox?cursor=..`
    (which is only a read form).
 8. Interop was tested with the rmcp client only. No third-party MCP host (Claude Code, Inspector) was run:

@@ -521,33 +521,42 @@ async fn run(cli: Cli) -> CliResult<i32> {
             cursor,
             conversation,
             include_quarantined,
+            message_id,
+            sender,
         } => {
-            let res = remote()
-                .read_inbox(ReadInboxRequest {
-                    cursor,
-                    limit,
-                    unread_only: unread,
-                    conversation_id: conversation,
-                    include_quarantined,
-                })
-                .await?;
-            emit(json, &res, |r| {
-                let mut s = String::new();
-                for rec in &r.records {
-                    s.push_str(&render::inbox_record(rec));
-                    s.push('\n');
-                }
-                if r.records.is_empty() {
-                    s.push_str("inbox is empty\n");
-                }
-                if let Some(c) = &r.next_cursor {
-                    s.push_str(&format!(
-                        "next_cursor={c}{}",
-                        if r.has_more { " (more available)" } else { "" }
-                    ));
-                }
-                s
-            });
+            if let Some(message_id) = message_id {
+                let rec = remote()
+                    .get_message(GetMessageRequest { message_id, sender })
+                    .await?;
+                emit(json, &rec, render::inbox_record);
+            } else {
+                let res = remote()
+                    .read_inbox(ReadInboxRequest {
+                        cursor,
+                        limit,
+                        unread_only: unread,
+                        conversation_id: conversation,
+                        include_quarantined,
+                    })
+                    .await?;
+                emit(json, &res, |r| {
+                    let mut s = String::new();
+                    for rec in &r.records {
+                        s.push_str(&render::inbox_record(rec));
+                        s.push('\n');
+                    }
+                    if r.records.is_empty() {
+                        s.push_str("inbox is empty\n");
+                    }
+                    if let Some(c) = &r.next_cursor {
+                        s.push_str(&format!(
+                            "next_cursor={c}{}",
+                            if r.has_more { " (more available)" } else { "" }
+                        ));
+                    }
+                    s
+                });
+            }
         }
         Command::Ack { message_id } => {
             let r = remote().acknowledge_message(message_id).await?;

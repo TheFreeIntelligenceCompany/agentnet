@@ -166,6 +166,18 @@ pub struct ReadInboxRequest {
     pub include_quarantined: bool,
 }
 
+/// `get_message` request. Inbox rows are keyed by `(sender, message_id)`; a
+/// `message.received` event carries only the `message_id`, so `sender` is
+/// optional and needed only when two senders used the same id.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct GetMessageRequest {
+    pub message_id: String,
+    /// Authenticated sender address. Required to disambiguate when more than
+    /// one sender used `message_id` (the call is then `conflict`).
+    #[serde(default)]
+    pub sender: Option<String>,
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct InboxRecord {
     /// Cursor positioned at this record.
@@ -557,6 +569,12 @@ pub trait AgentApi: Send + Sync + 'static {
     async fn get_identity(&self) -> ApiResult<IdentityInfo>;
     async fn send_message(&self, req: SendMessageRequest) -> ApiResult<SendMessageResponse>;
     async fn read_inbox(&self, req: ReadInboxRequest) -> ApiResult<ReadInboxResponse>;
+    /// Fetch one received message by id (the id a `message.received` event
+    /// carries). Same visibility as `read_inbox` without `include_quarantined`:
+    /// quarantined and replay-guard-held messages are `not_found`. A message id
+    /// is sender-chosen; if several senders used it and `sender` is absent the
+    /// call fails with `conflict`. Does not acknowledge the message.
+    async fn get_message(&self, req: GetMessageRequest) -> ApiResult<InboxRecord>;
     /// Marks a message as processed locally. Unrelated to the transport-level
     /// `ack.received` receipt, which the engine sends on persistence.
     async fn acknowledge_message(&self, message_id: String) -> ApiResult<AcknowledgeResponse>;

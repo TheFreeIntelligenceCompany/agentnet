@@ -5,7 +5,8 @@ use std::time::Duration;
 
 use agentnet_core::api::{
     AddContactRequest, AdvertiseRequest, AgentApi, ApiError, ChangeHint, CreateTriggerRequest,
-    DiscoverRequest, ErrorCode, PageRequest, ReadInboxRequest, SendMessageRequest, Trust,
+    DiscoverRequest, ErrorCode, GetMessageRequest, PageRequest, ReadInboxRequest,
+    SendMessageRequest, Trust,
 };
 use agentnet_core::Node;
 use serde::de::DeserializeOwned;
@@ -352,6 +353,7 @@ async fn dispatch(ctx: &ServerCtx, method: &str, p: Value) -> Result<Value, ApiE
         "get_identity" => to_value(n.get_identity().await?),
         "send_message" => to_value(n.send_message(params::<SendMessageRequest>(p)?).await?),
         "read_inbox" => to_value(n.read_inbox(params::<ReadInboxRequest>(p)?).await?),
+        "get_message" => to_value(n.get_message(params::<GetMessageRequest>(p)?).await?),
         "acknowledge_message" => {
             let a: MessageIdParams = params(p)?;
             to_value(n.acknowledge_message(a.message_id).await?)

@@ -242,6 +242,11 @@ Options:
       --cursor <CURSOR>      Continue after this cursor (`next_cursor` of the previous page)
       --conversation <ID>    Only this conversation
       --include-quarantined  Also show quarantined messages
+      --message-id <ID>      Show only the message with this id (as given by a `message.received`
+                             event; quarantined messages are not found). Cannot be combined with
+                             paging filters
+      --sender <ADDRESS>     With --message-id: the sender address, to choose between senders that
+                             used the same id
   -h, --help                 Print help
 
 ===== agentnet ack --help =====

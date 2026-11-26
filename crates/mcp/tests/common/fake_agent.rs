@@ -165,6 +165,32 @@ impl FakeAgent {
         c
     }
 
+    /// Persist an inbound record with an explicit id and quarantine flag (no hints).
+    pub fn push_raw(&self, sender: &str, message_id: &str, body: &str, quarantined: bool) {
+        let mut s = self.st();
+        s.seq += 1;
+        let seq = s.seq;
+        s.inbox.push(InboxRecord {
+            cursor: cursor(seq),
+            message_id: message_id.to_string(),
+            sender: sender.to_string(),
+            sender_trust: if quarantined {
+                Trust::Unknown
+            } else {
+                Trust::Trusted
+            },
+            message_type: "message".into(),
+            conversation_id: None,
+            correlation_id: None,
+            created_at: now(),
+            expires_at: now() + 3_600_000,
+            received_at: now(),
+            body: body.to_string(),
+            acknowledged: false,
+            quarantined,
+        });
+    }
+
     pub fn inbox_len(&self) -> usize {
         self.st().inbox.len()
     }
@@ -302,6 +328,23 @@ impl AgentApi for FakeAgent {
             next_cursor,
             has_more,
         })
+    }
+
+    async fn get_message(&self, req: GetMessageRequest) -> ApiResult<InboxRecord> {
+        self.check()?;
+        let s = self.st();
+        let mut hits = s.inbox.iter().filter(|r| {
+            r.message_id == req.message_id
+                && !r.quarantined
+                && req.sender.as_ref().is_none_or(|x| &r.sender == x)
+        });
+        let first = hits
+            .next()
+            .ok_or_else(|| ApiError::not_found("no such message"))?;
+        if hits.next().is_some() {
+            return Err(ApiError::new(ErrorCode::Conflict, "pass `sender`"));
+        }
+        Ok(first.clone())
     }
 
     async fn acknowledge_message(&self, message_id: String) -> ApiResult<AcknowledgeResponse> {

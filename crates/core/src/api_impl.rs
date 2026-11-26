@@ -8,9 +8,10 @@ use crate::api::{
     AcknowledgeResponse, AddContactRequest, AdvertInfo, AdvertiseRequest, AgentApi, ApiError,
     ApiResult, ChangeHint, ContactInfo, ConversationEntry, ConversationPage, CreateTriggerRequest,
     DeleteTriggerResponse, Direction, DiscoverPage, DiscoverRequest, ErrorCode, EventPage,
-    IdentityInfo, InboxRecord, MessageStatus, NetworkStatus, OutboxPage, OutboxRecord, PageRequest,
-    QueueHealth, ReadInboxRequest, ReadInboxResponse, ReplayGuardInfo, SendMessageRequest,
-    SendMessageResponse, TriggerInfo, Trust, WithdrawInfo, MAX_QUARANTINE_PAGE_BYTES,
+    GetMessageRequest, IdentityInfo, InboxRecord, MessageStatus, NetworkStatus, OutboxPage,
+    OutboxRecord, PageRequest, QueueHealth, ReadInboxRequest, ReadInboxResponse, ReplayGuardInfo,
+    SendMessageRequest, SendMessageResponse, TriggerInfo, Trust, WithdrawInfo,
+    MAX_QUARANTINE_PAGE_BYTES,
 };
 use crate::crypto::{Address, Envelope, VerifiedContact};
 use crate::cursor::{decode_conv, decode_seq, encode_conv, encode_seq, CursorKind};
@@ -390,6 +391,32 @@ impl AgentApi for Node {
                 })
             })
             .map_err(|e| e.to_api())
+    }
+
+    async fn get_message(&self, req: GetMessageRequest) -> ApiResult<InboxRecord> {
+        self.store
+            .read(|c| {
+                let mut st = c.prepare(&format!(
+                    "SELECT {INBOX_COLS} FROM inbox
+                     WHERE message_id = ?1 AND quarantined = 0 AND (?2 IS NULL OR sender = ?2)
+                     ORDER BY seq LIMIT 2"
+                ))?;
+                let rows = st.query_map(params![req.message_id, req.sender], inbox_from_row)?;
+                let mut records = Vec::new();
+                for r in rows {
+                    records.push(r?);
+                }
+                Ok(records)
+            })
+            .map_err(|e| e.to_api())
+            .and_then(|mut records| match records.len() {
+                0 => Err(ApiError::not_found("no such message")),
+                1 => Ok(records.remove(0)),
+                _ => Err(ApiError::new(
+                    ErrorCode::Conflict,
+                    "several senders used this message_id; pass `sender` to choose one",
+                )),
+            })
     }
 
     /// Acknowledges every non-quarantined inbox row with this `message_id`

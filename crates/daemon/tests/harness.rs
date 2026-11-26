@@ -333,3 +333,35 @@ fn documented_sample_configs_match_the_code() {
         assert_eq!(have, text, "{name} is stale; regenerate with AGENTNET_REGEN_EXAMPLES=1 cargo test -p agentnet-daemon --test harness documented_sample");
     }
 }
+
+/// The documented receive flow: event -> get_message(message_id) -> handle -> ack.
+#[tokio::test]
+async fn fetch_mode_resolves_the_event_message_id_with_get_message_then_acknowledges() {
+    let w = World::new();
+    let (a, b) = pair(&w, cfg(), cfg()).await;
+    let m1 = a.send(&b, "fetch me").await;
+    wait_until("b has the message", || async { b.inbox_len().await == 1 }).await;
+    let out = w.tmp.path().join("turns.jsonl");
+    let state = w.tmp.path().join("state.json");
+    let o = harness(
+        &b.path,
+        &out,
+        &state,
+        &["--include-received", "--fetch", "--max-events", "1"],
+    )
+    .await;
+    assert!(o.status.success(), "{}", String::from_utf8_lossy(&o.stderr));
+    let l = lines(&out);
+    assert_eq!(l.len(), 1, "{l:?}");
+    assert_eq!(l[0]["message_id"], m1.as_str());
+    assert_eq!(l[0]["fetched"]["sender"], a.address.as_str());
+    assert_eq!(l[0]["fetched"]["body_bytes"], "fetch me".len());
+    let inbox = b
+        .remote
+        .read_inbox(agentnet_core::api::ReadInboxRequest::default())
+        .await
+        .unwrap();
+    assert!(inbox.records[0].acknowledged, "acknowledged after handling");
+    a.daemon.unwrap().shutdown().await;
+    b.daemon.unwrap().shutdown().await;
+}
