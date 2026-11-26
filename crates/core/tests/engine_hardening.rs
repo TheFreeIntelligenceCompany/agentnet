@@ -570,7 +570,8 @@ async fn rollback_enters_the_replay_guard_and_holds_replayed_frames() {
     assert_eq!(b.n("outbox"), outbox_rows, "no ack queued");
     assert_eq!(b.n("events"), 0);
     assert_eq!(status(&b).await.replay_guard.unwrap().held, 1);
-    // a message created after the guard started is delivered normally
+    // a message created after the guard start plus the skew is delivered normally
+    w.advance(121_000);
     a.send(&b, "after the rollback").await;
     settle(&[&a, &b]).await;
     assert_eq!(b.inbox().await.len(), 1);
@@ -590,6 +591,53 @@ async fn rollback_enters_the_replay_guard_and_holds_replayed_frames() {
             .all(|r| r.body != "received before the rollback"),
         "the held replay was discarded as expired"
     );
+}
+
+/// Review finding 1: a trusted sender whose clock runs ahead (within the
+/// allowed skew) creates a frame that opens fine; replaying it after a restore
+/// must still be held, because its signed `created_at` is later than the guard
+/// start but not later than guard start + skew.
+#[tokio::test]
+async fn rollback_guard_holds_replays_from_a_sender_clock_ahead_within_the_skew() {
+    let w = World::new();
+    let mut v = started(&w, &["a", "b"]).await;
+    let (b, a) = (v.pop().unwrap(), v.pop().unwrap());
+    exchange(&a, &b).await;
+    let backup = w.dir.path().join("b-backup.sqlite");
+    b.node.close();
+    copy_store(&b, &backup);
+    let b = w.reopen(b, cfg());
+
+    // A's clock is 60 s ahead (allowed skew is 120 s).
+    let ahead = w.now_ms() + 60_000;
+    let id = load(&a);
+    let vc = VerifiedContact::parse_and_verify(&b.record, w.now_ms()).unwrap();
+    let env = Envelope::new(
+        id.address(),
+        vc.address,
+        MESSAGE_TYPE_MESSAGE,
+        "from the future".to_owned(),
+        ahead,
+        TTL,
+    )
+    .unwrap();
+    let frame = seal(&id, &vc, &env, w.now_ms(), 150_000).unwrap();
+    inject(&w, &b, &frame);
+    b.node.step_receive().await.unwrap();
+    assert_eq!(b.inbox().await.len(), 1, "accepted within the skew");
+
+    b.node.close();
+    restore_store(&b, &backup);
+    w.advance(5_000);
+    let b = w.reopen(b, cfg());
+    assert!(status(&b).await.replay_guard.is_some());
+    let outbox_rows = b.n("outbox");
+    inject(&w, &b, &frame);
+    b.node.step_receive().await.unwrap();
+    assert_eq!(b.inbox().await.len(), 0, "replay must not be delivered");
+    assert_eq!(b.metric("guard.held"), 1);
+    assert_eq!(b.n("outbox"), outbox_rows, "no ack queued");
+    assert_eq!(b.n("events"), 0);
 }
 
 #[tokio::test]
@@ -835,4 +883,176 @@ async fn replay_across_kem_revocation_and_after_pruning() {
     assert_eq!(b.metric("frame.not_for_us"), nfu + 1);
     // the pruning case is engine_security::replay_now_and_after_dedupe_pruning
     assert_eq!(b.inbox().await.len(), 1, "only the original, from before");
+}
+
+// ------------------------------------------- concurrent send vs. revocation
+
+/// Review finding 2: while the first publish of a batch awaits, a tombstone for
+/// a later recipient of the same batch is applied. The later (cached) frame must
+/// never reach the transport.
+#[tokio::test]
+async fn revocation_during_a_pending_publish_stops_later_frames_of_the_batch() {
+    let w = World::new();
+    let (s, gate) = w.agent_gated("s", cfg());
+    let mut v = started(&w, &["r1", "r2"]).await;
+    let (r2, r1) = (v.pop().unwrap(), v.pop().unwrap());
+    s.node.step_receive().await.unwrap();
+    s.add(&r1).await;
+    s.add(&r2).await;
+    let m1 = s.send(&r1, "first").await;
+    let m2 = s.send(&r2, "second").await;
+
+    gate.arm();
+    let n = s.node.clone();
+    let task = tokio::spawn(async move { n.step_send().await.unwrap() });
+    gate.wait_reached().await;
+    // the tombstone arrives while m1's publish is awaiting
+    s.node
+        .import_revocation(&tombstone(&w, &r2, "gone"))
+        .unwrap();
+    gate.release();
+    task.await.unwrap();
+
+    assert_eq!(s.state(&m2.message_id).await, DeliveryState::Failed);
+    let to_r2 = topic_of(&r2.record);
+    assert_eq!(
+        w.net.publish_count(&to_r2),
+        0,
+        "a revoked recipient's frame must not be published"
+    );
+    assert_eq!(w.net.publish_count(&topic_of(&r1.record)), 1);
+    assert_ne!(s.state(&m1.message_id).await, DeliveryState::Failed);
+}
+
+/// Review finding 2 (rotation): the re-sealed frame, not the cached old-key
+/// frame, is what a later batch entry publishes.
+#[tokio::test]
+async fn key_update_during_a_pending_publish_publishes_the_resealed_frame() {
+    let w = World::new();
+    let (s, gate) = w.agent_gated("s", cfg());
+    let mut v = started(&w, &["r1", "r2"]).await;
+    let (r2, r1) = (v.pop().unwrap(), v.pop().unwrap());
+    s.node.step_receive().await.unwrap();
+    s.add(&r1).await;
+    s.add(&r2).await;
+    // R2 also knows S so it can send the contact.update
+    r2.add(&s).await;
+    s.send(&r1, "first").await;
+    let m2 = s.send(&r2, "second").await;
+    let old_frame: Vec<u8> = {
+        let c = rusqlite::Connection::open(&s.store_path).unwrap();
+        c.query_row(
+            "SELECT frame FROM outbox WHERE message_id = ?1",
+            [&m2.message_id],
+            |r| r.get(0),
+        )
+        .unwrap()
+    };
+
+    // R2 rotates (old key revoked) and announces it, but S has not seen it yet
+    rotate(&w, &r2, true);
+    let r2 = w.reopen(r2, cfg());
+
+    gate.arm();
+    let n = s.node.clone();
+    let task = tokio::spawn(async move { n.step_send().await.unwrap() });
+    gate.wait_reached().await;
+    // R2 publishes its contact.update; S applies it and re-seals m2
+    r2.node.step_send().await.unwrap();
+    s.node.step_receive().await.unwrap();
+    assert!(s.metric("outbox.resealed") >= 1);
+    gate.release();
+    task.await.unwrap();
+
+    let to_r2 = topic_of(&r2.record);
+    let frames: Vec<_> = w
+        .net
+        .published_frames()
+        .into_iter()
+        .filter(|f| f.topic == to_r2 && f.publisher == Some(s.transport.index()))
+        .collect();
+    assert!(
+        frames.iter().all(|f| f.payload != old_frame),
+        "the obsolete old-key frame must never be published"
+    );
+}
+
+// ------------------------------------- held messages vs. current sender trust
+
+/// Hold one message from `a` at `b` (rollback + replay), run `change` while the
+/// message is held, then accept the rollback and restart.
+async fn held_then_changed(change: impl FnOnce(&World, &Agent, &Agent)) -> (World, Agent, Agent) {
+    let w = World::new();
+    let mut v = started(&w, &["a", "b"]).await;
+    let (b, a) = (v.pop().unwrap(), v.pop().unwrap());
+    exchange(&a, &b).await;
+    let backup = w.dir.path().join("b-backup.sqlite");
+    b.node.close();
+    copy_store(&b, &backup);
+    let b = w.reopen(b, cfg());
+    a.send(&b, "m").await;
+    settle(&[&a, &b]).await;
+    let f = captured(&w, &a);
+    b.node.close();
+    restore_store(&b, &backup);
+    w.advance(1_000);
+    let b = w.reopen(b, cfg());
+    inject(&w, &b, &f.payload);
+    b.node.step_receive().await.unwrap();
+    assert_eq!(b.n("inbox"), 1, "held row stored");
+    change(&w, &a, &b);
+    b.node.close();
+    assert!(guard::accept_rollback(&b.store_path).unwrap());
+    let b = w.reopen(b, cfg());
+    (w, a, b)
+}
+
+/// Review finding 3: a sender blocked while its message was held must not get
+/// the message released into the inbox (no event, no ack).
+#[tokio::test]
+async fn accepting_a_rollback_does_not_release_held_messages_of_a_blocked_sender() {
+    let (_w, _a, b) = held_then_changed(|_, a, b| {
+        b.node.set_contact_trust(&a.addr, Trust::Blocked).unwrap();
+    })
+    .await;
+    assert!(b.inbox().await.is_empty());
+    assert_eq!(b.n("events"), 0, "no message.received");
+    assert_eq!(b.metric("guard.released"), 0);
+    assert_eq!(b.n("inbox"), 0, "the blocked sender's held row is dropped");
+    let acks: i64 = {
+        let c = rusqlite::Connection::open(&b.store_path).unwrap();
+        c.query_row("SELECT COUNT(*) FROM outbox WHERE is_ack = 1", [], |r| {
+            r.get(0)
+        })
+        .unwrap()
+    };
+    assert_eq!(acks, 0, "no ack for a blocked sender");
+}
+
+/// Review finding 3 (revocation): same, for a sender whose tombstone arrived.
+#[tokio::test]
+async fn accepting_a_rollback_does_not_release_held_messages_of_a_revoked_sender() {
+    let (_w, _a, b) = held_then_changed(|w, a, b| {
+        b.node
+            .import_revocation(&tombstone(w, a, "compromised"))
+            .unwrap();
+    })
+    .await;
+    assert!(b.inbox().await.is_empty());
+    assert_eq!(b.n("events"), 0);
+    assert_eq!(b.metric("guard.released"), 0);
+}
+
+/// Review finding 3 (policy): a sender that lost trust (untrusted) falls under
+/// the quarantine policy again instead of landing in the inbox.
+#[tokio::test]
+async fn accepting_a_rollback_requarantines_held_messages_of_a_distrusted_sender() {
+    let (_w, _a, b) = held_then_changed(|_, a, b| {
+        b.node.set_contact_trust(&a.addr, Trust::Untrusted).unwrap();
+    })
+    .await;
+    assert!(b.inbox().await.is_empty(), "not in the normal inbox");
+    assert_eq!(b.n("events"), 0);
+    assert_eq!(b.node.list_quarantined().unwrap().len(), 1);
+    assert_eq!(b.metric("guard.released"), 0);
 }

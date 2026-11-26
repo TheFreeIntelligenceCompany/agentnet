@@ -323,8 +323,15 @@ pub enum ContactCmd {
 
 #[derive(Subcommand)]
 pub enum QuarantineCmd {
-    /// List quarantined messages (oldest first).
-    List,
+    /// List quarantined messages (oldest first, one page at a time).
+    List {
+        /// Maximum records (default 50, maximum 200; a page is also capped at 8 MiB).
+        #[arg(long, value_name = "N")]
+        limit: Option<u32>,
+        /// Continue after this cursor (`next_cursor` of the previous page).
+        #[arg(long, value_name = "CURSOR")]
+        cursor: Option<String>,
+    },
     /// Move a quarantined message into the inbox (its sender must be trusted by now).
     Release {
         /// Message id.

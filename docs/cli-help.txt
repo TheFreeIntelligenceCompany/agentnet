@@ -197,7 +197,7 @@ Inspect and release messages from unknown or untrusted senders
 Usage: agentnet quarantine [OPTIONS] <COMMAND>
 
 Commands:
-  list     List quarantined messages (oldest first)
+  list     List quarantined messages (oldest first, one page at a time)
   release  Move a quarantined message into the inbox (its sender must be trusted by now)
   help     Print this message or the help of the given subcommand(s)
 
@@ -620,15 +620,17 @@ Options:
 
 ===== agentnet quarantine list --help =====
 
-List quarantined messages (oldest first)
+List quarantined messages (oldest first, one page at a time)
 
 Usage: agentnet quarantine list [OPTIONS]
 
 Options:
-      --data-dir <DIR>  Data directory (identity, config, database, socket, tokens) [env:
-                        AGENTNET_HOME=]
-      --json            Print machine-readable JSON instead of human text
-  -h, --help            Print help
+      --data-dir <DIR>   Data directory (identity, config, database, socket, tokens) [env:
+                         AGENTNET_HOME=]
+      --limit <N>        Maximum records (default 50, maximum 200; a page is also capped at 8 MiB)
+      --cursor <CURSOR>  Continue after this cursor (`next_cursor` of the previous page)
+      --json             Print machine-readable JSON instead of human text
+  -h, --help             Print help
 
 ===== agentnet quarantine release --help =====
 

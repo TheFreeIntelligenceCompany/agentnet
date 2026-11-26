@@ -542,7 +542,8 @@ start, after the transport becomes ready again, after a persistence failure, and
 every `history_sync_interval_s` (15). A pass queries
 `[max(watermark - history_overlap_s, now - retention_hours), now + clock_skew]`
 in windows of at most the transport's `max_history_window_ns`, following page
-cursors, and advances the watermark to the pass's start time only if every page
+cursors (a cursor that repeats, or cycles back to an earlier one, is a failed pass: the
+watermark stays and the same interval is read again next time), and advances the watermark to the pass's start time only if every page
 was processed without a store failure. `HistoryUnavailable`, isolation and
 other transport errors leave the watermark untouched. In `run`, a bounded
 channel (`inbound_channel_capacity`, 256) sits between the receive loop and
@@ -590,7 +591,7 @@ monotonic and cannot acknowledge events that do not yet exist.
 
 | Item | Rule |
 |---|---|
-| Inbox, outbox terminal rows | pruned after `retention_hours` (168) by maintenance (unread rows included) |
+| Inbox, outbox terminal rows (including published `ack.received` rows, which are never acknowledged themselves) | pruned after `retention_hours` (168) by maintenance (unread rows included) |
 | `seen` | until `expires_at + clock_skew_s` |
 | Events | see 8.7 |
 | Body | `max_body_bytes` (65536) and one frame (`transport.max_payload_len`) |
@@ -676,6 +677,17 @@ body) is signed again with the new `recipient_key_epoch` and sealed to the new
 key; the row's `frame` is replaced in the same transaction that replaces the
 contact.
 
+The send loop selects a batch of due rows and publishes them one after another
+while a publish may take seconds. Immediately before each publish it therefore
+re-reads the row (state, topic, frame) and skips it if a tombstone made it
+unpublishable; the frame it publishes is always
+the current one. The result of a publish is recorded only if the stored frame
+is still the one that was published, so a re-seal that raced with a publish
+leaves the row due for an immediate re-publish. A publish that is already in
+flight when the tombstone or key update is applied cannot be recalled (tests
+`revocation_during_a_pending_publish_stops_later_frames_of_the_batch`,
+`key_update_during_a_pending_publish_publishes_the_resealed_frame`).
+
 ### 9.5 Identity (signing key) revocation
 
 `agentnet identity revoke --reason <text>` (daemon stopped) creates the
@@ -756,15 +768,21 @@ On open:
 * a brand-new database with no sidecar is a fresh install: no guard.
 
 In guard mode (persisted in the database, so it survives restarts) an inbound
-message whose `created_at` is **older than the moment the guard started** and
+message whose `created_at` is **at or before the moment the guard started plus
+`clock_skew`** (a message accepted before the rollback may have been created that
+far ahead of the local clock) and
 that would otherwise be delivered is *held*: stored in the inbox as quarantined
 with `hold_reason = replay_guard`, **not acknowledged, no event, no trigger**,
 counted (`guard.held`), and shown by `network status` (reason, held count,
-deadline) and `agentnet doctor`. Messages created after the guard started are
-delivered normally. The guard ends when `max_ttl + clock_skew` has elapsed (every
+deadline) and `agentnet doctor`. Messages created after that cutoff are
+delivered normally; a legitimate message created within `clock_skew` after the
+guard started is held too and is released only by accepting the rollback. The guard ends when `max_ttl + clock_skew` has elapsed (every
 held message has expired by then and is discarded) or when the operator runs
 `agentnet doctor --accept-rollback` (daemon stopped); at the next start the held
-messages that have not expired are released like quarantined ones (event + ack,
+messages that have not expired are released like quarantined ones, but only after
+the sender's *current* standing is re-checked as for a new frame (a sender blocked
+or revoked in the meantime has its held messages dropped; an untrusted or unknown
+one follows `unknown_senders`) (event + ack,
 no trigger matching). The sender keeps retrying a held message (it is not acked),
 so a message that was genuinely sent before the rollback and not yet received is
 held, not lost, until the guard ends or is accepted; acceptance, however, also

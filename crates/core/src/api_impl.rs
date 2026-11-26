@@ -10,7 +10,7 @@ use crate::api::{
     DeleteTriggerResponse, Direction, DiscoverPage, DiscoverRequest, ErrorCode, EventPage,
     IdentityInfo, InboxRecord, MessageStatus, NetworkStatus, OutboxPage, OutboxRecord, PageRequest,
     QueueHealth, ReadInboxRequest, ReadInboxResponse, ReplayGuardInfo, SendMessageRequest,
-    SendMessageResponse, TriggerInfo, Trust, WithdrawInfo,
+    SendMessageResponse, TriggerInfo, Trust, WithdrawInfo, MAX_QUARANTINE_PAGE_BYTES,
 };
 use crate::crypto::{Address, Envelope, VerifiedContact};
 use crate::cursor::{decode_conv, decode_seq, encode_conv, encode_seq, CursorKind};
@@ -149,7 +149,65 @@ impl Node {
             .map_err(|e| e.to_api())
     }
 
-    /// Quarantined messages (oldest first, at most 1000).
+    /// One page of quarantined messages (oldest first) after `req.cursor`: at
+    /// most `req.limit` records (default 50, maximum 200) and at most
+    /// [`MAX_QUARANTINE_PAGE_BYTES`] of serialized records (always at least one
+    /// when any exist). `has_more` tells whether to continue with `next_cursor`.
+    /// Cursors are inbox positions, so held and quarantined rows keep a stable order.
+    pub fn list_quarantined_page(&self, req: PageRequest) -> ApiResult<ReadInboxResponse> {
+        let after = match &req.cursor {
+            Some(c) => decode_seq(CursorKind::Inbox, c)?,
+            None => 0,
+        };
+        let limit = clamp_limit(req.limit);
+        self.store
+            .read(|c| {
+                let mut st = c.prepare(&format!(
+                    "SELECT {INBOX_COLS} FROM inbox WHERE quarantined = 1 AND seq > ?1
+                     ORDER BY seq LIMIT ?2"
+                ))?;
+                let rows = st.query_map(
+                    params![after, i64::try_from(limit + 1).unwrap_or(i64::MAX)],
+                    inbox_from_row,
+                )?;
+                let mut records = Vec::new();
+                let mut bytes = 0usize;
+                let mut more = false;
+                for r in rows {
+                    let r = r?;
+                    // A record serializes to JSON as it will on the wire (+1 for the comma).
+                    let n = serde_json::to_vec(&r)
+                        .map_or(MAX_QUARANTINE_PAGE_BYTES, |v| v.len())
+                        .saturating_add(1);
+                    if records.len() >= limit
+                        || (!records.is_empty()
+                            && bytes.saturating_add(n) > MAX_QUARANTINE_PAGE_BYTES)
+                    {
+                        more = true;
+                        break;
+                    }
+                    bytes = bytes.saturating_add(n);
+                    records.push(r);
+                }
+                let next_cursor = Some(match records.last() {
+                    Some(r) => r.cursor.clone(),
+                    None => req
+                        .cursor
+                        .clone()
+                        .unwrap_or_else(|| encode_seq(CursorKind::Inbox, 0)),
+                });
+                Ok(ReadInboxResponse {
+                    records,
+                    next_cursor,
+                    has_more: more,
+                })
+            })
+            .map_err(|e| e.to_api())
+    }
+
+    /// Quarantined messages (oldest first, at most 1000). In-process only: the
+    /// result can be far larger than a control-socket line; remote callers use
+    /// [`Node::list_quarantined_page`].
     pub fn list_quarantined(&self) -> ApiResult<Vec<InboxRecord>> {
         self.store
             .read(|c| {

@@ -1005,5 +1005,66 @@ async fn contact_management() {
     assert_eq!(idn.contact_record, a.record);
 }
 
+/// Review finding 7a: a repeated or cyclic pagination cursor is a failed pass:
+/// the watermark stays and the missed interval is queried again next time.
+#[tokio::test]
+async fn repeated_history_cursor_is_a_failed_pass_and_the_interval_is_requeried() {
+    use std::sync::atomic::Ordering;
+    for mode in [1u8, 2] {
+        let w = World::new();
+        let (b, hl) = w.agent_history_loop("b", cfg());
+        b.node.step_receive().await.unwrap();
+        assert!(b.node.step_history_sync().await.unwrap().completed);
+        let wm0 = b.node.debug_history_watermark().unwrap();
+        w.advance(120_000);
+
+        hl.mode.store(mode, Ordering::SeqCst);
+        hl.starts.lock().unwrap().clear();
+        let rep = b.node.step_history_sync().await.unwrap();
+        assert!(
+            !rep.completed,
+            "mode {mode}: a looping cursor is a failed pass"
+        );
+        assert!(rep.error.is_some());
+        assert_eq!(b.node.debug_history_watermark().unwrap(), wm0);
+        let first_start = hl.starts.lock().unwrap()[0];
+
+        hl.mode.store(0, Ordering::SeqCst);
+        hl.starts.lock().unwrap().clear();
+        assert!(b.node.step_history_sync().await.unwrap().completed);
+        assert_eq!(
+            hl.starts.lock().unwrap()[0],
+            first_start,
+            "the interval that was not fully read is queried again"
+        );
+        assert!(b.node.debug_history_watermark().unwrap() > wm0);
+    }
+}
+
+/// Review finding 4: published acks (and re-acks) are terminal and must be
+/// pruned after the retention window instead of staying `sent` forever.
+#[tokio::test]
+async fn published_acks_and_reacks_are_pruned_after_retention() {
+    let w = World::new();
+    let (a, b) = pair(&w).await;
+    a.send(&b, "hello").await;
+    a.node.step_send().await.unwrap();
+    b.node.step_receive().await.unwrap();
+    // the first ack is lost, so A retries and B re-acks once the interval passed
+    b.transport.drop_next_publishes(1);
+    b.node.step_send().await.unwrap();
+    w.advance(40_000);
+    a.node.step_send().await.unwrap();
+    b.node.step_receive().await.unwrap();
+    b.node.step_send().await.unwrap();
+    assert!(b.metric("ack.requeued") >= 1);
+    assert_eq!(b.n("outbox"), 2, "ack and re-ack rows exist");
+
+    // well past the retention window (and every TTL)
+    w.advance(200 * 3_600_000);
+    b.node.step_maintenance().unwrap();
+    assert_eq!(b.n("outbox"), 0, "published acks must be pruned");
+}
+
 #[allow(dead_code)]
 fn _t(_: &MockNetwork, _: &dyn Transport) {}

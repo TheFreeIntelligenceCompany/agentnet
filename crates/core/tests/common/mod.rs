@@ -13,6 +13,12 @@ use agentnet_core::config::{NodeConfig, UnknownSenders};
 use agentnet_core::identity::Identity;
 use agentnet_core::{Clock, Node, NodeOptions};
 use agentnet_transport::mock::{MockClock, MockNetwork, MockTransport};
+use agentnet_transport::{
+    ContentTopic, HistoryPage, HistoryQuery, InboundFrame, PublishReceipt, Transport,
+    TransportError, TransportStatus,
+};
+use async_trait::async_trait;
+use tokio::sync::Notify;
 
 pub const MS: i64 = 1_000;
 
@@ -73,7 +79,60 @@ impl World {
         let id_path = self.dir.path().join(format!("{name}.identity.json"));
         id.save(&id_path, false).unwrap();
         let transport = self.net.endpoint();
-        self.open_agent(name, config, transport, id_path, NodeOptions::default())
+        let dynt: Arc<dyn Transport> = Arc::new(transport.clone());
+        self.open_agent(
+            name,
+            config,
+            transport,
+            dynt,
+            id_path,
+            NodeOptions::default(),
+        )
+    }
+
+    /// An agent whose next publish can be paused with the returned [`Gate`].
+    pub fn agent_gated(&self, name: &str, config: NodeConfig) -> (Agent, Arc<Gate>) {
+        let id = Identity::generate(16, self.now_ms()).unwrap();
+        let id_path = self.dir.path().join(format!("{name}.identity.json"));
+        id.save(&id_path, false).unwrap();
+        let transport = self.net.endpoint();
+        let gate = Arc::new(Gate::default());
+        let dynt: Arc<dyn Transport> = Arc::new(GateTransport {
+            inner: transport.clone(),
+            gate: gate.clone(),
+        });
+        let a = self.open_agent(
+            name,
+            config,
+            transport,
+            dynt,
+            id_path,
+            NodeOptions::default(),
+        );
+        (a, gate)
+    }
+
+    /// An agent whose history queries can be made to paginate in a loop
+    /// (see [`HistoryLoop`]).
+    pub fn agent_history_loop(&self, name: &str, config: NodeConfig) -> (Agent, Arc<HistoryLoop>) {
+        let id = Identity::generate(16, self.now_ms()).unwrap();
+        let id_path = self.dir.path().join(format!("{name}.identity.json"));
+        id.save(&id_path, false).unwrap();
+        let transport = self.net.endpoint();
+        let hl = Arc::new(HistoryLoop::default());
+        let dynt: Arc<dyn Transport> = Arc::new(HistoryLoopTransport {
+            inner: transport.clone(),
+            ctl: hl.clone(),
+        });
+        let a = self.open_agent(
+            name,
+            config,
+            transport,
+            dynt,
+            id_path,
+            NodeOptions::default(),
+        );
+        (a, hl)
     }
 
     fn open_agent(
@@ -81,6 +140,7 @@ impl World {
         name: &str,
         config: NodeConfig,
         transport: MockTransport,
+        node_transport: Arc<dyn Transport>,
         id_path: PathBuf,
         options: NodeOptions,
     ) -> Agent {
@@ -91,7 +151,7 @@ impl World {
         let node = Node::open_with(
             id,
             &store_path,
-            Arc::new(transport.clone()),
+            node_transport,
             config,
             Arc::new(self.clock.clone()),
             options,
@@ -125,7 +185,8 @@ impl World {
         } = old;
         node.close();
         drop(node);
-        self.open_agent(&name, config, transport, id_path, options)
+        let dynt: Arc<dyn Transport> = Arc::new(transport.clone());
+        self.open_agent(&name, config, transport, dynt, id_path, options)
     }
 }
 
@@ -207,4 +268,127 @@ pub fn code(e: &ApiError) -> ErrorCode {
 
 pub fn quarantine_cfg() -> NodeConfig {
     cfg_with(|c| c.policy.unknown_senders = UnknownSenders::Quarantine)
+}
+
+/// Pauses the next `publish` of a [`GateTransport`] until released.
+#[derive(Default)]
+pub struct Gate {
+    reached: Notify,
+    release: Notify,
+    armed: std::sync::atomic::AtomicBool,
+}
+
+impl Gate {
+    /// Arm the gate: the next publish blocks.
+    pub fn arm(&self) {
+        self.armed.store(true, std::sync::atomic::Ordering::SeqCst);
+    }
+    /// Wait until a publish is blocked at the gate.
+    pub async fn wait_reached(&self) {
+        self.reached.notified().await;
+    }
+    /// Let the blocked publish continue.
+    pub fn release(&self) {
+        self.release.notify_one();
+    }
+}
+
+pub struct GateTransport {
+    inner: MockTransport,
+    gate: Arc<Gate>,
+}
+
+#[async_trait]
+impl Transport for GateTransport {
+    async fn subscribe(&self, topic: &ContentTopic) -> Result<(), TransportError> {
+        self.inner.subscribe(topic).await
+    }
+    async fn publish(
+        &self,
+        topic: &ContentTopic,
+        payload: &[u8],
+    ) -> Result<PublishReceipt, TransportError> {
+        if self
+            .gate
+            .armed
+            .swap(false, std::sync::atomic::Ordering::SeqCst)
+        {
+            self.gate.reached.notify_one();
+            self.gate.release.notified().await;
+        }
+        self.inner.publish(topic, payload).await
+    }
+    async fn poll(&self, topic: &ContentTopic) -> Result<Vec<InboundFrame>, TransportError> {
+        self.inner.poll(topic).await
+    }
+    async fn history(&self, query: &HistoryQuery) -> Result<HistoryPage, TransportError> {
+        self.inner.history(query).await
+    }
+    async fn status(&self) -> TransportStatus {
+        self.inner.status().await
+    }
+    fn max_payload_len(&self, topic: &ContentTopic) -> usize {
+        self.inner.max_payload_len(topic)
+    }
+    fn max_history_window_ns(&self) -> i64 {
+        self.inner.max_history_window_ns()
+    }
+}
+
+/// Controls a [`HistoryLoopTransport`]: while `mode` is non-zero every history
+/// query answers an empty page whose cursor repeats (mode 1: `x` -> `x`) or
+/// cycles (mode 2: `x` -> `y` -> `x`). `starts` records every query start.
+#[derive(Default)]
+pub struct HistoryLoop {
+    pub mode: std::sync::atomic::AtomicU8,
+    pub starts: std::sync::Mutex<Vec<i64>>,
+}
+
+pub struct HistoryLoopTransport {
+    inner: MockTransport,
+    ctl: Arc<HistoryLoop>,
+}
+
+#[async_trait]
+impl Transport for HistoryLoopTransport {
+    async fn subscribe(&self, topic: &ContentTopic) -> Result<(), TransportError> {
+        self.inner.subscribe(topic).await
+    }
+    async fn publish(
+        &self,
+        topic: &ContentTopic,
+        payload: &[u8],
+    ) -> Result<PublishReceipt, TransportError> {
+        self.inner.publish(topic, payload).await
+    }
+    async fn poll(&self, topic: &ContentTopic) -> Result<Vec<InboundFrame>, TransportError> {
+        self.inner.poll(topic).await
+    }
+    async fn history(&self, query: &HistoryQuery) -> Result<HistoryPage, TransportError> {
+        self.ctl.starts.lock().unwrap().push(query.start_ns);
+        match self.ctl.mode.load(std::sync::atomic::Ordering::SeqCst) {
+            0 => self.inner.history(query).await,
+            1 => Ok(HistoryPage {
+                frames: vec![],
+                next_cursor: Some("x".into()),
+            }),
+            _ => Ok(HistoryPage {
+                frames: vec![],
+                next_cursor: Some(if query.cursor.as_deref() == Some("x") {
+                    "y".into()
+                } else {
+                    "x".into()
+                }),
+            }),
+        }
+    }
+    async fn status(&self) -> TransportStatus {
+        self.inner.status().await
+    }
+    fn max_payload_len(&self, topic: &ContentTopic) -> usize {
+        self.inner.max_payload_len(topic)
+    }
+    fn max_history_window_ns(&self) -> i64 {
+        self.inner.max_history_window_ns()
+    }
 }

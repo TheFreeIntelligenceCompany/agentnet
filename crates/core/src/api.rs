@@ -365,6 +365,12 @@ pub struct DeleteTriggerResponse {
     pub deleted: bool,
 }
 
+/// Upper bound on the serialized size of the records in one quarantine page
+/// (JSON, as sent over the control socket, whose line limit is 64 MiB). A page
+/// always holds at least one record, so a single record is the only thing that
+/// can exceed it; a record is bounded by the frame size limit.
+pub const MAX_QUARANTINE_PAGE_BYTES: usize = 8 * 1024 * 1024;
+
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PageRequest {
     #[serde(default)]

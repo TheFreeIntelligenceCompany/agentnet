@@ -396,9 +396,27 @@ impl RemoteAgent {
             .await?;
         Ok(v["removed"].as_bool().unwrap_or(false))
     }
-    /// `quarantine.list`
+    /// `quarantine.list`: one page (see `Node::list_quarantined_page`).
+    pub async fn list_quarantined_page(&self, req: PageRequest) -> ApiResult<ReadInboxResponse> {
+        self.call("quarantine.list", req).await
+    }
+    /// Every quarantined message, fetched page by page.
     pub async fn list_quarantined(&self) -> ApiResult<Vec<InboxRecord>> {
-        self.call("quarantine.list", json!({})).await
+        let mut all = Vec::new();
+        let mut cursor = None;
+        loop {
+            let page = self
+                .list_quarantined_page(PageRequest {
+                    cursor: cursor.clone(),
+                    limit: Some(200),
+                })
+                .await?;
+            all.extend(page.records);
+            if !page.has_more || page.next_cursor == cursor {
+                return Ok(all);
+            }
+            cursor = page.next_cursor;
+        }
     }
     /// `quarantine.release`; returns the number of messages released.
     pub async fn release_quarantined(&self, message_id: &str) -> ApiResult<u64> {

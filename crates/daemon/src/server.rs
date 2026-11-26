@@ -21,7 +21,7 @@ use tokio_util::sync::CancellationToken;
 
 use crate::proto::{
     all_hints, change_line, err_line, event_line, ok_line, read_line, HelloFrame, Line, Request,
-    MAX_HELLO_LINE, MAX_REQUEST_LINE, PROTOCOL_VERSION,
+    MAX_HELLO_LINE, MAX_REQUEST_LINE, MAX_RESPONSE_LINE, PROTOCOL_VERSION,
 };
 
 /// Time a new connection has to send its hello line.
@@ -249,6 +249,19 @@ async fn handle_conn(stream: UnixStream, ctx: ServerCtx) {
                         Ok(v) => ok_line(req.id, v),
                         Err(e) => err_line(Some(req.id), &e),
                     };
+                    // An over-long line would make every client drop the whole
+                    // multiplexed connection: answer this request with an error.
+                    let line = if line.len() > MAX_RESPONSE_LINE {
+                        err_line(
+                            Some(req.id),
+                            &ApiError::new(
+                                ErrorCode::TooLarge,
+                                "the response is too large; use a smaller page (limit/cursor)",
+                            ),
+                        )
+                    } else {
+                        line
+                    };
                     let _ = out.send(line).await;
                     drop(permit);
                 });
@@ -396,7 +409,7 @@ async fn dispatch(ctx: &ServerCtx, method: &str, p: Value) -> Result<Value, ApiE
             let a: DocumentParams = params(p)?;
             to_value(n.import_revocation(&a.document)?)
         }
-        "quarantine.list" => to_value(n.list_quarantined()?),
+        "quarantine.list" => to_value(n.list_quarantined_page(params::<PageRequest>(p)?)?),
         "quarantine.release" => {
             let a: MessageIdParams = params(p)?;
             Ok(json!({"released": n.release_quarantined(&a.message_id)?}))

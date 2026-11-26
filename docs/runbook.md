@@ -198,7 +198,7 @@ stop the daemon, replace the binary, start the daemon, then run `agentnet doctor
 * **Likely cause.** Duplicates: the engine de-duplicates on `(sender, message_id)`, so a visible duplicate is usually a sender that sent twice (use
   `--idempotency-key`) or an event consumer that does not de-duplicate (events are at-least-once; use `event_id`). Replay after a restored database or an
   identity import: the replay guard holds older messages (`doctor` reports it). Quarantine: `policy.unknown_senders = "quarantine"` is the default.
-* **Check.** `agentnet quarantine list`; `agentnet contact list`; `agentnet doctor` (replay guard line); `agentnet inbox --include-quarantined`.
+* **Check.** `agentnet quarantine list` (one page; continue with `--cursor`); `agentnet contact list`; `agentnet doctor` (replay guard line); `agentnet inbox --include-quarantined`.
 * **Action.** Verify the sender's address out of band, then add them (`contact add ... --expect <address>`) or `contact trust <address> trusted`, and
   `agentnet quarantine release <message id>` (the sender must be trusted by then). Block abusers with `agentnet contact trust <address> blocked`.
   After a deliberate restore, run `agentnet doctor --accept-rollback` with the daemon stopped only if you accept that acknowledged messages from before
