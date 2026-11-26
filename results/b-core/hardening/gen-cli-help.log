@@ -1,0 +1,39 @@
+   Compiling tokio v1.54.1
+   Compiling ring v0.17.14
+   Compiling rust-embed-impl v8.14.0
+   Compiling parking_lot_core v0.9.12
+   Compiling rustix v1.1.6
+   Compiling age-core v0.12.0
+   Compiling uuid v1.29.3
+   Compiling parking_lot v0.12.5
+   Compiling rmcp v3.11.0
+   Compiling rand v0.10.4
+   Compiling rtoolbox v0.0.6
+   Compiling rustls-webpki v0.103.17
+   Compiling rust-embed v8.14.0
+   Compiling terminal_size v0.4.4
+   Compiling clap_builder v4.6.10
+   Compiling rustls v0.23.46
+   Compiling fs4 v0.13.1
+   Compiling i18n-embed v0.16.0
+   Compiling rpassword v7.5.5
+   Compiling i18n-embed-fl v0.10.1
+   Compiling age v0.12.1
+   Compiling clap v4.6.10
+   Compiling hyper v1.13.0
+   Compiling tower v0.5.3
+   Compiling tokio-util v0.7.20
+   Compiling tokio-stream v0.1.19
+   Compiling tower-http v0.6.11
+   Compiling tokio-rustls v0.26.6
+   Compiling hyper-util v0.1.21
+   Compiling hyper-rustls v0.27.10
+   Compiling axum v0.8.9
+   Compiling reqwest v0.12.28
+   Compiling agentnet-transport v0.1.0 (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a47fc99d044526c73/crates/transport)
+   Compiling agentnet-core v0.1.0 (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a47fc99d044526c73/crates/core)
+   Compiling agentnet-mcp v0.1.0 (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a47fc99d044526c73/crates/mcp)
+   Compiling agentnet-daemon v0.1.0 (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a47fc99d044526c73/crates/daemon)
+   Compiling agentnet-cli v0.1.0 (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a47fc99d044526c73/crates/cli)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 22.26s
+wrote docs/cli-help.txt

@@ -1,0 +1,26 @@
+   Compiling i18n-config v0.4.8
+   Compiling hyper-util v0.1.21
+   Compiling rmcp-macros v3.11.0
+   Compiling fs4 v0.13.1
+   Compiling i18n-embed-impl v0.8.4
+   Compiling rmcp v3.11.0
+   Compiling i18n-embed v0.16.0
+   Compiling hyper-rustls v0.27.10
+   Compiling axum v0.8.9
+   Compiling reqwest v0.12.28
+   Compiling i18n-embed-fl v0.10.1
+   Compiling age v0.12.1
+   Compiling agentnet-transport v0.1.0 (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a47fc99d044526c73/crates/transport)
+   Compiling agentnet-core v0.1.0 (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a47fc99d044526c73/crates/core)
+   Compiling agentnet-mcp v0.1.0 (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a47fc99d044526c73/crates/mcp)
+   Compiling agentnet-daemon v0.1.0 (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a47fc99d044526c73/crates/daemon)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 21.68s
+     Running tests/rotation_revocation.rs (target/debug/deps/rotation_revocation-419e0a7a0b619a37)
+
+running 3 tests
+test accept_rollback_is_a_no_op_on_a_healthy_store_and_needs_the_lock ... ok
+test a_revoked_identity_only_delivers_its_tombstone ... ok
+test offline_rotation_with_revoke_is_announced_at_the_next_start ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.55s
+

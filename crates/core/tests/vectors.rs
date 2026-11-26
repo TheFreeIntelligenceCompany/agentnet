@@ -13,13 +13,13 @@
 
 use std::convert::Infallible;
 
+use agentnet_core::contact::CONTACT_RECORD_DOMAIN;
 use agentnet_core::crypto::envelope::testing::{seal_presigned, sign_envelope_bytes};
 use agentnet_core::crypto::envelope::{
     open, seal, Envelope, OpenLimits, CIPHERTEXT_OFFSET, ENC_OFFSET, ENVELOPE_DOMAIN,
     HPKE_INFO_DOMAIN,
 };
 use agentnet_core::crypto::{Address, Identity, VerifiedContact};
-use agentnet_core::contact::CONTACT_RECORD_DOMAIN;
 use ed25519_dalek::{Signature, Signer, SigningKey};
 use hpke::aead::ChaCha20Poly1305;
 use hpke::kdf::HkdfSha256;
@@ -31,7 +31,7 @@ use sha2::{Digest, Sha256};
 type Kem = X25519HkdfSha256;
 
 fn unhex(s: &str) -> Vec<u8> {
-    assert!(s.len() % 2 == 0, "odd hex length");
+    assert!(s.len().is_multiple_of(2), "odd hex length");
     (0..s.len() / 2)
         .map(|i| u8::from_str_radix(&s[2 * i..2 * i + 2], 16).unwrap())
         .collect()
@@ -118,17 +118,32 @@ fn rfc9180_a2_base_decapsulates_and_decrypts_sequence_0() {
     assert_eq!(out, pt);
     // wrong aad / info / ciphertext bit flip must fail
     assert!(hpke::single_shot_open::<ChaCha20Poly1305, HkdfSha256, Kem>(
-        &OpModeR::Base, &sk, &enc, &info, &ct, b"Count-1"
+        &OpModeR::Base,
+        &sk,
+        &enc,
+        &info,
+        &ct,
+        b"Count-1"
     )
     .is_err());
     assert!(hpke::single_shot_open::<ChaCha20Poly1305, HkdfSha256, Kem>(
-        &OpModeR::Base, &sk, &enc, b"other info", &ct, &aad
+        &OpModeR::Base,
+        &sk,
+        &enc,
+        b"other info",
+        &ct,
+        &aad
     )
     .is_err());
     let mut bad = ct.clone();
     bad[0] ^= 1;
     assert!(hpke::single_shot_open::<ChaCha20Poly1305, HkdfSha256, Kem>(
-        &OpModeR::Base, &sk, &enc, &info, &bad, &aad
+        &OpModeR::Base,
+        &sk,
+        &enc,
+        &info,
+        &bad,
+        &aad
     )
     .is_err());
 }
@@ -173,7 +188,11 @@ fn rfc8032_section_7_1_ed25519_sign_and_verify_strict() {
             "public key, test {name}"
         );
         // Ed25519 is deterministic: signing reproduces the published signature
-        assert_eq!(sk.sign(&msg).to_bytes().to_vec(), want_sig, "sign, test {name}");
+        assert_eq!(
+            sk.sign(&msg).to_bytes().to_vec(),
+            want_sig,
+            "sign, test {name}"
+        );
         // verify_strict (the call the implementation uses) accepts it ...
         let sig = Signature::from_bytes(&want_sig.clone().try_into().unwrap());
         sk.verifying_key().verify_strict(&msg, &sig).unwrap();
@@ -215,7 +234,10 @@ fn rfc4648_base32_vectors_and_the_address_alphabet() {
             data_encoding::BASE32_NOPAD.encode(plain),
             padded.trim_end_matches('=')
         );
-        assert_eq!(data_encoding::BASE32.decode(padded.as_bytes()).unwrap(), plain);
+        assert_eq!(
+            data_encoding::BASE32.decode(padded.as_bytes()).unwrap(),
+            plain
+        );
     }
     // an address is "an1" + lowercase RFC 4648 base32 (no padding) of pk || checksum
     let sk = SigningKey::from_bytes(&[7u8; 32]);

@@ -110,7 +110,10 @@ async fn rotation_with_overlap_keeps_old_frames_openable_and_announces_the_new_r
         .unwrap()
         .records
         .is_empty());
-    assert!(b.n("outbox") >= 1, "hidden contact.update and ack rows exist");
+    assert!(
+        b.n("outbox") >= 1,
+        "hidden contact.update and ack rows exist"
+    );
     for t in [MESSAGE_TYPE_CONTACT_UPDATE, MESSAGE_TYPE_IDENTITY_REVOKED] {
         let e = b
             .send_err(SendMessageRequest {
@@ -225,7 +228,11 @@ async fn contact_updates_from_wrong_untrusted_or_replayed_sources_are_not_applie
     };
 
     // (a) a Trusted contact (C) pushes someone else's (B's) new record
-    inject(&w, &a, &forge(&w, &c, &a, MESSAGE_TYPE_CONTACT_UPDATE, &rec_b2));
+    inject(
+        &w,
+        &a,
+        &forge(&w, &c, &a, MESSAGE_TYPE_CONTACT_UPDATE, &rec_b2),
+    );
     a.node.step_receive().await.unwrap();
     assert_eq!(a.metric("contact_update.ignored_wrong_address"), 1);
     assert_eq!(contact(&a, &b).await.key_epoch, 1);
@@ -233,7 +240,11 @@ async fn contact_updates_from_wrong_untrusted_or_replayed_sources_are_not_applie
     // (b) B is known but Untrusted: B's own valid update is stored under the
     // quarantine policy, never applied
     a.node.set_contact_trust(&b.addr, Trust::Untrusted).unwrap();
-    inject(&w, &a, &forge(&w, &b, &a, MESSAGE_TYPE_CONTACT_UPDATE, &rec_b2));
+    inject(
+        &w,
+        &a,
+        &forge(&w, &b, &a, MESSAGE_TYPE_CONTACT_UPDATE, &rec_b2),
+    );
     a.node.step_receive().await.unwrap();
     assert_eq!(contact(&a, &b).await.key_epoch, 1);
     assert_eq!(a.metric("contact_update.applied"), 0);
@@ -241,7 +252,11 @@ async fn contact_updates_from_wrong_untrusted_or_replayed_sources_are_not_applie
     a.node.set_contact_trust(&b.addr, Trust::Trusted).unwrap();
 
     // (c) a stranger (D, not a contact) sends its own record: no contact appears
-    inject(&w, &a, &forge(&w, &d, &a, MESSAGE_TYPE_CONTACT_UPDATE, &rec_d2));
+    inject(
+        &w,
+        &a,
+        &forge(&w, &d, &a, MESSAGE_TYPE_CONTACT_UPDATE, &rec_d2),
+    );
     a.node.step_receive().await.unwrap();
     assert_eq!(a.node.list_contacts().await.unwrap().len(), 2);
     assert_eq!(a.metric("contact_update.applied"), 0);
@@ -257,12 +272,20 @@ async fn contact_updates_from_wrong_untrusted_or_replayed_sources_are_not_applie
     a.node.step_receive().await.unwrap();
     assert_eq!(a.metric("contact_update.applied"), 1);
     // ... and a replayed OLD record (fresh message id) cannot roll it back
-    inject(&w, &a, &forge(&w, &b, &a, MESSAGE_TYPE_CONTACT_UPDATE, &b.record));
+    inject(
+        &w,
+        &a,
+        &forge(&w, &b, &a, MESSAGE_TYPE_CONTACT_UPDATE, &b.record),
+    );
     a.node.step_receive().await.unwrap();
     assert_eq!(a.metric("contact_update.ignored_stale"), 1);
     assert_eq!(contact(&a, &b).await.key_epoch, 2);
     // garbage body from a Trusted contact is ignored
-    inject(&w, &a, &forge(&w, &b, &a, MESSAGE_TYPE_CONTACT_UPDATE, "not a record"));
+    inject(
+        &w,
+        &a,
+        &forge(&w, &b, &a, MESSAGE_TYPE_CONTACT_UPDATE, "not a record"),
+    );
     a.node.step_receive().await.unwrap();
     assert_eq!(a.metric("contact_update.ignored_invalid"), 1);
     // none of these reached the user inbox
@@ -319,16 +342,20 @@ async fn identity_revocation_propagates_and_blocks_the_revoked_contact() {
     assert_eq!(c.trust, Trust::Blocked);
     assert_eq!(a.state(&to_b.message_id).await, DeliveryState::Failed);
     // sends to it are refused with a clear error
-    let e = a.send_err(SendMessageRequest {
-        recipient: b.addr.clone(),
-        body: "x".into(),
-        ..Default::default()
-    })
-    .await;
+    let e = a
+        .send_err(SendMessageRequest {
+            recipient: b.addr.clone(),
+            body: "x".into(),
+            ..Default::default()
+        })
+        .await;
     assert_eq!(e.code, ErrorCode::PolicyDenied);
     assert!(e.message.contains("revoked"));
     // cannot be re-trusted or replaced by a new record
-    let e = a.node.set_contact_trust(&b.addr, Trust::Trusted).unwrap_err();
+    let e = a
+        .node
+        .set_contact_trust(&b.addr, Trust::Trusted)
+        .unwrap_err();
     assert_eq!(e.code, ErrorCode::Conflict);
     let e = a
         .node
@@ -385,7 +412,10 @@ async fn forged_tombstones_are_rejected_and_out_of_band_import_works() {
     assert!(a.node.import_revocation(&tombstone(&w, &a, "me")).is_err());
 
     // out of band, for an address that is not even a contact yet
-    let info = a.node.import_revocation(&tombstone(&w, &x, "gone")).unwrap();
+    let info = a
+        .node
+        .import_revocation(&tombstone(&w, &x, "gone"))
+        .unwrap();
     assert!(info.newly_revoked);
     let e = a
         .node
@@ -413,21 +443,37 @@ async fn tombstones_delivered_in_envelopes_are_applied_only_when_relevant() {
     // a stranger (Z, no contact) forwards B's tombstone: B is a contact -> applied
     // (self-authenticating, so any trust level may deliver it)
     let tb = tombstone(&w, &b, "b stolen");
-    inject(&w, &a, &forge(&w, &z, &a, MESSAGE_TYPE_IDENTITY_REVOKED, &tb));
+    inject(
+        &w,
+        &a,
+        &forge(&w, &z, &a, MESSAGE_TYPE_IDENTITY_REVOKED, &tb),
+    );
     a.node.step_receive().await.unwrap();
     assert_eq!(a.metric("identity_revoked.applied"), 1);
     assert!(contact(&a, &b).await.revoked);
     // a tombstone for an address that is neither the sender nor a contact is ignored
     let tz = tombstone(&w, &z, "z");
-    inject(&w, &a, &forge(&w, &c, &a, MESSAGE_TYPE_IDENTITY_REVOKED, &tz));
+    inject(
+        &w,
+        &a,
+        &forge(&w, &c, &a, MESSAGE_TYPE_IDENTITY_REVOKED, &tz),
+    );
     a.node.step_receive().await.unwrap();
     assert_eq!(a.metric("identity_revoked.ignored_unrelated"), 1);
     // ... but Z announcing its own tombstone is applied (names the sender)
-    inject(&w, &a, &forge(&w, &z, &a, MESSAGE_TYPE_IDENTITY_REVOKED, &tz));
+    inject(
+        &w,
+        &a,
+        &forge(&w, &z, &a, MESSAGE_TYPE_IDENTITY_REVOKED, &tz),
+    );
     a.node.step_receive().await.unwrap();
     assert_eq!(a.metric("identity_revoked.applied"), 2);
     // a forged body is ignored
-    inject(&w, &a, &forge(&w, &c, &a, MESSAGE_TYPE_IDENTITY_REVOKED, "nope"));
+    inject(
+        &w,
+        &a,
+        &forge(&w, &c, &a, MESSAGE_TYPE_IDENTITY_REVOKED, "nope"),
+    );
     a.node.step_receive().await.unwrap();
     assert_eq!(a.metric("identity_revoked.ignored_invalid"), 1);
     assert!(!contact(&a, &c).await.revoked);
@@ -477,7 +523,10 @@ async fn replay_after_restart_is_rejected() {
     b.node.step_receive().await.unwrap();
     assert_eq!(b.inbox().await.len(), 1);
     assert!(b.metric("message.duplicate") >= 1);
-    assert!(status(&b).await.replay_guard.is_none(), "no guard after a clean restart");
+    assert!(
+        status(&b).await.replay_guard.is_none(),
+        "no guard after a clean restart"
+    );
 }
 
 /// Scenario 2 (rollback): the guard holds pre-rollback messages instead of
@@ -655,20 +704,36 @@ async fn migration_guard_by_default_and_full_state_copy_keeps_history() {
     // identity import into a new dir, default: guard (replay held)
     let guarded = open_new("guarded", true, None);
     assert_eq!(
-        guarded.network_status(false).await.unwrap().replay_guard.unwrap().reason,
+        guarded
+            .network_status(false)
+            .await
+            .unwrap()
+            .replay_guard
+            .unwrap()
+            .reason,
         "imported"
     );
     // `--no-replay-guard`: no guard, no dedupe history: the replay is delivered
     let open = open_new("unguarded", false, None);
-    assert!(open.network_status(false).await.unwrap().replay_guard.is_none());
+    assert!(open
+        .network_status(false)
+        .await
+        .unwrap()
+        .replay_guard
+        .is_none());
     // full-state copy: history preserved, replay is a duplicate, no guard
     let copy = open_new("copied", false, Some(&b));
-    assert!(copy.network_status(false).await.unwrap().replay_guard.is_none());
+    assert!(copy
+        .network_status(false)
+        .await
+        .unwrap()
+        .replay_guard
+        .is_none());
 
     let topic = topic_of(&b.record);
     for n in [&guarded, &open, &copy] {
         n.step_receive().await.unwrap(); // subscribe
-        // (a no-op for the copy, which carried its contacts over)
+                                         // (a no-op for the copy, which carried its contacts over)
         let _ = n
             .add_contact(AddContactRequest {
                 contact_record: a.record.clone(),
@@ -683,9 +748,17 @@ async fn migration_guard_by_default_and_full_state_copy_keeps_history() {
     let inbox = |n: &std::sync::Arc<agentnet_core::Node>| n.debug_table_count("inbox");
     assert_eq!(inbox(&guarded), 1, "stored, but held");
     assert_eq!(guarded.metrics().get("guard.held"), 1);
-    assert_eq!(inbox(&open), 1, "no history and no guard: replay accepted (documented exposure)");
+    assert_eq!(
+        inbox(&open),
+        1,
+        "no history and no guard: replay accepted (documented exposure)"
+    );
     assert_eq!(open.metrics().get("guard.held"), 0);
-    assert_eq!(copy.metrics().get("message.duplicate"), 1, "history carried over");
+    assert_eq!(
+        copy.metrics().get("message.duplicate"),
+        1,
+        "history carried over"
+    );
     assert_eq!(inbox(&copy), 1);
     for n in [&guarded, &open, &copy] {
         n.close();

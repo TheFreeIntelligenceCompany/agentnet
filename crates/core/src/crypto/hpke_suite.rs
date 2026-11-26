@@ -291,7 +291,7 @@ impl MessageProtection for HpkeBaseEd25519 {
         // The signed suite and key epoch must equal what actually opened the
         // frame: an attacker holding an old recipient key cannot re-wrap a
         // message under a different suite or epoch unnoticed.
-        if envelope.suite != header[3] {
+        if envelope.suite != SUITE_ID {
             return Err(OpenError::SuiteMismatch);
         }
         if envelope.recipient_key_epoch != key_epoch {

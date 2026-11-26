@@ -72,7 +72,10 @@ fn only_the_crypto_module_references_the_cryptographic_crates() {
     // integration tests and examples of the non-core crates
     for krate in ["transport", "mcp", "daemon", "cli"] {
         rust_files(&root.join("crates").join(krate).join("tests"), &mut files);
-        rust_files(&root.join("crates").join(krate).join("examples"), &mut files);
+        rust_files(
+            &root.join("crates").join(krate).join("examples"),
+            &mut files,
+        );
     }
     // core's integration tests may use the primitives only in the published
     // vector tests, which exist to exercise the libraries directly
@@ -106,7 +109,10 @@ fn only_the_crypto_module_references_the_cryptographic_crates() {
 #[test]
 fn the_reference_matcher_works() {
     assert!(references("use hpke::kem::X25519;", "hpke"));
-    assert!(references("let k = ed25519_dalek::SigningKey::from_bytes(&s);", "ed25519_dalek"));
+    assert!(references(
+        "let k = ed25519_dalek::SigningKey::from_bytes(&s);",
+        "ed25519_dalek"
+    ));
     assert!(references("use age;", "age"));
     assert!(references("age::encrypt(&r, b)", "age"));
     assert!(!references("let m = message::new();", "age"));
@@ -156,7 +162,13 @@ fn the_engine_goes_through_the_message_protection_trait() {
     // `ingest`, `send`, `system` and `node` must not call the free
     // `envelope::seal` / `envelope::open` wrappers (which pin suite 1).
     let src = workspace_root().join("crates/core/src");
-    for f in ["ingest.rs", "send.rs", "system.rs", "node.rs", "api_impl.rs"] {
+    for f in [
+        "ingest.rs",
+        "send.rs",
+        "system.rs",
+        "node.rs",
+        "api_impl.rs",
+    ] {
         let text = std::fs::read_to_string(src.join(f)).unwrap();
         for bad in ["envelope::seal(", "envelope::open(", "HpkeBaseEd25519"] {
             assert!(!text.contains(bad), "{f} references {bad}");

@@ -274,6 +274,11 @@ fn to_value<T: serde::Serialize>(v: T) -> Result<Value, ApiError> {
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
+struct DocumentParams {
+    document: String,
+}
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
 struct MessageIdParams {
     message_id: String,
 }
@@ -374,6 +379,10 @@ async fn dispatch(ctx: &ServerCtx, method: &str, p: Value) -> Result<Value, ApiE
         "contacts.remove" => {
             let a: AddressParams = params(p)?;
             Ok(json!({"removed": n.remove_contact(&a.address)?}))
+        }
+        "contacts.import_revocation" => {
+            let a: DocumentParams = params(p)?;
+            to_value(n.import_revocation(&a.document)?)
         }
         "quarantine.list" => to_value(n.list_quarantined()?),
         "quarantine.release" => {

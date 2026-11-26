@@ -1343,8 +1343,7 @@ mod hardening {
         let dir = tempfile::tempdir().unwrap();
         let p = dir.path().join("id.json");
         id.save(&p, false).unwrap();
-        let mut v: serde_json::Value =
-            serde_json::from_slice(&std::fs::read(&p).unwrap()).unwrap();
+        let mut v: serde_json::Value = serde_json::from_slice(&std::fs::read(&p).unwrap()).unwrap();
         v.as_object_mut().unwrap().remove("kem_epoch");
         v.as_object_mut().unwrap().remove("min_valid_epoch");
         for k in v["previous_kems"].as_array_mut().unwrap() {

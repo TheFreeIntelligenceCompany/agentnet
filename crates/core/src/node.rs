@@ -459,7 +459,7 @@ impl Node {
 
     /// Publish the DB generation to the sidecar (after a commit that bumped it).
     pub(crate) fn publish_generation(&self) {
-        let g = match self.store.read(|c| guard::db_generation(c)) {
+        let g = match self.store.read(guard::db_generation) {
             Ok(g) => g,
             Err(_) => return,
         };

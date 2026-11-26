@@ -1,0 +1,80 @@
+   Compiling ring v0.17.14
+   Compiling rustls v0.23.46
+   Compiling serde_json v1.0.154
+   Compiling num-traits v0.2.19
+   Compiling indexmap v2.14.2
+   Compiling tokio-util v0.7.20
+   Compiling rmcp v3.11.0
+   Compiling rusqlite v0.42.0
+   Compiling regex-syntax v0.8.12
+   Compiling process-wrap v10.0.2
+   Compiling regex-automata v0.4.19
+   Compiling chrono v0.4.45
+   Compiling schemars v1.2.3
+   Compiling matchers v0.2.0
+   Compiling tracing-subscriber v0.3.23
+   Compiling rustls-webpki v0.103.17
+   Compiling tokio-rustls v0.26.6
+   Compiling hyper-rustls v0.27.10
+   Compiling reqwest v0.12.28
+   Compiling agentnet-transport v0.1.0 (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a47fc99d044526c73/crates/transport)
+   Compiling agentnet-core v0.1.0 (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a47fc99d044526c73/crates/core)
+   Compiling agentnet-mcp v0.1.0 (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a47fc99d044526c73/crates/mcp)
+   Compiling agentnet-daemon v0.1.0 (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a47fc99d044526c73/crates/daemon)
+   Compiling agentnet-cli v0.1.0 (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a47fc99d044526c73/crates/cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 29.59s
+     Running unittests src/main.rs (target/debug/deps/agentnet-cad881c944c662d2)
+
+running 2 tests
+test doctor::tests::peer_ids ... ok
+test doctor::tests::http_date ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/cli.rs (target/debug/deps/cli-dbc4161b44e93329)
+
+running 17 tests
+test init_creates_private_files_and_refuses_to_overwrite ... ok
+test doctor_always_warns_that_a_second_instance_of_the_identity_cannot_be_detected ... ok
+test doctor_reports_problems_with_actions_and_exit_code_7 ... ok
+test identity_revoke_writes_a_signed_tombstone_and_blocks_further_changes ... ok
+test init_without_peers_warns_and_serve_refuses_until_configured ... ok
+test relay_print_config_has_the_verified_flags_and_marks_tailscale_untested ... ok
+test every_command_has_help_and_the_top_level_documents_exit_codes ... ok
+test mcp_without_a_daemon_starts_and_every_tool_says_unavailable ... ok
+test mcp_embedded_runs_the_daemon_in_process_and_holds_the_lock ... ok
+test top_level_help_says_the_cryptography_is_not_audited ... ok
+test rotate_kem_keeps_the_address_and_changes_the_record ... ok
+test contact_revoke_imports_a_tombstone_into_a_running_daemon ... ok
+test rotate_kem_with_revoke_previous_destroys_old_keys_and_bumps_the_epoch ... ok
+test serve_runs_rejects_a_second_instance_and_stops_cleanly_on_sigterm ... FAILED
+test mcp_stdio_is_a_thin_client_of_a_running_daemon ... ok
+test identity_import_starts_in_replay_guard_mode_unless_told_otherwise ... ok
+test identity_export_import_round_trip_gives_the_same_address ... ok
+
+failures:
+
+---- serve_runs_rejects_a_second_instance_and_stops_cleanly_on_sigterm stdout ----
+
+thread 'serve_runs_rejects_a_second_instance_and_stops_cleanly_on_sigterm' (28360248) panicked at crates/cli/tests/cli.rs:335:5:
+assertion `left == right` failed
+  left: 493
+ right: 384
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    serve_runs_rejects_a_second_instance_and_stops_cleanly_on_sigterm
+
+test result: FAILED. 16 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.71s
+
+error: test failed, to rerun pass `-p agentnet-cli --test cli`
+     Running tests/relay_e2e.rs (target/debug/deps/relay_e2e-7d644b7ed79da0e9)
+
+running 1 test
+test two_agentnet_serve_processes_exchange_messages_over_the_private_relay ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: 1 target failed:
+    `-p agentnet-cli --test cli`

@@ -380,6 +380,15 @@ impl RemoteAgent {
         )
         .await
     }
+    /// `contacts.import_revocation`: import a signed identity-revocation
+    /// tombstone obtained out of band.
+    pub async fn import_revocation(
+        &self,
+        document: &str,
+    ) -> ApiResult<agentnet_core::api::RevocationInfo> {
+        self.call("contacts.import_revocation", json!({"document": document}))
+            .await
+    }
     /// `contacts.remove`; returns whether the contact existed.
     pub async fn remove_contact(&self, address: &str) -> ApiResult<bool> {
         let v: Value = self

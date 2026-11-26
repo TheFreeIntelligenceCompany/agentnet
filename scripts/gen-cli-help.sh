@@ -21,7 +21,8 @@ for c in init serve mcp identity contact quarantine send inbox ack status outbox
   emit "$c"
 done
 for c in "identity show" "identity export" "identity import" "identity rotate-kem" \
-         "contact add" "contact list" "contact trust" "contact remove" \
+         "identity revoke" "identity show-revocation" \
+         "contact add" "contact list" "contact trust" "contact remove" "contact revoke" \
          "quarantine list" "quarantine release" \
          "trigger create" "trigger list" "trigger delete" \
          "events tail" "network status" "relay print-config"; do
