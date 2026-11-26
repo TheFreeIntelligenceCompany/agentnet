@@ -156,4 +156,4 @@ git archive HEAD | docker run -i --rm -v agentnet-audit-cargohome:/cargohome \
    -v "$PWD/results/audit/cargo-deny.sh:/cargo-deny.sh:ro" -v "$PWD/deny.toml:/deny.toml:ro" rust:bookworm bash /cargo-deny.sh
 ```
 
-(`results/audit/cargo-deny.sh` installs `cargo-deny` with `cargo install cargo-deny --locked` inside the container, then runs `cargo deny check` and per-check runs.) In CI the official action is used (`.github/workflows/ci.yml`; UNTESTED on GitHub).
+(`results/audit/cargo-deny.sh` installs `cargo-deny` with `cargo install cargo-deny --locked` inside the container, then runs `cargo deny check` and per-check runs.) In CI the official action is used (`.github/workflows/ci.yml`; it ran and passed on GitHub Actions for commit `76e797d`, run 45845088419).
