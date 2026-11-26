@@ -296,18 +296,31 @@ async fn run(cli: Cli) -> CliResult<i32> {
                 passphrase_file,
                 node_url,
                 peer,
+                no_replay_guard,
             } => {
                 let pass = passphrase(passphrase_file.as_deref(), false)?;
                 let bytes = std::fs::read(&input)
                     .map_err(|e| CliError::other(format!("reading {}: {e}", input.display())))?;
-                let rep = offline::import_identity(&dir, &bytes, &pass, &node_url, &peer)?;
-                let v = json!({"address": rep.identity.agent_id, "data_dir": dir, "peers_configured": !rep.peers_missing});
+                let rep = offline::import_identity(
+                    &dir,
+                    &bytes,
+                    &pass,
+                    &node_url,
+                    &peer,
+                    !no_replay_guard,
+                )?;
+                let v = json!({"address": rep.identity.agent_id, "data_dir": dir, "peers_configured": !rep.peers_missing, "replay_guard": !no_replay_guard});
                 emit(json, &v, |_| {
                     let mut s = format!(
                         "Imported identity {} into {}",
                         rep.identity.agent_id,
                         dir.display()
                     );
+                    if no_replay_guard {
+                        s.push_str("\nWARNING: --no-replay-guard: this directory has no dedupe history; frames captured before the import can be accepted again within their TTL.");
+                    } else {
+                        s.push_str("\nReplay guard: messages created before the first start are held until max_ttl + clock_skew has passed (or `agentnet doctor --accept-rollback`). To keep dedupe history, copy agentnet.db and agentnet.generation instead.");
+                    }
                     if rep.peers_missing {
                         s.push_str(
                             "\nNo peers configured: edit agentnet.toml before `agentnet serve`.",
@@ -316,15 +329,50 @@ async fn run(cli: Cli) -> CliResult<i32> {
                     s
                 });
             }
-            IdentityCmd::RotateKem { keep_hours } => {
-                let i = offline::rotate_kem(&dir, keep_hours)?;
+            IdentityCmd::RotateKem {
+                keep_hours,
+                revoke_previous,
+            } => {
+                let i = offline::rotate_kem(&dir, keep_hours, revoke_previous)?;
                 emit(json, &i, |i| {
+                    let mut s = format!(
+                        "Rotated the agreement key of {} (key epoch {}).",
+                        i.agent_id, i.key_epoch
+                    );
+                    if revoke_previous {
+                        s.push_str(" All earlier KEM keys were destroyed: messages already sealed to them are lost unless their senders re-seal them after learning the new record.");
+                    } else {
+                        s.push_str(
+                            " The previous key keeps decrypting until the retention window ends.",
+                        );
+                    }
+                    s.push_str(&format!("\nAt the next `agentnet serve` every Trusted contact is sent the new record; you can also give it to peers directly:\n{}", i.contact_record));
+                    s
+                });
+            }
+            IdentityCmd::Revoke { reason } => {
+                let r = offline::revoke_identity(&dir, &reason)?;
+                let v = json!({"address": r.identity.agent_id, "revocation": r.document});
+                emit(json, &v, |_| {
                     format!(
-                        "Rotated the agreement key of {}. The previous key keeps decrypting until the retention window ends.\nPeers must import the new contact record:\n{}",
-                        i.agent_id, i.contact_record
+                        "Revoked {}. This is irreversible for this address; the daemon now sends nothing except this notice, which goes to every Trusted contact at the next `agentnet serve`.\nIt reaches only contacts that are reachable within the TTL/retry limits or that get it out of band; there is no global revocation list. Distribute it:\n{}",
+                        r.identity.agent_id, r.document
                     )
                 });
             }
+            IdentityCmd::ShowRevocation => match offline::show_revocation(&dir)? {
+                Some(doc) => {
+                    let v = json!({"revocation": doc});
+                    emit(json, &v, |_| doc.clone());
+                }
+                None => {
+                    return Err(CliError::new(
+                        exit::NOT_FOUND,
+                        "not_found",
+                        "this identity has not been revoked",
+                    ))
+                }
+            },
         },
         Command::Contact { action } => {
             let r = remote();
@@ -345,6 +393,22 @@ async fn run(cli: Cli) -> CliResult<i32> {
                         })
                         .await?;
                     emit(json, &c, render::contact_line);
+                }
+                ContactCmd::Revoke { document } => {
+                    let doc = read_text_arg(&document, "revocation document")?;
+                    let info = r.import_revocation(doc.trim()).await?;
+                    emit(json, &info, |i| {
+                        format!(
+                            "{} {} (reason: {}); the contact is blocked and cannot be re-trusted",
+                            if i.newly_revoked {
+                                "revoked"
+                            } else {
+                                "already revoked:"
+                            },
+                            i.address,
+                            render::clean(&i.reason)
+                        )
+                    });
                 }
                 ContactCmd::List => {
                     let l = r.list_contacts().await?;
@@ -623,7 +687,18 @@ async fn run(cli: Cli) -> CliResult<i32> {
                 emit(json, &out, |_| render::network(&st, daemon.as_ref()));
             }
         },
-        Command::Doctor => {
+        Command::Doctor { accept_rollback } => {
+            if accept_rollback {
+                let had = offline::accept_rollback(&dir)?;
+                eprintln!(
+                    "{}",
+                    if had {
+                        "accepted: the next start will not hold older messages (held messages are released); frames replayed from before the rollback may be accepted again within their TTL"
+                    } else {
+                        "nothing to accept: no rollback, unknown history or import marker was found"
+                    }
+                );
+            }
             let checks = doctor::run(&dir).await;
             let failed = checks.iter().any(|c| c.level == doctor::Level::Fail);
             emit(json, &checks, |cs| render::doctor(cs));

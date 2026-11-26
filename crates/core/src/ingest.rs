@@ -8,8 +8,11 @@ use rusqlite::{params, OptionalExtension, Transaction};
 
 use crate::api::{ChangeHint, Trust};
 use crate::config::UnknownSenders;
-use crate::envelope::{self, Envelope, MESSAGE_TYPE_ACK_RECEIVED};
+use crate::crypto::envelope::{
+    Envelope, MESSAGE_TYPE_ACK_RECEIVED, MESSAGE_TYPE_CONTACT_UPDATE, MESSAGE_TYPE_IDENTITY_REVOKED,
+};
 use crate::error::OpenError;
+use crate::guard::{self, HOLD_REPLAY_GUARD};
 use crate::node::{trust_to_db, Node};
 use crate::send::OutboxInsert;
 use crate::store::StoreError;
@@ -45,6 +48,14 @@ pub enum FrameOutcome {
     },
     /// A valid ack updated an outbox row.
     AckApplied,
+    /// A reserved system message (`contact.update`, `identity.revoked`) was
+    /// processed; `applied` tells whether it changed local state.
+    SystemHandled {
+        /// The message changed the contact/revocation state.
+        applied: bool,
+    },
+    /// Held by the replay guard (older than the guard start; no ack, no trigger).
+    HeldByGuard,
     /// An ack that was ignored (wrong party, unknown id, untrusted, duplicate).
     AckIgnored,
     /// The database failed; nothing was recorded, the frame is not marked seen.
@@ -65,6 +76,9 @@ fn open_error_kind(e: &OpenError) -> &'static str {
         OpenError::BadMagic => "bad_magic",
         OpenError::UnknownFrameVersion(_) => "unknown_frame_version",
         OpenError::UnknownSuite(_) => "unknown_suite",
+        OpenError::SuiteNotAdvertised(_) => "suite_not_advertised",
+        OpenError::SuiteMismatch => "suite_mismatch",
+        OpenError::KeyEpochMismatch => "key_epoch_mismatch",
         OpenError::NotForUs => "not_for_us",
         OpenError::BadLengthPrefix => "bad_length_prefix",
         OpenError::NonZeroPadding => "non_zero_padding",
@@ -88,6 +102,7 @@ enum MsgTx {
         acked: bool,
         consumed: bool,
         quarantined: bool,
+        held: bool,
     },
     InboxFull,
     QuarantineFull,
@@ -99,7 +114,7 @@ enum AckTx {
 }
 
 impl Node {
-    fn mark_transport_seen(&self, frame: &InboundFrame) {
+    pub(crate) fn mark_transport_seen(&self, frame: &InboundFrame) {
         let now = self.now();
         let r = self.store.tx(|tx| {
             tx.execute(
@@ -135,7 +150,10 @@ impl Node {
         }
         // 2. open
         let now = self.now();
-        let env = match envelope::open(&self.identity, &frame.payload, now, &self.open_limits) {
+        let env = match self
+            .protection
+            .open(&self.identity, &frame.payload, now, &self.open_limits)
+        {
             Ok(o) => o.envelope,
             Err(OpenError::NotForUs) => {
                 self.metrics.inc("frame.not_for_us");
@@ -156,7 +174,15 @@ impl Node {
         // 3. trust
         let trust = match self.store.read(|c| self.load_contact(c, &env.sender)) {
             Ok(Some(row)) => row.trust,
-            Ok(None) => Trust::Unknown,
+            Ok(None) => {
+                // A tombstone may exist for an address that is not a contact
+                // (imported out of band).
+                match self.store.read(|c| Self::is_revoked(c, &env.sender)) {
+                    Ok(true) => Trust::Blocked,
+                    Ok(false) => Trust::Unknown,
+                    Err(_) => return self.store_failure(),
+                }
+            }
             Err(_) => return self.store_failure(),
         };
         if trust == Trust::Blocked {
@@ -168,6 +194,16 @@ impl Node {
         if env.message_type == MESSAGE_TYPE_ACK_RECEIVED {
             return self.ingest_ack(frame, &env, trust);
         }
+        // Reserved system messages. A tombstone is self-authenticating, so any
+        // non-blocked sender may deliver one; a contact update is applied only
+        // from a Trusted contact (other senders' copies are stored like any
+        // other message, under the quarantine policy, and never applied).
+        if env.message_type == MESSAGE_TYPE_IDENTITY_REVOKED {
+            return self.ingest_identity_revoked(frame, &env);
+        }
+        if env.message_type == MESSAGE_TYPE_CONTACT_UPDATE && trust == Trust::Trusted {
+            return self.ingest_contact_update(frame, &env);
+        }
         let policy = self.config.policy.unknown_senders;
         if trust != Trust::Trusted && policy == UnknownSenders::Reject {
             self.metrics.inc("drop.rejected_unknown_sender");
@@ -175,14 +211,18 @@ impl Node {
             return FrameOutcome::Rejected;
         }
         let quarantine = trust != Trust::Trusted && policy == UnknownSenders::Quarantine;
+        // Replay guard: after a store rollback / import, messages created before
+        // the guard started are held instead of delivered.
+        let hold = !quarantine && self.guard_state().is_some_and(|g| env.created_at < g.since);
         // 5. one transaction
         let res = self
             .store
-            .tx(|tx| self.persist_message(tx, &env, trust, quarantine, now));
+            .tx(|tx| self.persist_message(tx, &env, trust, quarantine, hold, now));
         let res = match res {
             Ok(r) => r,
             Err(_) => return self.store_failure(),
         };
+        self.publish_generation();
         match res {
             MsgTx::InboxFull => {
                 self.metrics.inc("inbox.full_refused");
@@ -205,8 +245,13 @@ impl Node {
                 acked,
                 consumed,
                 quarantined,
+                held,
             } => {
                 self.mark_transport_seen(frame);
+                if held {
+                    self.metrics.inc("guard.held");
+                    return FrameOutcome::HeldByGuard;
+                }
                 if quarantined {
                     self.metrics.inc("message.quarantined");
                     return FrameOutcome::Quarantined;
@@ -228,7 +273,7 @@ impl Node {
         }
     }
 
-    fn store_failure(&self) -> FrameOutcome {
+    pub(crate) fn store_failure(&self) -> FrameOutcome {
         self.metrics.inc("store.error");
         FrameOutcome::StoreFailure
     }
@@ -239,8 +284,10 @@ impl Node {
         env: &Envelope,
         trust: Trust,
         quarantine: bool,
+        hold: bool,
         now: i64,
     ) -> Result<MsgTx, StoreError> {
+        let quarantine_slot = quarantine || hold;
         let sender = env.sender.to_string();
         let seen: Option<Option<i64>> = tx
             .query_row(
@@ -260,28 +307,11 @@ impl Node {
                 .optional()?;
             let mut reacked = false;
             if stored_q == Some(0) {
-                let min = i64::try_from(
-                    self.config
-                        .delivery
-                        .reack_min_interval_s
-                        .saturating_mul(1000),
-                )
-                .unwrap_or(i64::MAX);
-                if last.is_none_or(|l| now.saturating_sub(l) >= min) {
-                    if self.queue_ack(tx, env, now)? {
-                        tx.execute(
-                            "UPDATE seen SET last_reack_at = ?3 WHERE sender = ?1 AND message_id = ?2",
-                            params![sender, env.message_id, now],
-                        )?;
-                        reacked = true;
-                    }
-                } else {
-                    self.metrics.inc("ack.reack_rate_limited");
-                }
+                reacked = self.reack_if_due(tx, env, last, now)?;
             }
             return Ok(MsgTx::Duplicate { reacked });
         }
-        if quarantine {
+        if quarantine_slot {
             let n: i64 = tx.query_row(
                 "SELECT COUNT(*) FROM inbox WHERE quarantined = 1",
                 [],
@@ -304,10 +334,12 @@ impl Node {
             "INSERT INTO seen (sender, message_id, expires_at) VALUES (?1, ?2, ?3)",
             params![sender, env.message_id, env.expires_at],
         )?;
+        guard::bump_generation(tx)?;
         tx.execute(
             "INSERT INTO inbox (message_id, sender, type, conversation_id, correlation_id, body,
-                                created_at, expires_at, received_at, quarantined, sender_trust)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+                                created_at, expires_at, received_at, quarantined, sender_trust,
+                                hold_reason)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
             params![
                 env.message_id,
                 sender,
@@ -318,15 +350,17 @@ impl Node {
                 env.created_at,
                 env.expires_at,
                 now,
-                i64::from(quarantine),
+                i64::from(quarantine_slot),
                 trust_to_db(trust),
+                hold.then_some(HOLD_REPLAY_GUARD),
             ],
         )?;
-        if quarantine {
+        if quarantine_slot {
             return Ok(MsgTx::Accepted {
                 acked: false,
                 consumed: false,
                 quarantined: true,
+                held: hold,
             });
         }
         self.insert_event(tx, "message.received", &env.message_id, None, None, now)?;
@@ -352,7 +386,38 @@ impl Node {
             acked,
             consumed,
             quarantined: false,
+            held: false,
         })
+    }
+
+    /// Re-queue an ack for an already stored message if the re-ack interval
+    /// has passed. Returns whether an ack was queued.
+    pub(crate) fn reack_if_due(
+        &self,
+        tx: &Transaction<'_>,
+        env: &Envelope,
+        last: Option<i64>,
+        now: i64,
+    ) -> Result<bool, StoreError> {
+        let min = i64::try_from(
+            self.config
+                .delivery
+                .reack_min_interval_s
+                .saturating_mul(1000),
+        )
+        .unwrap_or(i64::MAX);
+        if last.is_none_or(|l| now.saturating_sub(l) >= min) {
+            if self.queue_ack(tx, env, now)? {
+                tx.execute(
+                    "UPDATE seen SET last_reack_at = ?3 WHERE sender = ?1 AND message_id = ?2",
+                    params![env.sender.to_string(), env.message_id, now],
+                )?;
+                return Ok(true);
+            }
+        } else {
+            self.metrics.inc("ack.reack_rate_limited");
+        }
+        Ok(false)
     }
 
     /// Seal an `ack.received` for `orig` and insert it into the outbox. Needs the
@@ -364,6 +429,11 @@ impl Node {
         orig: &Envelope,
         now: i64,
     ) -> Result<bool, StoreError> {
+        if self.local_revocation.is_some() {
+            // A revoked identity sends nothing except its tombstone.
+            self.metrics.inc("ack.suppressed_revoked");
+            return Ok(false);
+        }
         let Some(row) = self.load_contact(tx, &orig.sender)? else {
             self.metrics.inc("ack.no_contact");
             return Ok(false);
@@ -387,7 +457,10 @@ impl Node {
         env.conversation_id = orig.conversation_id.clone();
         env.correlation_id = Some(orig.message_id.clone());
         let frame =
-            match envelope::seal(&self.identity, &row.contact, &env, now, self.max_frame_len) {
+            match self
+                .protection
+                .seal(&self.identity, &row.contact, &env, now, self.max_frame_len)
+            {
                 Ok(f) => f,
                 Err(_) => {
                     self.metrics.inc("ack.seal_failed");
@@ -401,6 +474,7 @@ impl Node {
                 topic: &row.contact.inbox_topic().to_string(),
                 frame: &frame,
                 is_ack: true,
+                hidden: false,
                 idempotency_key: None,
             },
             now,
@@ -425,6 +499,7 @@ impl Node {
             if inserted == 0 {
                 return Ok(AckTx::Ignored("duplicate"));
             }
+            guard::bump_generation(tx)?;
             let Some(corr) = env.correlation_id.as_deref() else {
                 return Ok(AckTx::Ignored("no_correlation"));
             };
@@ -455,6 +530,9 @@ impl Node {
             )?;
             Ok(AckTx::Applied { conversation_id: conv })
         });
+        if res.is_ok() {
+            self.publish_generation();
+        }
         match res {
             Err(_) => self.store_failure(),
             Ok(AckTx::Ignored(why)) => {

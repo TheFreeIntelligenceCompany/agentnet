@@ -22,10 +22,14 @@ command output (and, for `agentnet mcp`, MCP protocol frames).";
 
 /// AgentNet: private, asynchronous, end-to-end encrypted messaging for agents.
 ///
+/// NOT AUDITED. The cryptography (HPKE + Ed25519, no forward secrecy) has had no
+/// independent review: an independent cryptographic review is required before
+/// production use involving sensitive information.
+///
 /// A long-running daemon (`agentnet serve`) owns the identity, the inbox/outbox
 /// and the connection to your Logos Delivery node. Every other command talks to
 /// that daemon over its control socket, except the few that manage the data
-/// directory while no daemon runs (`init`, `identity export|import|rotate-kem`).
+/// directory while no daemon runs (`init`, `identity export|import|rotate-kem|revoke`).
 #[derive(Parser)]
 #[command(name = "agentnet", version, after_help = EXIT_CODES)]
 pub struct Cli {
@@ -160,8 +164,18 @@ pub enum Command {
     },
     /// Check permissions, config, node reachability, peer allowlist, isolation, store and clock.
     ///
-    /// Prints an actionable line per check; exits 7 if any check fails.
-    Doctor,
+    /// Prints an actionable line per check; exits 7 if any check fails. Also
+    /// reports the replay guard (after a store rollback, an unknown store
+    /// history or an identity import) and whether the identity is revoked.
+    Doctor {
+        /// Accept a detected store rollback / unknown history / import so the next
+        /// start does not hold older messages, and release the held ones. Requires
+        /// the daemon to be stopped. Messages that were received and acknowledged
+        /// before the rollback cannot be recovered, and frames replayed from before
+        /// the rollback are accepted again within their TTL.
+        #[arg(long)]
+        accept_rollback: bool,
+    },
     /// Instructions for running your own relay/store node.
     Relay {
         #[command(subcommand)]
@@ -196,16 +210,46 @@ pub enum IdentityCmd {
         /// Static peer multiaddr for the new config (repeatable).
         #[arg(long, value_name = "MULTIADDR")]
         peer: Vec<String>,
+        /// Do NOT start the new store in replay-guard mode. A new data directory has no
+        /// dedupe history, so by default messages created before the first start are held
+        /// (not delivered) until max_ttl + clock_skew has passed or `doctor --accept-rollback`
+        /// is run. With this flag, frames captured before the import can be accepted again
+        /// within their TTL. To keep the history, copy agentnet.db and agentnet.generation
+        /// (daemon stopped) instead.
+        #[arg(long)]
+        no_replay_guard: bool,
     },
-    /// Generate a new agreement (KEM) key; the address stays the same.
+    /// Generate a new agreement (KEM) key and increment the key epoch; the address stays the same.
     ///
-    /// The previous key keeps decrypting until the retention window ends. Peers
-    /// must import the new contact record. There is no revocation channel.
+    /// By default the previous key keeps decrypting until the retention window
+    /// ends. At the next `agentnet serve` the new signed record is sent to every
+    /// Trusted contact as a `contact.update`, and their pending messages to you are
+    /// re-sealed to the new key. With --revoke-previous all earlier KEM keys are
+    /// destroyed at once: messages already sealed to them are lost unless re-sealed
+    /// by their senders after they learn the new record.
     RotateKem {
         /// How long the previous key keeps decrypting (default: storage.retention_hours).
         #[arg(long, value_name = "HOURS")]
         keep_hours: Option<u64>,
+        /// Destroy every earlier KEM key immediately and publish `revoked_kem_epochs_below`.
+        #[arg(long)]
+        revoke_previous: bool,
     },
+    /// Revoke this identity (the signing key): irreversible for this address.
+    ///
+    /// Writes a signed tombstone next to the identity and marks the local identity
+    /// revoked: the daemon then sends nothing except the tombstone, which it delivers
+    /// to every Trusted contact at the next start. Reaches only contacts that are
+    /// reachable within the TTL/retry limits or that receive the document out of band
+    /// (`identity show-revocation`). There is no global revocation list; a thief of the
+    /// signing key can also issue a tombstone (denial of service only).
+    Revoke {
+        /// Why (1-256 bytes, no control characters); shown to contacts.
+        #[arg(long, value_name = "TEXT")]
+        reason: String,
+    },
+    /// Print the signed revocation document of a revoked identity (for out-of-band distribution).
+    ShowRevocation,
 }
 
 #[derive(Clone, Copy, ValueEnum)]
@@ -250,6 +294,14 @@ pub enum ContactCmd {
         /// New trust level.
         #[arg(value_enum)]
         level: TrustArg,
+    },
+    /// Import a signed identity-revocation tombstone obtained out of band.
+    ///
+    /// The contact (if any) becomes blocked, sends to it are refused, pending
+    /// messages to it fail, and it cannot be re-trusted or replaced by a new record.
+    Revoke {
+        /// The tombstone document, `@FILE` to read it from a file, or `-` for stdin.
+        document: String,
     },
     /// Delete a contact (already queued messages are still sent).
     Remove {

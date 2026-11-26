@@ -1,0 +1,15 @@
+   Compiling agentnet-core v0.1.0 (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a47fc99d044526c73/crates/core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.15s
+     Running tests/vectors.rs (target/debug/deps/vectors-9b49b450a36c6f34)
+
+running 7 tests
+test frozen_known_answers_do_not_change ... ok
+test rfc4648_base32_vectors_and_the_address_alphabet ... ok
+test rfc6234_sha256_vectors ... ok
+test rfc8032_section_7_1_ed25519_sign_and_verify_strict ... ok
+test rfc9180_a2_base_decapsulates_and_decrypts_sequence_0 ... ok
+test rfc9180_a2_base_encapsulation_with_published_ephemeral_ikm_reproduces_enc_and_ct ... ok
+test the_frozen_frame_still_opens_to_the_frozen_envelope ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+

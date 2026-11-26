@@ -18,22 +18,14 @@
 //! persist `(sender, message_id)` of every accepted envelope and drop repeats.
 //! `open` is a pure function of its inputs.
 
-use ed25519_dalek::Signature;
-use hpke::aead::ChaCha20Poly1305;
-use hpke::kdf::HkdfSha256;
-use hpke::kem::X25519HkdfSha256;
-use hpke::{Deserializable, OpModeR, OpModeS, Serializable};
 use serde::{Deserialize, Serialize};
-use zeroize::Zeroizing;
 
-use crate::address::Address;
-use crate::contact::VerifiedContact;
-use crate::error::{json_reason, OpenError, SealError};
-use crate::identity::{random_bytes, Identity};
-
-type Kem = X25519HkdfSha256;
-type KemPublicKey = <Kem as hpke::Kem>::PublicKey;
-type KemEncapped = <Kem as hpke::Kem>::EncappedKey;
+use super::address::Address;
+use super::contact::VerifiedContact;
+use super::hpke_suite::HpkeBaseEd25519;
+use super::identity::{random_bytes, Identity};
+use super::protection::MessageProtection;
+use crate::error::{OpenError, SealError};
 
 /// Domain separation prefix of the envelope signature.
 pub const ENVELOPE_DOMAIN: &[u8] = b"agentnet/v1/envelope\0";
@@ -77,6 +69,10 @@ pub const MESSAGE_TYPE_MESSAGE: &str = "message";
 pub const MESSAGE_TYPE_ACK_RECEIVED: &str = "ack.received";
 pub const MESSAGE_TYPE_TASK_REQUEST: &str = "task.request";
 pub const MESSAGE_TYPE_TASK_RESULT: &str = "task.result";
+/// Reserved: body is the sender's new signed contact-record document.
+pub const MESSAGE_TYPE_CONTACT_UPDATE: &str = "contact.update";
+/// Reserved: body is the sender's signed identity-revocation document.
+pub const MESSAGE_TYPE_IDENTITY_REVOKED: &str = "identity.revoked";
 
 pub const MAX_MESSAGE_TYPE_LEN: usize = 64;
 pub const MAX_ID_LEN: usize = 128;
@@ -90,6 +86,13 @@ pub struct Envelope {
     pub message_id: String,
     pub sender: Address,
     pub recipient: Address,
+    /// Suite id the envelope was sealed under (signed; checked against the
+    /// frame header on open). Set by `seal`.
+    pub suite: u8,
+    /// `key_epoch` of the recipient KEM key the envelope was sealed to (signed;
+    /// checked against the key that decrypted the frame). Set by `seal`;
+    /// epochs start at 1, so 0 marks "not sealed yet".
+    pub recipient_key_epoch: u64,
     #[serde(rename = "type")]
     pub message_type: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -155,6 +158,8 @@ impl Envelope {
             message_id: new_message_id()?,
             sender,
             recipient,
+            suite: SUITE_ID,
+            recipient_key_epoch: 0,
             message_type: message_type.to_owned(),
             conversation_id: None,
             correlation_id: None,
@@ -219,63 +224,8 @@ pub fn padded_plaintext_len(min_pt: usize, max_frame_len: usize) -> Option<usize
     Some(b.min(max_pt))
 }
 
-enum BuildError {
-    TooLarge,
-    Crypto(&'static str),
-}
-
-fn hpke_info(kem_pk: &[u8; 32]) -> Vec<u8> {
-    let mut v = Vec::with_capacity(HPKE_INFO_DOMAIN.len() + 32);
-    v.extend_from_slice(HPKE_INFO_DOMAIN);
-    v.extend_from_slice(kem_pk);
-    v
-}
-
-/// HPKE single-shot seal of an already padded plaintext; returns the frame.
-fn seal_plaintext(kem_pk: &[u8; 32], plaintext: &[u8]) -> Result<Vec<u8>, BuildError> {
-    let pk = KemPublicKey::from_bytes(kem_pk).map_err(|_| BuildError::Crypto("invalid KEM key"))?;
-    let (enc, ct) = hpke::single_shot_seal::<ChaCha20Poly1305, HkdfSha256, Kem>(
-        &OpModeS::Base,
-        &pk,
-        &hpke_info(kem_pk),
-        plaintext,
-        &FRAME_HEADER,
-    )
-    .map_err(|_| BuildError::Crypto("HPKE seal failed"))?;
-    let enc_b = enc.to_bytes();
-    let mut frame = Vec::with_capacity(HEADER_LEN + enc_b.len() + ct.len());
-    frame.extend_from_slice(&FRAME_HEADER);
-    frame.extend_from_slice(enc_b.as_slice());
-    frame.extend_from_slice(&ct);
-    Ok(frame)
-}
-
-fn build_frame(
-    kem_pk: &[u8; 32],
-    sig: &[u8; 64],
-    env_bytes: &[u8],
-    max_frame_len: usize,
-) -> Result<Vec<u8>, BuildError> {
-    let inner_len = SIG_LEN
-        .checked_add(env_bytes.len())
-        .ok_or(BuildError::TooLarge)?;
-    let inner_u32 = u32::try_from(inner_len).map_err(|_| BuildError::TooLarge)?;
-    let min_pt = LEN_PREFIX_LEN + inner_len;
-    let target = padded_plaintext_len(min_pt, max_frame_len).ok_or(BuildError::TooLarge)?;
-    let mut pt = Zeroizing::new(Vec::with_capacity(target));
-    pt.extend_from_slice(&inner_u32.to_be_bytes());
-    pt.extend_from_slice(sig);
-    pt.extend_from_slice(env_bytes);
-    pt.resize(target, 0);
-    seal_plaintext(kem_pk, &pt)
-}
-
-/// Seal `envelope` from `sender` to `recipient`.
-///
-/// `now_ms` is used only to refuse sealing to a KEM key that is already
-/// expired ([`SealError::RecipientKemExpired`]); the envelope's own
-/// `created_at`/`expires_at` are not compared with it (the receiver does that).
-/// The envelope must name `sender` and `recipient` and pass [`Envelope::validate`].
+/// Seal with the default suite (suite 1, `HpkeBaseEd25519`). The engine does
+/// not call this; it goes through [`MessageProtection`].
 pub fn seal(
     sender: &Identity,
     recipient: &VerifiedContact,
@@ -283,28 +233,7 @@ pub fn seal(
     now_ms: i64,
     max_frame_len: usize,
 ) -> Result<Vec<u8>, SealError> {
-    if envelope.sender != sender.address() {
-        return Err(SealError::SenderMismatch);
-    }
-    if envelope.recipient != recipient.address {
-        return Err(SealError::RecipientMismatch);
-    }
-    if recipient.is_kem_expired(now_ms) {
-        return Err(SealError::RecipientKemExpired);
-    }
-    envelope.validate().map_err(SealError::InvalidField)?;
-    if envelope.expires_at <= envelope.created_at {
-        return Err(SealError::InvalidField("expires_at"));
-    }
-    let env_bytes = serde_json::to_vec(envelope).map_err(|_| SealError::InvalidField("body"))?;
-    let sig = sender.sign(ENVELOPE_DOMAIN, &env_bytes);
-    build_frame(&recipient.kem_pk, &sig, &env_bytes, max_frame_len).map_err(|e| match e {
-        BuildError::TooLarge => SealError::TooLarge {
-            body_len: envelope.body.len(),
-            max_body_len_hint: max_body_len(max_frame_len, envelope),
-        },
-        BuildError::Crypto(m) => SealError::Crypto(m),
-    })
+    HpkeBaseEd25519.seal(sender, recipient, envelope, now_ms, max_frame_len)
 }
 
 /// Limits applied when opening a frame.
@@ -336,128 +265,14 @@ pub struct OpenedEnvelope {
     pub sender: Address,
 }
 
-#[derive(Deserialize)]
-struct VersionOnly {
-    v: u64,
-}
-
-/// Open and fully validate a frame addressed to `recipient`.
-///
-/// `NotForUs` is the expected outcome for other agents' frames in a shared
-/// inbox bucket and costs one HPKE decapsulation per usable KEM key. No
-/// logging happens here. No duplicate detection happens here either.
+/// Open with the default suite (suite 1). The engine does not call this.
 pub fn open(
     recipient: &Identity,
     frame: &[u8],
     now_ms: i64,
     limits: &OpenLimits,
 ) -> Result<OpenedEnvelope, OpenError> {
-    if frame.len() > limits.max_frame_len {
-        return Err(OpenError::FrameTooLarge);
-    }
-    let (header, rest) = frame
-        .split_at_checked(HEADER_LEN)
-        .ok_or(OpenError::Truncated)?;
-    if header.get(0..2) != Some(&FRAME_MAGIC[..]) {
-        return Err(OpenError::BadMagic);
-    }
-    match header.get(2) {
-        Some(&FRAME_VERSION) => {}
-        Some(&v) => return Err(OpenError::UnknownFrameVersion(v)),
-        None => return Err(OpenError::Truncated),
-    }
-    match header.get(3) {
-        Some(&SUITE_ID) => {}
-        Some(&s) => return Err(OpenError::UnknownSuite(s)),
-        None => return Err(OpenError::Truncated),
-    }
-    let (enc_b, ct) = rest.split_at_checked(ENC_LEN).ok_or(OpenError::Truncated)?;
-    if ct.len() < TAG_LEN + PLAINTEXT_OVERHEAD + 1 {
-        return Err(OpenError::Truncated);
-    }
-    let enc = KemEncapped::from_bytes(enc_b).map_err(|_| OpenError::NotForUs)?;
-
-    let mut plaintext: Option<Zeroizing<Vec<u8>>> = None;
-    for key in recipient.decryption_keys(now_ms) {
-        let Some(sk) = key.private_key() else {
-            continue;
-        };
-        if let Ok(pt) = hpke::single_shot_open::<ChaCha20Poly1305, HkdfSha256, Kem>(
-            &OpModeR::Base,
-            &sk,
-            &enc,
-            &hpke_info(key.public_key()),
-            ct,
-            header,
-        ) {
-            plaintext = Some(Zeroizing::new(pt));
-            break;
-        }
-    }
-    let plaintext = plaintext.ok_or(OpenError::NotForUs)?;
-
-    // Plaintext structure: u32_be(inner_len) || inner || zero padding.
-    let (len_b, after_len) = plaintext
-        .split_at_checked(LEN_PREFIX_LEN)
-        .ok_or(OpenError::BadLengthPrefix)?;
-    let len_arr: [u8; 4] = len_b.try_into().map_err(|_| OpenError::BadLengthPrefix)?;
-    let inner_len =
-        usize::try_from(u32::from_be_bytes(len_arr)).map_err(|_| OpenError::BadLengthPrefix)?;
-    if inner_len <= SIG_LEN {
-        return Err(OpenError::BadLengthPrefix);
-    }
-    let (inner, padding) = after_len
-        .split_at_checked(inner_len)
-        .ok_or(OpenError::BadLengthPrefix)?;
-    if padding.iter().any(|b| *b != 0) {
-        return Err(OpenError::NonZeroPadding);
-    }
-    let (sig_b, env_bytes) = inner
-        .split_at_checked(SIG_LEN)
-        .ok_or(OpenError::BadLengthPrefix)?;
-    let sig_arr: [u8; SIG_LEN] = sig_b.try_into().map_err(|_| OpenError::BadLengthPrefix)?;
-
-    // Envelope parsing: version first so that future versions give a clean error.
-    let ver: VersionOnly = serde_json::from_slice(env_bytes)
-        .map_err(|e| OpenError::MalformedEnvelope(json_reason(&e)))?;
-    if ver.v != u64::from(ENVELOPE_VERSION) {
-        return Err(OpenError::UnknownEnvelopeVersion(ver.v));
-    }
-    let envelope: Envelope = serde_json::from_slice(env_bytes)
-        .map_err(|e| OpenError::MalformedEnvelope(json_reason(&e)))?;
-
-    // Signature over the exact received bytes.
-    let mut msg = Vec::with_capacity(ENVELOPE_DOMAIN.len() + env_bytes.len());
-    msg.extend_from_slice(ENVELOPE_DOMAIN);
-    msg.extend_from_slice(env_bytes);
-    envelope
-        .sender
-        .verifying_key()
-        .verify_strict(&msg, &Signature::from_bytes(&sig_arr))
-        .map_err(|_| OpenError::BadSignature)?;
-
-    if envelope.recipient != recipient.address() {
-        return Err(OpenError::WrongRecipient);
-    }
-    envelope.validate().map_err(OpenError::InvalidField)?;
-
-    if envelope.created_at > now_ms.saturating_add(limits.clock_skew_ms) {
-        return Err(OpenError::FromFuture);
-    }
-    if envelope.expires_at <= now_ms {
-        return Err(OpenError::Expired);
-    }
-    if envelope.expires_at <= envelope.created_at {
-        return Err(OpenError::ExpiresBeforeCreated);
-    }
-    if envelope.expires_at.saturating_sub(envelope.created_at) > limits.max_ttl_ms {
-        return Err(OpenError::TtlTooLong);
-    }
-
-    Ok(OpenedEnvelope {
-        sender: envelope.sender,
-        envelope,
-    })
+    HpkeBaseEd25519.open(recipient, frame, now_ms, limits)
 }
 
 /// Helpers for building deliberately malformed or re-targeted frames in tests.
@@ -465,11 +280,17 @@ pub fn open(
 #[cfg(any(test, feature = "test-support"))]
 #[doc(hidden)]
 pub mod testing {
+    use super::super::hpke_suite::{self, BuildError};
     use super::*;
+
+    /// True if `frame` decrypts for `recipient` with the given HPKE `aad`.
+    pub fn decrypts_with_aad(recipient: &Identity, frame: &[u8], aad: &[u8], now_ms: i64) -> bool {
+        hpke_suite::decrypts_with_aad(recipient, frame, aad, now_ms)
+    }
 
     /// Sign arbitrary envelope bytes as `signer` (domain-separated like `seal`).
     pub fn sign_envelope_bytes(signer: &Identity, env_bytes: &[u8]) -> [u8; 64] {
-        signer.sign(ENVELOPE_DOMAIN, env_bytes)
+        hpke_suite::sign_envelope_bytes(signer, env_bytes)
     }
 
     /// Frame an existing `(sig, env_bytes)` pair for `kem_pk` with the normal
@@ -480,7 +301,7 @@ pub mod testing {
         env_bytes: &[u8],
         max_frame_len: usize,
     ) -> Result<Vec<u8>, SealError> {
-        build_frame(kem_pk, sig, env_bytes, max_frame_len).map_err(|e| match e {
+        hpke_suite::build_frame(kem_pk, sig, env_bytes, max_frame_len).map_err(|e| match e {
             BuildError::TooLarge => SealError::TooLarge {
                 body_len: env_bytes.len(),
                 max_body_len_hint: 0,
@@ -492,7 +313,7 @@ pub mod testing {
     /// HPKE-seal an arbitrary, caller-built plaintext (no length prefix or
     /// padding is added) so tests can construct authenticated garbage.
     pub fn seal_raw_plaintext(kem_pk: &[u8; 32], plaintext: &[u8]) -> Result<Vec<u8>, SealError> {
-        seal_plaintext(kem_pk, plaintext).map_err(|e| match e {
+        hpke_suite::seal_plaintext(kem_pk, plaintext).map_err(|e| match e {
             BuildError::TooLarge => SealError::Crypto("too large"),
             BuildError::Crypto(m) => SealError::Crypto(m),
         })
@@ -532,7 +353,11 @@ mod tests {
         assert_eq!(&frame[..4], b"AN\x01\x01");
         assert_eq!(frame.len(), FRAME_OVERHEAD + 512);
         let o = open(&b, &frame, NOW, &OpenLimits::default()).unwrap();
-        assert_eq!(o.envelope, e);
+        // `seal` fills in the signed suite and recipient key epoch
+        let mut expected = e.clone();
+        expected.suite = SUITE_ID;
+        expected.recipient_key_epoch = 1;
+        assert_eq!(o.envelope, expected);
         assert_eq!(o.sender, a.address());
     }
 

@@ -86,6 +86,66 @@ fn peer_id(maddr: &str) -> Option<&str> {
     last
 }
 
+fn replay_guard_check(dd: &DataDir) -> Check {
+    use agentnet_core::guard::{inspect, SidecarState};
+    let name = "replay guard";
+    let r = match inspect(&dd.db()) {
+        Ok(r) => r,
+        Err(e) => {
+            return check(
+                name,
+                Level::Warn,
+                format!("could not inspect the store: {e}"),
+                "",
+            )
+        }
+    };
+    if let Some(g) = &r.active {
+        return check(
+            name,
+            Level::Warn,
+            format!(
+                "ACTIVE ({}): messages created before the guard started are held, not delivered or acknowledged; {} held now; it lapses by itself at unix ms {}",
+                g.reason, r.held, g.until
+            ),
+            "if the store was restored on purpose: stop the daemon and run `agentnet doctor --accept-rollback` (accepts replay exposure for already-received messages)",
+        );
+    }
+    if r.rollback_suspected {
+        return check(
+            name,
+            Level::Warn,
+            "the database is OLDER than its generation sidecar: the store looks rolled back; the next start enters guard mode",
+            "if intended, run `agentnet doctor --accept-rollback` with the daemon stopped",
+        );
+    }
+    if r.unknown_history {
+        return check(
+            name,
+            Level::Warn,
+            "the generation sidecar is missing next to a non-empty database: store history is unknown; the next start enters guard mode",
+            "if intended, run `agentnet doctor --accept-rollback` with the daemon stopped",
+        );
+    }
+    if matches!(&r.sidecar, SidecarState::Present(s) if s.guard.is_some()) {
+        return check(
+            name,
+            Level::Warn,
+            "this data directory was created by `identity import`: the first start enters guard mode (no dedupe history)",
+            "wait for max_ttl + clock_skew after the first start, or run `agentnet doctor --accept-rollback`",
+        );
+    }
+    check(
+        name,
+        Level::Ok,
+        match r.db_generation {
+            Some(g) => format!("inactive (store generation {g})"),
+            None => "inactive (no store yet)".to_owned(),
+        },
+        "",
+    )
+}
+
 pub async fn run(dir: &Path) -> Vec<Check> {
     let dd = DataDir::new(dir);
     let mut out = Vec::new();
@@ -191,6 +251,23 @@ pub async fn run(dir: &Path) -> Vec<Check> {
             None
         }
     };
+
+    // 3b. revocation, replay guard, single-instance warning
+    if dd.revocation().exists() {
+        out.push(check(
+            "identity revoked",
+            Level::Warn,
+            "this identity has been revoked (revocation.json): the daemon sends nothing except its revocation notice",
+            "use a new identity (`agentnet init` in a new data dir); `agentnet identity show-revocation` prints the notice to distribute out of band",
+        ));
+    }
+    out.push(replay_guard_check(&dd));
+    out.push(check(
+        "single instance",
+        Level::Warn,
+        "the same identity running in two data directories cannot be detected or prevented (the data-dir lock only covers one directory); both would receive, persist and acknowledge every message independently and may both fire triggers",
+        "run each identity in exactly one place; to move it, stop the old daemon first and copy agentnet.db + agentnet.generation or use `identity export/import`",
+    ));
 
     // 4. daemon socket
     let remote = RemoteAgent::new(dir);

@@ -1,0 +1,164 @@
+   Compiling agentnet-core v0.1.0 (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a47fc99d044526c73/crates/core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.60s
+     Running unittests src/lib.rs (target/debug/deps/agentnet_core-8d510d4f526784f0)
+
+running 34 tests
+test config::tests::defaults_are_valid_and_match_the_documented_values ... ok
+test crypto::address::tests::rejects_non_canonical_point_encoding ... ok
+test crypto::address::tests::ordering_and_hash ... ok
+test crypto::address::tests::rejects_weak_keys ... ok
+test crypto::address::tests::known_vector ... ok
+test crypto::address::tests::strictness ... ok
+test crypto::address::tests::trailing_bits_must_be_zero ... ok
+test config::tests::partial_toml_like_json_and_unknown_keys ... ok
+test crypto::contact::tests::record_layout_is_as_specified ... ok
+test crypto::contact::tests::document_shape_errors ... ok
+test crypto::contact::tests::duplicate_keys_rejected ... ok
+test crypto::address::tests::topic_vector_and_all_buckets_valid ... ok
+test crypto::contact::tests::swapped_kem_key_from_other_identity ... ok
+test crypto::contact::tests::roundtrip ... ok
+test crypto::contact::tests::low_order_kem_keys_rejected ... ok
+test crypto::envelope::tests::field_rules ... ok
+test crypto::address::tests::roundtrip_and_serde ... ok
+test crypto::envelope::tests::padding_rule ... ok
+test crypto::envelope::tests::uuid_validation ... ok
+test crypto::contact::tests::tampered_fields_rejected ... ok
+test crypto::identity::tests::file_roundtrip_in_memory ... ok
+test crypto::identity::tests::debug_has_no_secrets ... ok
+test crypto::contact::tests::kem_expiry ... ok
+test crypto::identity::tests::generate_validates_buckets ... ok
+test crypto::envelope::tests::serde_rejects_duplicates_and_unknown_fields ... ok
+test crypto::identity::tests::rotation_and_prune ... ok
+test crypto::contact::tests::strict_record_validation ... ok
+test crypto::identity::tests::file_validation ... ok
+test cursor::tests::roundtrip_and_kind_checks ... ok
+test crypto::revocation::tests::roundtrip_and_tamper ... ok
+test crypto::envelope::tests::roundtrip_and_layout ... ok
+test crypto::identity::tests::previous_keys_are_capped ... ok
+test store::tests::refuses_a_newer_database ... ok
+test store::tests::migrates_a_v1_database ... ok
+
+test result: ok. 34 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/crypto.rs (target/debug/deps/crypto-0c0b57fb5a6396ca)
+
+running 34 tests
+test constants_match_spec ... ok
+test contact_record_round_trip_and_tampering ... ok
+test equal_frame_length_within_a_bucket ... ok
+test envelope_parsing_is_strict ... ok
+test forged_sender_is_bad_signature ... ok
+test files::debug_output_has_no_key_material ... ok
+test files::save_into_missing_directory_fails_cleanly ... ok
+test frame_layout_offsets ... ok
+test header_errors_are_distinct ... ok
+test files::save_load_permissions_and_atomicity ... ok
+test files::load_rejects_bad_files ... ok
+test inbox_buckets_in_contact_and_topic ... ok
+test prop_address_parse_total ... ok
+test kem_rotation_keeps_old_key_until_retire_time ... ok
+test nonzero_padding_is_rejected ... ok
+test prop_contact_parse_total ... ok
+test round_trip_all_message_types ... ok
+test seal_refuses_expired_recipient_key ... ok
+test seal_rejects_mismatches ... ok
+test signature_over_other_domain_is_rejected ... ok
+test surreptitious_forwarding_is_wrong_recipient ... ok
+test max_frame_len_cap_and_too_large ... ok
+test prop_open_never_panics_on_arbitrary_bytes ... ok
+test time_checks_and_exact_boundaries ... ok
+test unicode_bodies_are_byte_exact ... ok
+test bucket_boundaries_are_exact ... ok
+test wrong_recipient_field_after_valid_signature ... ok
+test wrong_recipient_is_not_for_us ... ok
+test prop_authentic_garbage_envelope_never_panics ... ok
+test truncation_at_every_length_is_rejected ... ok
+test prop_round_trip ... ok
+test every_single_bit_flip_is_rejected ... ok
+test ten_thousand_random_frames_never_panic ... ok
+test encrypted_export_import ... ok
+
+test result: ok. 34 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.74s
+
+     Running tests/engine_delivery.rs (target/debug/deps/engine_delivery-0ad974d45176a64e)
+
+running 23 tests
+test a_to_b_message_ack_status_hints_and_event ... ok
+test contact_management ... ok
+test crash_between_inbox_commit_and_ack_publish_ack_still_goes_out ... ok
+test crash_between_send_message_and_step_send ... ok
+test expired_recipient_kem_key_is_refused_with_clear_error ... ok
+test disk_failure_inbound_not_acked_then_recovered ... ok
+test invalid_config_is_refused ... ok
+test backoff_ceiling_caps_and_is_seed_deterministic ... ok
+test crash_receiver_mid_stream_no_duplicate_processing ... ok
+test history_past_retention_is_not_recovered_and_sender_expires ... ok
+test history_unavailable_keeps_watermark_and_recovers_later ... ok
+test idempotency_key_semantics ... ok
+test isolation_violation_blocks_everything_until_cleared ... ok
+test opening_store_with_different_identity_is_refused ... ok
+test lost_publish_retries_with_backoff_bounds_then_delivers ... ok
+test inbox_saturation_not_acked_then_accepted_after_space_frees ... ok
+test late_ack_after_expiry_still_marks_delivered ... ok
+test duplicates_reordering_and_lost_ack ... ok
+test self_send_works_through_relay_echo ... ok
+test ttl_expiry_of_outbox_and_cap ... ok
+test send_validation ... ok
+test outbox_saturation_returns_unavailable ... ok
+test offline_recipient_recovers_20_via_history ... ok
+
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.37s
+
+     Running tests/engine_random.rs (target/debug/deps/engine_random-c9f4f9f5fad24238)
+
+running 1 test
+test random_schedules_converge_exactly_once ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 33.89s
+
+     Running tests/engine_run.rs (target/debug/deps/engine_run-3691a3753e5b472a)
+
+running 3 tests
+test run_smoke_delivers_and_shuts_down_promptly ... ok
+test run_recovers_via_history_when_transport_comes_back ... ok
+test inbound_channel_applies_backpressure_and_loses_nothing ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.07s
+
+     Running tests/engine_security.rs (target/debug/deps/engine_security-7cd2945d162a832f)
+
+running 8 tests
+test time_checks_skew_expiry_ttl ... ok
+test max_attempts_stops_publishing_until_expiry ... ok
+test too_large_publish_is_permanent_failure ... ok
+test quarantine_hides_message_and_emits_nothing ... ok
+test replay_now_and_after_dedupe_pruning ... ok
+test tampered_foreign_forged_and_forwarded_frames_create_nothing ... ok
+test ack_rules_wrong_party_unknown_id_untrusted_and_no_ping_pong ... ok
+test reject_blocked_accept_untrusted_and_quarantine_cap ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.66s
+
+     Running tests/engine_triggers.rs (target/debug/deps/engine_triggers-bc2176d63b291d01)
+
+running 11 tests
+test once_trigger_consumed_exactly_once_under_duplicates_and_two_messages ... ok
+test delete_trigger_is_idempotent ... ok
+test rate_budget_blocks_recording_and_does_not_consume_once_triggers ... ok
+test policy_gates_on_create_trigger ... ok
+test filter_combinations ... ok
+test trigger_expiry ... ok
+test events_replay_ack_and_pruning ... ok
+test since_cursor_closes_reply_before_trigger_race ... ok
+test pagination_cursors_for_inbox_outbox_conversation ... ok
+test unauthorized_senders_never_match ... ok
+test limit_defaults_and_caps ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.88s
+
+   Doc-tests agentnet_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

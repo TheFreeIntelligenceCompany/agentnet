@@ -6,8 +6,8 @@
 //! `send`, triggers/events in `triggers`, and the `AgentApi` implementation in
 //! `api_impl`.
 
-use std::path::Path;
-use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
+use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
@@ -16,17 +16,21 @@ use rusqlite::OptionalExtension;
 use tokio::sync::{broadcast, mpsc, watch, Notify};
 use tokio_util::sync::CancellationToken;
 
-use crate::address::Address;
 use crate::api::{ApiError, ChangeHint, DeliveryState, Trust};
 use crate::clock::Clock;
 use crate::config::NodeConfig;
-use crate::contact::VerifiedContact;
-use crate::envelope::OpenLimits;
-use crate::identity::Identity;
+use crate::crypto::envelope::OpenLimits;
+use crate::crypto::{
+    default_protection, Address, Identity, MessageProtection, VerifiedContact, VerifiedRevocation,
+};
+use crate::guard::{self, GuardState, Sidecar, SidecarState};
 use crate::metrics::{Metrics, NodeMetrics};
 use crate::store::{kv_get, kv_set, Store, StoreError};
 
 const KV_OWN_ADDRESS: &str = "own_address";
+pub(crate) const KV_ANNOUNCED_EPOCH: &str = "announced_key_epoch";
+pub(crate) const KV_ANNOUNCED_REVOCATION: &str = "announced_revocation";
+pub(crate) const KV_LOCAL_REVOCATION: &str = "local_revocation";
 pub(crate) const KV_HISTORY_WATERMARK: &str = "history_watermark_ms";
 pub(crate) const KV_EVENTS_ACK: &str = "events_ack_seq";
 const HISTORY_PAGE_LIMIT: u32 = 100;
@@ -106,9 +110,28 @@ pub struct MaintenanceReport {
     pub pruned_rows: usize,
 }
 
+/// Optional construction parameters of a [`Node`].
+#[derive(Clone, Default)]
+pub struct NodeOptions {
+    /// The message-protection scheme (default: [`default_protection`], suite 1).
+    /// The identity's published `suites` list is taken from it.
+    pub protection: Option<Arc<dyn MessageProtection>>,
+    /// The local identity's signed revocation tombstone, if it was revoked
+    /// (the daemon reads it from the data directory). A revoked identity sends
+    /// nothing except its own tombstone.
+    pub local_revocation: Option<String>,
+    /// Override of the generation sidecar path (default: next to the store).
+    pub generation_sidecar: Option<PathBuf>,
+}
+
 /// The agent engine. Create with [`Node::open`].
 pub struct Node {
     pub(crate) identity: Identity,
+    pub(crate) protection: Arc<dyn MessageProtection>,
+    pub(crate) local_revocation: Option<VerifiedRevocation>,
+    pub(crate) guard: Mutex<Option<GuardState>>,
+    pub(crate) sidecar_path: PathBuf,
+    pub(crate) published_generation: AtomicU64,
     pub(crate) own: Address,
     pub(crate) own_str: String,
     pub(crate) topic: ContentTopic,
@@ -188,6 +211,9 @@ pub(crate) struct ContactRow {
     pub trust: Trust,
     pub alias: Option<String>,
     pub added_at: i64,
+    /// The address has a verified identity-revocation tombstone; `trust` is
+    /// reported as `Blocked` and cannot be changed.
+    pub revoked: bool,
 }
 
 impl Node {
@@ -203,17 +229,55 @@ impl Node {
         config: NodeConfig,
         clock: Arc<dyn Clock>,
     ) -> Result<Arc<Self>, NodeError> {
+        Self::open_with(
+            identity,
+            store_path,
+            transport,
+            config,
+            clock,
+            NodeOptions::default(),
+        )
+    }
+
+    /// [`Node::open`] with explicit [`NodeOptions`].
+    pub fn open_with(
+        mut identity: Identity,
+        store_path: &Path,
+        transport: Arc<dyn Transport>,
+        config: NodeConfig,
+        clock: Arc<dyn Clock>,
+        options: NodeOptions,
+    ) -> Result<Arc<Self>, NodeError> {
         config.validate().map_err(NodeError::Config)?;
+        let protection = options.protection.unwrap_or_else(default_protection);
+        identity.set_advertised_suites(protection.advertised_suites());
+        let now0 = clock.now_ms();
+        let local_revocation = match &options.local_revocation {
+            Some(doc) => {
+                let r = VerifiedRevocation::parse_and_verify(doc, now0)
+                    .map_err(|e| NodeError::Config(format!("local revocation: {e}")))?;
+                if r.address != identity.address() {
+                    return Err(NodeError::Config(
+                        "local revocation names a different address".into(),
+                    ));
+                }
+                Some(r)
+            }
+            None => None,
+        };
         let store = Store::open(store_path)?;
         let own = identity.address();
         let own_str = own.to_string();
-        store
+        let fresh = store
             .tx(|tx| match kv_get(tx, KV_OWN_ADDRESS)? {
                 Some(stored) if stored != own_str => {
                     Err(StoreError::Api(ApiError::internal(stored)))
                 }
-                Some(_) => Ok(()),
-                None => kv_set(tx, KV_OWN_ADDRESS, &own_str),
+                Some(_) => Ok(false),
+                None => {
+                    kv_set(tx, KV_OWN_ADDRESS, &own_str)?;
+                    Ok(true)
+                }
             })
             .map_err(|e| match e {
                 StoreError::Api(a) => NodeError::IdentityMismatch {
@@ -240,7 +304,20 @@ impl Node {
         };
         let (changes, _) = broadcast::channel(256);
         let (pause, _) = watch::channel(false);
-        Ok(Arc::new(Self {
+        let sidecar_path = options
+            .generation_sidecar
+            .unwrap_or_else(|| guard::sidecar_path(store_path));
+        let guard_ttl = open_limits
+            .max_ttl_ms
+            .saturating_add(open_limits.clock_skew_ms);
+        let (guard_state, generation) =
+            Self::evaluate_guard(&store, &sidecar_path, fresh, now0, guard_ttl)?;
+        let node = Arc::new(Self {
+            protection,
+            local_revocation,
+            guard: Mutex::new(guard_state),
+            sidecar_path,
+            published_generation: AtomicU64::new(generation),
             identity,
             own,
             own_str,
@@ -261,7 +338,144 @@ impl Node {
             transport_was_ok: AtomicBool::new(true),
             history_needed: AtomicBool::new(false),
             pause,
-        }))
+        });
+        node.after_open()?;
+        Ok(node)
+    }
+
+    /// Decide whether the replay guard must be active (see `guard.rs`),
+    /// persist the decision and re-synchronise the sidecar. Returns the active
+    /// guard and the current generation.
+    fn evaluate_guard(
+        store: &Store,
+        sidecar_path: &Path,
+        fresh: bool,
+        now: i64,
+        guard_ttl_ms: i64,
+    ) -> Result<(Option<GuardState>, u64), NodeError> {
+        let sidecar = guard::read_sidecar(sidecar_path);
+        let (state, generation, sidecar_out) = store.tx(|tx| {
+            let db_gen = guard::db_generation(tx)?;
+            let clear = kv_get(tx, guard::KV_GUARD_CLEAR)?.is_some();
+            let existing = guard::load_guard(tx)?;
+            let mut reason: Option<&'static str> = None;
+            match &sidecar {
+                SidecarState::Present(s) => {
+                    if s.guard.is_some() {
+                        reason = Some(guard::REASON_IMPORTED);
+                    } else if s.generation > db_gen {
+                        reason = Some(guard::REASON_ROLLBACK);
+                    }
+                }
+                SidecarState::Missing | SidecarState::Unreadable => {
+                    if !fresh {
+                        reason = Some(guard::REASON_UNKNOWN_HISTORY);
+                    }
+                }
+            }
+            let sc_gen = match &sidecar {
+                SidecarState::Present(s) => s.generation,
+                _ => 0,
+            };
+            let generation = db_gen.max(sc_gen);
+            kv_set(tx, guard::KV_GENERATION, &generation.to_string())?;
+            let state = if clear {
+                guard::delete_guard(tx)?;
+                None
+            } else if let Some(g) = existing {
+                Some(g)
+            } else if let Some(r) = reason {
+                let g = GuardState {
+                    reason: r.to_owned(),
+                    since: now,
+                    until: now.saturating_add(guard_ttl_ms),
+                };
+                guard::save_guard(tx, &g)?;
+                Some(g)
+            } else {
+                None
+            };
+            Ok((
+                state,
+                generation,
+                Sidecar {
+                    generation,
+                    guard: None,
+                },
+            ))
+        })?;
+        if let Err(e) = guard::write_sidecar(sidecar_path, &sidecar_out) {
+            tracing::warn!(error = %e, "could not write the store generation sidecar");
+        }
+        Ok((state, generation))
+    }
+
+    /// Work that needs the finished node: release messages held by an accepted
+    /// guard, persist the local revocation, queue announcements.
+    fn after_open(&self) -> Result<(), NodeError> {
+        let now = self.now();
+        if self.guard_state().is_none() {
+            self.release_held(now)?;
+        } else {
+            self.metrics.inc("guard.active_at_start");
+        }
+        if let Some(r) = &self.local_revocation {
+            self.store
+                .tx(|tx| kv_set(tx, KV_LOCAL_REVOCATION, r.document()))?;
+        }
+        self.announce_changes(now)?;
+        Ok(())
+    }
+
+    /// The active replay guard, lapsing it first if its time has passed.
+    pub(crate) fn guard_state(&self) -> Option<GuardState> {
+        let g = self
+            .guard
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone()?;
+        if self.now() >= g.until {
+            // All held messages are expired by now; this only cleans up.
+            if self.clear_guard().is_ok() {
+                return None;
+            }
+        }
+        Some(g)
+    }
+
+    /// Drop the guard and release (or discard, when expired) held messages.
+    pub(crate) fn clear_guard(&self) -> Result<(), StoreError> {
+        self.store.tx(|tx| guard::delete_guard(tx))?;
+        *self.guard.lock().unwrap_or_else(|e| e.into_inner()) = None;
+        self.release_held(self.now())?;
+        self.metrics.inc("guard.cleared");
+        Ok(())
+    }
+
+    /// True when the local identity has been revoked.
+    pub fn identity_revoked(&self) -> bool {
+        self.local_revocation.is_some()
+    }
+
+    /// Publish the DB generation to the sidecar (after a commit that bumped it).
+    pub(crate) fn publish_generation(&self) {
+        let g = match self.store.read(guard::db_generation) {
+            Ok(g) => g,
+            Err(_) => return,
+        };
+        if g <= self.published_generation.load(Ordering::SeqCst) {
+            return;
+        }
+        match guard::write_sidecar(
+            &self.sidecar_path,
+            &Sidecar {
+                generation: g,
+                guard: None,
+            },
+        ) {
+            Ok(()) => self.published_generation.store(g, Ordering::SeqCst),
+            Err(_) => self.metrics.inc("guard.sidecar_error"),
+        }
     }
 
     /// The agent's address string.
@@ -296,7 +510,8 @@ impl Node {
     /// Test hook: row count of one of the engine's tables.
     #[doc(hidden)]
     pub fn debug_table_count(&self, table: &str) -> u64 {
-        const TABLES: [&str; 9] = [
+        const TABLES: [&str; 10] = [
+            "revocations",
             "contacts",
             "outbox",
             "inbox",
@@ -379,6 +594,7 @@ impl Node {
                 trust: Trust::Trusted,
                 alias: Some("self".into()),
                 added_at: self.identity.created_at(),
+                revoked: false,
             }));
         }
         let row: Option<(String, Option<String>, String, i64)> = conn
@@ -396,12 +612,33 @@ impl Node {
         if contact.address != *addr {
             return Err(StoreError::Corrupt("stored contact address mismatch"));
         }
+        let revoked = Self::is_revoked(conn, addr)?;
         Ok(Some(ContactRow {
             contact,
-            trust: trust_from_db(&trust),
+            trust: if revoked {
+                Trust::Blocked
+            } else {
+                trust_from_db(&trust)
+            },
             alias,
             added_at,
+            revoked,
         }))
+    }
+
+    /// True if a verified identity-revocation tombstone is stored for `addr`.
+    pub(crate) fn is_revoked(
+        conn: &rusqlite::Connection,
+        addr: &Address,
+    ) -> Result<bool, StoreError> {
+        Ok(conn
+            .query_row(
+                "SELECT 1 FROM revocations WHERE address = ?1",
+                [addr.to_string()],
+                |_| Ok(()),
+            )
+            .optional()?
+            .is_some())
     }
 
     // ------------------------------------------------------------------ steps
@@ -544,6 +781,7 @@ impl Node {
     /// Expire and prune (see `docs/protocol.md`).
     pub fn step_maintenance(&self) -> Result<MaintenanceReport, NodeError> {
         let now = self.now();
+        let _ = self.guard_state();
         let c = &self.config;
         let hours = |h: u64| i64::try_from(h.saturating_mul(3_600_000)).unwrap_or(i64::MAX);
         let skew_ms = self.open_limits.clock_skew_ms;
@@ -560,7 +798,7 @@ impl Node {
                 let mut st = tx.prepare(
                     "UPDATE outbox SET state='expired', next_attempt_at=NULL
                      WHERE expires_at <= ?1 AND (state='queued' OR (state='sent' AND is_ack=0))
-                     RETURNING conversation_id, is_ack",
+                     RETURNING conversation_id, (is_ack OR hidden)",
                 )?;
                 let rows = st.query_map([now], |r| Ok((r.get::<_, Option<String>>(0)?, r.get::<_, i64>(1)? != 0)))?;
                 for r in rows {

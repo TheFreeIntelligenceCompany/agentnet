@@ -19,7 +19,7 @@ use rusqlite::{Connection, OptionalExtension, Transaction, TransactionBehavior};
 use crate::api::ApiError;
 
 /// Current schema version (`PRAGMA user_version`).
-pub const SCHEMA_VERSION: i64 = 1;
+pub const SCHEMA_VERSION: i64 = 2;
 
 /// Failure of a store operation. `Display` never contains row contents.
 #[derive(Debug, thiserror::Error)]
@@ -160,6 +160,20 @@ CREATE TABLE events (
 CREATE INDEX events_budget ON events (type, timestamp);
 ";
 
+/// v1 -> v2: hidden (system) outbox rows, replay-guard holds on inbox rows and
+/// the identity-revocation table.
+const SCHEMA_V2: &str = "
+ALTER TABLE outbox ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE inbox ADD COLUMN hold_reason TEXT;
+CREATE TABLE revocations (
+  address     TEXT PRIMARY KEY,
+  document    TEXT NOT NULL,
+  revoked_at  INTEGER NOT NULL,
+  received_at INTEGER NOT NULL,
+  source      TEXT NOT NULL
+) WITHOUT ROWID;
+";
+
 /// The SQLite store.
 pub struct Store {
     conn: Mutex<Option<Connection>>,
@@ -188,6 +202,12 @@ impl Store {
             let tx = conn.transaction()?;
             tx.execute_batch(SCHEMA_V1)?;
             tx.pragma_update(None, "user_version", 1)?;
+            tx.commit()?;
+        }
+        if v < 2 {
+            let tx = conn.transaction()?;
+            tx.execute_batch(SCHEMA_V2)?;
+            tx.pragma_update(None, "user_version", 2)?;
             tx.commit()?;
         }
         Ok(Self {
@@ -256,4 +276,77 @@ pub fn kv_set(conn: &Connection, key: &str, value: &str) -> Result<(), StoreErro
         [key, value],
     )?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A database created by the v1 code path (the v1 schema, user_version 1,
+    /// with rows in every table that v2 touches) migrates to v2 in place.
+    #[test]
+    fn migrates_a_v1_database() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("old.sqlite");
+        {
+            let conn = Connection::open(&path).unwrap();
+            conn.execute_batch(SCHEMA_V1).unwrap();
+            conn.pragma_update(None, "user_version", 1).unwrap();
+            conn.execute(
+                "INSERT INTO outbox (message_id, recipient, topic, type, body, frame, state, created_at, expires_at)
+                 VALUES ('m1','an1x','/t','message','b',x'00','queued',1,2)",
+                [],
+            )
+            .unwrap();
+            conn.execute(
+                "INSERT INTO inbox (message_id, sender, type, body, created_at, expires_at, received_at, sender_trust)
+                 VALUES ('m2','an1y','message','b',1,2,3,'trusted')",
+                [],
+            )
+            .unwrap();
+            conn.execute(
+                "INSERT INTO kv (key, value) VALUES ('own_address','an1z')",
+                [],
+            )
+            .unwrap();
+        }
+        let store = Store::open(&path).unwrap();
+        store
+            .read(|c| {
+                let v: i64 = c.query_row("PRAGMA user_version", [], |r| r.get(0))?;
+                assert_eq!(v, SCHEMA_VERSION);
+                let hidden: i64 =
+                    c.query_row("SELECT hidden FROM outbox WHERE message_id='m1'", [], |r| {
+                        r.get(0)
+                    })?;
+                assert_eq!(hidden, 0);
+                let hold: Option<String> = c.query_row(
+                    "SELECT hold_reason FROM inbox WHERE message_id='m2'",
+                    [],
+                    |r| r.get(0),
+                )?;
+                assert_eq!(hold, None);
+                let n: i64 = c.query_row("SELECT COUNT(*) FROM revocations", [], |r| r.get(0))?;
+                assert_eq!(n, 0);
+                assert_eq!(kv_get(c, "own_address")?.as_deref(), Some("an1z"));
+                Ok(())
+            })
+            .unwrap();
+        store.close();
+        // reopening a v2 database is a no-op
+        let store = Store::open(&path).unwrap();
+        store.close();
+    }
+
+    #[test]
+    fn refuses_a_newer_database() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("new.sqlite");
+        {
+            let conn = Connection::open(&path).unwrap();
+            conn.pragma_update(None, "user_version", SCHEMA_VERSION + 1)
+                .unwrap();
+        }
+        assert!(matches!(Store::open(&path), Err(StoreError::Corrupt(_))));
+    }
 }

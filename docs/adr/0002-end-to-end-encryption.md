@@ -65,7 +65,7 @@ Not provided, and stated as limitations:
 * RFC 9180 section 8.1 notes that applications using only the single-shot API
   should not rely on both `info` and `aad`; we use `info` for the domain and
   recipient key and `aad` for the 4-byte frame header. Flagged for the review.
-* No revocation channel; signing-key compromise means a new address.
+* No revocation channel; signing-key compromise means a new address. (Superseded in part after the owner's conditions: best-effort key and identity revocation now exist, `docs/protocol.md` section 9; there is still no global revocation list.)
 
 ## Alternatives
 

@@ -1,0 +1,22 @@
+   Compiling agentnet-core v0.1.0 (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a47fc99d044526c73/crates/core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.29s
+     Running tests/engine_hardening.rs (target/debug/deps/engine_hardening-391ebd95af9f67c9)
+
+running 14 tests
+test forged_tombstones_are_rejected_and_out_of_band_import_works ... ok
+test replay_across_kem_revocation_and_after_pruning ... ok
+test identity_revocation_propagates_and_blocks_the_revoked_contact ... ok
+test missing_sidecar_next_to_a_database_means_unknown_history ... ok
+test concurrent_identity_in_two_data_dirs_is_not_prevented ... ok
+test accept_rollback_releases_unexpired_held_messages ... ok
+test migration_guard_by_default_and_full_state_copy_keeps_history ... ok
+test contact_updates_from_wrong_untrusted_or_replayed_sources_are_not_applied ... ok
+test replay_after_restart_is_rejected ... ok
+test stale_and_conflicting_contact_records_are_rejected ... ok
+test rollback_enters_the_replay_guard_and_holds_replayed_frames ... ok
+test rotation_with_overlap_keeps_old_frames_openable_and_announces_the_new_record ... ok
+test rotation_with_revoke_reseals_pending_messages_after_contact_update ... ok
+test tombstones_delivered_in_envelopes_are_applied_only_when_relevant ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.88s
+

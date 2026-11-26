@@ -1,0 +1,12 @@
+   Compiling agentnet-core v0.1.0 (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a47fc99d044526c73/crates/core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.11s
+     Running tests/architecture.rs (target/debug/deps/architecture-eadd58d3067bc17d)
+
+running 4 tests
+test the_reference_matcher_works ... ok
+test transport_mcp_daemon_and_cli_do_not_depend_on_the_cryptographic_crates ... ok
+test the_engine_goes_through_the_message_protection_trait ... ok
+test only_the_crypto_module_references_the_cryptographic_crates ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+

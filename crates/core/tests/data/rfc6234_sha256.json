@@ -1,0 +1,15 @@
+{
+  "source": "https://www.rfc-editor.org/rfc/rfc6234.txt",
+  "section": "Section 8.5 test driver data: SHA256 test cases 1 and 2 (TEST1, TEST2_1)",
+  "retrieved": "2026-11-26",
+  "vectors": [
+    {
+      "message": "abc",
+      "digest": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+    },
+    {
+      "message": "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
+      "digest": "248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1"
+    }
+  ]
+}

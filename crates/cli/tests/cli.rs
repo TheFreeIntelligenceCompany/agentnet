@@ -547,3 +547,202 @@ async fn mcp_embedded_runs_the_daemon_in_process_and_holds_the_lock() {
     );
     c.cancel().await.unwrap();
 }
+
+// ----------------------------------------------- hardening: rotation, revocation, replay guard
+
+#[test]
+fn rotate_kem_with_revoke_previous_destroys_old_keys_and_bumps_the_epoch() {
+    let t = tempfile::tempdir().unwrap();
+    let (a, addr) = init(t.path(), "a");
+    // plain rotation: epoch 2, one retired key kept
+    let v = json_ok(&a, &["identity", "rotate-kem", "--keep-hours", "1"]);
+    assert_eq!(v["key_epoch"], 2);
+    let id: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(a.join("identity.json")).unwrap()).unwrap();
+    assert_eq!(id["previous_kems"].as_array().unwrap().len(), 1);
+    // revoking rotation: epoch 3, no retired keys left on disk, floor signed in the record
+    let v = json_ok(&a, &["identity", "rotate-kem", "--revoke-previous"]);
+    assert_eq!(v["agent_id"], addr.as_str());
+    assert_eq!(v["key_epoch"], 3);
+    let id: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(a.join("identity.json")).unwrap()).unwrap();
+    assert_eq!(id["previous_kems"].as_array().unwrap().len(), 0);
+    assert_eq!(id["min_valid_epoch"], 3);
+    let rec = agentnet_core::crypto::VerifiedContact::parse_and_verify(
+        v["contact_record"].as_str().unwrap(),
+        i64::MAX / 2,
+    )
+    .unwrap();
+    assert_eq!(rec.key_epoch, 3);
+    assert_eq!(rec.revoked_kem_epochs_below, 3);
+    assert_eq!(rec.suites, vec![1]);
+}
+
+#[test]
+fn identity_revoke_writes_a_signed_tombstone_and_blocks_further_changes() {
+    let t = tempfile::tempdir().unwrap();
+    let (a, addr) = init(t.path(), "a");
+    let o = agentnet(&a, &["identity", "show-revocation"]);
+    assert_eq!(o.status.code(), Some(5), "not revoked yet: {}", stderr(&o));
+    let bad = agentnet(&a, &["identity", "revoke", "--reason", ""]);
+    assert!(!bad.status.success());
+    assert!(!a.join("revocation.json").exists());
+
+    let v = json_ok(&a, &["identity", "revoke", "--reason", "key stolen"]);
+    assert_eq!(v["address"], addr.as_str());
+    let doc = v["revocation"].as_str().unwrap().to_owned();
+    assert_eq!(mode(&a.join("revocation.json")), 0o600);
+    // the printed document verifies and names this address
+    let rev =
+        agentnet_core::crypto::VerifiedRevocation::parse_and_verify(&doc, i64::MAX / 2).unwrap();
+    assert_eq!(rev.address.to_string(), addr);
+    assert_eq!(rev.reason, "key stolen");
+    // show-revocation prints the same document; identity show reports it
+    let s = json_ok(&a, &["identity", "show-revocation"]);
+    assert_eq!(s["revocation"].as_str().unwrap(), doc);
+    assert_eq!(json_ok(&a, &["identity", "show"])["revoked"], true);
+    // irreversible and not repeatable; rotating is refused
+    assert!(!agentnet(&a, &["identity", "revoke", "--reason", "again"])
+        .status
+        .success());
+    assert!(!agentnet(&a, &["identity", "rotate-kem"]).status.success());
+    // doctor says so
+    let d = stdout(&agentnet(&a, &["doctor"]));
+    assert!(d.contains("[warn] identity revoked"), "{d}");
+}
+
+#[test]
+fn identity_import_starts_in_replay_guard_mode_unless_told_otherwise() {
+    let t = tempfile::tempdir().unwrap();
+    let (a, addr) = init(t.path(), "a");
+    let pw = write_file(t.path(), "pw", "correct horse battery staple\n");
+    let export = t.path().join("export.age");
+    ok(
+        &a,
+        &[
+            "identity",
+            "export",
+            "--out",
+            export.to_str().unwrap(),
+            "--passphrase-file",
+            pw.to_str().unwrap(),
+        ],
+    );
+    let args = |extra: &[&'static str]| {
+        let mut v = vec![
+            "identity",
+            "import",
+            "--in",
+            export.to_str().unwrap(),
+            "--passphrase-file",
+            pw.to_str().unwrap(),
+            "--peer",
+            PEER,
+        ];
+        v.extend_from_slice(extra);
+        v.into_iter().map(str::to_owned).collect::<Vec<_>>()
+    };
+    let run = |dir: &std::path::Path, extra: &[&'static str]| {
+        let a = args(extra);
+        let r: Vec<&str> = a.iter().map(String::as_str).collect();
+        json_ok(dir, &r)
+    };
+    let guarded = t.path().join("guarded");
+    let v = run(&guarded, &[]);
+    assert_eq!(v["address"], addr.as_str());
+    assert_eq!(v["replay_guard"], true);
+    let sidecar = std::fs::read_to_string(guarded.join("agentnet.generation")).unwrap();
+    assert!(sidecar.contains("\"guard\":\"imported\""), "{sidecar}");
+    let d = stdout(&agentnet(&guarded, &["doctor"]));
+    assert!(d.contains("[warn] replay guard"), "{d}");
+
+    let open = t.path().join("open");
+    let v = run(&open, &["--no-replay-guard"]);
+    assert_eq!(v["replay_guard"], false);
+    assert!(!open.join("agentnet.generation").exists());
+    let d = stdout(&agentnet(&open, &["doctor"]));
+    assert!(d.contains("[ok  ] replay guard"), "{d}");
+
+    // `doctor --accept-rollback` drops the import marker (daemon stopped)
+    let o = agentnet(&guarded, &["doctor", "--accept-rollback"]);
+    assert!(stderr(&o).contains("accepted"), "{}", stderr(&o));
+    let sidecar = std::fs::read_to_string(guarded.join("agentnet.generation")).unwrap();
+    assert!(sidecar.contains("\"guard\":null"), "{sidecar}");
+    let d = stdout(&agentnet(&guarded, &["doctor"]));
+    assert!(d.contains("[ok  ] replay guard"), "{d}");
+    // nothing left to accept
+    let o = agentnet(&guarded, &["doctor", "--accept-rollback"]);
+    assert!(stderr(&o).contains("nothing to accept"), "{}", stderr(&o));
+}
+
+#[test]
+fn doctor_always_warns_that_a_second_instance_of_the_identity_cannot_be_detected() {
+    let t = tempfile::tempdir().unwrap();
+    let (a, _) = init(t.path(), "a");
+    let d = stdout(&agentnet(&a, &["doctor"]));
+    assert!(d.contains("[warn] single instance"), "{d}");
+}
+
+#[tokio::test]
+async fn contact_revoke_imports_a_tombstone_into_a_running_daemon() {
+    let t = tempfile::tempdir().unwrap();
+    let (a, _addr_a) = init(t.path(), "a");
+    let (b, addr_b) = init(t.path(), "b");
+    // B is revoked (daemon stopped) and its notice is carried out of band
+    let rev = json_ok(&b, &["identity", "revoke", "--reason", "retired"])["revocation"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    let record_b = contact_record(&b);
+    let now_ns = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos() as i64;
+    let clock = MockClock::new(now_ns);
+    let net = MockNetwork::with_clock(clock.clone());
+    let cfg = DaemonConfig::load(&a.join("agentnet.toml")).unwrap();
+    let da = Daemon::start_with_transport(&a, cfg, Arc::new(net.endpoint()), Arc::new(clock))
+        .await
+        .unwrap();
+    let (a2, addr_b2) = (a.clone(), addr_b.clone());
+    let out = tokio::task::spawn_blocking(move || {
+        let fr = write_file(&a2, "peer.json", &record_b);
+        ok(&a2, &["contact", "add", &format!("@{}", fr.display())]);
+        let ft = write_file(&a2, "tomb.json", &rev);
+        let first = json_ok(&a2, &["contact", "revoke", &format!("@{}", ft.display())]);
+        let again = json_ok(&a2, &["contact", "revoke", &format!("@{}", ft.display())]);
+        let list = json_ok(&a2, &["contact", "list"]);
+        // re-adding / re-trusting a revoked address is refused (exit 6)
+        let readd = agentnet(&a2, &["contact", "add", &format!("@{}", fr.display())]);
+        let retrust = agentnet(&a2, &["contact", "trust", &addr_b2, "trusted"]);
+        let garbage = agentnet(&a2, &["contact", "revoke", "not a document"]);
+        (
+            first,
+            again,
+            list,
+            readd.status.code(),
+            retrust.status.code(),
+            garbage.status.code(),
+        )
+    })
+    .await
+    .unwrap();
+    let (first, again, list, readd, retrust, garbage) = out;
+    assert_eq!(first["newly_revoked"], true);
+    assert_eq!(first["address"], addr_b.as_str());
+    assert_eq!(again["newly_revoked"], false);
+    assert_eq!(list[0]["revoked"], true);
+    assert_eq!(list[0]["trust"], "blocked");
+    assert_eq!(readd, Some(6));
+    assert_eq!(retrust, Some(6));
+    assert_eq!(garbage, Some(4));
+    da.shutdown().await;
+}
+
+#[test]
+fn top_level_help_says_the_cryptography_is_not_audited() {
+    let t = tempfile::tempdir().unwrap();
+    let h = stdout(&agentnet(t.path(), &["--help"]));
+    assert!(h.contains("NOT AUDITED"), "{h}");
+    assert!(h.contains("independent cryptographic review"), "{h}");
+}

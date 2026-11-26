@@ -8,7 +8,7 @@ use std::time::{Duration, Instant};
 
 use agentnet_core::api::AgentApi;
 use agentnet_core::identity::Identity;
-use agentnet_core::{Clock, Node, SystemClock};
+use agentnet_core::{Clock, Node, NodeOptions, SystemClock};
 use agentnet_mcp::{bind_http, serve_http, HttpOptions};
 use agentnet_transport::logos_rest::LogosRestTransport;
 use agentnet_transport::Transport;
@@ -121,10 +121,24 @@ fn prepare_socket(path: &Path) -> Result<UnixListener, DaemonError> {
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
         Err(e) => return Err(DaemonError::io(format!("checking {}", path.display()), e)),
     }
-    let listener = UnixListener::bind(path)
-        .map_err(|e| DaemonError::io(format!("binding {}", path.display()), e))?;
-    std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o600))
-        .map_err(|e| DaemonError::io(format!("chmod {}", path.display()), e))?;
+    // Bind under a temporary name, restrict it, then rename it into place, so
+    // that `agentnet.sock` never exists with the umask-derived mode.
+    let mut tmp = path.as_os_str().to_owned();
+    tmp.push(format!(".{}.tmp", std::process::id()));
+    let tmp = PathBuf::from(tmp);
+    let _ = std::fs::remove_file(&tmp);
+    let listener = UnixListener::bind(&tmp)
+        .map_err(|e| DaemonError::io(format!("binding {}", tmp.display()), e))?;
+    let finish = || -> Result<(), DaemonError> {
+        std::fs::set_permissions(&tmp, std::fs::Permissions::from_mode(0o600))
+            .map_err(|e| DaemonError::io(format!("chmod {}", tmp.display()), e))?;
+        std::fs::rename(&tmp, path)
+            .map_err(|e| DaemonError::io(format!("renaming into {}", path.display()), e))
+    };
+    if let Err(e) = finish() {
+        let _ = std::fs::remove_file(&tmp);
+        return Err(e);
+    }
     Ok(listener)
 }
 
@@ -137,12 +151,32 @@ async fn start_locked(
 ) -> Result<RunningDaemon, DaemonError> {
     let identity =
         Identity::load(&dir.identity()).map_err(|e| DaemonError::Identity(e.to_string()))?;
-    let node = Node::open(
+    // A revoked identity carries its signed tombstone next to the identity file.
+    let local_revocation = match std::fs::read_to_string(dir.revocation()) {
+        Ok(doc) => Some(doc),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => None,
+        Err(e) => {
+            return Err(DaemonError::io(
+                format!("reading {}", dir.revocation().display()),
+                e,
+            ))
+        }
+    };
+    if local_revocation.is_some() {
+        tracing::warn!(
+            "this identity has been REVOKED: it will only deliver its revocation notice"
+        );
+    }
+    let node = Node::open_with(
         identity,
         &dir.db(),
         transport,
         config.to_node_config(),
         clock.clone(),
+        NodeOptions {
+            local_revocation,
+            ..Default::default()
+        },
     )?;
     for suffix in ["", "-wal", "-shm"] {
         let mut p = dir.db().into_os_string();

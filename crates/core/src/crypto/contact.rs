@@ -16,9 +16,9 @@ use serde::{Deserialize, Deserializer, Serialize};
 
 use agentnet_transport::ContentTopic;
 
-use crate::address::{Address, MAX_INBOX_BUCKETS, MIN_INBOX_BUCKETS};
+use super::address::{Address, MAX_INBOX_BUCKETS, MIN_INBOX_BUCKETS};
+use super::identity::Identity;
 use crate::error::{json_reason, ContactError};
-use crate::identity::Identity;
 
 /// Domain separation prefix of the contact record signature.
 pub const CONTACT_RECORD_DOMAIN: &[u8] = b"agentnet/v1/contact-record\0";
@@ -45,11 +45,20 @@ struct RecordV1 {
     address: String,
     signing_pk: String,
     kem_pk: String,
+    /// Monotonically increasing; starts at 1; every KEM rotation increments it.
+    key_epoch: u64,
+    /// Key epochs strictly below this value are revoked (1 = none revoked).
+    revoked_kem_epochs_below: u64,
+    /// Cipher suites the owner accepts, strictly ascending.
+    suites: Vec<u8>,
     inbox_buckets: u16,
     created_at: i64,
     #[serde(deserialize_with = "required_option")]
     kem_expires_at: Option<i64>,
 }
+
+/// Longest `suites` list accepted in a record.
+pub const MAX_SUITES: usize = 16;
 
 #[derive(Deserialize)]
 struct VersionOnly {
@@ -71,13 +80,16 @@ pub struct SignedContactRecord {
 }
 
 impl SignedContactRecord {
-    pub(crate) fn create(id: &Identity) -> Self {
+    pub(crate) fn create(id: &Identity, suites: &[u8]) -> Self {
         let address = id.address();
         let rec = RecordV1 {
             v: CONTACT_RECORD_VERSION,
             address: address.to_string(),
             signing_pk: B64.encode(address.as_bytes()),
             kem_pk: B64.encode(id.kem_public_key()),
+            key_epoch: id.key_epoch(),
+            revoked_kem_epochs_below: id.min_valid_epoch(),
+            suites: suites.to_vec(),
             inbox_buckets: id.inbox_buckets(),
             created_at: id.kem_created_at(),
             kem_expires_at: id.kem_expires_at(),
@@ -113,6 +125,12 @@ impl SignedContactRecord {
 pub struct VerifiedContact {
     pub address: Address,
     pub kem_pk: [u8; 32],
+    /// Monotonic key epoch of `kem_pk`.
+    pub key_epoch: u64,
+    /// Epochs strictly below this are revoked by the owner.
+    pub revoked_kem_epochs_below: u64,
+    /// Suites the owner accepts (ascending).
+    pub suites: Vec<u8>,
     pub inbox_buckets: u16,
     pub created_at: i64,
     pub kem_expires_at: Option<i64>,
@@ -136,7 +154,7 @@ impl VerifiedContact {
     }
 
     /// Like [`Self::parse_and_verify`] but does not reject an expired KEM key.
-    /// Intended for re-loading persisted contacts; [`crate::envelope::seal`]
+    /// Intended for re-loading persisted contacts; [`super::envelope::seal`]
     /// still refuses to seal to an expired key.
     pub fn parse_and_verify_allow_expired(doc: &str, now_ms: i64) -> Result<Self, ContactError> {
         if doc.len() > MAX_CONTACT_DOCUMENT_LEN {
@@ -188,6 +206,19 @@ impl VerifiedContact {
             .map_err(|_| ContactError::InvalidKemKey)?;
         check_kem_public_key(&kem_pk)?;
 
+        if r.key_epoch < 1
+            || r.revoked_kem_epochs_below < 1
+            || r.revoked_kem_epochs_below > r.key_epoch
+        {
+            return Err(ContactError::InvalidKeyEpoch);
+        }
+        if r.suites.is_empty()
+            || r.suites.len() > MAX_SUITES
+            || r.suites.first() == Some(&0)
+            || r.suites.windows(2).any(|w| w[0] >= w[1])
+        {
+            return Err(ContactError::InvalidSuites);
+        }
         if !(MIN_INBOX_BUCKETS..=MAX_INBOX_BUCKETS).contains(&r.inbox_buckets) {
             return Err(ContactError::InvalidInboxBuckets);
         }
@@ -201,11 +232,27 @@ impl VerifiedContact {
         Ok(Self {
             address,
             kem_pk,
+            key_epoch: r.key_epoch,
+            revoked_kem_epochs_below: r.revoked_kem_epochs_below,
+            suites: r.suites,
             inbox_buckets: r.inbox_buckets,
             created_at: r.created_at,
             kem_expires_at: r.kem_expires_at,
             document: doc.to_owned(),
         })
+    }
+
+    /// True if every field of the signed record is equal (the document text,
+    /// which may differ in whitespace, is not compared).
+    pub fn same_record(&self, other: &Self) -> bool {
+        self.address == other.address
+            && self.kem_pk == other.kem_pk
+            && self.key_epoch == other.key_epoch
+            && self.revoked_kem_epochs_below == other.revoked_kem_epochs_below
+            && self.suites == other.suites
+            && self.inbox_buckets == other.inbox_buckets
+            && self.created_at == other.created_at
+            && self.kem_expires_at == other.kem_expires_at
     }
 
     /// True if the advertised KEM key is expired at `now_ms`.
@@ -285,7 +332,7 @@ mod tests {
         let rec = id.contact_record();
         let s = std::str::from_utf8(rec.record_bytes()).unwrap();
         let expect = format!(
-            "{{\"v\":1,\"address\":\"{}\",\"signing_pk\":\"{}\",\"kem_pk\":\"{}\",\"inbox_buckets\":16,\"created_at\":{NOW},\"kem_expires_at\":null}}",
+            "{{\"v\":1,\"address\":\"{}\",\"signing_pk\":\"{}\",\"kem_pk\":\"{}\",\"key_epoch\":1,\"revoked_kem_epochs_below\":1,\"suites\":[1],\"inbox_buckets\":16,\"created_at\":{NOW},\"kem_expires_at\":null}}",
             id.address(),
             B64.encode(id.address().as_bytes()),
             B64.encode(id.kem_public_key())
@@ -322,6 +369,9 @@ mod tests {
         for (field, newval) in [
             ("inbox_buckets", serde_json::json!(32)),
             ("created_at", serde_json::json!(NOW + 1)),
+            ("key_epoch", serde_json::json!(2)),
+            ("revoked_kem_epochs_below", serde_json::json!(1)),
+            ("suites", serde_json::json!([1, 2])),
             ("kem_expires_at", serde_json::json!(NOW + 100_000)),
             (
                 "kem_pk",
@@ -450,6 +500,46 @@ mod tests {
                 "negative",
                 Box::new(|v| v["created_at"] = serde_json::json!(-1)),
                 ContactError::InvalidTimestamp,
+            ),
+            (
+                "epoch 0",
+                Box::new(|v| v["key_epoch"] = serde_json::json!(0)),
+                ContactError::InvalidKeyEpoch,
+            ),
+            (
+                "floor 0",
+                Box::new(|v| v["revoked_kem_epochs_below"] = serde_json::json!(0)),
+                ContactError::InvalidKeyEpoch,
+            ),
+            (
+                "floor above epoch",
+                Box::new(|v| v["revoked_kem_epochs_below"] = serde_json::json!(2)),
+                ContactError::InvalidKeyEpoch,
+            ),
+            (
+                "no suites",
+                Box::new(|v| v["suites"] = serde_json::json!([])),
+                ContactError::InvalidSuites,
+            ),
+            (
+                "unsorted suites",
+                Box::new(|v| v["suites"] = serde_json::json!([2, 1])),
+                ContactError::InvalidSuites,
+            ),
+            (
+                "duplicate suites",
+                Box::new(|v| v["suites"] = serde_json::json!([1, 1])),
+                ContactError::InvalidSuites,
+            ),
+            (
+                "suite zero",
+                Box::new(|v| v["suites"] = serde_json::json!([0, 1])),
+                ContactError::InvalidSuites,
+            ),
+            (
+                "suite out of range",
+                Box::new(|v| v["suites"] = serde_json::json!([1, 256])),
+                ContactError::MalformedRecord("invalid field value or type"),
             ),
             (
                 "float time",

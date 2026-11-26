@@ -1,0 +1,5 @@
+    Checking agentnet-daemon v0.1.0 (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a47fc99d044526c73/crates/daemon)
+    Checking agentnet-mcp v0.1.0 (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a47fc99d044526c73/crates/mcp)
+    Checking agentnet-core v0.1.0 (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a47fc99d044526c73/crates/core)
+    Checking agentnet-cli v0.1.0 (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a47fc99d044526c73/crates/cli)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 12.20s

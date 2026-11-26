@@ -18,6 +18,8 @@ The daemon surfaces their error messages and does not duplicate their rules.
 |---|---|---|
 | `.` | 0700 | The daemon refuses to start if group/others have any access |
 | `identity.json` | 0600 | Secret keys; loading refuses looser permissions |
+| `revocation.json` | 0600 | Signed identity-revocation tombstone; exists only after `agentnet identity revoke`. A revoked identity sends nothing except this notice |
+| `agentnet.generation` | 0600 | Sidecar of the store generation (JSON `{"v":1,"generation":N,"guard":null}`), rewritten and fsynced after every committed receive. A database *older* than this file means the store was rolled back and starts the replay guard; a missing sidecar next to an existing database does too. Copy it together with `agentnet.db` to migrate with dedupe history. `identity import` creates it with an `imported` marker (guard on the first start) unless `--no-replay-guard` is given. Nothing to configure: `agentnet doctor` reports it and `agentnet doctor --accept-rollback` (daemon stopped) accepts a rollback |
 | `agentnet.toml` | 0600 | This file |
 | `agentnet.db` (+ `-wal`, `-shm`) | 0600 | Engine store (SQLite, WAL) |
 | `webhook.db` | 0600 | Webhook dispatcher cursor and parked events |
@@ -27,7 +29,7 @@ The daemon surfaces their error messages and does not duplicate their rules.
 | `mcp-http.token` | 0600 | Bearer token for `[mcp_http]` |
 
 One data directory is one agent identity and at most one process: a second `agentnet serve` (or an
-`identity export|import|rotate-kem`) on the same directory fails with "another AgentNet process is using
+`identity export|import|rotate-kem|revoke`, `doctor --accept-rollback`) on the same directory fails with "another AgentNet process is using
 this data directory". The socket path must fit a Unix socket (about 100 bytes): use a short `--data-dir`.
 
 ## `[network]`

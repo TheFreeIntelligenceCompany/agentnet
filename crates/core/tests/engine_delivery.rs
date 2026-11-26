@@ -981,7 +981,7 @@ async fn contact_management() {
         })
         .await
         .unwrap_err();
-    assert_eq!(e.code, ErrorCode::InvalidArgument);
+    assert_eq!(e.code, ErrorCode::Conflict);
     assert_eq!(a.node.list_contacts().await.unwrap().len(), 1);
     assert_eq!(
         a.node

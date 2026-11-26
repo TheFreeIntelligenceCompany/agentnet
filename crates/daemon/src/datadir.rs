@@ -3,6 +3,7 @@
 //! ```text
 //! <data dir>/            0700
 //!   identity.json        0600   secret keys (written by `agentnet init`)
+//!   revocation.json      0600   signed identity-revocation tombstone (only after `identity revoke`)
 //!   agentnet.toml        0600   configuration
 //!   agentnet.db          0600   engine store (SQLite, WAL)
 //!   webhook.db           0600   webhook dispatcher cursor
@@ -44,6 +45,14 @@ impl DataDir {
     /// `identity.json`
     pub fn identity(&self) -> PathBuf {
         self.root.join("identity.json")
+    }
+    /// `revocation.json` (exists only for a revoked identity)
+    pub fn revocation(&self) -> PathBuf {
+        self.root.join("revocation.json")
+    }
+    /// `agentnet.generation` (sidecar of the store generation, see `agentnet_core::guard`)
+    pub fn generation(&self) -> PathBuf {
+        agentnet_core::guard::sidecar_path(&self.db())
     }
     /// `agentnet.toml`
     pub fn config(&self) -> PathBuf {

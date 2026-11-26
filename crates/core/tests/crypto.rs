@@ -31,8 +31,10 @@ fn contact_of(id: &Identity) -> VerifiedContact {
     VerifiedContact::parse_and_verify(&id.contact_record().to_document(), NOW).unwrap()
 }
 
+/// An envelope as `seal` will produce it for a recipient on key epoch 1
+/// (the signed `suite` and `recipient_key_epoch` are filled in by `seal`).
 fn env(from: &Identity, to: &Identity, body: &str) -> Envelope {
-    Envelope::new(
+    let mut e = Envelope::new(
         from.address(),
         to.address(),
         MESSAGE_TYPE_MESSAGE,
@@ -40,7 +42,9 @@ fn env(from: &Identity, to: &Identity, body: &str) -> Envelope {
         NOW,
         TTL,
     )
-    .unwrap()
+    .unwrap();
+    e.recipient_key_epoch = to.key_epoch();
+    e
 }
 
 fn seal_to(from: &Identity, to: &Identity, body: &str) -> Vec<u8> {
@@ -1126,4 +1130,286 @@ fn constants_match_spec() {
     assert_eq!(envelope::HPKE_INFO_DOMAIN, b"agentnet/v1/hpke\0");
     assert_eq!(OpenLimits::default().clock_skew_ms, 120_000);
     assert_eq!(OpenLimits::default().max_ttl_ms, 7 * 24 * 3600 * 1000);
+}
+
+// ------------------------------------------------- conditions 1, 6, 7: suites,
+// ------------------------------------------------- epochs, headers, fresh contexts
+
+mod hardening {
+    use super::*;
+    use agentnet_core::crypto::envelope::testing::decrypts_with_aad;
+    use agentnet_core::crypto::{
+        HpkeBaseEd25519, MessageProtection, SuiteRegistry, SUITE_HPKE_BASE_ED25519,
+    };
+    use std::sync::Arc;
+
+    fn contact_with_suites(id: &mut Identity, suites: &[u8]) -> VerifiedContact {
+        id.set_advertised_suites(suites.to_vec());
+        VerifiedContact::parse_and_verify(&id.contact_record().to_document(), NOW).unwrap()
+    }
+
+    /// Test-only suite: NOT cryptography, only a frame the registry can route
+    /// (`"AN" 1 <id>` header followed by the envelope JSON).
+    struct DummySuite(u8);
+
+    impl MessageProtection for DummySuite {
+        fn suite_id(&self) -> u8 {
+            self.0
+        }
+        fn supported_suites(&self) -> Vec<u8> {
+            vec![self.0]
+        }
+        fn seal(
+            &self,
+            _sender: &Identity,
+            recipient: &VerifiedContact,
+            envelope: &Envelope,
+            _now: i64,
+            _max: usize,
+        ) -> Result<Vec<u8>, SealError> {
+            assert!(
+                recipient.suites.contains(&self.0),
+                "never seal to an unlisted suite"
+            );
+            let mut f = vec![b'A', b'N', 1, self.0];
+            f.extend(serde_json::to_vec(envelope).unwrap());
+            Ok(f)
+        }
+        fn open(
+            &self,
+            _r: &Identity,
+            frame: &[u8],
+            _now: i64,
+            _l: &OpenLimits,
+        ) -> Result<OpenedEnvelope, OpenError> {
+            let envelope: Envelope = serde_json::from_slice(&frame[4..]).unwrap();
+            Ok(OpenedEnvelope {
+                sender: envelope.sender,
+                envelope,
+            })
+        }
+        fn max_body_len(&self, _m: usize, _e: &Envelope) -> usize {
+            0
+        }
+    }
+
+    fn registry(ids: &[u8]) -> SuiteRegistry {
+        let mut r = SuiteRegistry::new(vec![]);
+        for id in ids {
+            if *id == SUITE_HPKE_BASE_ED25519 {
+                r.register(Arc::new(HpkeBaseEd25519));
+            } else {
+                r.register(Arc::new(DummySuite(*id)));
+            }
+        }
+        r
+    }
+
+    #[test]
+    fn two_seals_of_the_same_envelope_use_fresh_hpke_contexts() {
+        let (a, b) = (ident(), ident());
+        let c = contact_of(&b);
+        let e = env(&a, &b, "same envelope");
+        let f1 = seal(&a, &c, &e, NOW, MAX).unwrap();
+        let f2 = seal(&a, &c, &e, NOW, MAX).unwrap();
+        // different ephemeral key (enc) and different ciphertext
+        assert_ne!(
+            f1[ENC_OFFSET..ENC_OFFSET + ENC_LEN],
+            f2[ENC_OFFSET..ENC_OFFSET + ENC_LEN]
+        );
+        assert_ne!(f1[CIPHERTEXT_OFFSET..], f2[CIPHERTEXT_OFFSET..]);
+        assert_eq!(f1.len(), f2.len());
+        // both open to the same envelope
+        let o1 = open(&b, &f1, NOW, &lim()).unwrap();
+        let o2 = open(&b, &f2, NOW, &lim()).unwrap();
+        assert_eq!(o1.envelope, o2.envelope);
+        // many seals never repeat an enc
+        let mut encs = std::collections::HashSet::new();
+        for _ in 0..64 {
+            let f = seal(&a, &c, &e, NOW, MAX).unwrap();
+            assert!(encs.insert(f[ENC_OFFSET..ENC_OFFSET + ENC_LEN].to_vec()));
+        }
+    }
+
+    #[test]
+    fn frame_version_and_suite_bytes_are_authenticated_as_aad() {
+        let (a, b) = (ident(), ident());
+        let f = seal_to(&a, &b, "x");
+        let header: [u8; 4] = f[..4].try_into().unwrap();
+        assert!(decrypts_with_aad(&b, &f, &header, NOW));
+        for i in 0..4 {
+            for flip in [1u8, 0x80, 0xff] {
+                let mut bad = header;
+                bad[i] ^= flip;
+                assert!(
+                    !decrypts_with_aad(&b, &f, &bad, NOW),
+                    "byte {i} ^ {flip:#x} must fail authentication"
+                );
+            }
+        }
+        // and through the real entry point, a changed version/suite never opens
+        for (i, want) in [
+            (2usize, OpenError::UnknownFrameVersion(2)),
+            (3, OpenError::UnknownSuite(2)),
+        ] {
+            let mut g = f.clone();
+            g[i] = 2;
+            assert_eq!(open(&b, &g, NOW, &lim()), Err(want));
+        }
+    }
+
+    #[test]
+    fn signed_suite_and_key_epoch_must_match_the_frame_and_the_decrypting_key() {
+        let (a, mut b) = (ident(), ident());
+        b.rotate_kem(NOW, NOW + 1_000_000, None).unwrap(); // epoch 2, epoch-1 key retained
+        let cur = b.kem_public_key();
+        let mut e = env(&a, &b, "m");
+        e.recipient_key_epoch = 2;
+        // control: epoch 2 to the epoch-2 key
+        assert!(open(&b, &raw_frame(&a, &cur, &e), NOW, &lim()).is_ok());
+        // wrong signed epoch
+        for bad in [0u64, 1, 3] {
+            let mut x = e.clone();
+            x.recipient_key_epoch = bad;
+            assert_eq!(
+                open(&b, &raw_frame(&a, &cur, &x), NOW, &lim()),
+                Err(OpenError::KeyEpochMismatch),
+                "epoch {bad}"
+            );
+        }
+        // wrong signed suite
+        let mut x = e.clone();
+        x.suite = 2;
+        assert_eq!(
+            open(&b, &raw_frame(&a, &cur, &x), NOW, &lim()),
+            Err(OpenError::SuiteMismatch)
+        );
+    }
+
+    #[test]
+    fn an_old_recipient_key_cannot_rewrap_a_message_into_a_newer_epoch() {
+        let a = ident();
+        let mut b = ident();
+        let old_pk = b.kem_public_key();
+        b.rotate_kem(NOW, NOW + 1_000_000, None).unwrap();
+        // attacker holding the OLD secret key re-wraps A's (validly signed)
+        // epoch-1 envelope claiming epoch 2: the signature covers the epoch
+        // field, and the epoch that actually decrypts is 1.
+        let mut e = env(&a, &b, "m");
+        e.recipient_key_epoch = 1;
+        assert!(open(&b, &raw_frame(&a, &old_pk, &e), NOW, &lim()).is_ok());
+        e.recipient_key_epoch = 2;
+        assert_eq!(
+            open(&b, &raw_frame(&a, &old_pk, &e), NOW, &lim()),
+            Err(OpenError::KeyEpochMismatch)
+        );
+    }
+
+    #[test]
+    fn kem_rotation_with_revoke_destroys_old_keys_and_signs_the_floor() {
+        let a = ident();
+        let mut b = ident();
+        let old = contact_of(&b);
+        assert_eq!((old.key_epoch, old.revoked_kem_epochs_below), (1, 1));
+        let f_old = seal(&a, &old, &env(&a, &b, "to the old key"), NOW, MAX).unwrap();
+        assert!(open(&b, &f_old, NOW, &lim()).is_ok());
+
+        b.rotate_kem_with(NOW, NOW + 1_000_000, None, true).unwrap();
+        assert_eq!(b.previous_kem_count(), 0);
+        assert_eq!(open(&b, &f_old, NOW, &lim()), Err(OpenError::NotForUs));
+        let new = contact_of(&b);
+        assert_eq!((new.key_epoch, new.revoked_kem_epochs_below), (2, 2));
+        // the floor survives an export/import, and a later plain rotation keeps it
+        let mut c = Identity::import_encrypted(&b.export_encrypted("pw").unwrap(), "pw").unwrap();
+        assert_eq!((c.key_epoch(), c.min_valid_epoch()), (2, 2));
+        c.rotate_kem(NOW, NOW + 1_000, None).unwrap();
+        let n3 = contact_of(&c);
+        assert_eq!((n3.key_epoch, n3.revoked_kem_epochs_below), (3, 2));
+        // overlap rotation (no revoke) keeps the old key openable until the window ends
+        let mut d = ident();
+        let f = seal_to(&a, &d, "overlap");
+        d.rotate_kem(NOW, NOW + 1_000_000, None).unwrap();
+        assert!(open(&d, &f, NOW, &lim()).is_ok());
+        assert_eq!(
+            open(&d, &f, NOW + 1_000_000, &lim()),
+            Err(OpenError::NotForUs)
+        );
+    }
+
+    #[test]
+    fn identity_files_without_epochs_load_with_defaults() {
+        let mut id = ident();
+        id.rotate_kem(NOW, NOW + 1_000_000, None).unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        let p = dir.path().join("id.json");
+        id.save(&p, false).unwrap();
+        let mut v: serde_json::Value = serde_json::from_slice(&std::fs::read(&p).unwrap()).unwrap();
+        v.as_object_mut().unwrap().remove("kem_epoch");
+        v.as_object_mut().unwrap().remove("min_valid_epoch");
+        for k in v["previous_kems"].as_array_mut().unwrap() {
+            k.as_object_mut().unwrap().remove("epoch");
+        }
+        std::fs::write(&p, serde_json::to_vec(&v).unwrap()).unwrap();
+        let legacy = Identity::load(&p).unwrap();
+        assert_eq!((legacy.key_epoch(), legacy.min_valid_epoch()), (2, 1));
+    }
+
+    #[test]
+    fn registry_negotiates_the_highest_common_suite_and_never_falls_back_silently() {
+        let (a, mut b) = (ident(), ident());
+        // recipient lists [1,2]; sender supports [1,2] -> suite 2
+        let both = contact_with_suites(&mut b, &[1, 2]);
+        let r12 = registry(&[1, 2]);
+        let f = r12.seal(&a, &both, &env(&a, &b, "x"), NOW, MAX).unwrap();
+        assert_eq!(f[3], 2);
+        // recipient lists [1]; sender supports [1,2] -> suite 1
+        let one = contact_with_suites(&mut b, &[1]);
+        let f = r12.seal(&a, &one, &env(&a, &b, "x"), NOW, MAX).unwrap();
+        assert_eq!(f[3], 1);
+        // recipient lists only [2]; sender supports only [1] -> error, no downgrade
+        let two = contact_with_suites(&mut b, &[2]);
+        let r1 = registry(&[1]);
+        assert_eq!(
+            r1.seal(&a, &two, &env(&a, &b, "x"), NOW, MAX),
+            Err(SealError::NoCommonSuite)
+        );
+        // the single-suite implementation refuses a record that does not list it
+        assert_eq!(
+            HpkeBaseEd25519.seal(&a, &two, &env(&a, &b, "x"), NOW, MAX),
+            Err(SealError::NoCommonSuite)
+        );
+        assert_eq!(r12.supported_suites(), vec![1, 2]);
+        assert_eq!(r12.suite_id(), 2);
+    }
+
+    #[test]
+    fn receiver_rejects_frames_for_suites_it_does_not_advertise() {
+        let (a, mut b) = (ident(), ident());
+        let both = contact_with_suites(&mut b, &[1, 2]);
+        // an attacker (or stale sender) seals under suite 2 ...
+        let f2 = registry(&[1, 2])
+            .seal(&a, &both, &env(&a, &b, "x"), NOW, MAX)
+            .unwrap();
+        assert_eq!(f2[3], 2);
+        // ... a receiver that registered suite 2 but advertises only [1] refuses it
+        let mut recv = registry(&[1, 2]);
+        recv.set_advertised(&[1]);
+        assert_eq!(recv.advertised_suites(), vec![1]);
+        assert_eq!(
+            recv.open(&b, &f2, NOW, &lim()).err(),
+            Some(OpenError::SuiteNotAdvertised(2))
+        );
+        // advertising it makes the same frame routable
+        let mut recv = registry(&[1, 2]);
+        recv.set_advertised(&[1, 2]);
+        assert!(recv.open(&b, &f2, NOW, &lim()).is_ok());
+        // a suite nobody registered is a different error
+        assert_eq!(
+            registry(&[1]).open(&b, &f2, NOW, &lim()).err(),
+            Some(OpenError::UnknownSuite(2))
+        );
+        // suite 1 frames still open on the default registry
+        let f1 = seal_to(&a, &b, "x");
+        assert!(registry(&[1]).open(&b, &f1, NOW, &lim()).is_ok());
+    }
 }

@@ -81,6 +81,13 @@ pub struct IdentityInfo {
     pub created_at: i64,
     /// Expiry of the current agreement key, if one is set.
     pub kem_expires_at: Option<i64>,
+    /// Epoch of the current agreement key (starts at 1; +1 per rotation).
+    #[serde(default)]
+    pub key_epoch: u64,
+    /// The identity has been revoked (signed tombstone): it only delivers the
+    /// tombstone and sends nothing else.
+    #[serde(default)]
+    pub revoked: bool,
 }
 
 /// Lifecycle of an outbound message. `Sent` means the local node accepted it;
@@ -238,6 +245,37 @@ pub struct ContactInfo {
     pub kem_expires_at: Option<i64>,
     /// True when an existing contact was replaced by a newer record.
     pub updated: bool,
+    /// Key epoch of the stored contact record.
+    #[serde(default)]
+    pub key_epoch: u64,
+    /// A verified identity-revocation tombstone exists for this address; the
+    /// contact is blocked and cannot be re-trusted or replaced.
+    #[serde(default)]
+    pub revoked: bool,
+}
+
+/// Result of importing an identity-revocation tombstone.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RevocationInfo {
+    pub address: String,
+    pub revoked_at: i64,
+    pub reason: String,
+    /// False when the same address was already revoked.
+    pub newly_revoked: bool,
+}
+
+/// The replay guard (see `docs/protocol.md`): entered after a store rollback,
+/// an unknown store history or an identity import.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ReplayGuardInfo {
+    /// `rollback`, `unknown_history` or `imported`.
+    pub reason: String,
+    /// Messages created before this are held (Unix ms).
+    pub since: i64,
+    /// The guard lapses by itself at this time (Unix ms).
+    pub until: i64,
+    /// Messages currently held.
+    pub held: u64,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -263,6 +301,12 @@ pub struct NetworkStatus {
     /// Sanitized detail; peer IDs only when `verbose` was requested.
     pub detail: String,
     pub peers: Option<Vec<String>>,
+    /// Present while the replay guard is active.
+    #[serde(default)]
+    pub replay_guard: Option<ReplayGuardInfo>,
+    /// The local identity has been revoked.
+    #[serde(default)]
+    pub identity_revoked: bool,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]

@@ -47,6 +47,29 @@ pub enum ContactError {
     CreatedInFuture,
     #[error("contact record KEM key has expired")]
     KemKeyExpired,
+    #[error("key_epoch must be at least 1 and revoked_kem_epochs_below must be in 1..=key_epoch")]
+    InvalidKeyEpoch,
+    #[error("suites must be a non-empty, strictly ascending list of non-zero suite ids")]
+    InvalidSuites,
+}
+
+/// Failure to parse or verify a signed identity-revocation document.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, thiserror::Error)]
+pub enum RevocationError {
+    #[error("revocation document exceeds the size limit")]
+    TooLarge,
+    #[error("malformed revocation document: {0}")]
+    Malformed(&'static str),
+    #[error("unknown revocation version {0}")]
+    UnknownVersion(u64),
+    #[error("invalid address in revocation: {0}")]
+    InvalidAddress(AddressError),
+    #[error("revocation signature does not verify under the address it names")]
+    BadSignature,
+    #[error("revocation timestamp is invalid")]
+    InvalidTimestamp,
+    #[error("revocation reason is empty, too long or contains control characters")]
+    InvalidReason,
 }
 
 /// Failure to seal an envelope.
@@ -60,6 +83,9 @@ pub enum SealError {
     RecipientMismatch,
     #[error("recipient KEM key has expired")]
     RecipientKemExpired,
+    /// The recipient's signed record lists no suite this node supports.
+    #[error("no cipher suite in common with the recipient's signed contact record")]
+    NoCommonSuite,
     /// The sealed frame would exceed the maximum frame length.
     /// `max_body_len_hint` is the largest body (in UTF-8 bytes, assuming no JSON
     /// escaping is needed) that would fit with otherwise identical fields.
@@ -85,6 +111,15 @@ pub enum OpenError {
     UnknownFrameVersion(u8),
     #[error("unknown cipher suite {0}")]
     UnknownSuite(u8),
+    /// A known suite that this agent does not list in its own contact record.
+    #[error("cipher suite {0} is not advertised by this agent")]
+    SuiteNotAdvertised(u8),
+    /// The signed `suite` field differs from the frame header's suite.
+    #[error("signed suite does not match the frame suite")]
+    SuiteMismatch,
+    /// The signed `recipient_key_epoch` differs from the epoch of the key that decrypted.
+    #[error("signed recipient key epoch does not match the decrypting key")]
+    KeyEpochMismatch,
     /// No local KEM key opened the frame. This is the normal outcome for frames
     /// addressed to other agents sharing the inbox bucket.
     #[error("frame is not for this identity")]
