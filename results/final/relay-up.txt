@@ -1,3 +1,16 @@
+ Container an-r1 Creating 
+ Container an-r1 Created 
+ Container an-r1 Starting 
+ Container an-r1 Started 
+ Container an-r1 Running 
+ Container an-nb Creating 
+ Container an-na Creating 
+ Container an-nb Created 
+ Container an-na Created 
+ Container an-nb Starting 
+ Container an-na Starting 
+ Container an-nb Started 
+ Container an-na Started 
 18640 peers: ['Connected', 'Connected']
 18641 peers: ['Connected']
 18642 peers: ['Connected']
