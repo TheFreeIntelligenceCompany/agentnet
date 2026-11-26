@@ -96,7 +96,8 @@ possibly behind a TLS/WebSocket front end). Set `mode = "public"`, `i_understand
 * `peers` (and `store_peer`) may be `/ip4|ip6|dns4|dns6/<host>/tcp/<port>[/tls][/ws|/wss]/p2p/<peerId>`.
   `/p2p-circuit` relay hops, `dnsaddr`, any other component and a second `/p2p/` are rejected.
 * The allowlist is derived exactly as in private mode: the peer ids of `peers`. `peers` must not be empty.
-* The node's peer list is audited every `audit_interval` (15 s). A connected peer outside the allowlist, or an
+* The node's peer list is audited every `audit_interval` (15 s) for status, subscribe, poll and history, and
+  **again, uncached, immediately before every publish** (one extra `GET /admin/v1/peers` per publish). A connected peer outside the allowlist, or an
   unauditable node, sets `isolation_violation`, the transport is not ready and sends are not published
   (same fail-closed behaviour as private mode). The adapter redials the configured peers as in private mode.
 * `cluster_id` must still not be a public preset (1, 2, 3, 16); `node_url` plain http is still only for
@@ -117,7 +118,7 @@ What this does **not** give you: the node itself may resolve names through a pub
 egress" no longer holds; the relay endpoint is reachable by anyone, and cluster/shard ids are not access
 control (`docs/threat-model.md` T13), so strangers can join your relay and read ciphertext and metadata.
 It only guarantees that this agent's node is not meshed with peers outside `peers`; like the private-mode
-audit it is detective, not preventive. Validated once against a relay on its own public IPv4 (raw tcp, one Mac client behind NAT, `results/public-ip-relay/20261126T211443Z/`): a foreign peer meshed into the node was reported as an isolation violation, the transport went not-ready, sends stayed queued and recovered when the peer left. **Detective only:** a send issued in the moment before the audit sees the peer can still be published. **UNTESTED:** `wss`/`tls` endpoints and DNS-name peers end to end, more than one client, long runs.
+audit it is detective, not preventive. Validated once against a relay on its own public IPv4 (raw tcp, one Mac client behind NAT, `results/public-ip-relay/20261126T211443Z/`): a foreign peer meshed into the node was reported as an isolation violation, the transport went not-ready, sends stayed queued and recovered when the peer left. **Detective only:** the race found there (a send right after the peer connected was published, because publish trusted a cached audit) is fixed by auditing before every publish; a peer that connects between that audit response and the publish request can still get one message, so the window is one REST round trip (the fix is unit-tested only, real-relay re-verification **UNTESTED**). **UNTESTED:** `wss`/`tls` endpoints and DNS-name peers end to end, more than one client, long runs.
 
 ## `[storage]`
 

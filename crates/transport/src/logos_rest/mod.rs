@@ -303,7 +303,8 @@ impl LogosRestTransport {
         }
     }
 
-    /// Runs the audit if never done or older than `audit_interval`.
+    /// Runs the audit if never done or older than `audit_interval`. Used by
+    /// subscribe, poll and history; `publish` audits uncached (see there).
     async fn ensure_audit(&self) -> Result<(), TransportError> {
         if !self.cfg.audits_peers() {
             return Ok(());
@@ -382,7 +383,15 @@ impl Transport for LogosRestTransport {
                 max,
             });
         }
-        self.ensure_audit().await?;
+        // Root cause of the real-relay race (results/public-ip-relay/
+        // 20261126T211443Z, check 3d): `ensure_audit` trusted a cached "ok" for
+        // up to `audit_interval`. A publish therefore audits unconditionally,
+        // with no cache: one `GET /admin/v1/peers` right before the publish
+        // request. The audit stays detective: a peer that connects between
+        // that response and the publish request is not seen, and the node API
+        // has no atomic check-and-publish. The window is one REST round trip,
+        // not the cache lifetime. Cost: one extra GET per publish.
+        self.audit().await?;
         let ts = next_timestamp_ns();
         let body = serde_json::to_vec(&serde_json::json!({
             "payload": B64.encode(payload),
