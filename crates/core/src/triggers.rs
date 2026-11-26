@@ -180,7 +180,7 @@ impl Node {
             || !session.bytes().all(|b| (0x21..=0x7e).contains(&b))
         {
             return Err(ApiError::invalid(
-                "target_session must be 1..=128 printable ASCII characters",
+                "target_session must be 1..=128 ASCII characters from '!' through '~' (no spaces)",
             ));
         }
         if !tcfg.allowed_sessions.iter().any(|s| s == session) {

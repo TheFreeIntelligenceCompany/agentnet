@@ -533,6 +533,9 @@ impl AgentApi for RemoteAgent {
     async fn read_inbox(&self, req: ReadInboxRequest) -> ApiResult<ReadInboxResponse> {
         self.call("read_inbox", req).await
     }
+    async fn get_message(&self, req: GetMessageRequest) -> ApiResult<InboxRecord> {
+        self.call("get_message", req).await
+    }
     async fn acknowledge_message(&self, message_id: String) -> ApiResult<AcknowledgeResponse> {
         self.call("acknowledge_message", json!({"message_id": message_id}))
             .await

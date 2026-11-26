@@ -517,7 +517,16 @@ async fn run(cli: Cli) -> CliResult<i32> {
             cursor,
             conversation,
             include_quarantined,
+            message_id,
+            sender,
         } => {
+            if let Some(message_id) = message_id {
+                let rec = remote()
+                    .get_message(GetMessageRequest { message_id, sender })
+                    .await?;
+                emit(json, &rec, |r| render::inbox_record(r));
+                return Ok(());
+            }
             let res = remote()
                 .read_inbox(ReadInboxRequest {
                     cursor,

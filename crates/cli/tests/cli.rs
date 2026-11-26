@@ -394,7 +394,7 @@ async fn mcp_without_a_daemon_starts_and_every_tool_says_unavailable() {
         .await
         .expect("mcp must start without a daemon");
     let tools = c.list_all_tools().await.unwrap();
-    assert_eq!(tools.len(), 13);
+    assert_eq!(tools.len(), 15);
     for (tool, args) in [
         ("get_identity", json!({})),
         ("read_inbox", json!({})),

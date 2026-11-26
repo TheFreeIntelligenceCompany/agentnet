@@ -55,7 +55,7 @@ async fn stdio_version_negotiation_table() {
         assert_eq!(v, offered.to_string());
         let out: Value = call_ok(c.peer(), "get_identity", json!({})).await;
         assert!(out["agent_id"].is_string(), "{offered}");
-        assert_eq!(c.list_all_tools().await.unwrap().len(), 13, "{offered}");
+        assert_eq!(c.list_all_tools().await.unwrap().len(), 15, "{offered}");
         c.cancel().await.unwrap();
     }
 }
@@ -67,7 +67,7 @@ async fn http_version_negotiation_table() {
     let v = negotiated(&c);
     log!("VERSION transport=http lifecycle=discover offered=2026-07-28 negotiated={v}");
     assert_eq!(v, "2026-07-28");
-    assert_eq!(c.list_all_tools().await.unwrap().len(), 13);
+    assert_eq!(c.list_all_tools().await.unwrap().len(), 15);
     c.cancel().await.unwrap();
 
     let (c, _rx) = server

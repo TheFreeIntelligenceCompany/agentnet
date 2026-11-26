@@ -703,3 +703,128 @@ async fn quarantine_listing_is_paged_within_a_byte_budget() {
         })
         .is_err());
 }
+
+const SHARED_ID: &str = "22222222-2222-4222-8222-222222222222";
+
+#[tokio::test]
+async fn get_message_follows_inbox_visibility_and_disambiguates_senders() {
+    let w = World::new();
+    let mut v = started(&w, &["a", "b", "c"]).await;
+    let (c, b, a) = (v.pop().unwrap(), v.pop().unwrap(), v.pop().unwrap());
+    exchange(&a, &b).await;
+    exchange(&a, &c).await;
+    let r = b.send(&a, "hello a").await;
+    settle(&[&a, &b, &c]).await;
+
+    // Found by the id an event carries; fetching does not acknowledge.
+    let ev = a
+        .node
+        .read_events(PageRequest::default())
+        .await
+        .unwrap()
+        .events;
+    assert_eq!(ev[0].message_id, r.message_id);
+    let rec = a
+        .node
+        .get_message(GetMessageRequest {
+            message_id: ev[0].message_id.clone(),
+            sender: None,
+        })
+        .await
+        .unwrap();
+    assert_eq!(
+        (rec.body.as_str(), rec.sender.as_str()),
+        ("hello a", b.addr.as_str())
+    );
+    assert!(!rec.acknowledged && !rec.quarantined);
+    let by_sender = a
+        .node
+        .get_message(GetMessageRequest {
+            message_id: r.message_id.clone(),
+            sender: Some(b.addr.clone()),
+        })
+        .await
+        .unwrap();
+    assert_eq!(by_sender, rec);
+
+    // Not found, and the wrong sender is not found.
+    let req = |id: &str, sender: Option<&str>| GetMessageRequest {
+        message_id: id.into(),
+        sender: sender.map(str::to_string),
+    };
+    assert_eq!(
+        a.node
+            .get_message(req("nope", None))
+            .await
+            .unwrap_err()
+            .code,
+        ErrorCode::NotFound
+    );
+    assert_eq!(
+        a.node
+            .get_message(req(&r.message_id, Some(&c.addr)))
+            .await
+            .unwrap_err()
+            .code,
+        ErrorCode::NotFound
+    );
+
+    // Two senders that chose the same message id: ambiguous without `sender`.
+    let f = Forge { w: &w };
+    let (b_id, c_id) = (
+        Identity::load(&b.id_path).unwrap(),
+        Identity::load(&c.id_path).unwrap(),
+    );
+    for (who, body) in [(&b_id, "from b"), (&c_id, "from c")] {
+        let mut e = f.envelope(who, &a, MESSAGE_TYPE_MESSAGE, body, 3_600_000);
+        e.message_id = SHARED_ID.into();
+        f.inject(&a, &f.seal(who, &a, &e));
+    }
+    a.node.step_receive().await.unwrap();
+    assert_eq!(
+        a.node
+            .get_message(req(SHARED_ID, None))
+            .await
+            .unwrap_err()
+            .code,
+        ErrorCode::Conflict
+    );
+    let got = a
+        .node
+        .get_message(req(SHARED_ID, Some(&c.addr)))
+        .await
+        .unwrap();
+    assert_eq!(got.body, "from c");
+}
+
+#[tokio::test]
+async fn get_message_never_returns_quarantined_content() {
+    let (_w, x, b) = unknown_sender_setup(UnknownSenders::Quarantine, |_| {}).await;
+    let r = x.send(&b, "hi from stranger").await;
+    settle(&[&x, &b]).await;
+    assert_eq!(b.n("inbox"), 1);
+    for sender in [None, Some(x.addr.clone())] {
+        let e = b
+            .node
+            .get_message(GetMessageRequest {
+                message_id: r.message_id.clone(),
+                sender,
+            })
+            .await
+            .unwrap_err();
+        assert_eq!(e.code, ErrorCode::NotFound, "quarantined is not visible");
+        assert!(!e.message.contains("stranger"));
+    }
+    // Once the sender is trusted and the message released it is visible.
+    b.add(&x).await;
+    b.node.release_quarantined(&r.message_id).unwrap();
+    let rec = b
+        .node
+        .get_message(GetMessageRequest {
+            message_id: r.message_id.clone(),
+            sender: None,
+        })
+        .await
+        .unwrap();
+    assert_eq!(rec.body, "hi from stranger");
+}

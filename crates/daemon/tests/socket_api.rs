@@ -263,6 +263,40 @@ async fn every_method_round_trips_and_equals_the_direct_node() {
     let r1 = b.remote.read_inbox(req.clone()).await.unwrap();
     assert_eq!(r1, bn.read_inbox(req.clone()).await.unwrap());
     assert_eq!(r1.records[0].body, "hello over the socket");
+    // get_message: the id an event carries resolves to the same record, equal to
+    // the direct node; a wrong sender or an unknown id is not_found.
+    let one = b
+        .remote
+        .get_message(GetMessageRequest {
+            message_id: id.message_id.clone(),
+            sender: None,
+        })
+        .await
+        .unwrap();
+    assert_eq!(one, r1.records[0]);
+    assert_eq!(
+        one,
+        bn.get_message(GetMessageRequest {
+            message_id: id.message_id.clone(),
+            sender: Some(a.address.clone()),
+        })
+        .await
+        .unwrap()
+    );
+    for (mid, sender) in [
+        (id.message_id.as_str(), Some(b.address.clone())),
+        ("nope", None),
+    ] {
+        let e = b
+            .remote
+            .get_message(GetMessageRequest {
+                message_id: mid.into(),
+                sender,
+            })
+            .await
+            .unwrap_err();
+        assert_eq!(e.code, ErrorCode::NotFound);
+    }
     let conv_r = b
         .remote
         .read_conversation("conv-1".into(), PageRequest::default())
@@ -413,6 +447,16 @@ async fn quarantine_list_and_release_through_the_socket() {
     assert_eq!(a.inbox_len().await, 0);
     let q = a.remote.list_quarantined().await.unwrap();
     assert_eq!(q[0].message_id, mid);
+    // A quarantined message is not returned by get_message.
+    let hidden = a
+        .remote
+        .get_message(GetMessageRequest {
+            message_id: mid.clone(),
+            sender: Some(b.address.clone()),
+        })
+        .await
+        .unwrap_err();
+    assert_eq!(hidden.code, ErrorCode::NotFound);
     // Release needs a Trusted sender.
     assert_eq!(
         a.remote.release_quarantined(&mid).await.unwrap_err().code,
@@ -421,6 +465,15 @@ async fn quarantine_list_and_release_through_the_socket() {
     a.add_contact_of(&b).await;
     assert_eq!(a.remote.release_quarantined(&mid).await.unwrap(), 1);
     assert_eq!(a.inbox_len().await, 1);
+    let released = a
+        .remote
+        .get_message(GetMessageRequest {
+            message_id: mid.clone(),
+            sender: None,
+        })
+        .await
+        .unwrap();
+    assert_eq!(released.body, "from an unknown");
     a.daemon.unwrap().shutdown().await;
     b.daemon.unwrap().shutdown().await;
 }

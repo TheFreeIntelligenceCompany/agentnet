@@ -127,6 +127,17 @@ pub enum Command {
         /// Also show quarantined messages.
         #[arg(long)]
         include_quarantined: bool,
+        /// Show only the message with this id (as given by a `message.received` event;
+        /// quarantined messages are not found). Cannot be combined with paging filters.
+        #[arg(
+            long,
+            value_name = "ID",
+            conflicts_with_all = ["unread", "limit", "cursor", "conversation", "include_quarantined"]
+        )]
+        message_id: Option<String>,
+        /// With --message-id: the sender address, to choose between senders that used the same id.
+        #[arg(long, value_name = "ADDRESS", requires = "message_id")]
+        sender: Option<String>,
     },
     /// Mark a received message as processed locally (idempotent; unrelated to the delivery receipt).
     Ack {
