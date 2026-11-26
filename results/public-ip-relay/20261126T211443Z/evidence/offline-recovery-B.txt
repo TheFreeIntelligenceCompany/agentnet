@@ -1,0 +1,28 @@
+21:23:37.431Z
+node B stopped
+21:23:37.3NZ
+5 sent from A while node B down
+sent 4
+sent 4
+sent 4
+sent 4
+sent 4
+21:23:58.348Z
+node B started
+21:23:58.3NZ delivered=0/5
+21:24:00.3NZ delivered=5/5
+{'state': 'delivered', 'attempts': 4, 'delivered_at': 1795728239706}
+{'state': 'delivered', 'attempts': 4, 'delivered_at': 1795728239725}
+{'state': 'delivered', 'attempts': 5, 'delivered_at': 1795728239738}
+{'state': 'delivered', 'attempts': 4, 'delivered_at': 1795728239750}
+{'state': 'delivered', 'attempts': 4, 'delivered_at': 1795728239760}
+mode: public
+ready: true
+connected peers: 1
+isolation: ok
+queue: outbox queued=0 sent-unacked=0, inbox unread=21 quarantined=0, events unacked=21, active triggers=0
+last live poll: 2026-11-26 21:24:00 UTC
+last history sync: 2026-11-26 21:23:49 UTC
+detail: node reachable; 1 connected allowed peer(s)
+daemon: version 0.1.0 uptime 552s
+webhook: disabled

@@ -1,0 +1,32 @@
+## plain public mode config
+mode = "public"
+peers = ["/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV"]
+i_understand_public = true
+
+## doctor --ready BEFORE R2 connects
+[ok  ] data dir permissions: directory 0700, files 0600
+[ok  ] config: <scratch>/a/agentnet.toml valid (public mode, 1 peer(s))
+[ok  ] identity: address an1cad2xuln444qgr3rr4dckjhu3lprkwayxyeupub5kw4qkmp3deren5w3ti
+[ok  ] replay guard: inactive (store generation 51)
+[ok  ] daemon socket: daemon answers on agentnet.sock
+[ok  ] node reachable: http://127.0.0.1:18690 answered 200
+[ok  ] clock: within 0 s of the node's clock
+[skip] isolation: not audited in public mode; the node may be connected to any peer
+       -> to audit your own relay on a public address set network.enforce_peer_allowlist = true (and list the relay in network.peers)
+[skip] peers == allowlist: public mode: no allowlist audit (set network.enforce_peer_allowlist to audit)
+[ok  ] history sync: last successful relay Store sync 14 s ago (interval 15 s)
+[ok  ] transport ready: node reachable; 1 connected peer(s) (public mode: peers not audited)
+[ok  ] local inbox database: inbox query works (this tests the local database, not the relay Store)
+0 failing, 1 warning(s)
+ready: daemon, node, isolation and transport checks are ok
+rc=0
+mode: public
+ready: true
+connected peers: 1
+isolation: ok
+queue: outbox queued=0 sent-unacked=0, inbox unread=21 quarantined=0, events unacked=21, active triggers=0
+last live poll: 2026-11-26 21:27:44 UTC
+last history sync: 2026-11-26 21:27:30 UTC
+detail: node reachable; 1 connected peer(s) (public mode: peers not audited)
+daemon: version 0.1.0 uptime 14s
+webhook: disabled

@@ -1,0 +1,63 @@
+[t+0.0] POST /admin/v1/peers [R2] on node A REST (127.0.0.1:18690)
+http=200
+[t+0.1] node A peers:
+    /ip4/<PUB_IP_R>/tcp/60001/p2p/16Uiu2HAmKGKgVN8J4vsK2DrZXE2H3PkqLQHRdcmiV8DGG4PBF6Bx Connected
+    /ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV Connected
+[t+0.3] ready=False connected=2 violation=node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAmKGKgVN8J4vsK2DrZXE2H3PkqLQHRdcmiV8DGG4PBF6Bx) detail=isolation violation: node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAmKGKgVN8J4vsK2DrZXE2H3PkqLQHRdcmiV8DGG4PBF6Bx)
+[t+0.3] doctor --ready:
+[ok  ] data dir permissions: directory 0700, files 0600
+[ok  ] config: <scratch>/a/agentnet.toml valid (public mode, 1 peer(s))
+[ok  ] identity: address an1cad2xuln444qgr3rr4dckjhu3lprkwayxyeupub5kw4qkmp3deren5w3ti
+[ok  ] replay guard: inactive (store generation 47)
+[ok  ] daemon socket: daemon answers on agentnet.sock
+[ok  ] node reachable: http://127.0.0.1:18690 answered 200
+[ok  ] clock: within 0 s of the node's clock
+[FAIL] isolation: node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAmKGKgVN8J4vsK2DrZXE2H3PkqLQHRdcmiV8DGG4PBF6Bx)
+       -> the node is connected to a peer outside agentnet.toml: restart it with the verified flags
+[FAIL] peers == allowlist: the node knows 1 peer(s) outside the allowlist (not connected unless an isolation violation is reported)
+       -> the node should only know the peers in agentnet.toml; check its discovery flags, then restart the node to clear stale entries
+[ok  ] history sync: last successful relay Store sync 3 s ago (interval 15 s)
+[warn] transport ready: isolation violation: node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAmKGKgVN8J4vsK2DrZXE2H3PkqLQHRdcmiV8DGG4PBF6Bx)
+       -> messages queue locally until the node is ready
+[ok  ] local inbox database: inbox query works (this tests the local database, not the relay Store)
+2 failing, 2 warning(s)
+NOT READY: messaging is not operational:
+  - isolation: FAILED: node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAmKGKgVN8J4vsK2DrZXE2H3PkqLQHRdcmiV8DGG4PBF6Bx) -> the node is connected to a peer outside agentnet.toml: restart it with the verified flags
+  - transport ready: warning: isolation violation: node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAmKGKgVN8J4vsK2DrZXE2H3PkqLQHRdcmiV8DGG4PBF6Bx) -> messages queue locally until the node is ready
+  - peers == allowlist: FAILED: the node knows 1 peer(s) outside the allowlist (not connected unless an isolation violation is reported)
+doctor --ready rc=7
+[t+0.4] network status (human):
+mode: public
+ready: false
+connected peers: 2
+ISOLATION VIOLATION: node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAmKGKgVN8J4vsK2DrZXE2H3PkqLQHRdcmiV8DGG4PBF6Bx)
+queue: outbox queued=0 sent-unacked=0, inbox unread=21 quarantined=0, events unacked=21, active triggers=0
+last live poll: 2026-11-26 21:24:38 UTC
+last history sync: 2026-11-26 21:24:35 UTC
+detail: isolation violation: node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAmKGKgVN8J4vsK2DrZXE2H3PkqLQHRdcmiV8DGG4PBF6Bx)
+daemon: version 0.1.0 uptime 590s
+webhook: disabled
+rc=0
+[t+0.4] SEND message in conversation 753a20e2-304b-420b-b34d-ccad2df73f13
+message_id=a6be4571-843e-49f0-bf02-85cad5ca1997
+[t+0.5] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+3.6] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+6.7] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+9.8] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+12.9] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+16.0] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+19.1] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+22.2] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+25.3] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+28.4] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+31.5] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+34.6] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+37.7] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+40.8] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+43.9] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+47.0] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+50.1] B inbox for conversation (count):
+0
+[t+50.5] node A peers now:
+    /ip4/<PUB_IP_R>/tcp/60001/p2p/16Uiu2HAmKGKgVN8J4vsK2DrZXE2H3PkqLQHRdcmiV8DGG4PBF6Bx Connected
+    /ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV Connected

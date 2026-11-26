@@ -1,0 +1,27 @@
+R2 stopped
+[t+0] R2 container stopped (t+0 = return of docker stop)
+[t+0.1] ready=True connected=1 violation=None | state=queued attempts=0
+[t+1.2] ready=True connected=1 violation=None | state=delivered attempts=1
+node A peers:
+    /ip4/<PUB_IP_R>/tcp/60001/p2p/16Uiu2HAmKGKgVN8J4vsK2DrZXE2H3PkqLQHRdcmiV8DGG4PBF6Bx CannotConnect
+    /ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV Connected
+{"message_id":"a6be4571-843e-49f0-bf02-85cad5ca1997","recipient":"an1xtaxhdjkuckqflpyp4yllc2tm6wppixjojmlh4o4ah237jtb6qvof6dfby","message_type":"message","conversation_id":"753a20e2-304b-420b-b34d-ccad2df73f13","state":"delivered","attempts":1,"created_at":1795728278669,"expires_at":1795814678669,"last_attempt_at":1795728337435,"next_attempt_at":null,"sent_at":1795728337435,"delivered_at":1795728337706,"last_error":null}
+B inbox for conversation:
+1 ['synthetic key-test audited']
+
+[ok  ] data dir permissions: directory 0700, files 0600
+[ok  ] config: <scratch>/a/agentnet.toml valid (public mode, 1 peer(s))
+[ok  ] identity: address an1cad2xuln444qgr3rr4dckjhu3lprkwayxyeupub5kw4qkmp3deren5w3ti
+[ok  ] replay guard: inactive (store generation 48)
+[ok  ] daemon socket: daemon answers on agentnet.sock
+[ok  ] node reachable: http://127.0.0.1:18690 answered 200
+[ok  ] clock: within 0 s of the node's clock
+[ok  ] isolation: no isolation violation reported
+[warn] peers == allowlist: the node knows 1 peer(s) outside the allowlist (not connected unless an isolation violation is reported)
+       -> the node should only know the peers in agentnet.toml; check its discovery flags, then restart the node to clear stale entries
+[ok  ] history sync: last successful relay Store sync 1 s ago (interval 15 s)
+[ok  ] transport ready: node reachable; 1 connected allowed peer(s)
+[ok  ] local inbox database: inbox query works (this tests the local database, not the relay Store)
+0 failing, 2 warning(s)
+ready: daemon, node, isolation and transport checks are ok
+doctor --ready rc=

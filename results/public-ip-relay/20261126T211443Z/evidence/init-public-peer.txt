@@ -1,0 +1,72 @@
+## agentnet init --peer <public ip multiaddr> (fresh data dir; default flags)
+Created <scratch>/c6 (directory 0700, files 0600)
+Address: an17sejheodzh3hlfkhi7new66fpld2uvdz5hg6yqkteiqt2xm7jkts6r27vq
+Contact record (share it with peers; they must verify the address out of band):
+
+Next: agentnet --data-dir <scratch>/c6 serve
+rc=
+
+## resulting [network] block
+10:mode = "private"
+12:node_url = "http://127.0.0.1:18690"
+14:peers = ["/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV"]
+19:i_understand_public = false
+
+## doctor --ready on that config
+[ok  ] data dir permissions: directory 0700, files 0600
+[FAIL] config: invalid configuration: network: isolation violation: static_peers entry rejected in private mode: address must be a literal private IP
+       -> edit agentnet.toml (see docs/configuration.md)
+[ok  ] identity: address an17sejheodzh3hlfkhi7new66fpld2uvdz5hg6yqkteiqt2xm7jkts6r27vq
+[ok  ] replay guard: inactive (no store yet)
+[warn] single instance: the same identity running in two data directories cannot be detected or prevented (the data-dir lock only covers one directory); both would receive, persist and acknowledge every message independently and may both fire triggers
+       -> run each identity in exactly one place; to move it, stop the old daemon first and copy agentnet.db + agentnet.generation or use `identity export/import`
+[warn] daemon socket: the AgentNet daemon is not running (cannot connect to <scratch>/c6/agentnet.sock); start it with `agentnet --data-dir <scratch>/c6 serve`
+       -> run `agentnet --data-dir <scratch>/c6 serve`
+1 failing, 2 warning(s)
+NOT READY: messaging is not operational:
+  - daemon socket: warning: the AgentNet daemon is not running (cannot connect to <scratch>/c6/agentnet.sock); start it with `agentnet --data-dir <scratch>/c6 serve` -> run `agentnet --data-dir <scratch>/c6 serve`
+  - node reachable: not run (it needs a readable config and a running daemon) -> fix the failing or skipped checks above, then run `agentnet --data-dir <scratch>/c6 doctor --ready` again
+  - isolation: not run (it needs a readable config and a running daemon) -> fix the failing or skipped checks above, then run `agentnet --data-dir <scratch>/c6 doctor --ready` again
+  - transport ready: not run (it needs a readable config and a running daemon) -> fix the failing or skipped checks above, then run `agentnet --data-dir <scratch>/c6 doctor --ready` again
+  - local inbox database: not run (it needs a readable config and a running daemon) -> fix the failing or skipped checks above, then run `agentnet --data-dir <scratch>/c6 doctor --ready` again
+  - config: FAILED: invalid configuration: network: isolation violation: static_peers entry rejected in private mode: address must be a literal private IP
+rc=7
+
+## serve
+error: invalid configuration: network: isolation violation: static_peers entry rejected in private mode: address must be a literal private IP
+rc=4
+
+## init --help (network-related flags)
+Create a data directory with a new identity, a private-mode config and access tokens.
+
+Refuses to touch an existing agent. Prints the address and the signed contact record to share with
+peers.
+
+Usage: agentnet init [OPTIONS]
+
+Options:
+      --data-dir <DIR>
+          Data directory (identity, config, database, socket, tokens)
+          
+          [env: AGENTNET_HOME=]
+
+      --inbox-buckets <N>
+          Number of shared inbox topics (anonymity set vs bandwidth); advertised in the contact
+          record
+          
+          [default: 16]
+
+      --json
+          Print machine-readable JSON instead of human text
+
+      --node-url <URL>
+          REST URL of your local Logos Delivery node (loopback or private address)
+          
+          [default: http://127.0.0.1:8645]
+
+      --peer <MULTIADDR>
+          Static peer multiaddr ending in /p2p/<peerId> (repeatable). Required before `serve`
+
+  -h, --help
+          Print help (see a summary with '-h')
+init rc=0

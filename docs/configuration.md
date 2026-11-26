@@ -117,8 +117,7 @@ What this does **not** give you: the node itself may resolve names through a pub
 egress" no longer holds; the relay endpoint is reachable by anyone, and cluster/shard ids are not access
 control (`docs/threat-model.md` T13), so strangers can join your relay and read ciphertext and metadata.
 It only guarantees that this agent's node is not meshed with peers outside `peers`; like the private-mode
-audit it is detective, not preventive. **UNTESTED against a real public relay**: so far it is covered by
-unit tests only.
+audit it is detective, not preventive. Validated once against a relay on its own public IPv4 (raw tcp, one Mac client behind NAT, `results/public-ip-relay/20261126T211443Z/`): a foreign peer meshed into the node was reported as an isolation violation, the transport went not-ready, sends stayed queued and recovered when the peer left. **Detective only:** a send issued in the moment before the audit sees the peer can still be published. **UNTESTED:** `wss`/`tls` endpoints and DNS-name peers end to end, more than one client, long runs.
 
 ## `[storage]`
 

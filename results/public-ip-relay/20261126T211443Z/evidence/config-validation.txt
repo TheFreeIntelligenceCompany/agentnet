@@ -1,0 +1,99 @@
+## 5a enforce_peer_allowlist = true with mode = "private" (doctor, no daemon)
+10:mode = "private"
+14:peers = ["/ip4/10.1.2.3/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV"]
+19:i_understand_public = false
+20:enforce_peer_allowlist = true
+[ok  ] data dir permissions: directory 0700, files 0600
+[FAIL] config: invalid configuration: network.enforce_peer_allowlist is only valid with mode = "public": private mode always audits the allowlist and accepts only literal private IPs. To use your own relay on a public address, set mode = "public", i_understand_public = true and enforce_peer_allowlist = true
+       -> edit agentnet.toml (see docs/configuration.md)
+[ok  ] identity: address an1eyun26u22hga6l2cgm4qa3ajkcjn76czf7loe7mwmx32suqoqe34ql6keu
+[ok  ] replay guard: inactive (no store yet)
+[warn] single instance: the same identity running in two data directories cannot be detected or prevented (the data-dir lock only covers one directory); both would receive, persist and acknowledge every message independently and may both fire triggers
+       -> run each identity in exactly one place; to move it, stop the old daemon first and copy agentnet.db + agentnet.generation or use `identity export/import`
+[warn] daemon socket: the AgentNet daemon is not running (cannot connect to <scratch>/c5a/agentnet.sock); start it with `agentnet --data-dir <scratch>/c5a serve`
+       -> run `agentnet --data-dir <scratch>/c5a serve`
+1 failing, 2 warning(s)
+NOT READY: messaging is not operational:
+  - daemon socket: warning: the AgentNet daemon is not running (cannot connect to <scratch>/c5a/agentnet.sock); start it with `agentnet --data-dir <scratch>/c5a serve` -> run `agentnet --data-dir <scratch>/c5a serve`
+  - node reachable: not run (it needs a readable config and a running daemon) -> fix the failing or skipped checks above, then run `agentnet --data-dir <scratch>/c5a doctor --ready` again
+  - isolation: not run (it needs a readable config and a running daemon) -> fix the failing or skipped checks above, then run `agentnet --data-dir <scratch>/c5a doctor --ready` again
+  - transport ready: not run (it needs a readable config and a running daemon) -> fix the failing or skipped checks above, then run `agentnet --data-dir <scratch>/c5a doctor --ready` again
+  - local inbox database: not run (it needs a readable config and a running daemon) -> fix the failing or skipped checks above, then run `agentnet --data-dir <scratch>/c5a doctor --ready` again
+  - config: FAILED: invalid configuration: network.enforce_peer_allowlist is only valid with mode = "public": private mode always audits the allowlist and accepts only literal private IPs. To use your own relay on a public address, set mode = "public", i_understand_public = true and enforce_peer_allowlist = true
+rc=7
+-- serve
+error: invalid configuration: network.enforce_peer_allowlist is only valid with mode = "public": private mode always audits the allowlist and accepts only literal private IPs. To use your own relay on a public address, set mode = "public", i_understand_public = true and enforce_peer_allowlist = true
+rc=4
+
+## 5b audited mode, /p2p-circuit peer
+10:mode = "public"
+14:peers = ["/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV/p2p-circuit/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV"]
+19:i_understand_public = true
+20:enforce_peer_allowlist = true
+[ok  ] data dir permissions: directory 0700, files 0600
+[FAIL] config: invalid configuration: network: isolation violation: static_peers entry rejected (enforce_peer_allowlist): exactly one /p2p/<peerId> must end the address; expected /<ip4|ip6|dns4|dns6>/<host>/tcp/<port>[/tls][/ws|/wss]/p2p/<peerId> (no /p2p-circuit relay hops, no dnsaddr, exactly one /p2p/)
+       -> edit agentnet.toml (see docs/configuration.md)
+[ok  ] identity: address an1s4cba53mz5ppn3rctit5kzhs2pk2lpempi5zctys42yvjucjgoqnvobesy
+[ok  ] replay guard: inactive (no store yet)
+[warn] single instance: the same identity running in two data directories cannot be detected or prevented (the data-dir lock only covers one directory); both would receive, persist and acknowledge every message independently and may both fire triggers
+       -> run each identity in exactly one place; to move it, stop the old daemon first and copy agentnet.db + agentnet.generation or use `identity export/import`
+[warn] daemon socket: the AgentNet daemon is not running (cannot connect to <scratch>/c5b/agentnet.sock); start it with `agentnet --data-dir <scratch>/c5b serve`
+       -> run `agentnet --data-dir <scratch>/c5b serve`
+1 failing, 2 warning(s)
+NOT READY: messaging is not operational:
+  - daemon socket: warning: the AgentNet daemon is not running (cannot connect to <scratch>/c5b/agentnet.sock); start it with `agentnet --data-dir <scratch>/c5b serve` -> run `agentnet --data-dir <scratch>/c5b serve`
+  - node reachable: not run (it needs a readable config and a running daemon) -> fix the failing or skipped checks above, then run `agentnet --data-dir <scratch>/c5b doctor --ready` again
+  - isolation: not run (it needs a readable config and a running daemon) -> fix the failing or skipped checks above, then run `agentnet --data-dir <scratch>/c5b doctor --ready` again
+  - transport ready: not run (it needs a readable config and a running daemon) -> fix the failing or skipped checks above, then run `agentnet --data-dir <scratch>/c5b doctor --ready` again
+  - local inbox database: not run (it needs a readable config and a running daemon) -> fix the failing or skipped checks above, then run `agentnet --data-dir <scratch>/c5b doctor --ready` again
+  - config: FAILED: invalid configuration: network: isolation violation: static_peers entry rejected (enforce_peer_allowlist): exactly one /p2p/<peerId> must end the address; expected /<ip4|ip6|dns4|dns6>/<host>/tcp/<port>[/tls][/ws|/wss]/p2p/<peerId> (no /p2p-circuit relay hops, no dnsaddr, exactly one /p2p/)
+rc=7
+-- serve
+error: invalid configuration: network: isolation violation: static_peers entry rejected (enforce_peer_allowlist): exactly one /p2p/<peerId> must end the address; expected /<ip4|ip6|dns4|dns6>/<host>/tcp/<port>[/tls][/ws|/wss]/p2p/<peerId> (no /p2p-circuit relay hops, no dnsaddr, exactly one /p2p/)
+rc=4
+
+## 5b2 audited mode, trailing /p2p-circuit only
+[ok  ] data dir permissions: directory 0700, files 0600
+[FAIL] config: invalid configuration: network: protocol error: static_peers must be multiaddrs ending in /p2p/<id>
+       -> edit agentnet.toml (see docs/configuration.md)
+[ok  ] identity: address an1eocnovcwdyzgx327telb526f2xmcdavxqju6x3mqpktmfwug7fbrf6uhmq
+[ok  ] replay guard: inactive (no store yet)
+[warn] single instance: the same identity running in two data directories cannot be detected or prevented (the data-dir lock only covers one directory); both would receive, persist and acknowledge every message independently and may both fire triggers
+       -> run each identity in exactly one place; to move it, stop the old daemon first and copy agentnet.db + agentnet.generation or use `identity export/import`
+[warn] daemon socket: the AgentNet daemon is not running (cannot connect to <scratch>/c5b2/agentnet.sock); start it with `agentnet --data-dir <scratch>/c5b2 serve`
+       -> run `agentnet --data-dir <scratch>/c5b2 serve`
+1 failing, 2 warning(s)
+NOT READY: messaging is not operational:
+  - daemon socket: warning: the AgentNet daemon is not running (cannot connect to <scratch>/c5b2/agentnet.sock); start it with `agentnet --data-dir <scratch>/c5b2 serve` -> run `agentnet --data-dir <scratch>/c5b2 serve`
+  - node reachable: not run (it needs a readable config and a running daemon) -> fix the failing or skipped checks above, then run `agentnet --data-dir <scratch>/c5b2 doctor --ready` again
+  - isolation: not run (it needs a readable config and a running daemon) -> fix the failing or skipped checks above, then run `agentnet --data-dir <scratch>/c5b2 doctor --ready` again
+  - transport ready: not run (it needs a readable config and a running daemon) -> fix the failing or skipped checks above, then run `agentnet --data-dir <scratch>/c5b2 doctor --ready` again
+  - local inbox database: not run (it needs a readable config and a running daemon) -> fix the failing or skipped checks above, then run `agentnet --data-dir <scratch>/c5b2 doctor --ready` again
+  - config: FAILED: invalid configuration: network: protocol error: static_peers must be multiaddrs ending in /p2p/<id>
+rc=7
+
+## 5c audited mode, dns4 wss peer (config validation only)
+10:mode = "public"
+14:peers = ["/dns4/relay.example.org/tcp/443/wss/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV"]
+19:i_understand_public = true
+20:enforce_peer_allowlist = true
+[ok  ] data dir permissions: directory 0700, files 0600
+[ok  ] config: <scratch>/c5c/agentnet.toml valid (public mode, 1 peer(s))
+[ok  ] identity: address an1yqkty65aeipgwgn27vxg2dpqiumvmvwaxxim4476fdkkb7eysaxsvj7e3a
+[ok  ] replay guard: inactive (no store yet)
+[warn] single instance: the same identity running in two data directories cannot be detected or prevented (the data-dir lock only covers one directory); both would receive, persist and acknowledge every message independently and may both fire triggers
+       -> run each identity in exactly one place; to move it, stop the old daemon first and copy agentnet.db + agentnet.generation or use `identity export/import`
+[warn] daemon socket: the AgentNet daemon is not running (cannot connect to <scratch>/c5c/agentnet.sock); start it with `agentnet --data-dir <scratch>/c5c serve`
+       -> run `agentnet --data-dir <scratch>/c5c serve`
+[ok  ] node reachable: http://127.0.0.1:18690 answered 200
+[ok  ] clock: within 1 s of the node's clock
+[skip] isolation: needs the running daemon
+       -> run `agentnet --data-dir <scratch>/c5c serve`
+[skip] peers == allowlist: needs the running daemon
+       -> run `agentnet --data-dir <scratch>/c5c serve`
+[skip] history sync: needs the running daemon
+       -> run `agentnet --data-dir <scratch>/c5c serve`
+[skip] local inbox database: needs the running daemon
+       -> run `agentnet --data-dir <scratch>/c5c serve`
+0 failing, 2 warning(s)
+rc=0

@@ -1,0 +1,27 @@
+## droplet
+6.8.0-149-generic
+Ubuntu 24.04.5 LTS
+Docker version 29.1.3, build 29.1.3-0ubuntu3~24.04.2
+bash: line 1: rustc: command not found
+14631fd3ce92a9269cf38728e007b3a49e591af2
+agentnet 0.1.0
+net.ipv4.tcp_retries2 = 6
+-- R tcp_retries2 in container:
+6
+-- R peers
+/ip4/172.28.66.1/tcp/32906/p2p/16Uiu2HAmGGTNKYN2QDGjGj2HK1fXFUZ4js6P5K1VmMvEofo4MfAZ Connected
+/ip4/<PUB_IP_A>/tcp/65359/p2p/16Uiu2HAmPS2LiuhjzFX8XBhBJe7QZ8ycx6HzKcJG75G6RYLz8wUB Connected
+LISTEN 0      4096   <PUB_IP_R>:60001      0.0.0.0:*          
+LISTEN 0      4096   <PUB_IP_R>:60000      0.0.0.0:*          
+LISTEN 0      4096          0.0.0.0:22         0.0.0.0:*          
+LISTEN 0      4096             [::]:22            [::]:*          
+an-r2 8545/tcp, 30303/tcp, 60000/tcp, <PUB_IP_R>:60001->60001/tcp, 127.0.0.1:18641->8645/tcp
+an-nb 8545/tcp, 30303/tcp, 60000/tcp, 127.0.0.1:18642->8645/tcp
+an-r1 8545/tcp, 30303/tcp, <PUB_IP_R>:60000->60000/tcp, 127.0.0.1:18640->8645/tcp
+[--nodekey=<disposable> --nat=extip:<PUB_IP_R> --relay=true --store=false --filter=false --lightpush=false --max-msg-size=150KiB --cluster-id=66 --num-shards-in-network=1 --shard=0 --discv5-discovery=false --peer-exchange=false --relay-peer-exchange=false --rendezvous=false --enable-kad-discovery=false --quic-support=false --mix=false --rln-relay=false --listen-address=0.0.0.0 --dns-addrs-name-server=127.0.0.1 --tcp-port=60001 --metrics-server=false --peer-persistence=false --local-storage-path=/data --log-level=INFO --rest=true --rest-address=0.0.0.0 --rest-port=8645 --rest-admin=true --rest-relay-cache-capacity=1000 --rest-messaging-cache-capacity=1000]
+## Mac
+26.6.2
+arm64
+agentnet 0.1.0
+local HEAD 14631fd3ce92a9269cf38728e007b3a49e591af2
+wakuorg/nwaku@sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73 [--nodekey=<disposable> --nat=none --relay=true --store=false --filter=false --lightpush=false --staticnode=/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV --storenode=/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV --filternode=/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV --lightpushnode=/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV --max-msg-size=150KiB --cluster-id=66 --num-shards-in-network=1 --shard=0 --discv5-discovery=false --peer-exchange=false --relay-peer-exchange=false --rendezvous=false --enable-kad-discovery=false --quic-support=false --mix=false --rln-relay=false --listen-address=0.0.0.0 --dns-addrs-name-server=127.0.0.1 --tcp-port=60000 --metrics-server=false --peer-persistence=false --local-storage-path=/data --log-level=INFO --rest=true --rest-address=0.0.0.0 --rest-port=8645 --rest-admin=true --rest-relay-cache-capacity=1000 --rest-messaging-cache-capacity=1000]
