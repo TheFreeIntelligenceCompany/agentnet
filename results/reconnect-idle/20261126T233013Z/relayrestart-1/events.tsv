@@ -1,0 +1,9 @@
+t_ms	event	detail
+0	block_start
+48310	B_lists_R_not_connected	CanConnect
+48310	redial	http=400 dur=10068ms
+60696	redial	http=400 dur=10054ms
+73050	block_end
+73050	hook_after	271ms an-wg-r-node 
+73050	redial	http=400 dur=41ms
+84502	redial	http=200 dur=119ms

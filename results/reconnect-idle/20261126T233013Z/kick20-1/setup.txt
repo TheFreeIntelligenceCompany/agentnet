@@ -1,0 +1,2 @@
+R sockets to B before block: 0 0 10.66.0.1:60000 10.66.0.3:44806 ts sack cubic wscale:7,7
+R at restore: 0 1460 10.66.0.1:60000 10.66.0.3:44806 timer:(persist,30sec,8) ts sack cubic wscale:7,7 rto:208 backoff:8 rtt:7.123/11.274 ato:40 mss:1328 pmtu:1380 rcvmss:536 advmss:1328 cwnd:10 bytes_sent:21051 bytes_acked:5188 bytes_received:4440 segs_out:151 segs_in:159 data_segs_out:125 data_segs_in:95 send 14915064bps lastsnd:14620 lastrcv:78757 lastack:78757 pacing_rate 29829080bps delivery_rate 60535608bp

@@ -1,0 +1,4 @@
+WRN 2026-11-26 22:54:30.197+00:00 Too many consecutive ping failures, node likely disconnected. Killing all connections tid=1 file=node_health_monitor.nim:671 consecutiveIterationFailures=3 maxAllowedConsecutiveFailures=2
+WRN 2026-11-26 22:54:35.211+00:00 Node is offline                            topics="waku online monitor" tid=1 file=online_monitor.nim:55
+INF 2026-11-26 22:54:39.881+00:00 Relay peer connections                     topics="waku node peer_manager" tid=1 file=peer_manager.nim:975 inRelayConns=0/50 outRelayConns=0/25 totalConnections=0/150 notConnectedPeers=1 outsideBackoffPeers=1
+INF 2026-11-26 22:59:39.857+00:00 Relay peer connections                     topics="waku node peer_manager" tid=1 file=peer_manager.nim:975 inRelayConns=0/50 outRelayConns=0/25 totalConnections=0/150 notConnectedPeers=1 outsideBackoffPeers=0

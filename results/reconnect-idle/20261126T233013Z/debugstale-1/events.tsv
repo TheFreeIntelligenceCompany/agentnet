@@ -1,0 +1,43 @@
+t_ms	event	detail
+0	block_start
+46849	B_lists_R_not_connected	CanConnect
+46849	redial	http=400 dur=10068ms
+59131	redial	http=400 dur=10119ms
+71690	block_end
+71690	redial	http=400 dur=64ms
+82778	redial	http=400 dur=53ms
+94220	redial	http=400 dur=97ms
+105816	redial	http=400 dur=210ms
+116388	redial	http=400 dur=81ms
+128397	redial	http=400 dur=108ms
+138758	redial	http=400 dur=125ms
+150646	redial	http=400 dur=101ms
+161918	redial	http=400 dur=52ms
+172935	redial	http=400 dur=52ms
+183948	redial	http=400 dur=52ms
+194984	redial	http=400 dur=53ms
+206097	redial	http=400 dur=48ms
+217081	redial	http=400 dur=48ms
+228100	redial	http=400 dur=51ms
+239070	redial	http=400 dur=46ms
+250049	redial	http=400 dur=51ms
+261262	redial	http=400 dur=50ms
+272158	redial	http=400 dur=55ms
+283100	redial	http=400 dur=51ms
+294080	redial	http=400 dur=47ms
+305082	redial	http=400 dur=56ms
+316133	redial	http=400 dur=50ms
+327148	redial	http=400 dur=45ms
+338073	redial	http=400 dur=46ms
+348984	redial	http=400 dur=50ms
+359875	redial	http=400 dur=48ms
+370788	redial	http=400 dur=54ms
+381763	redial	http=400 dur=54ms
+392878	redial	http=400 dur=54ms
+403814	redial	http=400 dur=53ms
+414774	redial	http=400 dur=47ms
+425791	redial	http=400 dur=55ms
+436778	redial	http=400 dur=79ms
+447943	redial	http=400 dur=120ms
+459815	redial	http=400 dur=55ms
+470898	redial	http=200 dur=69ms

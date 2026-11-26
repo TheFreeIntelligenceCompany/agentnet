@@ -1,0 +1,48 @@
+== t=80 ms
+0 0 10.66.0.1:60000 10.66.0.3:51164 ts sack cubic wscale:7,7 rto:208 rtt:7.141/10.946 ato:40 mss:1328 pmtu:1380 rcvmss:536 advmss:1328 cwnd:10 bytes_sent:2852 bytes_acked:2852 bytes_received:2399 segs_out:70 segs_in:74 data_segs_out:49 data_segs_in:48 send 14877468bps lastsnd:7435 lastrcv:7426 lastack:7426 pacing_rate 29754936bps delivery_rate 68763752bps delivered:50 app_limited busy:203ms rcv_space:13280 rcv_ssthresh:64208 minrtt:0.166 snd_wnd:64256 rcv_wnd:64256
+== t=2264 ms
+0 0 10.66.0.1:60000 10.66.0.3:51164 ts sack cubic wscale:7,7 rto:208 rtt:7.141/10.946 ato:40 mss:1328 pmtu:1380 rcvmss:536 advmss:1328 cwnd:10 bytes_sent:2852 bytes_acked:2852 bytes_received:2399 segs_out:70 segs_in:74 data_segs_out:49 data_segs_in:48 send 14877468bps lastsnd:9605 lastrcv:9596 lastack:9596 pacing_rate 29754936bps delivery_rate 68763752bps delivered:50 app_limited busy:203ms rcv_space:13280 rcv_ssthresh:64208 minrtt:0.166 snd_wnd:64256 rcv_wnd:64256
+== t=4425 ms
+0 0 10.66.0.1:60000 10.66.0.3:51164 ts sack cubic wscale:7,7 rto:208 rtt:7.141/10.946 ato:40 mss:1328 pmtu:1380 rcvmss:536 advmss:1328 cwnd:10 bytes_sent:2852 bytes_acked:2852 bytes_received:2399 segs_out:70 segs_in:74 data_segs_out:49 data_segs_in:48 send 14877468bps lastsnd:11786 lastrcv:11777 lastack:11777 pacing_rate 29754936bps delivery_rate 68763752bps delivered:50 app_limited busy:203ms rcv_space:13280 rcv_ssthresh:64208 minrtt:0.166 snd_wnd:64256 rcv_wnd:64256
+== t=6623 ms
+0 0 10.66.0.1:60000 10.66.0.3:51164 ts sack cubic wscale:7,7 rto:208 rtt:7.141/10.946 ato:40 mss:1328 pmtu:1380 rcvmss:536 advmss:1328 cwnd:10 bytes_sent:2852 bytes_acked:2852 bytes_received:2399 segs_out:70 segs_in:74 data_segs_out:49 data_segs_in:48 send 14877468bps lastsnd:13977 lastrcv:13968 lastack:13968 pacing_rate 29754936bps delivery_rate 68763752bps delivered:50 app_limited busy:203ms rcv_space:13280 rcv_ssthresh:64208 minrtt:0.166 snd_wnd:64256 rcv_wnd:64256
+== t=8809 ms
+0 0 10.66.0.1:60000 10.66.0.3:51164 ts sack cubic wscale:7,7 rto:208 rtt:7.141/10.946 ato:40 mss:1328 pmtu:1380 rcvmss:536 advmss:1328 cwnd:10 bytes_sent:2852 bytes_acked:2852 bytes_received:2399 segs_out:70 segs_in:74 data_segs_out:49 data_segs_in:48 send 14877468bps lastsnd:16146 lastrcv:16137 lastack:16137 pacing_rate 29754936bps delivery_rate 68763752bps delivered:50 app_limited busy:203ms rcv_space:13280 rcv_ssthresh:64208 minrtt:0.166 snd_wnd:64256 rcv_wnd:64256
+== t=11052 ms
+0 279 10.66.0.1:60000 10.66.0.3:51164 timer:(persist,1.194ms,3) ts sack cubic wscale:7,7 rto:208 backoff:3 rtt:7.141/10.946 ato:40 mss:1328 pmtu:1380 rcvmss:536 advmss:1328 cwnd:10 bytes_sent:3924 bytes_acked:2852 bytes_received:2399 segs_out:76 segs_in:74 data_segs_out:55 data_segs_in:48 send 14877468bps lastsnd:402 lastrcv:18399 lastack:18399 pacing_rate 29754936bps delivery_rate 68763752bps delivered:50 app_limited busy:2203ms rcv_space:13280 rcv_ssthresh:64208 notsent:279 minrtt:0.166 snd_wnd:64256 rcv_wnd:64256
+== t=13332 ms
+0 365 10.66.0.1:60000 10.66.0.3:51164 timer:(persist,2.217ms,4) ts sack cubic wscale:7,7 rto:208 backoff:4 rtt:7.141/10.946 ato:40 mss:1328 pmtu:1380 rcvmss:536 advmss:1328 cwnd:10 bytes_sent:4654 bytes_acked:2852 bytes_received:2399 segs_out:78 segs_in:74 data_segs_out:57 data_segs_in:48 send 14877468bps lastsnd:1111 lastrcv:20768 lastack:20768 pacing_rate 29754936bps delivery_rate 68763752bps delivered:50 app_limited busy:4572ms rcv_space:13280 rcv_ssthresh:64208 notsent:365 minrtt:0.166 snd_wnd:64256 rcv_wnd:64256
+== t=15712 ms
+0 365 10.66.0.1:60000 10.66.0.3:51164 timer:(persist,6.462ms,5) ts sack cubic wscale:7,7 rto:208 backoff:5 rtt:7.141/10.946 ato:40 mss:1328 pmtu:1380 rcvmss:536 advmss:1328 cwnd:10 bytes_sent:5019 bytes_acked:2852 bytes_received:2399 segs_out:79 segs_in:74 data_segs_out:58 data_segs_in:48 send 14877468bps lastsnd:194 lastrcv:23243 lastack:23243 pacing_rate 29754936bps delivery_rate 68763752bps delivered:50 app_limited busy:7047ms rcv_space:13280 rcv_ssthresh:64208 notsent:365 minrtt:0.166 snd_wnd:64256 rcv_wnd:64256
+== t=18193 ms
+0 365 10.66.0.1:60000 10.66.0.3:51164 timer:(persist,4.141ms,5) ts sack cubic wscale:7,7 rto:208 backoff:5 rtt:7.141/10.946 ato:40 mss:1328 pmtu:1380 rcvmss:536 advmss:1328 cwnd:10 bytes_sent:5019 bytes_acked:2852 bytes_received:2399 segs_out:79 segs_in:74 data_segs_out:58 data_segs_in:48 send 14877468bps lastsnd:2515 lastrcv:25564 lastack:25564 pacing_rate 29754936bps delivery_rate 68763752bps delivered:50 app_limited busy:9368ms rcv_space:13280 rcv_ssthresh:64208 notsent:365 minrtt:0.166 snd_wnd:64256 rcv_wnd:64256
+== t=20405 ms
+0 365 10.66.0.1:60000 10.66.0.3:51164 timer:(persist,1.965ms,5) ts sack cubic wscale:7,7 rto:208 backoff:5 rtt:7.141/10.946 ato:40 mss:1328 pmtu:1380 rcvmss:536 advmss:1328 cwnd:10 bytes_sent:5019 bytes_acked:2852 bytes_received:2399 segs_out:79 segs_in:74 data_segs_out:58 data_segs_in:48 send 14877468bps lastsnd:4691 lastrcv:27740 lastack:27740 pacing_rate 29754936bps delivery_rate 68763752bps delivered:50 app_limited busy:11544ms rcv_space:13280 rcv_ssthresh:64208 notsent:365 minrtt:0.166 snd_wnd:64256 rcv_wnd:64256
+== t=22628 ms
+0 365 10.66.0.1:60000 10.66.0.3:51164 timer:(persist,13sec,6) ts sack cubic wscale:7,7 rto:208 backoff:6 rtt:7.141/10.946 ato:40 mss:1328 pmtu:1380 rcvmss:536 advmss:1328 cwnd:10 bytes_sent:5384 bytes_acked:2852 bytes_received:2399 segs_out:80 segs_in:74 data_segs_out:59 data_segs_in:48 send 14877468bps lastsnd:80 lastrcv:30233 lastack:30233 pacing_rate 29754936bps delivery_rate 68763752bps delivered:50 app_limited busy:14037ms rcv_space:13280 rcv_ssthresh:64208 notsent:365 minrtt:0.166 snd_wnd:64256 rcv_wnd:64256
+== t=25333 ms
+0 365 10.66.0.1:60000 10.66.0.3:51164 timer:(persist,10sec,6) ts sack cubic wscale:7,7 rto:208 backoff:6 rtt:7.141/10.946 ato:40 mss:1328 pmtu:1380 rcvmss:536 advmss:1328 cwnd:10 bytes_sent:5384 bytes_acked:2852 bytes_received:2399 segs_out:80 segs_in:74 data_segs_out:59 data_segs_in:48 send 14877468bps lastsnd:2759 lastrcv:32912 lastack:32912 pacing_rate 29754936bps delivery_rate 68763752bps delivered:50 app_limited busy:16716ms rcv_space:13280 rcv_ssthresh:64208 notsent:365 minrtt:0.166 snd_wnd:64256 rcv_wnd:64256
+== t=27956 ms
+0 365 10.66.0.1:60000 10.66.0.3:51164 timer:(persist,8.127ms,6) ts sack cubic wscale:7,7 rto:208 backoff:6 rtt:7.141/10.946 ato:40 mss:1328 pmtu:1380 rcvmss:536 advmss:1328 cwnd:10 bytes_sent:5384 bytes_acked:2852 bytes_received:2399 segs_out:80 segs_in:74 data_segs_out:59 data_segs_in:48 send 14877468bps lastsnd:5185 lastrcv:35338 lastack:35338 pacing_rate 29754936bps delivery_rate 68763752bps delivered:50 app_limited busy:19142ms rcv_space:13280 rcv_ssthresh:64208 notsent:365 minrtt:0.166 snd_wnd:64256 rcv_wnd:64256
+== t=30295 ms
+0 558 10.66.0.1:60000 10.66.0.3:51164 timer:(persist,5.717ms,6) ts sack cubic wscale:7,7 rto:208 backoff:6 rtt:7.141/10.946 ato:40 mss:1328 pmtu:1380 rcvmss:536 advmss:1328 cwnd:10 bytes_sent:6414 bytes_acked:2852 bytes_received:2399 segs_out:82 segs_in:74 data_segs_out:61 data_segs_in:48 send 14877468bps lastsnd:758 lastrcv:37748 lastack:37748 pacing_rate 29754936bps delivery_rate 68763752bps delivered:50 app_limited busy:21552ms rcv_space:13280 rcv_ssthresh:64208 notsent:558 minrtt:0.166 snd_wnd:64256 rcv_wnd:64256
+== t=32666 ms
+0 730 10.66.0.1:60000 10.66.0.3:51164 timer:(persist,3.432ms,6) ts sack cubic wscale:7,7 rto:208 backoff:6 rtt:7.141/10.946 ato:40 mss:1328 pmtu:1380 rcvmss:536 advmss:1328 cwnd:10 bytes_sent:7788 bytes_acked:2852 bytes_received:2399 segs_out:84 segs_in:74 data_segs_out:63 data_segs_in:48 send 14877468bps lastsnd:1044 lastrcv:40033 lastack:40033 pacing_rate 29754936bps delivery_rate 68763752bps delivered:50 app_limited busy:23837ms rcv_space:13280 rcv_ssthresh:64208 notsent:730 minrtt:0.166 snd_wnd:64256 rcv_wnd:64256
+== t=34935 ms
+0 730 10.66.0.1:60000 10.66.0.3:51164 timer:(persist,1.038ms,6) ts sack cubic wscale:7,7 rto:208 backoff:6 rtt:7.141/10.946 ato:40 mss:1328 pmtu:1380 rcvmss:536 advmss:1328 cwnd:10 bytes_sent:7788 bytes_acked:2852 bytes_received:2399 segs_out:84 segs_in:74 data_segs_out:63 data_segs_in:48 send 14877468bps lastsnd:3438 lastrcv:42427 lastack:42427 pacing_rate 29754936bps delivery_rate 68763752bps delivered:50 app_limited busy:26231ms rcv_space:13280 rcv_ssthresh:64208 notsent:730 minrtt:0.166 snd_wnd:64256 rcv_wnd:64256
+== t=37414 ms
+
+== t=39666 ms
+
+== t=41880 ms
+
+== t=44247 ms
+
+== t=46444 ms
+
+== t=58765 ms
+
+== t=71222 ms
+
+== t=73697 ms
+0 0 10.66.0.1:60000 10.66.0.3:53274 ts sack cubic wscale:7,7 rto:211 rtt:10.345/15.708 ato:40 mss:1328 pmtu:1380 rcvmss:536 advmss:1328 cwnd:16 bytes_sent:2028 bytes_acked:2028 bytes_received:1775 segs_out:47 segs_in:47 data_segs_out:36 data_segs_in:34 send 16431513bps lastsnd:2058 lastrcv:2061 lastack:2017 pacing_rate 32860240bps delivery_rate 58940360bps delivered:37 app_limited busy:111ms rcv_space:13280 rcv_ssthresh:64208 minrtt:0.32 snd_wnd:64256 rcv_wnd:64256

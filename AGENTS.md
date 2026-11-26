@@ -98,8 +98,11 @@ results/           raw evidence; every claim in docs points here
   relay can keep a half-open socket for 15+ minutes and refuse the client's
   redials meanwhile. Relays set `net.ipv4.tcp_retries2=6` (compose `sysctls`,
   `agentnet relay print-config`); this does not help when the stale socket is idle
-  (7 min 25 s outage measured on real hosts); no client-side fix exists
-  (`results/reconnect/20261126T065412Z/SUMMARY.md`, `docs/runbook.md` 6.3).
+  (7 min 25 s outage measured on real hosts; 401 s and 496 s in the simulation): the node sets
+  no SO_KEEPALIVE and never pings inbound peers. A relay-side watchdog
+  (`spike/relay-wireguard/scripts/stale-watchdog.sh`, `ss -K` on sockets with no data received
+  for 60 s) fixed it 3 of 3 times in the simulation, UNTESTED on real hosts; no client-side fix
+  exists (`results/reconnect/20261126T065412Z/SUMMARY.md`, `results/reconnect-idle/20261126T233013Z/SUMMARY.md`, `docs/runbook.md` 6.3).
 - Parallel cargo builds in separate worktrees filled the disk once: share one
   `CARGO_TARGET_DIR` between worktrees and delete merged worktrees promptly.
 - The node REST API has no call to disconnect a peer: a node meshed with an

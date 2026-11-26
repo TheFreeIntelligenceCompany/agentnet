@@ -1,0 +1,2 @@
+WRN 2026-11-26 23:17:56.765+00:00 Too many consecutive ping failures, node likely disconnected. Killing all connections tid=1 file=node_health_monitor.nim:671 consecutiveIterationFailures=3 maxAllowedConsecutiveFailures=2
+WRN 2026-11-26 23:18:01.772+00:00 Node is offline                            topics="waku online monitor" tid=1 file=online_monitor.nim:55
