@@ -442,17 +442,24 @@ async fn run(cli: Cli) -> CliResult<i32> {
         Command::Quarantine { action } => {
             let r = remote();
             match action {
-                QuarantineCmd::List => {
-                    let l = r.list_quarantined().await?;
-                    emit(json, &l, |l| {
-                        if l.is_empty() {
-                            "quarantine is empty".to_owned()
-                        } else {
-                            l.iter()
-                                .map(render::inbox_record)
-                                .collect::<Vec<_>>()
-                                .join("\n")
+                QuarantineCmd::List { limit, cursor } => {
+                    let res = r
+                        .list_quarantined_page(PageRequest { cursor, limit })
+                        .await?;
+                    emit(json, &res, |r| {
+                        if r.records.is_empty() {
+                            return "quarantine is empty".to_owned();
                         }
+                        let mut s = r
+                            .records
+                            .iter()
+                            .map(render::inbox_record)
+                            .collect::<Vec<_>>()
+                            .join("\n");
+                        if let (true, Some(c)) = (r.has_more, &r.next_cursor) {
+                            s.push_str(&format!("\nmore available: --cursor {c}"));
+                        }
+                        s
                     });
                 }
                 QuarantineCmd::Release { message_id } => {

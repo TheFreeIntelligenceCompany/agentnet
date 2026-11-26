@@ -638,3 +638,68 @@ async fn too_large_publish_is_permanent_failure() {
     assert_eq!(st.state, DeliveryState::Failed);
     assert!(st.last_error.is_some());
 }
+
+/// Review finding 5: a quarantine full of heavily escaped bodies is listed in
+/// pages whose serialized size stays under the byte budget (the unpaged
+/// response of 1000 such messages is about 80 MB, above the 64 MiB socket line
+/// limit; 200 of them were measured at 16.1 MB).
+#[tokio::test]
+async fn quarantine_listing_is_paged_within_a_byte_budget() {
+    let (_w, x, b) = unknown_sender_setup(UnknownSenders::Quarantine, |_| {}).await;
+    let body = "\"".repeat(60_000);
+    b.transport.set_live_capacity(1000);
+    let total = 80usize;
+    for _ in 0..total {
+        x.send(&b, &body).await;
+    }
+    for _ in 0..10 {
+        x.node.step_send().await.unwrap();
+        b.node.step_receive().await.unwrap();
+    }
+    assert_eq!(b.n("inbox"), total as u64);
+    let mut seen = std::collections::HashSet::new();
+    let mut cursor = None;
+    let mut pages = 0;
+    loop {
+        let page = b
+            .node
+            .list_quarantined_page(PageRequest {
+                cursor: cursor.clone(),
+                limit: Some(200),
+            })
+            .unwrap();
+        let bytes = serde_json::to_vec(&page).unwrap().len();
+        assert!(
+            bytes <= agentnet_core::api::MAX_QUARANTINE_PAGE_BYTES + 4096,
+            "page of {bytes} bytes exceeds the budget"
+        );
+        assert!(!page.records.is_empty());
+        pages += 1;
+        for r in &page.records {
+            assert!(seen.insert(r.message_id.clone()), "no record twice");
+        }
+        if !page.has_more {
+            break;
+        }
+        cursor = page.next_cursor;
+    }
+    assert_eq!(seen.len(), total);
+    assert!(pages >= 2, "the byte budget must split the listing");
+    // a small limit pages too and a bad cursor is refused
+    let p = b
+        .node
+        .list_quarantined_page(PageRequest {
+            cursor: None,
+            limit: Some(7),
+        })
+        .unwrap();
+    assert_eq!(p.records.len(), 7);
+    assert!(p.has_more);
+    assert!(b
+        .node
+        .list_quarantined_page(PageRequest {
+            cursor: Some("zz".into()),
+            limit: None,
+        })
+        .is_err());
+}

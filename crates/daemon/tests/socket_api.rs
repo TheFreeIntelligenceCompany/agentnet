@@ -425,6 +425,68 @@ async fn quarantine_list_and_release_through_the_socket() {
     b.daemon.unwrap().shutdown().await;
 }
 
+/// Review finding 5 through the socket: a quarantine of heavily escaped bodies
+/// is listed page by page; `quarantine.list` answers an object, not an array.
+#[tokio::test]
+async fn quarantine_list_is_paged_through_the_socket() {
+    let w = World::new();
+    let a = Agent::new(&w, "a", cfg()).await;
+    let b = Agent::new(&w, "b", cfg()).await;
+    b.add_contact_of(&a).await;
+    let body = "\"".repeat(60_000);
+    let total = 40usize;
+    for _ in 0..total {
+        b.send(&a, &body).await;
+    }
+    wait_until("all quarantined at a", || async {
+        a.remote.list_quarantined().await.unwrap().len() == total
+    })
+    .await;
+    let mut cursor = None;
+    let mut seen = HashSet::new();
+    let mut pages = 0;
+    loop {
+        let page = a
+            .remote
+            .list_quarantined_page(PageRequest {
+                cursor: cursor.clone(),
+                limit: Some(15),
+            })
+            .await
+            .unwrap();
+        assert!(page.records.len() <= 15);
+        pages += 1;
+        for r in &page.records {
+            assert!(seen.insert(r.message_id.clone()));
+        }
+        if !page.has_more {
+            break;
+        }
+        cursor = page.next_cursor;
+    }
+    assert_eq!((seen.len(), pages), (total, 3));
+    // raw protocol: an object with records / next_cursor / has_more
+    let (mut r, mut wr) = raw_connect(&a).await;
+    wr.write_all(
+        format!(
+            "{{\"hello\":{{\"token\":\"{}\",\"client\":\"t\"}}}}\n",
+            token(&a)
+        )
+        .as_bytes(),
+    )
+    .await
+    .unwrap();
+    read_json(&mut r).await.unwrap();
+    wr.write_all(b"{\"id\":1,\"method\":\"quarantine.list\",\"params\":{\"limit\":2}}\n")
+        .await
+        .unwrap();
+    let v = read_json(&mut r).await.unwrap();
+    assert_eq!(v["result"]["records"].as_array().unwrap().len(), 2);
+    assert_eq!(v["result"]["has_more"], true);
+    a.daemon.unwrap().shutdown().await;
+    b.daemon.unwrap().shutdown().await;
+}
+
 // ------------------------------------------------------------------ events
 
 #[tokio::test]

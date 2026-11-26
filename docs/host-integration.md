@@ -87,7 +87,7 @@ Methods, with the parameters being exactly the fields of the Rust types in `agen
 | `changes.subscribe` | | `{"subscribed":true}`, then a stream (1.4) |
 | `contacts.set_trust` | `{address,trust}` (`trusted` / `untrusted` / `blocked`) | `ContactInfo` |
 | `contacts.remove` | `{address}` | `{"removed":bool}` |
-| `quarantine.list` | | `[InboxRecord]` |
+| `quarantine.list` | `{cursor?,limit?}` (default 50, maximum 200) | `{records:[InboxRecord],next_cursor,has_more}`; a page also stops at 8 MiB of serialized records (`MAX_QUARANTINE_PAGE_BYTES`), so a quarantine of heavily escaped bodies never exceeds the response line limit. A response line over 64 MiB is replaced by a `too_large` error instead of closing the connection. Changed from a bare array. |
 | `quarantine.release` | `{message_id}` | `{"released":n}` |
 | `metrics` | | `{"counters":{name:value}}` |
 | `daemon.status` | | version, uptime, mode, `mcp_http`, `webhook` counters |
@@ -143,7 +143,7 @@ reconnect because hints were missed meanwhile. This is what feeds MCP resource-u
 
 `agentnet_daemon::RemoteAgent` implements `agentnet_core::api::AgentApi` over the socket (one multiplexed
 connection, reconnects when the daemon restarts) and adds `set_contact_trust`, `remove_contact`,
-`list_quarantined`, `release_quarantined`, `metrics`, `daemon_status`, `shutdown`. While the daemon is not
+`list_quarantined_page` (one page), `list_quarantined` (all pages), `release_quarantined`, `metrics`, `daemon_status`, `shutdown`. While the daemon is not
 running every call fails with `unavailable` and the message "the AgentNet daemon is not running (...);
 start it with `agentnet serve`". A rejected token is `policy_denied`.
 
