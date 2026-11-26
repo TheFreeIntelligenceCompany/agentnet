@@ -1,0 +1,11 @@
+[demo 15:23:33] checking prerequisites
+[demo 15:23:33] using agentnet 0.1.0 at /Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-ad50c699d08456f4b/target/release/agentnet
+[demo 15:23:33] relay topology is already up (reusing it; it will not be touched): r1 na nb
+[demo 15:23:33] temp directory: /tmp/an-demo.wJiTW1
+[demo 15:23:34] agent A = an1b5xrrqejgw62jri2uq2lcuj7go4vuynfdvsi7ksvgns456lq6i3gk6ojhm
+[demo 15:23:34] agent B = an1abqi2urqk3vqf4xuimn2xpbwjipow4l747tfgllp4mxpb2ukeuehncx4ie
+[demo 15:23:34] daemons started: A pid 45860, B pid 45861
+
+DEMO FAILED during: waiting for both daemons to become ready (node reachable, relay peer connected)
+  daemon A was not ready after 0 s. Run 'agentnet --data-dir <dir> network status' (use DEMO_KEEP=1 to keep the directory). A node that was just (re)created can take about a minute to reach the relay.
+[demo 15:23:35] relay containers were already running before this script: left untouched

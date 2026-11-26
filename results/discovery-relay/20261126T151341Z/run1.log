@@ -1,0 +1,55 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.23s
+     Running tests/relay_discovery.rs (target/debug/deps/relay_discovery-6d9010aa736d349c)
+
+running 1 test
+[1795705978] relay discovery: topology = spike/relay (localhost / docker bridge, NOT cross-machine)
+[1795705978] ok: node A health
+[1795705978] ok: node B health
+[1795705980] A = an1y44jre3twravdrki35kbnbhuz7hb5272onv2f4kdwed7npacdapgs7ncci
+B = an1kyithfpniwxz3c4leg26mu7qe3yafzjitkjrjt43lgaxwz3rwapdxk7ye4
+topics = ["rd1795705978", "rd1795705978-tamper", "rd1795705978-ctrl"] capability = relay-cap-1795705978
+[1795705980] ok: serve A ready
+[1795705980] ok: serve B ready
+[1795705980] A advertise: {"capabilities":[{"description":"relay discovery test","name":"relay-cap-1795705978"}],"expires_at":1795707780624,"issued_at":1795705980624,"seq":1,"topic":"rd1795705978"}
+[1795705981] ok: B lists A's advert (CLI)
+[1795705981] advert visible at B after 525.788375ms
+[1795705981] B list: [{"address":"an1y44jre3twravdrki35kbnbhuz7hb5272onv2f4kdwed7npacdapgs7ncci","capabilities":[{"description":"relay discovery test","name":"relay-cap-1795705978"}],"contact_record":"{\"record\":\"eyJ2IjoxLCJhZGRyZXNzIjoiYW4xeTQ0anJlM3R3cmF2ZHJraTM1a2JuYmh1ejdoYjUyNzJvbnYyZjRrZHdlZDducGFjZGFwZ3M3bmNjaSIsInNpZ25pbmdfcGsiOiJ4emlZazNPMFFWSEZTTjlVRm9UMHo4NGU2X3B6YTZMeFE3RUg5cndDR0I0Iiwia2VtX3BrIjoiQzZiZngxd3hWcVVWdjZpYkx1bnV2RkJSa1NlcWdoYm0wVlNPUVBkZnhqYyIsImtleV9lcG9jaCI6MSwicmV2b2tlZF9rZW1fZXBvY2hzX2JlbG93IjoxLCJzdWl0ZXMiOlsxXSwiaW5ib3hfYnVja2V0cyI6MTYsImNyZWF0ZWRfYXQiOjE3OTU3MDU5ODAwMjYsImtlbV9leHBpcmVzX2F0IjpudWxsfQ\",\"sig\":\"8OXcVKijbRR_vWBkMgfu39rnuzoLiBi17NXJJCFq7Nyhw995WFlrP0PBrbz4i9-LCgywXu--D2hGC6QNA35OBw\"}","display_name":"Relay Tester","expires_at":1795707780624,"is_contact":false,"issued_at":1795705980624,"trust":"unknown"}]
+[1795705981] B added the discovered contact_record with --expect an1y44jre3twravdrki35kbnbhuz7hb5272onv2f4kdwed7npacdapgs7ncci: ok
+[1795705981] B mcp discover_agents: {"agents":[{"address":"an1y44jre3twravdrki35kbnbhuz7hb5272onv2f4kdwed7npacdapgs7ncci","capabilities":[{"description":"relay discovery test","name":"relay-cap-1795705978"}],"contact_record":"{\"record\":\"eyJ2IjoxLCJhZGRyZXNzIjoiYW4xeTQ0anJlM3R3cmF2ZHJraTM1a2JuYmh1ejdoYjUyNzJvbnYyZjRrZHdlZDducGFjZGFwZ3M3bmNjaSIsInNpZ25pbmdfcGsiOiJ4emlZazNPMFFWSEZTTjlVRm9UMHo4NGU2X3B6YTZMeFE3RUg5cndDR0I0Iiwia2VtX3BrIjoiQzZiZngxd3hWcVVWdjZpYkx1bnV2RkJSa1NlcWdoYm0wVlNPUVBkZnhqYyIsImtleV9lcG9jaCI6MSwicmV2b2tlZF9rZW1fZXBvY2hzX2JlbG93IjoxLCJzdWl0ZXMiOlsxXSwiaW5ib3hfYnVja2V0cyI6MTYsImNyZWF0ZWRfYXQiOjE3OTU3MDU5ODAwMjYsImtlbV9leHBpcmVzX2F0IjpudWxsfQ\",\"sig\":\"8OXcVKijbRR_vWBkMgfu39rnuzoLiBi17NXJJCFq7Nyhw995WFlrP0PBrbz4i9-LCgywXu--D2hGC6QNA35OBw\"}","display_name":"Relay Tester","expires_at":1795707780624,"is_contact":true,"issued_at":1795705980624,"trust":"trusted"}],"has_more":false,"next_cursor":"YWR2ZXJ0OjE"}
+[1795705981] B mcp discover_agents unknown topic: {"error":{"code":"policy_denied","message":"topic \"not-configured\" is not an authorized discovery topic (host policy: discovery.topics)","retryable":false}}
+[1795705981] ok: advert frame in the relay Store
+[1795705981] store frame: 1205 bytes, prefix [41, 44, 01]
+[1795705981] inject on rd1795705978-ctrl: node answered "OK"
+[1795705981] inject on rd1795705978-tamper: node answered "OK"
+[1795705981] ok: control replay is listed at B
+[1795706001] B network status --verbose after injection:
+mode: private
+ready: true
+connected peers: 1
+isolation: ok
+queue: outbox queued=0 sent-unacked=0, inbox unread=0 quarantined=0, events unacked=0, active triggers=0
+last live poll: 2026-11-26 15:13:21 UTC
+last history sync: 2026-11-26 15:13:15 UTC
+detail: node reachable; 1 connected allowed peer(s)
+peer: 16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV
+daemon: version 0.1.0 uptime 21s
+webhook: disabled
+
+[1795706002] ok: B inbox has the message
+[1795706002] ok: A status delivered
+[1795706002] A withdraw: {"topic":"rd1795705978","withdrawn":true}
+[1795706002] ok: B no longer lists A's advert
+[1795706002] withdraw visible at B
+[1795706002] frames on the discovery topic before the disabled phase: 2
+[1795706002] ok: serve A (discovery disabled) ready
+[1795706002] disabled: ["discovery", "advertise", "--topic", "rd1795705978", "--capability", "relay-cap-1795705978"] -> exit Some(6) stderr error: discovery is disabled by host policy ([discovery] enabled = false in agentnet.toml)
+[1795706002] disabled: ["discovery", "withdraw", "--topic", "rd1795705978"] -> exit Some(6) stderr error: discovery is disabled by host policy ([discovery] enabled = false in agentnet.toml)
+[1795706002] disabled: ["--json", "discovery", "list", "--topic", "rd1795705978"] -> exit Some(6) stderr error: discovery is disabled by host policy ([discovery] enabled = false in agentnet.toml)
+[1795706002] disabled mcp advertise_agent: {"error":{"code":"policy_denied","message":"discovery is disabled by host policy ([discovery] enabled = false in agentnet.toml)","retryable":false}}
+[1795706012] frames on the discovery topic after the disabled phase: 2
+[1795706012] serve A log: 4 lines
+[1795706012] serve B log: 4 lines
+test signed_capability_discovery_works_over_the_private_relay ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 34.21s
+

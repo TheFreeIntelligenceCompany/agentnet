@@ -162,8 +162,9 @@ stop the daemon, replace the binary, start the daemon, then run `agentnet doctor
 * **Check.** `agentnet network status` (ready, `outbox_queued`, `outbox_sent_unacked`); `agentnet doctor` (clock, node reachable); ask the
   recipient to run `agentnet quarantine list`, `agentnet contact list` and `doctor`.
 * **Action.** Wait: the sender retries with backoff up to `max_attempts` 20, and `delivered` can take up to a minute or more after a node or relay
-  restart. Fix `ready` first (6.1, 6.3, 6.4). Fix clocks (NTP). If the message reached its TTL it becomes `expired`/`failed`; send again. `send --idempotency-key <key>`
-  makes a resend safe. Recovery is bounded by the minimum of the relay Store retention, the message TTL and `storage.retention_hours`
+  restart. Fix `ready` first (6.1, 6.3, 6.4). Fix clocks (NTP). If the message reached its TTL it becomes `expired`/`failed`. Reuse the original idempotency key when retrying an uncertain send request.
+  To create a new message after failure or expiry, use a new key or omit it. Reusing the old key returns the original message without resending.
+  A missing receipt does not prove non-delivery. Recovery is bounded by the minimum of the relay Store retention, the message TTL and `storage.retention_hours`
   (`docs/relay-setup.md` section 6).
 
 ### 6.3 Node lost the relay and is slow to reconnect
