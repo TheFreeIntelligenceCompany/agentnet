@@ -14,9 +14,9 @@
 //!   rolled back; a missing/unreadable sidecar next to a non-empty DB means the
 //!   history is unknown; an `imported` marker (written by `identity import`)
 //!   means a new data directory. All three enter **guard mode**;
-//! * in guard mode inbound messages whose `created_at` precedes the moment the
-//!   guard started are held (quarantined, reason `replay_guard`, no ack, no
-//!   trigger) until `max_ttl + clock_skew` has elapsed (they are all expired by
+//! * in guard mode inbound messages whose `created_at` is at or before the guard
+//!   start plus `clock_skew` are held (quarantined, reason `replay_guard`, no
+//!   ack, no trigger) until `max_ttl + clock_skew` has elapsed (they are all expired by
 //!   then) or the operator accepts the rollback.
 //!
 //! What this does not do: it cannot recover messages that were received and

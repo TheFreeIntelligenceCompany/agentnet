@@ -756,12 +756,15 @@ On open:
 * a brand-new database with no sidecar is a fresh install: no guard.
 
 In guard mode (persisted in the database, so it survives restarts) an inbound
-message whose `created_at` is **older than the moment the guard started** and
+message whose `created_at` is **at or before the moment the guard started plus
+`clock_skew`** (a message accepted before the rollback may have been created that
+far ahead of the local clock) and
 that would otherwise be delivered is *held*: stored in the inbox as quarantined
 with `hold_reason = replay_guard`, **not acknowledged, no event, no trigger**,
 counted (`guard.held`), and shown by `network status` (reason, held count,
-deadline) and `agentnet doctor`. Messages created after the guard started are
-delivered normally. The guard ends when `max_ttl + clock_skew` has elapsed (every
+deadline) and `agentnet doctor`. Messages created after that cutoff are
+delivered normally; a legitimate message created within `clock_skew` after the
+guard started is held too and is released only by accepting the rollback. The guard ends when `max_ttl + clock_skew` has elapsed (every
 held message has expired by then and is discarded) or when the operator runs
 `agentnet doctor --accept-rollback` (daemon stopped); at the next start the held
 messages that have not expired are released like quarantined ones (event + ack,

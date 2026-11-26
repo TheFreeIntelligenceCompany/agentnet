@@ -570,7 +570,8 @@ async fn rollback_enters_the_replay_guard_and_holds_replayed_frames() {
     assert_eq!(b.n("outbox"), outbox_rows, "no ack queued");
     assert_eq!(b.n("events"), 0);
     assert_eq!(status(&b).await.replay_guard.unwrap().held, 1);
-    // a message created after the guard started is delivered normally
+    // a message created after the guard start plus the skew is delivered normally
+    w.advance(121_000);
     a.send(&b, "after the rollback").await;
     settle(&[&a, &b]).await;
     assert_eq!(b.inbox().await.len(), 1);
@@ -590,6 +591,53 @@ async fn rollback_enters_the_replay_guard_and_holds_replayed_frames() {
             .all(|r| r.body != "received before the rollback"),
         "the held replay was discarded as expired"
     );
+}
+
+/// Review finding 1: a trusted sender whose clock runs ahead (within the
+/// allowed skew) creates a frame that opens fine; replaying it after a restore
+/// must still be held, because its signed `created_at` is later than the guard
+/// start but not later than guard start + skew.
+#[tokio::test]
+async fn rollback_guard_holds_replays_from_a_sender_clock_ahead_within_the_skew() {
+    let w = World::new();
+    let mut v = started(&w, &["a", "b"]).await;
+    let (b, a) = (v.pop().unwrap(), v.pop().unwrap());
+    exchange(&a, &b).await;
+    let backup = w.dir.path().join("b-backup.sqlite");
+    b.node.close();
+    copy_store(&b, &backup);
+    let b = w.reopen(b, cfg());
+
+    // A's clock is 60 s ahead (allowed skew is 120 s).
+    let ahead = w.now_ms() + 60_000;
+    let id = load(&a);
+    let vc = VerifiedContact::parse_and_verify(&b.record, w.now_ms()).unwrap();
+    let env = Envelope::new(
+        id.address(),
+        vc.address,
+        MESSAGE_TYPE_MESSAGE,
+        "from the future".to_owned(),
+        ahead,
+        TTL,
+    )
+    .unwrap();
+    let frame = seal(&id, &vc, &env, w.now_ms(), 150_000).unwrap();
+    inject(&w, &b, &frame);
+    b.node.step_receive().await.unwrap();
+    assert_eq!(b.inbox().await.len(), 1, "accepted within the skew");
+
+    b.node.close();
+    restore_store(&b, &backup);
+    w.advance(5_000);
+    let b = w.reopen(b, cfg());
+    assert!(status(&b).await.replay_guard.is_some());
+    let outbox_rows = b.n("outbox");
+    inject(&w, &b, &frame);
+    b.node.step_receive().await.unwrap();
+    assert_eq!(b.inbox().await.len(), 0, "replay must not be delivered");
+    assert_eq!(b.metric("guard.held"), 1);
+    assert_eq!(b.n("outbox"), outbox_rows, "no ack queued");
+    assert_eq!(b.n("events"), 0);
 }
 
 #[tokio::test]

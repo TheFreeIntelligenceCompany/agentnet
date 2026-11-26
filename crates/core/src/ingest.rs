@@ -233,9 +233,15 @@ impl Node {
             return FrameOutcome::Rejected;
         }
         let quarantine = trust != Trust::Trusted && policy == UnknownSenders::Quarantine;
-        // Replay guard: after a store rollback / import, messages created before
-        // the guard started are held instead of delivered.
-        let hold = !quarantine && self.guard_state().is_some_and(|g| env.created_at < g.since);
+        // Replay guard: after a store rollback / import, messages created up to
+        // the guard start plus the permitted clock skew are held instead of
+        // delivered (a message accepted before the rollback may have been
+        // created that far ahead of the local clock; the bound is inclusive).
+        let skew = self.open_limits.clock_skew_ms;
+        let hold = !quarantine
+            && self
+                .guard_state()
+                .is_some_and(|g| env.created_at <= g.since.saturating_add(skew));
         // 5. one transaction
         let res = self
             .store
