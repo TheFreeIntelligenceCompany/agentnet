@@ -241,9 +241,8 @@ struct StoreEntry {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct StoreResponse {
-    status_code: Option<u32>,
+    status_code: u32,
     status_desc: Option<String>,
-    #[serde(default)]
     messages: Vec<Value>,
     pagination_cursor: Option<String>,
 }
@@ -268,13 +267,14 @@ pub(crate) fn parse_store_page(
     let resp: StoreResponse = serde_json::from_slice(body).map_err(|_| {
         StoreParseError::Malformed("store response is not the expected JSON".into())
     })?;
-    if let Some(code) = resp.status_code {
-        if code != 200 {
-            return Err(StoreParseError::Status(format!(
-                "store statusCode {code}: {}",
-                snippet(resp.status_desc.unwrap_or_default().as_bytes())
-            )));
-        }
+    // `statusCode` and `messages` are mandatory in the node's envelope; a body
+    // without them (`{}`, `{"error":..}`) is not an empty page.
+    if resp.status_code != 200 {
+        return Err(StoreParseError::Status(format!(
+            "store statusCode {}: {}",
+            resp.status_code,
+            snippet(resp.status_desc.unwrap_or_default().as_bytes())
+        )));
     }
     let mut counts = ParseCounts::default();
     let mut frames = Vec::with_capacity(resp.messages.len());
@@ -338,17 +338,23 @@ pub(crate) struct RawPeer {
 }
 
 /// Parses `GET /admin/v1/peers`. The pinned node reports no separate peer id:
-/// it is the last `/p2p/` segment of `multiaddr`. `connected` is the string
-/// `"Connected"` for live connections.
+/// it is the last `/p2p/` segment of `multiaddr`. Every entry must be an object
+/// with a string `multiaddr` and a `connected` state that is one of the node's
+/// `Connectedness` names (`NotConnected`, `CannotConnect`, `CanConnect`,
+/// `Connected`); anything else makes the list unauditable. Only `Connected`
+/// counts as connected.
 pub(crate) fn parse_peers(body: &[u8]) -> Result<Vec<RawPeer>, String> {
     let items: Vec<Value> =
         serde_json::from_slice(body).map_err(|_| "admin peers response is not a JSON array")?;
     let mut out = Vec::with_capacity(items.len());
     for v in items {
-        let connected = match v.get("connected") {
-            Some(Value::String(s)) => s.eq_ignore_ascii_case("connected"),
-            Some(Value::Bool(b)) => *b,
-            _ => false,
+        if !v.get("multiaddr").is_some_and(Value::is_string) {
+            return Err("admin peers entry has no string multiaddr".into());
+        }
+        let connected = match v.get("connected").and_then(Value::as_str) {
+            Some("Connected") => true,
+            Some("NotConnected" | "CannotConnect" | "CanConnect") => false,
+            _ => return Err("admin peers entry has a missing or unknown connected state".into()),
         };
         let peer_id = v
             .get("peerId")
@@ -727,8 +733,62 @@ mod tests {
             shards: vec![],
         }];
         assert!(evaluate_peers(&p, &allowed, 0).violation.is_none());
-        // boolean `connected` and explicit peerId are tolerated
-        let raw = parse_peers(br#"[{"peerId":"RelayOne","connected":true}]"#).unwrap();
-        assert!(raw[0].connected && raw[0].peer_id.as_deref() == Some("RelayOne"));
+        // boolean `connected` is not a state of the pinned node
+        assert!(parse_peers(
+            br#"[{"multiaddr":"/ip4/1.2.3.4/tcp/1/p2p/RelayOne","connected":true}]"#
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn peers_parsing_is_strict() {
+        let good = |c: &str| {
+            format!(r#"[{{"multiaddr":"/ip4/1.2.3.4/tcp/1/p2p/RelayOne","connected":"{c}"}}]"#)
+        };
+        for c in ["Connected", "NotConnected", "CannotConnect", "CanConnect"] {
+            assert!(parse_peers(good(c).as_bytes()).is_ok(), "{c}");
+        }
+        assert!(parse_peers(b"[]").unwrap().is_empty());
+        for bad in [
+            "[null]".to_string(),
+            "[1]".to_string(),
+            r#"[{"multiaddr":"/ip4/1.2.3.4/tcp/1/p2p/RelayOne"}]"#.to_string(),
+            r#"[{"multiaddr":"/ip4/1.2.3.4/tcp/1/p2p/RelayOne","connected":null}]"#.to_string(),
+            r#"[{"multiaddr":"/ip4/1.2.3.4/tcp/1/p2p/RelayOne","connected":1}]"#.to_string(),
+            good("Dialing"),
+            good(""),
+            r#"[{"connected":"Connected"}]"#.to_string(),
+            r#"[{"multiaddr":7,"connected":"Connected"}]"#.to_string(),
+        ] {
+            assert!(parse_peers(bad.as_bytes()).is_err(), "{bad}");
+        }
+    }
+
+    #[test]
+    fn store_envelope_is_required() {
+        let t = topic();
+        for bad in [
+            "{}",
+            r#"{"error":"boom"}"#,
+            r#"{"statusCode":200}"#,
+            r#"{"messages":[]}"#,
+            r#"{"statusCode":"200","messages":[]}"#,
+            r#"{"statusCode":200,"messages":null}"#,
+            r#"{"statusCode":400,"statusDesc":"bad","messages":[]}"#,
+            "[]",
+        ] {
+            assert!(
+                parse_store_page(bad.as_bytes(), &t, PUBSUB, 10).is_err(),
+                "{bad}"
+            );
+        }
+        let (p, _) = parse_store_page(
+            br#"{"requestId":"r","statusCode":200,"statusDesc":"OK","messages":[]}"#,
+            &t,
+            PUBSUB,
+            10,
+        )
+        .unwrap();
+        assert!(p.frames.is_empty() && p.next_cursor.is_none());
     }
 }

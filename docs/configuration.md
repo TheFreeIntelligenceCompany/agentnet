@@ -38,7 +38,7 @@ this data directory". The socket path must fit a Unix socket (about 100 bytes): 
 |---|---|---|
 | `mode` | `"private"` | `"private"` or `"public"` |
 | `node_url` | `"http://127.0.0.1:8645"` | REST endpoint of your Logos Delivery node. Private mode: loopback, RFC 1918, 100.64.0.0/10 (Tailscale), IPv6 loopback/ULA, or the literal `localhost`; names are never resolved. |
-| `peers` | `[]` | Static peers: multiaddrs ending in `/p2p/<peerId>` (private IP literal). **Required (non-empty) in private mode.** The allowlist of peer ids is derived from them. |
+| `peers` | `[]` | Static peers: multiaddrs ending in `/p2p/<peerId>` (exactly one private IP literal and one `/p2p/` peer id; `/p2p-circuit` relay hops, DNS components and a second `/p2p/` are rejected in private mode; runtime behaviour of the node with such addresses is UNTESTED). **Required (non-empty) in private mode.** The allowlist of peer ids is derived from them. |
 | `cluster_id` | `66` | Waku cluster id. Private mode rejects the public preset ids 1, 2, 3 and 16. Cluster/shard separation is not access control. |
 | `public_discovery` | `false` | `true` is a config error in private mode. The daemon cannot switch discovery on the node; this key only records intent in public mode. |
 | `public_fallback` | `false` | `true` is **always** a config error: there is no public fallback and no code path that adds peers. |
@@ -53,7 +53,7 @@ node's peer list and **refuses to send or receive** (`isolation_violation` in `n
 is connected to any peer outside the allowlist. The daemon cannot set the node's flags: `agentnet relay
 print-config` prints the verified flag set (all discovery off, `--dns-addrs-name-server=127.0.0.1`,
 `--nat=extip:<ip>`, cluster 66 / shard 0, `--rln-relay=false`, REST on loopback) and the audit is the
-runtime check that the operator followed it.
+runtime check that the operator followed it. A peer list the transport cannot parse strictly (an entry that is not an object with a string `multiaddr` and a `connected` state of `Connected`, `NotConnected`, `CannotConnect` or `CanConnect`) makes the node unauditable, which also refuses sends and receives.
 
 ### Public mode
 
