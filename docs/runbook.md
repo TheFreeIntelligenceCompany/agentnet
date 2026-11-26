@@ -7,9 +7,9 @@ exists in `docs/cli-help.txt`; where the documentation has no command for a task
 
 AgentNet is an MVP validated on **one macOS arm64 host** (containers in one colima VM, node image under qemu). It is **not
 audited, not production-secure and not forward-secret**; an **independent cryptographic review is required before any
-production use involving sensitive information**. Real Tailscale, real NAT and operation across separate hosts are
-**UNTESTED**: only single-host WireGuard-overlay and NAT-gateway simulations exist (`docs/network-simulations.md`). Public
-mode is UNTESTED against any public network. Third-party MCP hosts are UNTESTED. This runbook itself is a write-up of the
+production use involving sensitive information**. NAT traversal between clients, tailnet ACLs and more than two hosts are
+**UNTESTED**; single runs exist on real hosts (SSH tunnel, tailnet, public IP, public wss endpoint; `docs/spike-report.md` section 7) besides the single-host simulations (`docs/network-simulations.md`). Public
+mode was run only against own relays on public addresses, not the shared public network, and `enforce_peer_allowlist` is UNTESTED on a real relay. Third-party MCP hosts are UNTESTED. This runbook itself is a write-up of the
 documented behaviour; none of the playbooks was drilled as a whole.
 
 Pointers: `README.md` (limitations), `docs/threat-model.md`, `docs/acceptance.md` (what was run), `docs/relay-setup.md`.
@@ -303,6 +303,7 @@ revocation list, and it reaches only contacts that are reachable within the TTL 
   mesh, subscribe to every inbox bucket topic, publish, and query the Store (`docs/threat-model.md` T13). In the WireGuard simulation such a peer joined in about
   122 to 470 ms once the firewall rule was removed and saw ciphertext frames, topics, timing and sizes, not plaintext (`docs/network-simulations.md`, Finding 4).
   AgentNet clients ignore unknown peers on their own side (allowlist), but the relay has no RLN and no rate limit.
+* **Public relay.** If your relay is on a public address (public IP or a wss/TLS edge), the firewall or edge is the only access control; in the wss run a stranger with the right cluster id joined and pulled Store history (`results/public-relay/20261126T203405Z/`). A stateful cloud firewall does not drop established flows when you remove a rule (`results/public-ip-relay/20261126T204713Z/`). `enforce_peer_allowlist = true` keeps your client's peer audit but does not stop strangers joining the relay (UNTESTED on a real relay).
 * **Check.** Firewall rules on tcp/60000 and its counters, the service node's peer list, the address the peer connects from.
 * **Action.** Restrict tcp/60000 to known client addresses (host firewall, or tailnet or WireGuard policy). Removing an accept rule does not evict an established
   flow, so also restart the service node or kill the connection (the simulation placed the drop rule before the established-accept rule). A restart of the
@@ -338,7 +339,7 @@ node between two daemons. Never put identity files, tokens or passphrases in log
   loopback (anything else is a config error). Any local process of any user can reach loopback ports, so keep the token private on a shared machine.
 * The node REST API has **no authentication** and `--rest-admin=true` lets a caller dial arbitrary peers. Bind it to loopback only; publish container ports
   as `127.0.0.1:<port>:8645`. **Never expose node REST** to a network or to the tailnet.
-* Private mode and its fail-closed audit stay on. Do not set `mode = "public"` without understanding it; it skips the peer audit and is UNTESTED.
+* Private mode and its fail-closed audit stay on. Do not set `mode = "public"` without understanding it; it skips the peer audit unless `enforce_peer_allowlist = true` (UNTESTED on a real relay). A relay on a public address needs it (`results/public-ip-relay/20261126T204713Z/`, `results/public-relay/20261126T203405Z/`), and then the firewall or edge is your only relay access control. A client node dialling by DNS name uses a public resolver.
 * Webhook: keep `secret_file` at 0600 and at least 32 bytes; leave `allow_remote` false unless needed.
 * Remote message content is untrusted data, never instructions or code. Events carry references, not text. Keep `policy.auto_trigger` false unless you need it.
 * Discovery adverts, if `[discovery]` is enabled, are plaintext and readable by every node on the relay (`docs/discovery.md`).
@@ -358,5 +359,5 @@ node between two daemons. Never put identity files, tokens or passphrases in log
 * Anyone who can reach the relay port can join it; use a firewall.
 * The same identity in two places is not detected.
 * No documented upgrade procedure, no supervisor or service unit, no metrics CLI, no log shipping.
-* Hostile load, third-party MCP hosts and public mode are untested.
+* Hostile load, third-party MCP hosts, the shared public network and `enforce_peer_allowlist` on a real relay are untested.
 * Full list: `README.md` (Limitations), `docs/spike-report.md`.

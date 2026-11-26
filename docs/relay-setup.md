@@ -4,8 +4,7 @@ Scope: how to run a user-owned Logos Delivery **service node** (relay + Store, o
 **client node** that `agentnet serve` talks to, for private mode. Every flag below is the set that was run in
 `spike/relay/docker-compose.yml` and that `agentnet relay print-config` prints (full output saved in
 `results/audit/relay-print-config.txt`). **All of it was run on one macOS arm64 host, with containers on a colima VM,
-the amd64 image under qemu.** Nothing here was tested across machines, behind NAT, over Tailscale or against a public
-network (see section 9 and `docs/spike-report.md`).
+the amd64 image under qemu.** The flag set was later also run across real hosts (SSH tunnel, tailnet, public IP, public wss edge; see "Your own relay on a public address" and `docs/spike-report.md` section 7). **UNTESTED**: NAT traversal between clients and the shared public Waku/Logos network.
 
 ## 1. Topology
 
@@ -284,8 +283,17 @@ Private mode only accepts a literal private IP. If your own relay is reached ove
 or a name such as a TLS/WebSocket endpoint `/dns4/relay.example.org/tcp/443/wss/p2p/<id>`), use
 `mode = "public"`, `i_understand_public = true` and `enforce_peer_allowlist = true` (`docs/configuration.md`,
 "Public mode with the allowlist audit kept"). The allowlist of peer ids and the periodic isolation audit are kept.
-Notes from the public-endpoint run (`results/public-relay/20261126T203405Z/SUMMARY.md`, which used plain public mode):
-the client node needs `--websocket-support=true` for `ws`/`wss` addresses, `--nat=extip:<ip>`, and a real DNS resolver
-to resolve the relay's name. Restrict who can reach the relay where you can: the endpoint is open to anyone who
-knows the cluster id (T13). **UNTESTED**: the `enforce_peer_allowlist` mode has unit tests only and has not been run
-against a real public relay.
+Two recipes were run on real hosts (each a single run, one outbound-only client behind a home NAT, agent B on the relay host):
+
+1. **Public IP plus cloud firewall** (`results/public-ip-relay/20261126T204713Z/`, plain public mode). The relay publishes tcp/60000 on its own public IPv4; the cloud firewall admits only the client's public address (and ssh). The client dials `/ip4/<relay ip>/tcp/60000/p2p/<id>` directly. 18 PASS, 0 FAIL, 2 UNTESTED; the capture on the relay shows Noise on the wire. Private mode rejects this address (`address must be a literal private IP`). Caveat: the cloud firewall is **stateful**; deleting the allow rule does not drop established connections, only new dials are blocked. To revoke a client, also restart the relay or the client.
+2. **wss behind a provider TLS edge** (`results/public-relay/20261126T203405Z/`, plain public mode). The relay's ws port (8000) is published by the provider's edge (TLS terminated there, HTTP/1.1 WebSocket upgrade; HTTP/2 gave 502) and the client dials `/dns4/<host>/tcp/443/wss/p2p/<id>`. 17 PASS, 0 FAIL. The edge sees the libp2p-over-ws byte stream; libp2p's own Noise layer inside it was not separately verified in that run.
+
+Client node caveats from these runs:
+
+* `--websocket-support=true` is needed for `ws`/`wss` addresses.
+* `--nat=extip:<ip>`: the default `--nat=any` attempted UPnP/NAT-PMP mapping on the home router.
+* **DNS egress:** a client dialling by DNS name needs a real resolver (1.1.1.1 was used; `127.0.0.1` could not resolve the name). The zero-public-egress property of `--dns-addrs-name-server=127.0.0.1` therefore does not hold for such a client. A public IP literal avoids the lookup (recipe 1 kept `127.0.0.1`).
+
+**The firewall or the edge is the only access control for the relay.** Cluster and shard ids are not (T13): in the wss run an uninvited node with a random key and the right cluster id joined through the public endpoint and pulled 145 stored frames (ciphertext only, topics and timing visible, 0 plaintext hits). REST was not reachable. Keep the REST port unpublished and restrict tcp/60000 where you can.
+
+`enforce_peer_allowlist = true` keeps this node's peer-id audit for your own relay. It does not stop strangers joining the relay. **UNTESTED**: the `enforce_peer_allowlist` mode has unit tests only and has not been run against a real public relay (both runs above used plain public mode).

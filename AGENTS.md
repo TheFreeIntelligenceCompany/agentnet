@@ -77,6 +77,15 @@ results/           raw evidence; every claim in docs points here
 
 ## Operational facts learned the hard way
 
+- A relay on a public address (public IP or wss edge) needs `mode = "public"`
+  (private mode refuses it); set `enforce_peer_allowlist = true` to keep the
+  peer audit (unit tests only, UNTESTED on a real relay). The cloud firewall or
+  edge is the only relay access control (cluster/shard ids are not), and a
+  stateful firewall does not cut established flows
+  (`results/public-ip-relay/20261126T204713Z/`, `results/public-relay/20261126T203405Z/`).
+- A client dialling a relay by DNS name needs a real resolver, which breaks zero
+  public egress; also use `--websocket-support=true` for ws/wss and
+  `--nat=extip:<ip>` (default `--nat=any` tries UPnP/NAT-PMP).
 - One Logos Delivery node per agent: the node's REST receive cache is
   destructive and shared.
 - A recreated node has no live relay for about 62 s; after a relay restart it
