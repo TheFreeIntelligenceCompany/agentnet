@@ -162,6 +162,18 @@ fn check_peer_addr_private(
             "{what} must be a multiaddr starting with '/'"
         )));
     }
+    // Exactly one dialled address: no relay hops (`/p2p-circuit`), no second
+    // `/p2p/` or IP component, no DNS component.
+    let comps: Vec<&str> = addr.split('/').collect();
+    let count = |names: &[&str]| comps.iter().filter(|c| names.contains(c)).count();
+    if count(&["p2p-circuit", "dns", "dns4", "dns6", "dnsaddr"]) > 0
+        || count(&["p2p"]) != 1
+        || count(&["ip4", "ip6"]) != 1
+    {
+        return Err(iso(
+            "must be one literal IP address and one /p2p/ peer id (no relay hops or DNS)",
+        ));
+    }
     let ok = match (segs.next(), segs.next()) {
         (Some("ip4"), Some(a)) => a.parse::<Ipv4Addr>().map(is_private_ipv4).unwrap_or(false),
         (Some("ip6"), Some(a)) => a.parse::<Ipv6Addr>().map(is_private_ipv6).unwrap_or(false),
@@ -452,6 +464,32 @@ mod tests {
         ] {
             c.store_peer = Some(bad.into());
             assert!(c.validate().is_err(), "{bad}");
+        }
+    }
+
+    #[test]
+    fn private_peer_addrs_reject_relay_hops_and_extra_components() {
+        let relay = "/ip4/172.28.66.10/tcp/60000/p2p/16Uiu2HAmRelay";
+        let dest = "/p2p-circuit/p2p/16Uiu2HAmPeerA";
+        for bad in [
+            format!("{relay}{dest}"),
+            "/ip4/172.28.66.10/tcp/1/p2p/16Uiu2HAmRelay/p2p/16Uiu2HAmPeerA".to_string(),
+            "/ip4/172.28.66.10/dns4/relay.example.com/tcp/1/p2p/16Uiu2HAmPeerA".to_string(),
+            "/ip4/172.28.66.10/tcp/1/ip4/8.8.8.8/tcp/1/p2p/16Uiu2HAmPeerA".to_string(),
+        ] {
+            for private in [true, false] {
+                let mut c = cfg("http://127.0.0.1:1");
+                c.allowed_peer_ids = vec!["16Uiu2HAmPeerA".into()];
+                if private {
+                    c.store_peer = Some(bad.clone());
+                } else {
+                    c.static_peers = vec![bad.clone()];
+                }
+                assert!(
+                    matches!(c.validate(), Err(TransportError::Isolation(_))),
+                    "{bad}"
+                );
+            }
         }
     }
 
