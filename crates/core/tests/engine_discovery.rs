@@ -97,7 +97,8 @@ fn record_json(
     now: i64,
 ) -> Vec<u8> {
     serde_json::to_vec(&json!({
-        "v": 1,
+        "v": 2,
+        "topic": TOPIC,
         "address": address,
         "contact_record": contact_record,
         "capabilities": caps,
@@ -748,6 +749,7 @@ async fn forged_adverts_are_rejected_and_counted() {
     let honest = vid
         .create_advert(
             &advert::AdvertContent {
+                topic: TOPIC,
                 capabilities: &[cap("honest", "d")],
                 display_name: None,
                 issued_at: now,
@@ -769,6 +771,7 @@ async fn forged_adverts_are_rejected_and_counted() {
     let (_, other_sig) = advert_testing::split(
         &eid.create_advert(
             &advert::AdvertContent {
+                topic: TOPIC,
                 capabilities: &[cap("honest", "d")],
                 display_name: None,
                 issued_at: now,
@@ -793,7 +796,7 @@ async fn forged_adverts_are_rejected_and_counted() {
     inject("{\"record\":\"AAAA\",\"sig\":\"AAAA\"}".into());
     inject(advert_testing::sign_record_as(
         &vid,
-        &serde_json::to_vec(&json!({"v": 2})).unwrap(),
+        &serde_json::to_vec(&json!({"v": 3})).unwrap(),
     ));
 
     b.node.step_receive().await.unwrap();
@@ -811,6 +814,135 @@ async fn forged_adverts_are_rejected_and_counted() {
     assert_eq!(b.metric("advert.invalid.malformed"), 1);
     assert_eq!(b.metric("advert.invalid.unknown_version"), 1);
     assert_eq!(b.metric("advert.applied"), 0);
+}
+
+#[tokio::test]
+async fn an_advert_replayed_onto_another_enabled_topic_is_rejected() {
+    let w = World::new();
+    let a = start(&w, "a", dcfg()).await;
+    let b = start(&w, "b", dcfg()).await;
+    a.node.advertise_agent(adv(TOPIC, &["x"])).await.unwrap();
+    pump(&[&a, &b]).await;
+    assert_eq!(
+        b.node
+            .discover_agents(disc(TOPIC))
+            .await
+            .unwrap()
+            .agents
+            .len(),
+        1
+    );
+    let frame = published_adverts(&w, &dtopic(TOPIC)).remove(0);
+
+    // an observer re-publishes the genuine frame on the other enabled topic
+    w.net.inject_raw(&dtopic("other"), &frame);
+    b.node.step_receive().await.unwrap();
+    assert!(b
+        .node
+        .discover_agents(disc("other"))
+        .await
+        .unwrap()
+        .agents
+        .is_empty());
+    assert_eq!(b.metric("advert.invalid.topic_mismatch"), 1);
+    assert_eq!(b.metric("advert.applied"), 1);
+    // the original listing is untouched, and a same-topic replay is just stale
+    assert_eq!(
+        b.node
+            .discover_agents(disc(TOPIC))
+            .await
+            .unwrap()
+            .agents
+            .len(),
+        1
+    );
+    w.net.inject_raw(&dtopic(TOPIC), &frame);
+    b.node.step_receive().await.unwrap();
+    assert_eq!(b.metric("advert.invalid.topic_mismatch"), 1);
+    assert_eq!(b.metric("advert.ignored_stale"), 1);
+}
+
+#[tokio::test]
+async fn a_withdrawal_replayed_onto_another_topic_does_not_remove_the_advert_there() {
+    let w = World::new();
+    let a = start(&w, "a", dcfg()).await;
+    let b = start(&w, "b", dcfg()).await;
+    a.node.advertise_agent(adv(TOPIC, &["x"])).await.unwrap();
+    a.node.advertise_agent(adv("other", &["y"])).await.unwrap();
+    pump(&[&a, &b]).await;
+    for t in [TOPIC, "other"] {
+        assert_eq!(
+            b.node.discover_agents(disc(t)).await.unwrap().agents.len(),
+            1,
+            "{t}"
+        );
+    }
+    assert!(
+        a.node
+            .withdraw_advert(TOPIC.into())
+            .await
+            .unwrap()
+            .withdrawn
+    );
+    let frames = published_adverts(&w, &dtopic(TOPIC));
+    let withdrawal = frames.last().unwrap().clone();
+    // deliver the withdrawal to B only on the topic it was signed for ...
+    pump(&[&a, &b]).await;
+    assert!(b
+        .node
+        .discover_agents(disc(TOPIC))
+        .await
+        .unwrap()
+        .agents
+        .is_empty());
+    assert_eq!(
+        b.node
+            .discover_agents(disc("other"))
+            .await
+            .unwrap()
+            .agents
+            .len(),
+        1
+    );
+    // ... and replay it onto the other topic: the advert there survives
+    w.net.inject_raw(&dtopic("other"), &withdrawal);
+    b.node.step_receive().await.unwrap();
+    assert_eq!(
+        b.node
+            .discover_agents(disc("other"))
+            .await
+            .unwrap()
+            .agents
+            .len(),
+        1
+    );
+    assert_eq!(b.metric("advert.invalid.topic_mismatch"), 1);
+    assert_eq!(b.metric("advert.withdrawal_applied"), 1);
+}
+
+#[tokio::test]
+async fn a_topic_less_version_1_advert_is_rejected_not_accepted_for_any_topic() {
+    let w = World::new();
+    let victim = start(&w, "victim", dcfg()).await;
+    let b = start(&w, "b", dcfg()).await;
+    let now = w.now_ms();
+    let vid = identity(&victim);
+    let old = serde_json::to_vec(&json!({
+        "v": 1,
+        "address": victim.addr,
+        "contact_record": victim.record,
+        "capabilities": [{"name": "x", "description": ""}],
+        "issued_at": now,
+        "expires_at": now + 3_600_000,
+        "seq": 1,
+    }))
+    .unwrap();
+    let doc = advert_testing::sign_record_as(&vid, &old);
+    w.net
+        .inject_raw(&dtopic(TOPIC), &advert::encode_frame(&doc));
+    b.node.step_receive().await.unwrap();
+    assert_eq!(b.metric("advert.invalid.unknown_version"), 1);
+    assert_eq!(b.n("adverts"), 0);
 }
 
 #[tokio::test]

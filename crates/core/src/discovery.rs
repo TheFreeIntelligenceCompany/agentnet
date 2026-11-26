@@ -121,6 +121,7 @@ impl Node {
 
     fn sign_own(
         &self,
+        topic: &str,
         capabilities: &[Capability],
         display_name: Option<&str>,
         issued_at: i64,
@@ -130,6 +131,7 @@ impl Node {
         self.identity
             .create_advert(
                 &AdvertContent {
+                    topic,
                     capabilities,
                     display_name,
                     issued_at,
@@ -196,6 +198,7 @@ impl Node {
                     None => 1,
                 };
                 let signed = self.sign_own(
+                    &req.topic,
                     &req.capabilities,
                     req.display_name.as_deref(),
                     now,
@@ -275,7 +278,7 @@ impl Node {
                 let expires_at = self
                     .clamp_to_kem(st.expires_at.min(now.saturating_add(max_ttl)))
                     .max(now.saturating_add(1));
-                let signed = self.sign_own(&[], None, now, expires_at, seq)?;
+                let signed = self.sign_own(&topic, &[], None, now, expires_at, seq)?;
                 st.seq = seq;
                 st.document = signed.to_document();
                 st.withdrawn = true;
@@ -387,6 +390,7 @@ impl Node {
                 }
                 let signed = self
                     .sign_own(
+                        name,
                         &st.capabilities,
                         st.display_name.as_deref(),
                         now,
@@ -424,7 +428,7 @@ impl Node {
         }
         let now = self.now();
         let verified = decode_frame(&frame.payload)
-            .and_then(|doc| VerifiedAdvert::parse_and_verify(doc, now, &self.advert_limits));
+            .and_then(|doc| VerifiedAdvert::parse_and_verify(doc, name, now, &self.advert_limits));
         let v = match verified {
             Ok(v) => v,
             Err(AdvertError::FromFuture) => {
