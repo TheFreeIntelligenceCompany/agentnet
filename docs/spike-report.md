@@ -11,7 +11,7 @@ Sources of numbers: the notes `docs/spike/notes-*.md` (each point back to raw fi
 **Headline limits, stated first.**
 
 * **Every network experiment was single-host.** One macOS arm64 laptop; the Logos Delivery nodes are containers on a colima Linux VM; the node image is
-  linux/amd64 and ran under qemu emulation. No second physical host and no public network was involved; NAT and WireGuard were only simulated on one host (`docs/network-simulations.md`). Later runs on real hosts (SSH tunnel, tailnet, public IP, public wss endpoint) are recorded in section 7 rows 2, 2a and 4 and section 16. **NAT traversal / hole punching between clients, tailnet ACL policy, DERP-relayed paths, key expiry and operation across more than two hosts remain UNTESTED.**
+  linux/amd64 and ran under qemu emulation. No second physical host and no public network was involved; NAT and WireGuard were only simulated on one host (`docs/network-simulations.md`). Later runs on real hosts (SSH tunnel, tailnet, public IP, public wss endpoint) are recorded in section 7 rows 2, 2a and 4 and section 16. **NAT traversal / hole punching between clients, hosted-Tailscale ACL syntax (tag policy was verified on a Headscale tailnet), steady-state DERP-relayed paths, key expiry and operation across more than two hosts remain UNTESTED.**
 * The host was heavily shared while the spikes ran (load average 259 during the crypto spike, `docs/spike/notes-e2e-crypto.md` header; 497 while this report's builds ran).
   All latency and CPU numbers are upper bounds and noisy.
 * The cryptographic composition is not independently reviewed (ADR 0002).
