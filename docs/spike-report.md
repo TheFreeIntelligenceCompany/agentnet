@@ -47,7 +47,7 @@ Synthetic messages and disposable keys only (`spike/relay/.env` holds disposable
 | Linux arm64 build container | `rust:1.92-bookworm` (rustc 1.92.0, gcc 12.2.0, **no cmake installed**) | `results/audit/linux-arm64-build.log` |
 | Native FFI audit container | Debian 12.13 aarch64, gcc/g++ 12.2.0, cmake 3.25.1, GNU Make 4.3, git 2.39.5, Nim 2.2.6 (built natively), nimble 0.26.0, kernel 6.8.0-117 | `results/a1-ffi/toolchain-versions.log` |
 | libchat build toolchain | rustc 1.100.0 (isolated `RUSTUP_HOME`; host 1.92 cannot build it) | `docs/spike/notes-libchat-and-crypto.md` s1.2 |
-| Linux x86_64 (native) | **UNTESTED** (no x86_64 Linux host; goal.md asks to build there first) | - |
+| Linux x86_64 (native) | Rust build and tests **PASS** on GitHub Actions `ubuntu-latest` (commit `76e797d`, run https://github.com/TheFreeIntelligenceCompany/agentnet/actions/runs/45845088419; recorded after the spike); the node and relay-gated tests on x86_64 remain **UNTESTED** | - |
 
 ## 3. Upstream versions, pins, licences, maintenance (checked 2026-11-25)
 
@@ -77,7 +77,7 @@ Synthetic messages and disposable keys only (`spike/relay/.env` holds disposable
 | What was built | `spike/transport-ffi` against `liblogosdelivery.so` built from source on Linux arm64 | `spike/libchat-eval` (in-process hub transport, no sockets) | `spike/relay` topology + `spike/transport-rest` probe; then `crates/transport` `LogosRestTransport` |
 | Builds on macOS arm64 | crate `cargo check` ok (`results/a1-ffi/macos-cargo-check.log`, 4m13s); **the native library was not built on macOS** | libchat does not build on rustc 1.92 (needs 1.95); builds and passes tests on 1.100.0 | yes (host build and tests, `results/b-daemon/workspace-tests.log`) |
 | Builds on Linux arm64 | yes, only with a native-Nim workaround (section 5) | not attempted | see section 4.1 and `docs/compatibility-matrix.md` |
-| Builds on Linux x86_64 | **UNTESTED** | **UNTESTED** | **UNTESTED** |
+| Builds on Linux x86_64 | **UNTESTED** | **UNTESTED** | AgentNet workspace: PASS on GitHub Actions `ubuntu-latest` for `76e797d` (after the spike); the others UNTESTED |
 | Runtime shape | one process; `liblogosdelivery.so` 295-304 MB unstripped, ~57 MB stripped | library only | AgentNet process + node sidecar (94.7 MB image, 44-53 MiB RSS idle per node) |
 | Persistence/identity | library gives libp2p identity only | **MLS state in memory only**; restart loses conversations (T6 FAIL) | application identity is AgentNet's (`crates/core`) |
 | Private-network support | config knobs exist (spike used cluster 7777, discovery off); packet-level public contact **not captured** (config-level only) | embedded transport hardcodes the public `logos.test` preset; bootstrap via hosted registry | all discovery flags off, static peers, `--dns-addrs-name-server=127.0.0.1`; egress capture clean (section 7 row 3) |
@@ -234,7 +234,7 @@ Gate text is goal.md A4 "Go". Verdicts are about the **evidence in this reposito
 
 | # | Gate | Verdict | Justification |
 |---|---|---|---|
-| G1 | Reproducible Rust build with at least one viable Delivery path | **GO (macOS arm64); Linux arm64: see result below; Linux x86_64 UNTESTED** | Path (3) builds and its tests pass on macOS arm64 (`results/b-daemon/workspace-tests.log`, lead re-ran per commit `0eb3d35`). Linux arm64 clean-checkout build and test: **OK** (`cargo build --workspace --locked` exit 0, 45m58s; `cargo test --workspace --locked` exit 0, 308 passed / 0 failed / 2 ignored in 25 suites, `results/audit/linux-arm64-build.log`; relay-gated tests skipped there). Clean checkout reproduction: the Linux run unpacks `git archive HEAD`, not the working tree. goal.md asks for Linux x86_64 first: not available (amd64 build under qemu: **not attempted**, UNTESTED) |
+| G1 | Reproducible Rust build with at least one viable Delivery path | **GO (macOS arm64); Linux arm64: see result below; Linux x86_64: Rust build and tests PASS on GitHub Actions for `76e797d`, added after the spike (node and relay-gated tests UNTESTED)** | Path (3) builds and its tests pass on macOS arm64 (`results/b-daemon/workspace-tests.log`, lead re-ran per commit `0eb3d35`). Linux arm64 clean-checkout build and test: **OK** (`cargo build --workspace --locked` exit 0, 45m58s; `cargo test --workspace --locked` exit 0, 308 passed / 0 failed / 2 ignored in 25 suites, `results/audit/linux-arm64-build.log`; relay-gated tests skipped there). Clean checkout reproduction: the Linux run unpacks `git archive HEAD`, not the working tree. goal.md asks for Linux x86_64 first: not available (amd64 build under qemu: **not attempted**, UNTESTED) |
 | G2 | Bidirectional encrypted messaging | **GO (single host)** | 100/100 each way with the HPKE+Ed25519 envelope; two `agentnet serve` processes exchange messages with authenticated receipts (`results/b-daemon/relay-e2e.log`, passes in the lead's re-run per commit `0eb3d35`) |
 | G3 | Private isolation demonstrated on controlled infrastructure | **GO with caveats (single host)** | Capture shows no destination outside the subnet once the DNS setting is changed; AgentNet audits peers and fails closed. Caveats: capture only on the VM bridge, none during failure runs, none of the daemon's own sockets; the isolation depends on node flags AgentNet cannot set; the relay accepts any peer that knows cluster 66 (T13); not shown on separate hosts |
 | G4 | Durable identity | **GO** | Restart, file migration, exclusive lock, export/import unit test. Competing instances on two directories are not detected (documented gap) |
@@ -317,5 +317,5 @@ Listed here so that this report is self-contained; further platform-specific fin
   `results/acceptance/20261126T014245Z/`). The Linux arm64 figure in section 2/G1 (308 passed) is from an earlier commit and
   was not repeated after the merge: Linux on the final tree is **UNTESTED**.
 * Items in section 15 marked "fixed in working tree" are committed (`5e66954`, `e250186`).
-* Still not validated anywhere: cross-machine and NAT operation, Tailscale, public networks, Linux x86_64, third-party MCP
+* Still not validated anywhere: cross-machine and NAT operation, Tailscale, public networks, Linux x86_64 beyond the Rust build and tests (those passed on GitHub Actions for `76e797d`; the node and relay-gated tests are UNTESTED there), third-party MCP
   hosts, operation over hours or days, and any independent security review.

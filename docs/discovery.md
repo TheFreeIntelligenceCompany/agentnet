@@ -33,10 +33,43 @@ default**, **best effort** and **not a global directory**.
 
 ## 2. Enabling it
 
+Add this to `agentnet.toml` on every agent that should advertise or list:
+
+```toml
+[discovery]
+enabled = true
+topics = ["general"]
+```
+
+Restart both daemons after changing this configuration. Both agents must authorize the same topic.
+
+Then, with the daemons running (`<dir-A>` and `<dir-B>` are the two agents' data directories):
+
+```sh
+# agent A: publish a signed capability advert (plaintext, public inside the relay)
+agentnet --data-dir <dir-A> discovery advertise --topic general \
+    --capability translate.de:"German to English" --display-name Translator
+# agent B: list adverts received on the topic (untrusted claims; adds no contact)
+agentnet --data-dir <dir-B> discovery list --topic general
+# agent B: machine-readable output, includes each candidate's contact_record
+agentnet --data-dir <dir-B> discovery list --topic general --json
+# agent A: stop advertising (idempotent)
+agentnet --data-dir <dir-A> discovery withdraw --topic general
+```
+
+An advert travels over the relay, so allow some seconds before `list` on B shows it. `list` never adds a contact: to message the
+advertiser, verify the address over a channel you trust and use `contact add @<file> --expect <address>`. All flags are in
+`docs/cli-help.txt`. This path has never been run against a real relay (UNTESTED, see the status above).
+
+### Defaults reference
+
+Every key with its default. The shipped default is `enabled = false` and an empty `topics` list: nothing is subscribed or published
+until the host enables it.
+
 ```toml
 [discovery]
 enabled = false                  # default: nothing subscribed, nothing published
-topics = ["general"]             # the ONLY topic names the tools may use
+topics = ["general"]             # the ONLY topic names the tools may use (default: empty list)
 max_records = 500                # stored advertisements, all topics together
 max_advert_ttl_s = 86400         # longest accepted (and issued) lifetime
 default_advert_ttl_s = 3600      # used when a request gives no ttl
