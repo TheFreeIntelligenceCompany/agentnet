@@ -24,6 +24,15 @@
 //!       --out turns.jsonl --state harness-state.json
 //!   ```
 //!
+//! With `--fetch` (socket mode) the harness shows the whole receive flow for
+//! `message.received` events (use with `--include-received`): event ->
+//! `get_message(message_id)` -> handle -> `acknowledge_message`. The event
+//! cursor is NOT an inbox cursor; `get_message` is how an event's `message_id`
+//! is resolved. The turn line then also carries `"fetched"` (`sender` and
+//! `body_bytes`, or an error code such as `NotFound` for a quarantined or
+//! unknown message). The body is untrusted data: this mock only measures it
+//! and never acts on it.
+//!
 //! Delivery is at-least-once, so the harness keeps the ids of events it has
 //! already handled in `--state` and ignores repeats (the idempotency key is the
 //! `event_id`). Other options: `--include-received`, `--max-events N` (exit
@@ -41,11 +50,11 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use agentnet_core::api::{EventRecord, EventType};
+use agentnet_core::api::{AgentApi, EventRecord, EventType, GetMessageRequest};
 use agentnet_daemon::webhook::{
     verify_signature, HEADER_SIGNATURE, HEADER_TIMESTAMP, SIGNATURE_TOLERANCE_S,
 };
-use agentnet_daemon::EventStream;
+use agentnet_daemon::{EventStream, RemoteAgent};
 use axum::body::Bytes;
 use axum::extract::State;
 use axum::http::{HeaderMap, StatusCode};
@@ -65,6 +74,7 @@ struct Opts {
     out: PathBuf,
     state: PathBuf,
     include_received: bool,
+    fetch: bool,
     max_events: Option<u64>,
     idle_exit: Option<Duration>,
     webhook: Option<String>,
@@ -79,6 +89,7 @@ fn parse_args() -> Result<Opts, String> {
         out: PathBuf::from("turns.jsonl"),
         state: PathBuf::from("harness-state.json"),
         include_received: false,
+        fetch: false,
         max_events: None,
         idle_exit: None,
         webhook: None,
@@ -92,6 +103,7 @@ fn parse_args() -> Result<Opts, String> {
             "--out" => o.out = val("--out")?.into(),
             "--state" => o.state = val("--state")?.into(),
             "--include-received" => o.include_received = true,
+            "--fetch" => o.fetch = true,
             "--max-events" => {
                 o.max_events = Some(val("--max-events")?.parse().map_err(|_| "bad number")?)
             }
@@ -137,18 +149,26 @@ impl Harness {
     }
 
     /// Handle one event idempotently. Returns true when a turn was recorded.
-    fn handle(&self, ev: &EventRecord, advance_cursor: bool) -> std::io::Result<bool> {
+    fn handle(
+        &self,
+        ev: &EventRecord,
+        advance_cursor: bool,
+        fetched: Option<serde_json::Value>,
+    ) -> std::io::Result<bool> {
         let mut st = self.state.lock().unwrap_or_else(|e| e.into_inner());
         let mut recorded = false;
         if self.wants(ev) && !st.seen.contains(&ev.event_id) {
             st.turns += 1;
-            let line = serde_json::json!({
+            let mut line = serde_json::json!({
                 "event_id": ev.event_id,
                 "trigger_id": ev.trigger_id,
                 "target_session": ev.target_session,
                 "message_id": ev.message_id,
                 "simulated_turn": st.turns,
             });
+            if let Some(f) = fetched {
+                line["fetched"] = f;
+            }
             let mut f = std::fs::OpenOptions::new()
                 .create(true)
                 .append(true)
@@ -179,6 +199,7 @@ async fn run_socket(o: &Opts, h: Arc<Harness>) -> Result<(), String> {
             .unwrap_or_else(|e| e.into_inner())
             .cursor
             .clone();
+        let agent = RemoteAgent::new(&o.data_dir);
         match EventStream::connect(&o.data_dir, cursor).await {
             Ok(mut s) => {
                 backoff = Duration::from_millis(200);
@@ -192,7 +213,37 @@ async fn run_socket(o: &Opts, h: Arc<Harness>) -> Result<(), String> {
                     };
                     match next {
                         Ok(Some(ev)) => {
-                            h.handle(&ev, true).map_err(|e| e.to_string())?;
+                            // receive event -> get_message -> handle -> ack.
+                            let fetched = if o.fetch && ev.event_type == EventType::MessageReceived
+                            {
+                                Some(
+                                    match agent
+                                        .get_message(GetMessageRequest {
+                                            message_id: ev.message_id.clone(),
+                                            sender: None,
+                                        })
+                                        .await
+                                    {
+                                        Ok(m) => serde_json::json!({
+                                            "sender": m.sender,
+                                            "body_bytes": m.body.len(),
+                                        }),
+                                        Err(e) => serde_json::json!(format!("{:?}", e.code)),
+                                    },
+                                )
+                            } else {
+                                None
+                            };
+                            h.handle(&ev, true, fetched.clone())
+                                .map_err(|e| e.to_string())?;
+                            if fetched.as_ref().is_some_and(|f| f.is_object()) {
+                                // Local processing state only; idempotent.
+                                if let Err(e) =
+                                    agent.acknowledge_message(ev.message_id.clone()).await
+                                {
+                                    eprintln!("acknowledge failed: {e}");
+                                }
+                            }
                             // Ack only after the turn and the cursor are durable.
                             if let Err(e) = s.ack(&ev.cursor).await {
                                 eprintln!("ack failed: {e}");
@@ -246,7 +297,7 @@ async fn receive(State(s): State<WebhookState>, headers: HeaderMap, body: Bytes)
     };
     // Replay / duplicate protection: `handle` ignores event ids it has seen and
     // still answers 200 so the sender stops retrying.
-    match s.h.handle(&ev, false) {
+    match s.h.handle(&ev, false, None) {
         Ok(_) => StatusCode::OK,
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
     }

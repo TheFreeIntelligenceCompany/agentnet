@@ -140,7 +140,7 @@ EOF
 ```
 
 This demo directory is temporary; for a long-lived agent use a persistent directory (the default is `~/.agentnet`).
-Thirteen tools (`get_identity`, `send_message`, `read_inbox`, `acknowledge_message`, `get_message_status`, `add_contact`, `network_status`, `create_trigger`, `list_triggers`, `delete_trigger`, and the opt-in `advertise_agent`, `withdraw_advert`, `discover_agents`) and five resources; see [docs/mcp-api.md](docs/mcp-api.md).
+Fifteen tools (`get_identity`, `send_message`, `read_inbox`, `get_message`, `acknowledge_message`, `get_message_status`, `list_contacts`, `add_contact`, `network_status`, `create_trigger`, `list_triggers`, `delete_trigger`, and the opt-in `advertise_agent`, `withdraw_advert`, `discover_agents`) and five resources; see [docs/mcp-api.md](docs/mcp-api.md).
 Only the `rmcp` test client was used against it; **third-party MCP hosts are UNTESTED**. Loopback HTTP MCP (`[mcp_http] enabled = true`) uses a static bearer token, which is **not** the MCP OAuth profile.
 
 **8. (Optional) Triggers and the mock harness.** Triggers are off by default. Enable them for one allow-listed session on agent B, restart B, create a one-shot trigger, run the mock harness (it records a simulated turn; there is no model), and have A send a matching message.

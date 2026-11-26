@@ -484,6 +484,29 @@ async fn mcp_stdio_is_a_thin_client_of_a_running_daemon() {
         let inbox = bapi.read_inbox(ReadInboxRequest::default()).await.unwrap();
         if inbox.records.len() == 1 {
             assert_eq!(inbox.records[0].body, "via mcp stdio");
+            // `inbox --message-id` fetches exactly the message an event names.
+            let (b3, mid3) = (b.clone(), mid.clone());
+            let (one, nf, conflicting) = tokio::task::spawn_blocking(move || {
+                let one = json_ok(&b3, &["inbox", "--message-id", &mid3]);
+                let nf = agentnet(&b3, &["inbox", "--message-id", "no-such-id"]);
+                let conflicting = agentnet(&b3, &["inbox", "--message-id", &mid3, "--limit", "1"]);
+                (one, nf, conflicting)
+            })
+            .await
+            .unwrap();
+            assert_eq!(one["message_id"], mid.as_str());
+            assert_eq!(one["body"], "via mcp stdio");
+            assert_eq!(one["sender"], addr_a.as_str());
+            assert!(!nf.status.success());
+            assert!(
+                stderr(&nf).to_lowercase().contains("no such message"),
+                "{}",
+                stderr(&nf)
+            );
+            assert!(
+                !conflicting.status.success(),
+                "--message-id excludes paging flags"
+            );
             break;
         }
         assert!(

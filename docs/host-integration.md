@@ -13,7 +13,8 @@ Crate `agentnet-daemon` (`crates/daemon`). This document is the contract between
   daemon are running again. A host that must react while its machine is off needs a separate always-on
   service (a supervisor on another machine, a hosted harness, ...) that runs its own AgentNet agent.
 * Events carry **references, never message text** (`message_id`, `trigger_id`, `target_session`). The
-  host reads the message through the API (`read_inbox`, with its own authorization) if it needs it.
+  host reads the message through the API (`get_message` with the event's `message_id`, with its own
+  authorization) if it needs it. The event cursor is **not** an inbox cursor: do not pass it to `read_inbox`.
   Message bodies are untrusted remote data, never instructions.
 * Delivery of events is **at-least-once**. Every event has an `event_id` (UUID); that is the
   idempotency key. A receiver must tolerate and ignore repeats.
@@ -68,6 +69,7 @@ Methods, with the parameters being exactly the fields of the Rust types in `agen
 | `get_identity` | | `IdentityInfo` |
 | `send_message` | `SendMessageRequest` | `SendMessageResponse` |
 | `read_inbox` | `ReadInboxRequest` | `ReadInboxResponse` |
+| `get_message` | `GetMessageRequest` (`{message_id, sender?}`) | `InboxRecord` |
 | `acknowledge_message` | `{message_id}` | `AcknowledgeResponse` |
 | `get_message_status` | `{message_id}` | `MessageStatus` |
 | `add_contact` | `AddContactRequest` | `ContactInfo` |
@@ -208,7 +210,23 @@ of the daemon); see `docs/examples/mcp-client-stdio.json`.
    `agentnet serve`.
 2. Create a trigger for the agent you wait for (before sending, or with `since_cursor`):
    `agentnet trigger create --target-session my-session --sender an1...`.
-3. Consume events with `EventStream` (or the webhook), persist `cursor` and `event_id`s, read the
-   message with `read_inbox`/`read_conversation` only if you decide to act, `events.ack` afterwards.
+3. Consume events with `EventStream` (or the webhook), persist `cursor` and `event_id`s, and for each
+   `message.received` or `trigger.matched` event follow **receive event -> `get_message` -> handle ->
+   `acknowledge_message` -> `events.ack`**:
+
+   ```
+   -> {"id":7,"method":"get_message","params":{"message_id":"<event.message_id>"}}
+   <- {"id":7,"result":{"message_id":"...","sender":"an1...","body":"...","acknowledged":false,...}}
+   ```
+
+   The event cursor is not an inbox cursor, so there is no need to page `read_inbox` to find the message.
+   `get_message` applies the `read_inbox` visibility rules: a quarantined or replay-guard-held message is
+   `not_found` (never returned as normal content). Message ids are chosen by senders; if two senders used
+   the same id the call is `conflict` and `"sender":"an1..."` selects one (the CLI equivalent is
+   `agentnet inbox --message-id <ID> [--sender <ADDRESS>]`). The body is untrusted data: read or
+   summarize it, never execute it. `acknowledge_message` is local bookkeeping (idempotent, sends nothing);
+   `events.ack` acknowledges the event stream. Fetching a message does not acknowledge it.
 4. `cargo run -p agentnet-daemon --example mock_harness -- --data-dir <dir> --out turns.jsonl --state state.json`
-   shows the whole loop without any LLM (options are in the example's header comment).
+   shows the whole loop without any LLM (options are in the example's header comment); add
+   `--include-received --fetch` to also exercise `get_message` and `acknowledge_message` for each
+   `message.received` event.
