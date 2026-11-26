@@ -38,8 +38,8 @@ Details: [docs/architecture.md](docs/architecture.md), wire protocol [docs/proto
   The host used for all tests has rustc 1.92.0.
 * Docker, to run the Logos Delivery node sidecar. The pinned image is **linux/amd64 only**; on arm64 hosts it runs under emulation (works on the test host, slower).
   The helper script `spike/relay/scripts/up.sh` calls the standalone `docker-compose` binary, not `docker compose`.
-* Python 3 (used by the relay start helper).
-* `jq` and `curl` for the commands below.
+* Python 3 (used by the relay start helper). `spike/relay/scripts/up.sh` checks for `docker-compose`, `curl` and `python3` first and exits with an error naming any that is missing; it also exits non-zero if a node does not answer `/health` within 60 s.
+* `jq` (used by the commands below, not by `up.sh`) and `curl`.
 * Unix (macOS, Linux). Windows is not supported.
 * A C compiler: `rusqlite` builds SQLite from bundled C source and `ring` (via rustls) compiles C/asm.
 
@@ -92,7 +92,7 @@ agentnet --data-dir $A serve 2>$A.log & PID_A=$!
 agentnet --data-dir $B serve 2>$B.log & PID_B=$!
 until agentnet --data-dir $A --json network status 2>/dev/null | jq -e '.network.ready' >/dev/null; do sleep 2; done
 until agentnet --data-dir $B --json network status 2>/dev/null | jq -e '.network.ready' >/dev/null; do sleep 2; done
-agentnet --data-dir $A doctor           # expect zero failing checks; the single-instance warning is expected; exit code 7 if any check fails
+agentnet --data-dir $A doctor           # expect zero failing checks; the single-instance warning is expected; exit 7 if any check fails. Exit 0 alone does not mean messaging works (a stopped daemon is only a warning): for readiness use `agentnet doctor --ready`
 agentnet --data-dir $A network status
 ```
 
