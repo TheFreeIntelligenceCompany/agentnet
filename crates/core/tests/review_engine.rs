@@ -306,3 +306,87 @@ async fn l6_a_frame_sealed_to_an_expired_subkey_is_not_republished() {
     );
     assert_eq!(a.state(&m.message_id).await, DeliveryState::Failed);
 }
+
+// ------------------------------------------------------------------- M1
+
+/// M1 through the engine: B rotates with `--revoke-previous` twelve times, each
+/// time announcing the new certificate with a `contact.update`; B's ORIGINAL
+/// certificate then arrives again as a stale `contact.update`. A message A
+/// sends afterwards must not open with the first subkey's secret.
+#[tokio::test]
+async fn m1_a_stale_contact_update_does_not_resurrect_a_revoked_subkey() {
+    use agentnet_core::crypto::{
+        Address, MessageProtection, OpenLimits, OpenPgpProtection, SenderDirectory,
+    };
+    use agentnet_core::error::OpenError;
+    struct Pinned(Vec<VerifiedContact>);
+    impl SenderDirectory for Pinned {
+        fn certificate(&self, a: &Address) -> Option<VerifiedContact> {
+            self.0.iter().find(|c| c.address == *a).cloned()
+        }
+    }
+    let w = World::new();
+    let a = w.agent("a", cfg());
+    let mut b = w.agent("b", cfg());
+    a.node.step_receive().await.unwrap();
+    b.node.step_receive().await.unwrap();
+    exchange(&a, &b).await;
+    let original = b.record.clone();
+    let compromised = load(&b); // holds only the first subkey's secret
+    for _ in 0..12 {
+        w.advance(10_000);
+        let mut id = load(&b);
+        id.rotate_kem_with(w.now_ms(), w.now_ms() + 7 * 24 * 3_600_000, None, true)
+            .unwrap();
+        id.save(&b.id_path, true).unwrap();
+        b = w.reopen(b, cfg());
+        settle(&[&a, &b]).await;
+    }
+    assert!(a.metric("contact_update.applied") >= 12);
+    // the stale original certificate is "announced" again
+    inject(
+        &w,
+        &a,
+        &forge(
+            &w,
+            &b,
+            &a,
+            agentnet_core::crypto::envelope::MESSAGE_TYPE_CONTACT_UPDATE,
+            &original,
+        ),
+    );
+    a.node.step_receive().await.unwrap();
+    let before = published_by(&w, &a).len();
+    a.send(&b, "after compromise").await;
+    a.node.step_send().await.unwrap();
+    let frames: Vec<Vec<u8>> = published_by(&w, &a)[before..]
+        .iter()
+        .map(|f| f.payload.clone())
+        .collect();
+    let now = w.now_ms();
+    let lim = OpenLimits {
+        clock_skew_ms: 120_000,
+        max_ttl_ms: 7 * 24 * 3600 * 1000,
+        max_frame_len: 153_600,
+    };
+    let dir = Pinned(vec![
+        VerifiedContact::parse_and_verify(&a.record, now).unwrap()
+    ]);
+    let current = load(&b);
+    let mut opened = 0;
+    for frame in &frames {
+        assert_eq!(
+            OpenPgpProtection
+                .open(&compromised, frame, now, &lim, &dir)
+                .unwrap_err(),
+            OpenError::NotForUs
+        );
+        if let Ok(o) = OpenPgpProtection.open(&current, frame, now, &lim, &dir) {
+            // acks of B's contact updates open too; count only the message
+            if o.envelope.body == "after compromise" {
+                opened += 1;
+            }
+        }
+    }
+    assert_eq!(opened, 1);
+}
