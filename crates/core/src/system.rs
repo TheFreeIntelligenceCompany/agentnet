@@ -1,11 +1,16 @@
 //! System messages and the state transitions behind them.
 //!
-//! * `contact.update`: a Trusted contact tells us its new signed contact record
-//!   after a KEM rotation; applied only if it verifies, names the authenticated
-//!   sender and has a strictly higher `key_epoch`. Pending outbox rows to that
-//!   contact are re-sealed to the new key in the same transaction.
-//! * `identity.revoked`: a self-authenticating tombstone; the named address is
-//!   marked revoked (blocked, no sends, cannot be re-added or re-trusted).
+//! * `contact.update`: a Trusted contact sends its current signed certificate
+//!   (after a KEM rotation). It is MERGED into the stored certificate (same
+//!   primary key only: new encryption subkeys, expiry updates and revocations
+//!   are accepted, nothing is replaced or dropped; a stale certificate cannot
+//!   bring back a revoked subkey). Pending outbox rows to that contact are
+//!   re-sealed to the new key in the same transaction. A primary-key revocation
+//!   inside the update is applied like `identity.revoked`.
+//! * `identity.revoked`: a self-authenticating tombstone; applied only when it
+//!   names an existing contact (strangers' tombstones are dropped and counted,
+//!   so the `revocations` table cannot be grown by third parties). The address
+//!   is marked revoked (blocked, no sends, cannot be re-added or re-trusted).
 //! * announcements at start (`contact.update` after a local rotation,
 //!   `identity.revoked` after a local revocation), hidden from the user outbox.
 //! * release of messages held by the replay guard.

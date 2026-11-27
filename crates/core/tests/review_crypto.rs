@@ -594,3 +594,69 @@ fn l3_unhashed_junk_and_invalid_signatures_do_not_survive_sanitising() {
     let merged = vc_clean.merge(&vc_bloated, t0).unwrap();
     assert!(merged.document() == vc_clean.document());
 }
+
+// ------------------------------------------------------------- frame sizes
+
+/// Frame sizes (recorded in `docs/protocol.md` s5 and `docs/threat-model.md`)
+/// for the sender certificate of a fresh identity and of one at the certificate
+/// cap, and the transport limit for the largest body (64 KiB), also in the
+/// worst JSON expansion (64 KiB of quotes).
+#[test]
+fn frame_sizes_with_a_fresh_and_a_maximal_sender_certificate_fit_the_transport_limit() {
+    use agentnet_core::envelope::MESSAGE_TYPE_ACK_RECEIVED;
+    let a = ident();
+    let fresh = ident();
+    let mut maximal = ident();
+    let mut t = NOW;
+    loop {
+        t += 10_000;
+        if maximal.rotate_kem_with(t, t, None, true).is_err() {
+            break;
+        }
+    }
+    for (label, sender) in [("fresh", &fresh), ("maximal", &maximal)] {
+        let cert = sender.contact_record().as_bytes().len();
+        let recipient = contact_at(&a, t);
+        let mut sizes = vec![];
+        for body in [0usize, 1024, 65_536] {
+            let f = OpenPgpProtection
+                .seal(
+                    sender,
+                    &recipient,
+                    &env(sender, &a, &"a".repeat(body), t),
+                    t,
+                    MAX_FRAME,
+                )
+                .unwrap();
+            assert!(f.len() < MAX_FRAME, "{label} {body}: {}", f.len());
+            let dir = Pinned(vec![contact_at(sender, t)]);
+            assert_eq!(
+                OpenPgpProtection
+                    .open(&a, &f, t, &lim(), &dir)
+                    .unwrap()
+                    .envelope
+                    .body
+                    .len(),
+                body
+            );
+            sizes.push((body, f.len()));
+        }
+        let q = "\"".repeat(65_536);
+        let worst = OpenPgpProtection
+            .seal(sender, &recipient, &env(sender, &a, &q, t), t, MAX_FRAME)
+            .unwrap();
+        assert!(worst.len() <= MAX_FRAME, "{label} quotes: {}", worst.len());
+        let mut ack = env(sender, &a, "", t);
+        ack.message_type = MESSAGE_TYPE_ACK_RECEIVED.to_owned();
+        ack.correlation_id = Some("9d3c1a52-0f5e-4b7e-8a41-6a0d7a9c2b11".into());
+        ack.conversation_id = Some("0c7bb2d4-5d11-4a5f-9b5b-1f0f6d2e3a77".into());
+        let ackf = OpenPgpProtection
+            .seal(sender, &recipient, &ack, t, MAX_FRAME)
+            .unwrap();
+        eprintln!(
+            "FRAME-SIZES {label}: certificate {cert} B, (body, frame) {sizes:?}, 64 KiB of quotes {} B, ack {} B",
+            worst.len(),
+            ackf.len()
+        );
+    }
+}

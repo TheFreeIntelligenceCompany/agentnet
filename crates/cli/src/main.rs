@@ -359,11 +359,12 @@ async fn run(cli: Cli) -> CliResult<i32> {
                     "address": r.identity.agent_id,
                     "contact_record": r.identity.contact_record,
                     "legacy_identity_file": r.legacy_identity_file,
+                    "warning": format!("the retired identity file {} still holds the OLD SECRET KEYS; delete it once you no longer need it", r.legacy_identity_file.display()),
                     "store": store,
                 });
                 emit(json, &v, |_| {
                     let mut s = format!(
-                        "Migrated {} to the OpenPGP format.\nNew address: {}\nPublic certificate (give it to peers; they must verify the address out of band):\n{}\nThe retired identity file was moved to {} (it holds secrets; delete it when you no longer need it).\n",
+                        "Migrated {} to the OpenPGP format.\nNew address: {}\nPublic certificate (give it to peers; they must verify the address out of band):\n{}\nWARNING: the retired identity file was moved to {} and still holds the OLD SECRET KEYS (the old address can still be impersonated by whoever reads it). Nothing needs it for the new identity. Delete it (`rm`, or a secure-erase tool) as soon as you have checked that the new identity works and you do not need the old keys to read anything; also delete any backup copies of it.\n",
                         dir.display(),
                         r.identity.agent_id,
                         r.identity.contact_record,

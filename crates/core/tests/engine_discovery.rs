@@ -1363,3 +1363,35 @@ async fn a_withdrawal_tombstone_is_not_evicted_before_its_expiry() {
     assert_eq!(obs.metric("advert.evicted"), 1);
     assert_eq!(obs.n("adverts"), 2);
 }
+
+/// A certificate grown by many revoking rotations does not fit an
+/// advertisement (the record limit is 8 KiB and embeds the whole certificate):
+/// advertising fails with a clear TooLarge error and nothing is stored; a fresh
+/// certificate advertises normally. (`docs/discovery.md`.)
+#[tokio::test]
+async fn a_certificate_grown_by_rotations_cannot_advertise() {
+    let w = World::new();
+    let mut id = Identity::generate_default(w.now_ms()).unwrap();
+    let mut t = w.now_ms();
+    let mut rotations = 0;
+    loop {
+        t += 10_000;
+        if id.rotate_kem_with(t, t, None, true).is_err() {
+            break;
+        }
+        rotations += 1;
+    }
+    assert!(rotations >= 9, "{rotations}");
+    let a = w.agent_with("big", dcfg(), id);
+    a.node.step_receive().await.unwrap();
+    let e = a
+        .node
+        .advertise_agent(adv(TOPIC, &["x"]))
+        .await
+        .unwrap_err();
+    assert_eq!(e.code, agentnet_core::api::ErrorCode::TooLarge);
+    assert!(e.message.contains("certificate"), "{}", e.message);
+    assert_eq!(a.n("adverts"), 0);
+    let ok = start(&w, "small", dcfg()).await;
+    ok.node.advertise_agent(adv(TOPIC, &["x"])).await.unwrap();
+}

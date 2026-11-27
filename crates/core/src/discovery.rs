@@ -77,7 +77,10 @@ fn advert_api_err(e: AdvertError) -> ApiError {
     match e {
         AdvertError::TooLarge => ApiError::new(
             ErrorCode::TooLarge,
-            "the advertisement is too large (at most 8 KiB); use fewer or shorter capabilities",
+            "the advertisement is too large (at most 8 KiB, which includes this agent's whole certificate); \
+             use fewer or shorter capabilities. A certificate grown by many revoking key rotations \
+             (above about 5 KiB) cannot be advertised at all: it shrinks only as old subkeys expire, \
+             or with a new identity",
         ),
         other => ApiError::invalid(other.to_string()),
     }

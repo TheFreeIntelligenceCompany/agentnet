@@ -182,3 +182,37 @@ fn the_engine_goes_through_the_message_protection_trait() {
         }
     }
 }
+
+/// The webhook request signature is a standard HMAC-SHA256 (not message
+/// protection). The rule is: the message-protection cryptography crates are
+/// confined to `crates/core/src/crypto/` (tests above); the `hmac` crate is
+/// confined to the daemon's webhook module, and no other crate depends on it.
+#[test]
+fn hmac_is_used_only_for_the_webhook_request_signature() {
+    let root = workspace_root();
+    for krate in ["core", "transport", "mcp", "cli"] {
+        let manifest = std::fs::read_to_string(root.join("crates").join(krate).join("Cargo.toml"))
+            .expect("manifest");
+        let used = dependencies_section(&manifest)
+            .lines()
+            .any(|l| l.split(['=', ' ', '.']).next().unwrap_or("").trim() == "hmac");
+        assert!(!used, "crates/{krate}/Cargo.toml depends on hmac");
+    }
+    let mut files = Vec::new();
+    rust_files(&root.join("crates/daemon/src"), &mut files);
+    assert!(!files.is_empty());
+    for f in &files {
+        if f.file_name().is_some_and(|n| n == "webhook.rs") {
+            continue;
+        }
+        let text = std::fs::read_to_string(f).expect("read source");
+        for (n, line) in text.lines().enumerate() {
+            assert!(
+                !references(line, "hmac"),
+                "{}:{}: hmac outside webhook.rs",
+                f.display(),
+                n + 1
+            );
+        }
+    }
+}
