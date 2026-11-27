@@ -1,0 +1,6 @@
+aarch64
+rustc 1.89.0 (29483883e 2025-08-04)
+OpenSSL 3.0.22 25 Aug 2026 (Library: OpenSSL 3.0.22 25 Aug 2026)
+error: could not find `Cargo.toml` in `/src` or any parent directory
+error: could not find `Cargo.toml` in `/src` or any parent directory
+finished exit=101
