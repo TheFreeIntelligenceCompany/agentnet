@@ -679,13 +679,16 @@ impl Node {
         u64::from_be_bytes([d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7]]) >> 1
     }
 
-    /// The pinned certificate of `addr`, for verifying a received message.
-    pub(crate) fn pinned_certificate(&self, addr: &Address) -> Option<VerifiedContact> {
-        self.store
-            .read(|c| self.load_contact(c, addr))
-            .ok()
-            .flatten()
-            .map(|r| r.contact)
+    /// The pinned certificate of `addr`, for verifying a received message. A store
+    /// or parse failure is an error, never "not a contact" (review finding L5).
+    pub(crate) fn pinned_certificate(
+        &self,
+        addr: &Address,
+    ) -> Result<Option<VerifiedContact>, StoreError> {
+        Ok(self
+            .store
+            .read(|c| self.load_contact(c, addr))?
+            .map(|r| r.contact))
     }
 
     /// True if a verified identity revocation is stored for `addr`.

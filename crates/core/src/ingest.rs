@@ -11,7 +11,7 @@ use crate::config::UnknownSenders;
 use crate::crypto::envelope::{
     Envelope, MESSAGE_TYPE_ACK_RECEIVED, MESSAGE_TYPE_CONTACT_UPDATE, MESSAGE_TYPE_IDENTITY_REVOKED,
 };
-use crate::crypto::VerifiedRevocation;
+use crate::crypto::{SenderAuth, VerifiedRevocation};
 use crate::error::OpenError;
 use crate::guard::{self, HOLD_REPLAY_GUARD};
 use crate::node::{trust_to_db, Node};
@@ -183,13 +183,35 @@ impl Node {
         }
         // 2. open
         let now = self.now();
-        let dir = |a: &crate::crypto::Address| self.pinned_certificate(a);
+        let auth: SenderAuth;
+        // The sender directory is fallible (review finding L5): a lookup that
+        // fails is remembered and fails the whole open as a store failure; the
+        // frame is not marked seen and will be seen again.
+        let dir_failed = std::cell::Cell::new(false);
+        let dir = |a: &crate::crypto::Address| match self.pinned_certificate(a) {
+            Ok(c) => c,
+            Err(_) => {
+                dir_failed.set(true);
+                None
+            }
+        };
+        let opened =
+            self.protection
+                .open(&self.identity, &frame.payload, now, &self.open_limits, &dir);
+        if dir_failed.get() {
+            self.metrics.inc("open.directory_failed");
+            return self.store_failure();
+        }
         let env =
-            match self
-                .protection
-                .open(&self.identity, &frame.payload, now, &self.open_limits, &dir)
-            {
-                Ok(o) => o.envelope,
+            match opened {
+                Ok(o) => {
+                    self.metrics.inc(match o.auth {
+                        SenderAuth::Pinned => "open.auth_pinned",
+                        SenderAuth::EmbeddedCertificate => "open.auth_embedded",
+                    });
+                    auth = o.auth;
+                    o.envelope
+                }
                 Err(OpenError::SenderRevoked) => {
                     // A revoked identity's messages are dropped like a blocked sender's.
                     self.metrics.inc("drop.blocked");
@@ -232,6 +254,14 @@ impl Node {
             }
             Err(_) => return self.store_failure(),
         };
+        // A sender that IS a contact must have been authenticated against its
+        // pinned certificate. An embedded-certificate authentication for a contact
+        // means the directory and the contact table disagree (a race or a failure):
+        // treat it like a store failure and see the frame again.
+        if sender_is_contact && auth == SenderAuth::EmbeddedCertificate {
+            self.metrics.inc("open.auth_mismatch");
+            return self.store_failure();
+        }
         if trust == Trust::Blocked {
             self.metrics.inc("drop.blocked");
             self.mark_transport_seen(frame);

@@ -197,3 +197,34 @@ async fn l1_a_frame_signed_in_the_future_is_deferred_then_accepted() {
     b.node.step_receive().await.unwrap();
     assert_eq!(b.inbox().await.len(), 1);
 }
+
+// ------------------------------------------------------------------- L5
+
+/// L5: when the sender directory cannot answer (here: the stored contact record
+/// of the sender is corrupt), the open fails as a store failure: the frame is not
+/// marked seen and no second-pass authentication with the embedded certificate
+/// is attempted (it used to be treated as "not a contact").
+#[tokio::test]
+async fn l5_a_directory_failure_fails_the_open_with_a_store_error() {
+    let w = World::new();
+    let a = w.agent("a", cfg());
+    let b = w.agent("b", cfg());
+    a.node.step_receive().await.unwrap();
+    b.node.step_receive().await.unwrap();
+    exchange(&a, &b).await;
+    // corrupt B's record in A's store
+    {
+        let c = rusqlite::Connection::open(&a.store_path).unwrap();
+        c.busy_timeout(std::time::Duration::from_secs(5)).unwrap();
+        c.execute("UPDATE contacts SET document = 'garbage'", [])
+            .unwrap();
+    }
+    b.send(&a, "hello").await;
+    b.node.step_send().await.unwrap();
+    let seen_before = a.n("transport_seen");
+    let r = a.node.step_receive().await.unwrap();
+    assert_eq!(r.store_failures, 1);
+    assert_eq!(a.metric("open.directory_failed"), 1);
+    assert_eq!(a.n("transport_seen"), seen_before, "not marked seen: it will be retried");
+    assert_eq!(a.n("inbox"), 0);
+}
