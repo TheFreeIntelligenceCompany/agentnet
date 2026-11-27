@@ -1,0 +1,10 @@
+mode: private
+ready: true
+connected peers: 1
+isolation: ok
+queue: outbox queued=0 sent-unacked=0, inbox unread=0 quarantined=0, events unacked=0, active triggers=0
+last live poll: 2026-11-27 22:01:41 UTC
+last history sync: 2026-11-27 22:01:37 UTC
+detail: node reachable; 1 connected allowed peer(s)
+daemon: version 0.1.0 uptime 79s
+webhook: disabled

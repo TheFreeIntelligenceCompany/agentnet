@@ -1,0 +1,3 @@
+ssh       88182 <user>   19u  IPv4  0xa0bf331affabfc0      0t0  TCP 127.0.0.1:18655 (LISTEN)
+ssh       92023 <user>    7u  IPv4 0xb94e467a38e219df      0t0  TCP 127.0.0.1:61660 (LISTEN)
+## agentnet sockets

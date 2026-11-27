@@ -1,0 +1,13 @@
+# wrong --expect on A
+error: contact certificate is not for the expected address
+rc=4
+# A right --expect
+{"address":"an2xxl4y6pwyfipubmqwbcjstb7rnijt2a76jufun7oa76qyxhzs3vcefgyuq","alias":"bob","trust":"trusted","inbox_topic":"/agentnet/1/inbox-07/proto","added_at":1795816495447,"kem_expires_at":1827352434000,"updated":false,"revoked":false}
+# B wrong --expect
+error: contact certificate is not for the expected address
+rc=4
+# B right --expect
+{"address":"an2sm3zx5d4iwgdu4vw4ph6jojh3l2xv6rc3kofimvaoz3qzm7x5knaboyqva","alias":"alice","trust":"trusted","inbox_topic":"/agentnet/1/inbox-07/proto","added_at":1795816496422,"kem_expires_at":1827352443000,"updated":false,"revoked":false}
+# lists
+an2xxl4y6pwyfipubmqwbcjstb7rnijt2a76jufun7oa76qyxhzs3vcefgyuq trusted alias=bob
+an2sm3zx5d4iwgdu4vw4ph6jojh3l2xv6rc3kofimvaoz3qzm7x5knaboyqva trusted alias=alice

@@ -1,0 +1,24 @@
+# 2026-11-27T22:05:33Z REST reachability through the public endpoint (expected: none)
+GET https://<PUB_HOST>/admin/v1/peers -> 502 52B
+GET https://<PUB_HOST>/debug/v1/info -> 502 52B
+GET https://<PUB_HOST>/relay/v1/auto/messages -> 502 52B
+GET https://<PUB_HOST>/health -> 502 52B
+GET https://<PUB_HOST>/ -> 502 52B
+# unpublished ports on the edge (REST 8645 / libp2p 60000 / 18640):
+https://8645-<BOX_ID>.instabox.tech/ -> 404
+https://60000-<BOX_ID>.instabox.tech/ -> 404
+https://18640-<BOX_ID>.instabox.tech/ -> 404
+# raw TCP on the public IPs (connect timeout 5 s, python socket)
+<PUB_IP>:60000 -> TimeoutError
+<PUB_IP>:8645 -> TimeoutError
+<PUB_IP>:8000 -> TimeoutError
+<PUB_IP>:60000 -> TimeoutError
+<PUB_IP>:8645 -> TimeoutError
+<PUB_IP>:8000 -> TimeoutError
+# REST works on the box loopback only:
+127.0.0.1:18640 -> 200
+LISTEN 0      4096         0.0.0.0:8000       0.0.0.0:*   
+LISTEN 0      4096       127.0.0.1:18642      0.0.0.0:*   
+LISTEN 0      4096       127.0.0.1:18640      0.0.0.0:*   
+# the only published port (instabox port ls) for this box:
+[8000]

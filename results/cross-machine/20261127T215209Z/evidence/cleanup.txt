@@ -1,0 +1,4 @@
+# cleanup (this experiment shared box agentnet-rh1 with the public-relay run; the box was deleted once, after both)
+Experiment 1 teardown: agents A and B stopped, port-forward killed (no listener on 61660), an-x-node-a removed, an-r1/an-nb/network/volume removed on the box.
+Box deletion and port checks: see ../../../public-relay/20261127T215957Z/evidence/cleanup.txt (box deleted 2026-11-27T22:14:15Z; instabox ls --meta project=agentnet no longer lists agentnet-rh1).
+Nothing was ever published for this experiment (instabox port ls showed no port of the box).

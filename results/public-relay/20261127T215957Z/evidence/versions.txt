@@ -1,0 +1,9 @@
+box:
+Linux 6.18.60-instabox x86_64
+Docker version 29.8.2, build 7fc2dff
+commit 481eb152f3b3e1ea7ef9e22c05af20bf2ec13ff9
+agentnet 0.1.0
+mac:
+26.6.2
+arm64
+agentnet 0.1.0

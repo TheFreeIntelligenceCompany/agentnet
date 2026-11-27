@@ -1,0 +1,6 @@
+ssh       88182 <user>   17u  IPv4 0xf1cb39a77e876e7b      0t0  TCP 127.0.0.1:18655 (LISTEN)
+## agentnet sockets
+COMMAND    PID     USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+agentnet 41470 <user>   14u  IPv4 0x84429be1cabaf098      0t0  TCP 127.0.0.1:59700->127.0.0.1:18655 (ESTABLISHED)
+## node A connections to the edge (from inside the container)
+ESTABLISHED local 030011AC:DF12 remote <PUB_IP>:443 (hex-decoded)

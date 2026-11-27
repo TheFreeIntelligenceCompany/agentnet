@@ -1,0 +1,6 @@
+## node A peers (Mac)
+[{"multiaddr":"/ip4/192.168.5.2/tcp/61660/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV","shards":[0],"connected":"Connected","agent":"logos-delivery-\"v0.39.2\"","origin":"UnknownOrigin"}]
+## node R peers (box)
+[{"multiaddr":"/ip4/172.28.66.1/tcp/39288/p2p/16Uiu2HAm1N4XD7fSWLmsU6kG1sDNeW5cRHgfMB87Uw3yFD3qkeLj","shards":[0],"connected":"Connected","agent":"logos-delivery-\"v0.39.2\"","origin":"UnknownOrigin"},{"multiaddr":"/ip4/172.28.66.22/tcp/38912/p2p/16Uiu2HAmGGTNKYN2QDGjGj2HK1fXFUZ4js6P5K1VmMvEofo4MfAZ","shards":[0],"connected":"Connected","agent":"logos-delivery-\"v0.39.2\"","origin":"UnknownOrigin"}]
+## node B peers (box)
+[{"multiaddr":"/ip4/172.28.66.10/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV","shards":[0],"connected":"Connected","agent":"logos-delivery-\"v0.39.2\"","origin":"UnknownOrigin"}]

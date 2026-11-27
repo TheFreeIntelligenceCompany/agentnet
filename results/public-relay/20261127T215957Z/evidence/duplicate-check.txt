@@ -1,0 +1,4 @@
+a2b {'sent': 20, 'delivered': 20, 'p50': 1160, 'p95': 2453, 'p99': 4142, 'min': 465, 'max': 4142}
+b2a {'sent': 20, 'delivered': 20, 'p50': 457, 'p95': 692, 'p99': 694, 'min': 172, 'max': 694}
+A inbox rows 21 unique 21 all burst ids present True
+B inbox rows 22 unique 22 all burst ids present True

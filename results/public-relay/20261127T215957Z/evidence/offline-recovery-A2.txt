@@ -1,0 +1,10 @@
+22:09:48 delivered=1/5
+22:09:50 delivered=2/5
+22:09:52 delivered=3/5
+22:09:54 delivered=4/5
+22:09:56 delivered=5/5
+{"state": "delivered", "attempts": 7, "delivered_s_after_restart": 30.789000034332275}
+{"state": "delivered", "attempts": 7, "delivered_s_after_restart": 32.289000034332275}
+{"state": "delivered", "attempts": 7, "delivered_s_after_restart": 34.789000034332275}
+{"state": "delivered", "attempts": 7, "delivered_s_after_restart": 36.03999996185303}
+{"state": "delivered", "attempts": 7, "delivered_s_after_restart": 28.039999961853027}

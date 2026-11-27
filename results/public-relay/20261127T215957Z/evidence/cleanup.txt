@@ -1,0 +1,8 @@
+# 2026-11-27T22:14:15Z
+Deleting agentnet-rh1: queued
+  succeeded
+$ instabox ls --meta project=agentnet (names)
+['agentnet-ts']
+ports with 8000 on any box of ours:
+[] 4
+0

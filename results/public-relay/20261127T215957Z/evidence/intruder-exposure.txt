@@ -1,0 +1,36 @@
+# 2026-11-27T22:05:07Z intruder: random nodekey, cluster 66 shard 0, dials the public wss endpoint, no AgentNet identity, no allowlist entry
+# intruder peers:
+"multiaddr":"/ip4/<PUB_IP>/tcp/443/wss/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV",(protocols) "shards":[0],"connected":"Connected"
+# R peers (box):
+"multiaddr":"/ip4/172.28.66.1/tcp/38474/ws/p2p/16Uiu2HAm3SCWRb9jNkQuJ3Znt6z4z35ipqKQrSk2bohBNhoocrzz","shards":[0],"connected":"Connected"
+"multiaddr":"/ip4/172.28.66.1/tcp/47718/ws/p2p/16Uiu2HAm1N4XD7fSWLmsU6kG1sDNeW5cRHgfMB87Uw3yFD3qkeLj","shards":[0],"connected":"Connected"
+"multiaddr":"/ip4/172.28.66.22/tcp/40008/p2p/16Uiu2HAmGGTNKYN2QDGjGj2HK1fXFUZ4js6P5K1VmMvEofo4MfAZ","shards":[0],"connected":"Connected"
+subscribe /agentnet/1/inbox-00/proto 200
+subscribe /agentnet/1/inbox-01/proto 200
+subscribe /agentnet/1/inbox-02/proto 200
+subscribe /agentnet/1/inbox-03/proto 200
+subscribe /agentnet/1/inbox-04/proto 200
+subscribe /agentnet/1/inbox-05/proto 200
+subscribe /agentnet/1/inbox-06/proto 200
+subscribe /agentnet/1/inbox-07/proto 200
+subscribe /agentnet/1/inbox-08/proto 200
+subscribe /agentnet/1/inbox-09/proto 200
+subscribe /agentnet/1/inbox-10/proto 200
+subscribe /agentnet/1/inbox-11/proto 200
+subscribe /agentnet/1/inbox-12/proto 200
+subscribe /agentnet/1/inbox-13/proto 200
+subscribe /agentnet/1/inbox-14/proto 200
+subscribe /agentnet/1/inbox-15/proto 200
+relay-received frames (cache of the intruder's own node): 9
+   ('relay', '/agentnet/1/inbox-00/proto', 2197, False)
+   ('relay', '/agentnet/1/inbox-00/proto', 2197, False)
+   ('relay', '/agentnet/1/inbox-00/proto', 2197, False)
+   ('relay', '/agentnet/1/inbox-00/proto', 2197, False)
+   ('relay', '/agentnet/1/inbox-00/proto', 2197, False)
+   ('relay', '/agentnet/1/inbox-00/proto', 2197, False)
+   ('relay', '/agentnet/1/inbox-04/proto', 2197, False)
+   ('relay', '/agentnet/1/inbox-04/proto', 2197, False)
+   ('relay', '/agentnet/1/inbox-04/proto', 2197, False)
+store query via R (no authentication): messages 101 plaintext-canary-hits 0
+   /agentnet/1/inbox-00/proto n=55 payload bytes min/max 2197 2197
+   /agentnet/1/inbox-04/proto n=46 payload bytes min/max 2197 2197

@@ -1,0 +1,16 @@
+# 2026-11-27T22:00:22Z from the Mac: TLS handshake to the published host on 443
+depth=2 C=US, O=Amazon, CN=Amazon Root CA 1
+depth=1 C=US, O=Amazon, CN=Amazon RSA 2048 M04
+depth=0 CN=*.instabox.tech
+subject=CN=*.instabox.tech
+issuer=C=US, O=Amazon, CN=Amazon RSA 2048 M04
+Verification: OK
+New, TLSv1.3, Cipher is TLS_AES_128_GCM_SHA256
+Protocol: TLSv1.3
+Verify return code: 0 (ok)
+# resolution
+resolved address is_global = True is_private = False
+resolved address is_global = True is_private = False
+# WebSocket upgrade through the edge (http/1.1)
+HTTP/1.1 101 Switching Protocols
+Date: Fri, 27 Nov 2026 22:00:24 GMT
