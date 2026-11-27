@@ -427,3 +427,44 @@ mod l2_adverts {
         ))));
     }
 }
+
+// ---- L4
+
+/// L4: every body length of two whole size classes gives one frame length per
+/// class (the reviewer measured 2005 B for body length 712 and 2197 B for all
+/// the others).
+#[test]
+fn l4_one_frame_length_per_class_for_every_body_length() {
+    let (a, b) = (ident(), ident());
+    let cb = contact_at(&b, NOW);
+    let mut lengths = std::collections::BTreeMap::<usize, usize>::new();
+    for body_len in 0..=2400usize {
+        let body = "x".repeat(body_len);
+        let f = OpenPgpProtection
+            .seal(&a, &cb, &env(&a, &b, &body, NOW), NOW, MAX_FRAME)
+            .unwrap();
+        *lengths.entry(f.len()).or_default() += 1;
+    }
+    // two classes (2 KiB and 4 KiB inner size) and nothing else: exactly two lengths
+    assert_eq!(lengths.len(), 2, "frame lengths seen: {lengths:?}");
+}
+
+
+// ------------------------------------------------------------------- L4
+
+/// L4: the padded size is a power of two for EVERY inner length (no gaps).
+#[test]
+fn l4_every_inner_length_has_an_exactly_encodable_padding_target() {
+    use agentnet_core::crypto::pgp::padded_total;
+    for n in 0..70_000u64 {
+        let t = padded_total(n);
+        assert!(t.is_power_of_two() && t >= 1024 && t >= n + 2, "n={n} t={t}");
+        // the padding packet needs a body that makes header + body == t - n
+        let want = t - n;
+        let body_ok = [(2u64, 0u64..192), (3, 192..8384), (6, 8384..u64::MAX)]
+            .iter()
+            .any(|(h, r)| want >= *h && r.contains(&(want - h)));
+        assert!(body_ok, "n={n}: no padding packet of total size {want}");
+    }
+}
+

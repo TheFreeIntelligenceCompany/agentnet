@@ -466,9 +466,11 @@ impl Default for BuildOpts {
     }
 }
 
-/// Padding packet body length so that header + body == `want` bytes.
-fn padding_body_for_total(want: u64) -> u64 {
-    // new-format length encoding: 1 tag byte + 1 (<192), 2 (<8384) or 5 length bytes
+/// Padding packet body length so that header + body == `want` bytes, or None
+/// when no body length gives exactly that total (new-format length encoding:
+/// 1 tag byte + 1 length byte for bodies < 192, 2 for < 8384, else 5; so the
+/// totals 194 and 8387 to 8389 cannot be hit).
+fn padding_body_for_total(want: u64) -> Option<u64> {
     for h in [2u64, 3, 6] {
         if want < h {
             continue;
@@ -480,20 +482,24 @@ fn padding_body_for_total(want: u64) -> u64 {
             _ => body >= 8384,
         };
         if ok {
-            return body;
+            return Some(body);
         }
     }
-    0
+    None
 }
 
 /// Total size of the inner packet sequence after padding: the smallest power of
-/// two >= max(`MIN_PAD_BUCKET`, n + 2).
-pub(crate) fn padded_total(n: u64) -> u64 {
+/// two >= max(`MIN_PAD_BUCKET`, n + 2) whose padding packet can be encoded
+/// exactly (review finding L4: for a few deficits no padding packet has exactly
+/// that size; those messages move to the next class instead of leaving theirs).
+pub fn padded_total(n: u64) -> u64 {
     let mut t = MIN_PAD_BUCKET;
-    while t < n + 2 {
+    loop {
+        if t >= n + 2 && padding_body_for_total(t - n).is_some() {
+            return t;
+        }
         t *= 2;
     }
-    t
 }
 
 /// Build one OpenPGP message: PKESK v6 (anonymous) to every live encryption
@@ -536,7 +542,7 @@ pub(crate) fn seal_message(
             Padder::new(message)
                 .with_policy(|n: u64| {
                     let total = padded_total(n);
-                    n + padding_body_for_total(total - n)
+                    n + padding_body_for_total(total - n).unwrap_or(0)
                 })
                 .build()
                 .map_err(c)?
