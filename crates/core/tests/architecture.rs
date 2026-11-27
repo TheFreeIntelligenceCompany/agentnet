@@ -6,9 +6,9 @@
 use std::path::{Path, PathBuf};
 
 /// The crates whose use is confined to the crypto module (Rust identifiers).
-const CRYPTO_CRATES: [&str; 3] = ["hpke", "ed25519_dalek", "age"];
+const CRYPTO_CRATES: [&str; 4] = ["sequoia_openpgp", "openssl", "openssl_sys", "age"];
 /// The same crates as written in Cargo manifests.
-const CRYPTO_PACKAGES: [&str; 3] = ["hpke", "ed25519-dalek", "age"];
+const CRYPTO_PACKAGES: [&str; 4] = ["sequoia-openpgp", "openssl", "openssl-sys", "age"];
 
 fn workspace_root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -77,8 +77,8 @@ fn only_the_crypto_module_references_the_cryptographic_crates() {
             &mut files,
         );
     }
-    // core's integration tests may use the primitives only in the published
-    // vector tests, which exist to exercise the libraries directly
+    // core's integration tests may use the OpenPGP library only in the published
+    // vector tests, which exist to exercise the library directly
     rust_files(&root.join("crates/core/tests"), &mut files);
     assert!(files.len() > 50, "walked {} files", files.len());
 
@@ -108,15 +108,18 @@ fn only_the_crypto_module_references_the_cryptographic_crates() {
 
 #[test]
 fn the_reference_matcher_works() {
-    assert!(references("use hpke::kem::X25519;", "hpke"));
     assert!(references(
-        "let k = ed25519_dalek::SigningKey::from_bytes(&s);",
-        "ed25519_dalek"
+        "use sequoia_openpgp::cert::Cert;",
+        "sequoia_openpgp"
+    ));
+    assert!(references(
+        "let k = openssl::pkey::PKey::generate_ed25519();",
+        "openssl"
     ));
     assert!(references("use age;", "age"));
     assert!(references("age::encrypt(&r, b)", "age"));
     assert!(!references("let m = message::new();", "age"));
-    assert!(!references("// uses hpke:: in a comment", "hpke"));
+    assert!(!references("// uses openssl:: in a comment", "openssl"));
     assert!(!references("fn usage::x()", "age"));
 }
 
@@ -160,7 +163,7 @@ fn transport_mcp_daemon_and_cli_do_not_depend_on_the_cryptographic_crates() {
 #[test]
 fn the_engine_goes_through_the_message_protection_trait() {
     // `ingest`, `send`, `system` and `node` must not call the free
-    // `envelope::seal` / `envelope::open` wrappers (which pin suite 1).
+    // `protection::seal` / `protection::open` wrappers (which pin the default scheme).
     let src = workspace_root().join("crates/core/src");
     for f in [
         "ingest.rs",
@@ -170,7 +173,7 @@ fn the_engine_goes_through_the_message_protection_trait() {
         "api_impl.rs",
     ] {
         let text = std::fs::read_to_string(src.join(f)).unwrap();
-        for bad in ["envelope::seal(", "envelope::open(", "HpkeBaseEd25519"] {
+        for bad in ["protection::seal(", "protection::open(", "OpenPgpProtection"] {
             assert!(!text.contains(bad), "{f} references {bad}");
         }
     }

@@ -179,7 +179,7 @@ impl Node {
                 .ok_or_else(|| ApiError::not_found("recipient is not a known contact; add_contact first"))?;
             if row.revoked {
                 return Err(ApiError::policy(
-                    "the recipient's identity has been revoked (signed tombstone); messages are refused",
+                    "the recipient's identity has been revoked (its certificate's primary key is revoked); messages are refused",
                 )
                 .into());
             }
@@ -188,7 +188,7 @@ impl Node {
             }
             if row.contact.is_kem_expired(now) {
                 return Err(ApiError::invalid(
-                    "the recipient's contact record has an expired encryption key; ask them for a fresh record and import it with add_contact",
+                    "the recipient's certificate has no usable encryption subkey (all expired or revoked); ask them for a fresh certificate and import it with add_contact",
                 )
                 .into());
             }
@@ -215,12 +215,15 @@ impl Node {
                         format!("message does not fit in one frame; at most about {max_body_len_hint} bytes of body fit"),
                     ),
                     SealError::RecipientKemExpired => ApiError::invalid(
-                        "the recipient's encryption key has expired; import a fresh contact record",
+                        "the recipient has no usable encryption subkey (expired, revoked or unbound); import a fresh certificate",
+                    ),
+                    SealError::RecipientRevoked => ApiError::policy(
+                        "the recipient's certificate has a revoked primary key; refusing to encrypt to it",
+                    ),
+                    SealError::RecipientExpired => ApiError::invalid(
+                        "the recipient's certificate has expired; import a fresh certificate",
                     ),
                     SealError::InvalidField(f) => ApiError::invalid(format!("invalid field: {f}")),
-                    SealError::NoCommonSuite => ApiError::invalid(
-                        "no cipher suite in common with the recipient's signed contact record; refusing to downgrade",
-                    ),
                     _ => ApiError::internal("could not seal message"),
                 })?;
             self.insert_outbox_row(

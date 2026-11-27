@@ -30,7 +30,7 @@ use crate::metrics::{Metrics, NodeMetrics};
 use crate::store::{kv_get, kv_set, Store, StoreError};
 
 const KV_OWN_ADDRESS: &str = "own_address";
-pub(crate) const KV_ANNOUNCED_EPOCH: &str = "announced_key_epoch";
+pub(crate) const KV_ANNOUNCED_CERT: &str = "announced_cert_id";
 pub(crate) const KV_ANNOUNCED_REVOCATION: &str = "announced_revocation";
 pub(crate) const KV_LOCAL_REVOCATION: &str = "local_revocation";
 pub(crate) const KV_HISTORY_WATERMARK: &str = "history_watermark_ms";
@@ -115,8 +115,7 @@ pub struct MaintenanceReport {
 /// Optional construction parameters of a [`Node`].
 #[derive(Clone, Default)]
 pub struct NodeOptions {
-    /// The message-protection scheme (default: [`default_protection`], suite 1).
-    /// The identity's published `suites` list is taken from it.
+    /// The message-protection scheme (default: [`default_protection`], RFC 9580 OpenPGP).
     pub protection: Option<Arc<dyn MessageProtection>>,
     /// The local identity's signed revocation tombstone, if it was revoked
     /// (the daemon reads it from the data directory). A revoked identity sends
@@ -250,7 +249,7 @@ impl Node {
 
     /// [`Node::open`] with explicit [`NodeOptions`].
     pub fn open_with(
-        mut identity: Identity,
+        identity: Identity,
         store_path: &Path,
         transport: Arc<dyn Transport>,
         config: NodeConfig,
@@ -259,7 +258,6 @@ impl Node {
     ) -> Result<Arc<Self>, NodeError> {
         config.validate().map_err(NodeError::Config)?;
         let protection = options.protection.unwrap_or_else(default_protection);
-        identity.set_advertised_suites(protection.advertised_suites());
         let now0 = clock.now_ms();
         let local_revocation = match &options.local_revocation {
             Some(doc) => {
@@ -659,7 +657,7 @@ impl Node {
         if contact.address != *addr {
             return Err(StoreError::Corrupt("stored contact address mismatch"));
         }
-        let revoked = Self::is_revoked(conn, addr)?;
+        let revoked = Self::is_revoked(conn, addr)? || contact.revocation(now).is_some();
         Ok(Some(ContactRow {
             contact,
             trust: if revoked {
@@ -673,7 +671,24 @@ impl Node {
         }))
     }
 
-    /// True if a verified identity-revocation tombstone is stored for `addr`.
+    /// A short identifier of the current public certificate (changes when the
+    /// certificate changes: rotation, revocation). Not a security mechanism.
+    pub(crate) fn cert_id(&self) -> u64 {
+        use sha2::{Digest, Sha256};
+        let d = Sha256::digest(self.identity.contact_record().as_bytes());
+        u64::from_be_bytes([d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7]]) >> 1
+    }
+
+    /// The pinned certificate of `addr`, for verifying a received message.
+    pub(crate) fn pinned_certificate(&self, addr: &Address) -> Option<VerifiedContact> {
+        self.store
+            .read(|c| self.load_contact(c, addr))
+            .ok()
+            .flatten()
+            .map(|r| r.contact)
+    }
+
+    /// True if a verified identity revocation is stored for `addr`.
     pub(crate) fn is_revoked(
         conn: &rusqlite::Connection,
         addr: &Address,

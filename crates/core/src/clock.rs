@@ -23,6 +23,11 @@ impl Clock for SystemClock {
     }
 }
 
+/// Wall-clock time now, Unix milliseconds.
+pub fn system_now_ms() -> i64 {
+    SystemClock.now_ms()
+}
+
 /// A manually advanced clock. Cloning shares the same time.
 #[derive(Clone, Debug)]
 pub struct ManualClock(Arc<AtomicI64>);

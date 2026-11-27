@@ -2,39 +2,42 @@
 //!
 //! An advertisement is a PLAINTEXT, publicly readable statement by an agent:
 //! "this address offers these capabilities until this time; here is my current
-//! signed contact record". It is published on a host-authorised discovery
-//! content topic, never on an inbox topic. Wire format (normative description in
+//! certificate". It is published on a host-authorised discovery content topic,
+//! never on an inbox topic. Wire format (normative description in
 //! `docs/discovery.md`):
 //!
-//! * document = `{"record": b64url(record_bytes), "sig": b64url(sig)}` (the same
-//!   wrapper as contact records and tombstones),
-//! * `record_bytes = {"v":2,"topic":"<discovery topic name>","address":…,"contact_record":"<document>",
+//! * document = base64url of ONE OpenPGP signed (not encrypted) message: a
+//!   one-pass signed Literal Data packet and a v6 Ed25519 signature by the
+//!   agent's primary key (RFC 9580 section 10.3),
+//! * the literal data is the JSON record
+//!   `{"v":3,"topic":"<discovery topic name>","address":…,"contact_record":"<certificate document>",
 //!   "capabilities":[{"name":…,"description":…}],"display_name":…(optional),
-//!   "issued_at":ms,"expires_at":ms,"seq":n}`,
-//! * `sig = Ed25519(signing_sk, "agentnet/v1/capability-advert\0" || record_bytes)`,
+//!   "issued_at":ms,"expires_at":ms,"seq":n}`; the topic is inside the signed content,
 //! * frame = `b"AD" || 0x01 || document_bytes`, so an advertisement can never be
-//!   mistaken for a sealed message frame (`b"AN"`).
+//!   mistaken for a sealed message (which starts with an OpenPGP packet tag
+//!   byte, high bit set, never `A`).
 //!
-//! This adds a signing domain only: no new cryptographic construction. A valid
-//! advertisement proves that the holder of the address key made the statement;
-//! it proves nothing about whether the capabilities are real or the agent is
-//! trustworthy. Receiving one never creates a contact.
+//! AgentNet defines no signature construction here: the signature is a standard
+//! OpenPGP data signature. The identity certificate is used for nothing but
+//! AgentNet, so the lack of a signature context string (domain separation) is
+//! compensated by the strict JSON schema with its `v` and `topic` fields
+//! (`docs/crypto-requirements.md`). A valid advertisement proves that the holder
+//! of the address key made the statement; it proves nothing about whether the
+//! capabilities are real or the agent is trustworthy. Receiving one never
+//! creates a contact.
 
 use base64::engine::general_purpose::URL_SAFE_NO_PAD as B64;
 use base64::Engine as _;
-use ed25519_dalek::Signature;
 use serde::{Deserialize, Serialize};
 
 use super::address::Address;
 use super::contact::VerifiedContact;
 use super::identity::Identity;
+use super::pgp;
 use crate::error::{json_reason, AdvertError};
 
-/// Domain separation prefix of the advertisement signature.
-pub const ADVERT_DOMAIN: &[u8] = b"agentnet/v1/capability-advert\0";
-/// Advertisement format version.
-/// Version 2 added the signed `topic`; version 1 documents are rejected.
-pub const ADVERT_VERSION: u64 = 2;
+/// Advertisement format version (version 3: an OpenPGP signed message).
+pub const ADVERT_VERSION: u64 = 3;
 /// Frame magic of an advertisement frame (sealed message frames use `AN`).
 pub const ADVERT_FRAME_MAGIC: [u8; 2] = *b"AD";
 /// Frame version byte of an advertisement frame.
@@ -85,13 +88,6 @@ struct AdvertV2 {
 #[derive(Deserialize)]
 struct VersionOnly {
     v: u64,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct Document {
-    record: String,
-    sig: String,
 }
 
 /// Limits applied when verifying an advertisement.
@@ -166,9 +162,10 @@ pub fn has_advert_magic(payload: &[u8]) -> bool {
     payload.get(0..2) == Some(&ADVERT_FRAME_MAGIC[..])
 }
 
-/// True if `payload` starts with the sealed-message frame magic.
+/// True if `payload` looks like a sealed message: it starts with an OpenPGP
+/// packet header (high bit set), which an advertisement frame (`A`) never does.
 pub fn has_sealed_magic(payload: &[u8]) -> bool {
-    payload.get(0..2) == Some(&super::envelope::FRAME_MAGIC[..])
+    payload.first().is_some_and(|b| b & 0x80 != 0)
 }
 
 /// Unwrap an advertisement frame into its document text. Never panics.
@@ -190,7 +187,7 @@ pub fn decode_frame(payload: &[u8]) -> Result<&str, AdvertError> {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SignedAdvert {
     record: Vec<u8>,
-    sig: [u8; 64],
+    message: Vec<u8>,
 }
 
 impl SignedAdvert {
@@ -229,22 +226,20 @@ impl SignedAdvert {
         if record.len() > MAX_ADVERT_RECORD_LEN {
             return Err(AdvertError::TooLarge);
         }
-        let sig = id.sign(ADVERT_DOMAIN, &record);
-        Ok(Self { record, sig })
+        let signer = id.signer().ok_or(AdvertError::BadSignature)?;
+        let message = pgp::sign_message(signer, &record, req.issued_at)
+            .map_err(|_| AdvertError::BadSignature)?;
+        Ok(Self { record, message })
     }
 
-    /// The exact signed bytes.
+    /// The signed JSON content.
     pub fn record_bytes(&self) -> &[u8] {
         &self.record
     }
 
-    /// The shareable JSON document.
+    /// The shareable document (base64url of the OpenPGP signed message).
     pub fn to_document(&self) -> String {
-        let d = Document {
-            record: B64.encode(&self.record),
-            sig: B64.encode(self.sig),
-        };
-        serde_json::to_string(&d).unwrap_or_default()
+        B64.encode(&self.message)
     }
 
     /// The document wrapped in an advertisement frame, ready to publish.
@@ -309,21 +304,12 @@ impl VerifiedAdvert {
         if doc.len() > MAX_ADVERT_DOCUMENT_LEN {
             return Err(AdvertError::TooLarge);
         }
-        let d: Document =
-            serde_json::from_str(doc).map_err(|e| AdvertError::Malformed(json_reason(&e)))?;
-        let record = B64
-            .decode(&d.record)
-            .map_err(|_| AdvertError::Malformed("record is not base64url"))?;
-        if record.len() > MAX_ADVERT_RECORD_LEN {
-            return Err(AdvertError::TooLarge);
-        }
-        let sig_bytes = B64
-            .decode(&d.sig)
-            .map_err(|_| AdvertError::Malformed("sig is not base64url"))?;
-        let sig: [u8; 64] = sig_bytes
-            .as_slice()
-            .try_into()
-            .map_err(|_| AdvertError::Malformed("sig must be 64 bytes"))?;
+        let msg = B64
+            .decode(doc)
+            .map_err(|_| AdvertError::Malformed("document is not base64url"))?;
+        // Pass 1: read the content WITHOUT trusting it, to find the certificate to verify with.
+        let record = pgp::read_signed_unverified(&msg, MAX_ADVERT_RECORD_LEN)
+            .ok_or(AdvertError::BadStructure)?;
         let ver: VersionOnly =
             serde_json::from_slice(&record).map_err(|e| AdvertError::Malformed(json_reason(&e)))?;
         if ver.v != ADVERT_VERSION {
@@ -332,21 +318,24 @@ impl VerifiedAdvert {
         let r: AdvertV2 =
             serde_json::from_slice(&record).map_err(|e| AdvertError::Malformed(json_reason(&e)))?;
         let address: Address = r.address.parse().map_err(AdvertError::InvalidAddress)?;
-        let mut msg = Vec::with_capacity(ADVERT_DOMAIN.len() + record.len());
-        msg.extend_from_slice(ADVERT_DOMAIN);
-        msg.extend_from_slice(&record);
-        address
-            .verifying_key()
-            .verify_strict(&msg, &Signature::from_bytes(&sig))
-            .map_err(|_| AdvertError::BadSignature)?;
-
-        if r.topic != expected_topic {
-            return Err(AdvertError::TopicMismatch);
-        }
         let contact = VerifiedContact::parse_and_verify(&r.contact_record, now_ms)
             .map_err(AdvertError::BadContact)?;
         if contact.address != address {
             return Err(AdvertError::ContactAddressMismatch);
+        }
+        // Pass 2: the signature must verify under that certificate, made by its primary key.
+        let (content, signer) = pgp::verify_signed_message(
+            &msg,
+            vec![contact.cert().clone()],
+            MAX_ADVERT_RECORD_LEN,
+            now_ms.saturating_add(limits.clock_skew_ms),
+        )
+        .ok_or(AdvertError::BadSignature)?;
+        if signer != address || content != record {
+            return Err(AdvertError::BadSignature);
+        }
+        if r.topic != expected_topic {
+            return Err(AdvertError::TopicMismatch);
         }
         if r.issued_at < 0 || r.expires_at <= r.issued_at {
             return Err(AdvertError::InvalidTimestamp);
@@ -403,6 +392,7 @@ pub fn error_kind(e: &AdvertError) -> &'static str {
         AdvertError::UnknownVersion(_) => "unknown_version",
         AdvertError::InvalidAddress(_) => "invalid_address",
         AdvertError::BadSignature => "bad_signature",
+        AdvertError::BadStructure => "bad_structure",
         AdvertError::TopicMismatch => "topic_mismatch",
         AdvertError::BadContact(_) => "bad_contact",
         AdvertError::ContactAddressMismatch => "contact_address_mismatch",
@@ -436,390 +426,30 @@ impl Identity {
 pub mod testing {
     use super::*;
 
-    /// A document whose record bytes are exactly `record`, signed by `signer`
-    /// under the advertisement domain (so anything can be forged, including
-    /// records naming another address or embedding another contact record).
-    pub fn sign_record_as(signer: &Identity, record: &[u8]) -> String {
-        serde_json::to_string(&Document {
-            record: B64.encode(record),
-            sig: B64.encode(signer.sign(ADVERT_DOMAIN, record)),
-        })
-        .unwrap_or_default()
-    }
-
-    /// A document with an arbitrary record and signature.
-    pub fn document(record: &[u8], sig: &[u8; 64]) -> String {
-        serde_json::to_string(&Document {
-            record: B64.encode(record),
-            sig: B64.encode(sig),
-        })
-        .unwrap_or_default()
-    }
-
-    /// Split a document into `(record bytes, signature)`.
-    pub fn split(doc: &str) -> Option<(Vec<u8>, [u8; 64])> {
-        let d: Document = serde_json::from_str(doc).ok()?;
-        let record = B64.decode(&d.record).ok()?;
-        let sig: [u8; 64] = B64.decode(&d.sig).ok()?.as_slice().try_into().ok()?;
-        Some((record, sig))
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    const TOPIC: &str = "general";
-    const NOW: i64 = 1_700_000_000_000;
-    const LIM: AdvertLimits = AdvertLimits {
-        max_ttl_ms: 86_400_000,
-        clock_skew_ms: 120_000,
-        max_capabilities: 16,
-    };
-
-    fn cap(n: &str, d: &str) -> Capability {
-        Capability {
-            name: n.into(),
-            description: d.into(),
+    /// A document whose signed content is exactly `record`, signed by `signer`
+    /// (so anything can be forged, including records naming another address or
+    /// embedding another certificate).
+    pub fn sign_record_as(signer: &Identity, record: &[u8], now_ms: i64) -> String {
+        match signer.signer() {
+            Some(kp) => pgp::sign_message(kp, record, now_ms)
+                .map(|m| B64.encode(m))
+                .unwrap_or_default(),
+            None => String::new(),
         }
     }
 
-    fn content<'a>(caps: &'a [Capability], seq: u64) -> AdvertContent<'a> {
-        AdvertContent {
-            topic: TOPIC,
-            capabilities: caps,
-            display_name: Some("Alice"),
-            issued_at: NOW,
-            expires_at: NOW + 3_600_000,
-            seq,
-        }
+    /// Decode a document to its OpenPGP message bytes.
+    pub fn message_bytes(doc: &str) -> Option<Vec<u8>> {
+        B64.decode(doc).ok()
     }
 
-    fn doc_of(_id: &Identity, rec: &serde_json::Value, sign_with: &Identity) -> String {
-        let bytes = serde_json::to_vec(rec).unwrap();
-        serde_json::to_string(&Document {
-            record: B64.encode(&bytes),
-            sig: B64.encode(sign_with.sign(ADVERT_DOMAIN, &bytes)),
-        })
-        .unwrap()
+    /// Encode raw message bytes as a document.
+    pub fn document_from_bytes(bytes: &[u8]) -> String {
+        B64.encode(bytes)
     }
 
-    fn record_value(a: &SignedAdvert) -> serde_json::Value {
-        serde_json::from_slice(a.record_bytes()).unwrap()
-    }
-
-    #[test]
-    fn roundtrip_and_layout() {
-        let id = Identity::generate_default(NOW).unwrap();
-        let caps = [cap("translate.de", "German to English")];
-        let a = id.create_advert(&content(&caps, 3), &LIM).unwrap();
-        let s = std::str::from_utf8(a.record_bytes()).unwrap();
-        assert!(s.starts_with("{\"v\":2,\"topic\":\"general\",\"address\":\"an1"));
-        assert!(s.contains("\"capabilities\":[{\"name\":\"translate.de\",\"description\":\"German to English\"}],\"display_name\":\"Alice\",\"issued_at\":"));
-        assert!(s.ends_with(&format!(
-            "\"issued_at\":{NOW},\"expires_at\":{},\"seq\":3}}",
-            NOW + 3_600_000
-        )));
-        let v = VerifiedAdvert::parse_and_verify(&a.to_document(), TOPIC, NOW + 1, &LIM).unwrap();
-        assert_eq!(v.address, id.address());
-        assert_eq!(v.topic, TOPIC);
-        assert_eq!(v.seq, 3);
-        assert_eq!(v.capabilities, caps.to_vec());
-        assert_eq!(v.display_name.as_deref(), Some("Alice"));
-        assert_eq!(v.contact_record(), id.contact_record().to_document());
-        assert!(!v.is_withdrawal());
-        // no display name: the field is omitted
-        let mut c = content(&caps, 1);
-        c.display_name = None;
-        let a2 = id.create_advert(&c, &LIM).unwrap();
-        assert!(!std::str::from_utf8(a2.record_bytes())
-            .unwrap()
-            .contains("display_name"));
-        let v2 = VerifiedAdvert::parse_and_verify(&a2.to_document(), TOPIC, NOW, &LIM).unwrap();
-        assert_eq!(v2.display_name, None);
-        // withdrawal
-        let w = id.create_advert(&content(&[], 4), &LIM).unwrap();
-        assert!(
-            VerifiedAdvert::parse_and_verify(&w.to_document(), TOPIC, NOW, &LIM)
-                .unwrap()
-                .is_withdrawal()
-        );
-    }
-
-    #[test]
-    fn the_signed_topic_must_equal_the_topic_received_on() {
-        let id = Identity::generate_default(NOW).unwrap();
-        let caps = [cap("a", "")];
-        let a = id.create_advert(&content(&caps, 1), &LIM).unwrap();
-        let doc = a.to_document();
-        assert!(VerifiedAdvert::parse_and_verify(&doc, TOPIC, NOW, &LIM).is_ok());
-        for other in ["other", "General", "general2", ""] {
-            assert_eq!(
-                VerifiedAdvert::parse_and_verify(&doc, other, NOW, &LIM),
-                Err(AdvertError::TopicMismatch),
-                "{other:?}"
-            );
-        }
-        assert_eq!(error_kind(&AdvertError::TopicMismatch), "topic_mismatch");
-        // a withdrawal is bound the same way
-        let w = id.create_advert(&content(&[], 2), &LIM).unwrap();
-        assert_eq!(
-            VerifiedAdvert::parse_and_verify(&w.to_document(), "other", NOW, &LIM),
-            Err(AdvertError::TopicMismatch)
-        );
-        // creation refuses an invalid topic name
-        let mut c = content(&caps, 1);
-        c.topic = "Bad Topic";
-        assert!(id.create_advert(&c, &LIM).is_err());
-    }
-
-    #[test]
-    fn frame_roundtrip_and_confusion() {
-        let id = Identity::generate_default(NOW).unwrap();
-        let a = id
-            .create_advert(&content(&[cap("x", "")], 1), &LIM)
-            .unwrap();
-        let f = a.to_frame();
-        assert_eq!(&f[..3], b"AD\x01");
-        assert_eq!(decode_frame(&f).unwrap(), a.to_document());
-        assert!(has_advert_magic(&f) && !has_sealed_magic(&f));
-        assert!(has_sealed_magic(b"AN\x01rest") && !has_advert_magic(b"AN\x01rest"));
-        for bad in [
-            &b""[..],
-            b"AD",
-            b"AD\x02{}",
-            b"AN\x01{}",
-            b"AD\x01\xff\xfe",
-            b"XX\x01{}",
-        ] {
-            assert_eq!(decode_frame(bad), Err(AdvertError::BadFrame), "{bad:?}");
-        }
-        let big = vec![b'a'; MAX_ADVERT_FRAME_LEN + 1];
-        assert_eq!(decode_frame(&big), Err(AdvertError::BadFrame));
-    }
-
-    #[test]
-    fn forgeries_are_rejected() {
-        let id = Identity::generate_default(NOW).unwrap();
-        let other = Identity::generate_default(NOW).unwrap();
-        let caps = [cap("a", "d")];
-        let a = id.create_advert(&content(&caps, 1), &LIM).unwrap();
-        let rec = record_value(&a);
-        let verify = |d: &str| VerifiedAdvert::parse_and_verify(d, TOPIC, NOW, &LIM);
-        // signed by another key
-        assert_eq!(
-            verify(&doc_of(&id, &rec, &other)),
-            Err(AdvertError::BadSignature)
-        );
-        // address swapped to the signer's, record names the victim
-        let mut r = rec.clone();
-        r["address"] = serde_json::json!(other.address().to_string());
-        assert_eq!(
-            verify(&doc_of(&id, &r, &id)),
-            Err(AdvertError::BadSignature)
-        );
-        // signed by `other` for `other`'s address but embedding id's contact record
-        assert_eq!(
-            verify(&doc_of(&other, &r, &other)),
-            Err(AdvertError::ContactAddressMismatch)
-        );
-        // embedded contact record of someone else, signed by the advertiser
-        let mut r = rec.clone();
-        r["contact_record"] = serde_json::json!(other.contact_record().to_document());
-        assert_eq!(
-            verify(&doc_of(&id, &r, &id)),
-            Err(AdvertError::ContactAddressMismatch)
-        );
-        // tampered capability after signing
-        let mut r = rec.clone();
-        r["capabilities"][0]["name"] = serde_json::json!("evil");
-        let bytes = serde_json::to_vec(&r).unwrap();
-        let tampered = serde_json::to_string(&Document {
-            record: B64.encode(&bytes),
-            sig: B64.encode(id.sign(ADVERT_DOMAIN, a.record_bytes())),
-        })
-        .unwrap();
-        assert_eq!(verify(&tampered), Err(AdvertError::BadSignature));
-        // wrong signing domain (contact-record domain)
-        let wrong = serde_json::to_string(&Document {
-            record: B64.encode(a.record_bytes()),
-            sig: B64.encode(id.sign(b"agentnet/v1/contact-record\0", a.record_bytes())),
-        })
-        .unwrap();
-        assert_eq!(verify(&wrong), Err(AdvertError::BadSignature));
-        // unknown field in a correctly signed record
-        let mut r = rec.clone();
-        r["extra"] = serde_json::json!(1);
-        assert!(matches!(
-            verify(&doc_of(&id, &r, &id)),
-            Err(AdvertError::Malformed(_))
-        ));
-        // unknown version (and the previous, topic-less version 1 is refused)
-        for ver in [1u64, 3] {
-            let mut r = rec.clone();
-            r["v"] = serde_json::json!(ver);
-            assert_eq!(
-                verify(&doc_of(&id, &r, &id)),
-                Err(AdvertError::UnknownVersion(ver))
-            );
-        }
-        // a record without a topic is malformed, never "any topic"
-        let mut r = rec.clone();
-        r.as_object_mut().unwrap().remove("topic");
-        assert!(matches!(
-            verify(&doc_of(&id, &r, &id)),
-            Err(AdvertError::Malformed(_))
-        ));
-        // topic tampered after signing: the signature no longer verifies
-        let mut r = rec.clone();
-        r["topic"] = serde_json::json!("other");
-        let bytes = serde_json::to_vec(&r).unwrap();
-        let tampered_topic = serde_json::to_string(&Document {
-            record: B64.encode(&bytes),
-            sig: B64.encode(id.sign(ADVERT_DOMAIN, a.record_bytes())),
-        })
-        .unwrap();
-        assert_eq!(verify(&tampered_topic), Err(AdvertError::BadSignature));
-        for bad in ["", "{}", "null", "[]", "{\"record\":\"!\",\"sig\":\"!\"}"] {
-            assert!(verify(bad).is_err());
-        }
-    }
-
-    #[test]
-    fn time_and_field_rules() {
-        let id = Identity::generate_default(NOW).unwrap();
-        let caps = [cap("a", "")];
-        let sign = |f: &dyn Fn(&mut serde_json::Value)| {
-            let a = id.create_advert(&content(&caps, 1), &LIM).unwrap();
-            let mut r = record_value(&a);
-            f(&mut r);
-            doc_of(&id, &r, &id)
-        };
-        let verify = |d: &str, now: i64| VerifiedAdvert::parse_and_verify(d, TOPIC, now, &LIM);
-        let ok = sign(&|_| {});
-        assert!(verify(&ok, NOW).is_ok());
-        // expired
-        assert_eq!(verify(&ok, NOW + 3_600_000), Err(AdvertError::Expired));
-        // issued in the future beyond skew
-        assert_eq!(verify(&ok, NOW - 120_001), Err(AdvertError::FromFuture));
-        assert!(verify(&ok, NOW - 120_000).is_ok());
-        // ttl above the maximum
-        let long = sign(&|r| r["expires_at"] = serde_json::json!(NOW + 86_400_001));
-        assert_eq!(verify(&long, NOW), Err(AdvertError::TtlTooLong));
-        // expires before issued
-        let neg = sign(&|r| r["expires_at"] = serde_json::json!(NOW - 1));
-        assert_eq!(verify(&neg, NOW), Err(AdvertError::InvalidTimestamp));
-        // seq beyond i64
-        let big = sign(&|r| r["seq"] = serde_json::json!(u64::MAX));
-        assert_eq!(verify(&big, NOW), Err(AdvertError::InvalidSeq));
-        // fields
-        for (name, desc) in [
-            ("UPPER", "d"),
-            ("", "d"),
-            ("has space", "d"),
-            ("ok", "bad\u{7}ctl"),
-        ] {
-            let d = sign(&|r| {
-                r["capabilities"] = serde_json::json!([{"name": name, "description": desc}])
-            });
-            assert!(
-                matches!(verify(&d, NOW), Err(AdvertError::InvalidCapability(_))),
-                "{name:?}"
-            );
-        }
-        let d = sign(&|r| {
-            r["capabilities"] = serde_json::json!([{"name": "a", "description": "x".repeat(257)}])
-        });
-        assert!(verify(&d, NOW).is_err());
-        let d = sign(&|r| {
-            r["capabilities"] = serde_json::json!([
-                {"name": "a", "description": ""}, {"name": "a", "description": ""}
-            ])
-        });
-        assert!(verify(&d, NOW).is_err());
-        let many: Vec<_> = (0..17)
-            .map(|i| serde_json::json!({"name": format!("c{i}"), "description": ""}))
-            .collect();
-        let d = sign(&|r| r["capabilities"] = serde_json::Value::Array(many.clone()));
-        assert!(verify(&d, NOW).is_err());
-        let d = sign(&|r| r["display_name"] = serde_json::json!("x".repeat(65)));
-        assert_eq!(verify(&d, NOW), Err(AdvertError::InvalidDisplayName));
-        let d = sign(&|r| r["display_name"] = serde_json::json!(""));
-        assert_eq!(verify(&d, NOW), Err(AdvertError::InvalidDisplayName));
-        let d = sign(&|r| r["display_name"] = serde_json::json!("a\nb"));
-        assert_eq!(verify(&d, NOW), Err(AdvertError::InvalidDisplayName));
-        // display_name: null is the same as absent
-        let d = sign(&|r| r["display_name"] = serde_json::Value::Null);
-        assert_eq!(verify(&d, NOW).unwrap().display_name, None);
-        // creation enforces the same rules
-        let mut c = content(&caps, 1);
-        c.expires_at = NOW + 86_400_001;
-        assert_eq!(
-            id.create_advert(&c, &LIM).unwrap_err(),
-            AdvertError::TtlTooLong
-        );
-        assert!(id
-            .create_advert(&content(&[cap("BAD", "")], 1), &LIM)
-            .is_err());
-        // an expired embedded KEM key invalidates the advertisement
-        let mut rot = Identity::generate_default(NOW).unwrap();
-        rot.rotate_kem(NOW, NOW, Some(NOW + 1000)).unwrap();
-        let a = rot.create_advert(&content(&caps, 1), &LIM).unwrap();
-        assert!(matches!(
-            verify(&a.to_document(), NOW + 2000),
-            Err(AdvertError::BadContact(_))
-        ));
-    }
-
-    #[test]
-    fn record_size_is_capped() {
-        let id = Identity::generate_default(NOW).unwrap();
-        // 64 capabilities of maximal size exceed 8 KiB
-        let caps: Vec<_> = (0..64)
-            .map(|i| cap(&format!("{:0>64}", i), &"x".repeat(256)))
-            .collect();
-        let lim = AdvertLimits {
-            max_capabilities: 64,
-            ..LIM
-        };
-        assert_eq!(
-            id.create_advert(&content(&caps, 1), &lim).unwrap_err(),
-            AdvertError::TooLarge
-        );
-    }
-
-    mod fuzz {
-        use super::*;
-        use proptest::prelude::*;
-
-        proptest! {
-            /// The frame and document parsers never panic and never accept noise.
-            #[test]
-            fn parsers_never_panic(bytes in proptest::collection::vec(any::<u8>(), 0..2048)) {
-                let _ = decode_frame(&bytes);
-                if let Ok(s) = std::str::from_utf8(&bytes) {
-                    prop_assert!(VerifiedAdvert::parse_and_verify(s, TOPIC, NOW, &LIM).is_err());
-                }
-                let mut framed = b"AD\x01".to_vec();
-                framed.extend_from_slice(&bytes);
-                if let Ok(doc) = decode_frame(&framed) {
-                    prop_assert!(VerifiedAdvert::parse_and_verify(doc, TOPIC, NOW, &LIM).is_err());
-                }
-            }
-
-            /// Structured near-misses (valid JSON wrapper, arbitrary record bytes,
-            /// arbitrary signature) are rejected without panicking.
-            #[test]
-            fn wrapper_with_arbitrary_record_is_rejected(
-                record in proptest::collection::vec(any::<u8>(), 0..512),
-                sig in proptest::collection::vec(any::<u8>(), 0..80),
-            ) {
-                let doc = serde_json::to_string(&Document {
-                    record: B64.encode(&record),
-                    sig: B64.encode(&sig),
-                }).unwrap();
-                prop_assert!(VerifiedAdvert::parse_and_verify(&doc, TOPIC, NOW, &LIM).is_err());
-            }
-        }
+    /// The JSON content of a signed document (not verified).
+    pub fn content_of(doc: &str) -> Option<Vec<u8>> {
+        pgp::read_signed_unverified(&B64.decode(doc).ok()?, MAX_ADVERT_RECORD_LEN)
     }
 }

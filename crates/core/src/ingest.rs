@@ -85,19 +85,26 @@ fn open_error_kind(e: &OpenError) -> &'static str {
     match e {
         OpenError::Truncated => "truncated",
         OpenError::FrameTooLarge => "frame_too_large",
-        OpenError::BadMagic => "bad_magic",
-        OpenError::UnknownFrameVersion(_) => "unknown_frame_version",
-        OpenError::UnknownSuite(_) => "unknown_suite",
-        OpenError::SuiteNotAdvertised(_) => "suite_not_advertised",
-        OpenError::SuiteMismatch => "suite_mismatch",
-        OpenError::KeyEpochMismatch => "key_epoch_mismatch",
+        OpenError::Malformed => "malformed",
         OpenError::NotForUs => "not_for_us",
-        OpenError::BadLengthPrefix => "bad_length_prefix",
-        OpenError::NonZeroPadding => "non_zero_padding",
-        OpenError::UnknownEnvelopeVersion(_) => "unknown_envelope_version",
-        OpenError::MalformedEnvelope(_) => "malformed_envelope",
-        OpenError::InvalidField(_) => "invalid_field",
+        OpenError::SkeskPresent => "skesk_present",
+        OpenError::PkeskNotV6 => "pkesk_not_v6",
+        OpenError::NotAead => "not_aead",
+        OpenError::UnsupportedCipher => "unsupported_cipher",
+        OpenError::Compressed => "compressed",
+        OpenError::BadStructure => "bad_structure",
+        OpenError::WrongSignatureCount => "wrong_signature_count",
+        OpenError::UnsupportedSignature => "unsupported_signature",
         OpenError::BadSignature => "bad_signature",
+        OpenError::UnknownSender => "unknown_sender",
+        OpenError::SenderRevoked => "sender_revoked",
+        OpenError::SenderExpired => "sender_expired",
+        OpenError::SignerMismatch => "signer_mismatch",
+        OpenError::MissingIntendedRecipient => "missing_intended_recipient",
+        OpenError::WrongIntendedRecipient => "wrong_intended_recipient",
+        OpenError::MalformedPayload => "malformed_payload",
+        OpenError::UnknownEnvelopeVersion(_) => "unknown_envelope_version",
+        OpenError::InvalidField(_) => "invalid_field",
         OpenError::WrongRecipient => "wrong_recipient",
         OpenError::FromFuture => "from_future",
         OpenError::Expired => "expired",
@@ -172,11 +179,22 @@ impl Node {
         }
         // 2. open
         let now = self.now();
-        let env = match self
-            .protection
-            .open(&self.identity, &frame.payload, now, &self.open_limits)
-        {
+        let dir = |a: &crate::crypto::Address| self.pinned_certificate(a);
+        let env = match self.protection.open(
+            &self.identity,
+            &frame.payload,
+            now,
+            &self.open_limits,
+            &dir,
+        ) {
             Ok(o) => o.envelope,
+            Err(OpenError::SenderRevoked) => {
+                // A revoked identity's messages are dropped like a blocked sender's.
+                self.metrics.inc("drop.blocked");
+                self.metrics.inc("open_error.sender_revoked");
+                self.mark_transport_seen(frame);
+                return FrameOutcome::Blocked;
+            }
             Err(OpenError::NotForUs) => {
                 self.metrics.inc("frame.not_for_us");
                 self.mark_transport_seen(frame);

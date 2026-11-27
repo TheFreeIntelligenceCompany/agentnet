@@ -1,135 +1,81 @@
-//! Local agent identity: Ed25519 signing key + HPKE (X25519) KEM keys.
+//! Local agent identity: one RFC 9580 v6 OpenPGP certificate with its secret keys.
 //!
-//! The signing key and the KEM keys are generated independently and never
-//! derived from each other. All secrets are zeroized on drop on a best-effort
-//! basis (see the notes in `docs/protocol.md`), and `Debug` never prints them.
+//! The certificate has an Ed25519 primary key (certify + sign, no expiry) and
+//! an X25519 encryption subkey with an expiry. Keys are generated fresh (an
+//! `an1` Ed25519 key is never reused). Rotation adds a new encryption subkey
+//! and retires the previous one (a standard subkey revocation, reason "key
+//! retired"); the retired secret key is kept for decryption until its retire
+//! time. Secret material lives in Sequoia's protected memory and is never
+//! printed (`Debug` shows the address only).
 
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+use std::time::Duration;
 
 use base64::engine::general_purpose::URL_SAFE_NO_PAD as B64;
 use base64::Engine as _;
-use ed25519_dalek::{Signer, SigningKey};
-use hpke::kem::{Kem as _, X25519HkdfSha256};
-use hpke::{Deserializable, Serializable};
+use sequoia_openpgp as openpgp;
 use serde::{Deserialize, Serialize};
 use zeroize::{Zeroize, Zeroizing};
 
+use openpgp::crypto::KeyPair;
+use openpgp::parse::Parse;
+use openpgp::serialize::MarshalInto;
+use openpgp::types::{PublicKeyAlgorithm, ReasonForRevocation};
+use openpgp::{Cert, Fingerprint};
+
 use agentnet_transport::ContentTopic;
 
-use super::address::{Address, DEFAULT_INBOX_BUCKETS, MAX_INBOX_BUCKETS, MIN_INBOX_BUCKETS};
-use super::contact::SignedContactRecord;
+use super::address::Address;
+use super::contact::ContactRecord;
+use super::pgp;
 use super::revocation::SignedRevocation;
 use crate::error::{IdentityError, RevocationError};
 
-type KemPrivateKey = <X25519HkdfSha256 as hpke::Kem>::PrivateKey;
-
-/// Version of the identity file format.
-pub const IDENTITY_FILE_VERSION: u64 = 1;
+/// Version of the identity file format (version 1 was the HPKE format).
+pub const IDENTITY_FILE_VERSION: u64 = 2;
 /// Maximum accepted size of an identity file / export (bytes).
 pub const MAX_IDENTITY_FILE_LEN: usize = 256 * 1024;
-/// Maximum number of retired KEM keys kept; the oldest are dropped first.
+/// Maximum number of retired encryption subkeys kept.
 pub const MAX_PREVIOUS_KEMS: usize = 32;
+/// Default lifetime of an encryption subkey.
+pub const DEFAULT_KEM_VALIDITY_DAYS: u64 = 365;
 
 /// Fill `buf` from the operating system RNG.
 pub(crate) fn random_bytes(buf: &mut [u8]) -> Result<(), IdentityError> {
     getrandom::fill(buf).map_err(|_| IdentityError::Random)
 }
 
-/// An X25519 KEM key pair. The secret is kept as the 32 raw bytes (clamping is
-/// done by the HPKE library on every load) and zeroized on drop.
-pub(crate) struct KemKeypair {
-    sk: Zeroizing<[u8; 32]>,
-    pk: [u8; 32],
-    /// When this key was created (becomes the contact record's `created_at`).
-    created_at: i64,
-    /// Key epoch (starts at 1, +1 per rotation).
-    epoch: u64,
-}
-
-impl KemKeypair {
-    fn from_secret(
-        sk: Zeroizing<[u8; 32]>,
-        created_at: i64,
-        epoch: u64,
-    ) -> Result<Self, IdentityError> {
-        let key = KemPrivateKey::from_bytes(sk.as_slice())
-            .map_err(|_| IdentityError::Malformed("invalid KEM secret key"))?;
-        let pk_arr = X25519HkdfSha256::sk_to_pk(&key).to_bytes();
-        let pk: [u8; 32] = pk_arr
-            .as_slice()
-            .try_into()
-            .map_err(|_| IdentityError::Malformed("invalid KEM public key length"))?;
-        Ok(Self {
-            sk,
-            pk,
-            created_at,
-            epoch,
-        })
-    }
-
-    fn generate(created_at: i64, epoch: u64) -> Result<Self, IdentityError> {
-        let mut sk = Zeroizing::new([0u8; 32]);
-        random_bytes(sk.as_mut_slice())?;
-        Self::from_secret(sk, created_at, epoch)
-    }
-
-    pub(crate) fn epoch(&self) -> u64 {
-        self.epoch
-    }
-
-    pub(crate) fn public_key(&self) -> &[u8; 32] {
-        &self.pk
-    }
-
-    /// The HPKE private key object (zeroized on drop by the library).
-    pub(crate) fn private_key(&self) -> Option<KemPrivateKey> {
-        KemPrivateKey::from_bytes(self.sk.as_slice()).ok()
-    }
-}
-
-struct RetiredKem {
-    kem: KemKeypair,
+struct Retained {
+    fp: Fingerprint,
     retire_at: i64,
 }
 
 /// The local agent's secret identity.
 pub struct Identity {
-    signing: SigningKey,
+    cert: Cert,
     address: Address,
-    kem: KemKeypair,
-    previous: Vec<RetiredKem>,
-    inbox_buckets: u16,
+    retained: Vec<Retained>,
     created_at: i64,
     kem_expires_at: Option<i64>,
-    /// Epochs strictly below this are revoked (1 = none).
-    min_valid_epoch: u64,
-    /// Suites listed in the contact record this identity publishes.
-    advertised_suites: Vec<u8>,
 }
 
 impl std::fmt::Debug for Identity {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Identity")
             .field("address", &self.address.to_string())
-            .field("inbox_buckets", &self.inbox_buckets)
             .field("created_at", &self.created_at)
             .field("kem_expires_at", &self.kem_expires_at)
-            .field("key_epoch", &self.kem.epoch)
-            .field("previous_kems", &self.previous.len())
+            .field("retained_subkeys", &self.retained.len())
             .finish_non_exhaustive()
     }
 }
 
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct PreviousKemFile {
-    kem_sk: String,
-    created_at: i64,
+struct RetainedFile {
+    fingerprint: String,
     retire_at: i64,
-    /// 0 = unknown (file written before epochs existed; assigned on load).
-    #[serde(default)]
-    epoch: u64,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -137,18 +83,11 @@ struct PreviousKemFile {
 struct IdentityFile {
     v: u64,
     address: String,
-    signing_sk: String,
-    kem_sk: String,
-    kem_created_at: i64,
-    inbox_buckets: u16,
     created_at: i64,
     kem_expires_at: Option<i64>,
-    previous_kems: Vec<PreviousKemFile>,
-    /// 0 = unknown (assigned on load).
-    #[serde(default)]
-    kem_epoch: u64,
-    #[serde(default)]
-    min_valid_epoch: u64,
+    /// base64url of the binary transferable secret key (RFC 9580 section 10.2).
+    certificate: String,
+    retained_subkeys: Vec<RetainedFile>,
 }
 
 #[derive(Deserialize)]
@@ -156,92 +95,50 @@ struct VersionOnly {
     v: u64,
 }
 
-impl Drop for PreviousKemFile {
-    fn drop(&mut self) {
-        self.kem_sk.zeroize();
-    }
-}
 impl Drop for IdentityFile {
     fn drop(&mut self) {
-        self.signing_sk.zeroize();
-        self.kem_sk.zeroize();
+        self.certificate.zeroize();
     }
 }
 
-fn decode_secret(s: &str) -> Result<Zeroizing<[u8; 32]>, IdentityError> {
-    let mut v = Zeroizing::new(
-        B64.decode(s)
-            .map_err(|_| IdentityError::Malformed("secret key is not base64url"))?,
-    );
-    let mut out = Zeroizing::new([0u8; 32]);
-    if v.len() != 32 {
-        return Err(IdentityError::Malformed("secret key must be 32 bytes"));
-    }
-    out.copy_from_slice(&v);
-    v.zeroize();
-    Ok(out)
+fn crypto_err(_: impl std::fmt::Debug) -> IdentityError {
+    IdentityError::Crypto("OpenPGP operation failed")
 }
 
-fn check_buckets(n: u16) -> Result<(), IdentityError> {
-    if (MIN_INBOX_BUCKETS..=MAX_INBOX_BUCKETS).contains(&n) {
-        Ok(())
-    } else {
-        Err(IdentityError::InvalidInboxBuckets)
-    }
+fn fp_hex(fp: &Fingerprint) -> String {
+    fp.to_hex().to_ascii_lowercase()
 }
 
 impl Identity {
-    /// Generate a fresh identity (new signing key, new KEM key).
-    pub fn generate(inbox_buckets: u16, now_ms: i64) -> Result<Self, IdentityError> {
-        check_buckets(inbox_buckets)?;
-        let mut seed = Zeroizing::new([0u8; 32]);
-        random_bytes(seed.as_mut_slice())?;
-        let signing = SigningKey::from_bytes(&seed);
-        let address = Address::from_verifying_key(&signing.verifying_key())
-            .map_err(|_| IdentityError::Malformed("generated signing key is weak"))?;
-        Ok(Self {
-            signing,
-            address,
-            kem: KemKeypair::generate(now_ms, 1)?,
-            previous: Vec::new(),
-            inbox_buckets,
-            created_at: now_ms,
-            kem_expires_at: None,
-            min_valid_epoch: 1,
-            advertised_suites: vec![super::envelope::SUITE_ID],
-        })
+    /// Generate a fresh identity: new v6 certificate, encryption subkey valid
+    /// for [`DEFAULT_KEM_VALIDITY_DAYS`] from `now_ms`.
+    pub fn generate(now_ms: i64) -> Result<Self, IdentityError> {
+        Self::generate_with(
+            now_ms,
+            Some(Duration::from_secs(DEFAULT_KEM_VALIDITY_DAYS * 86_400)),
+        )
     }
 
-    /// Deterministic identity from fixed seeds, for frozen known-answer tests
-    /// only (never use fixed seeds for a real identity).
-    #[cfg(any(test, feature = "test-support"))]
-    #[doc(hidden)]
-    pub fn from_seeds_for_tests(
-        signing_seed: [u8; 32],
-        kem_seed: [u8; 32],
-        inbox_buckets: u16,
-        now_ms: i64,
-    ) -> Result<Self, IdentityError> {
-        check_buckets(inbox_buckets)?;
-        let signing = SigningKey::from_bytes(&signing_seed);
-        let address = Address::from_verifying_key(&signing.verifying_key())
-            .map_err(|_| IdentityError::Malformed("signing key is weak"))?;
-        Ok(Self {
-            signing,
-            address,
-            kem: KemKeypair::from_secret(Zeroizing::new(kem_seed), now_ms, 1)?,
-            previous: Vec::new(),
-            inbox_buckets,
-            created_at: now_ms,
-            kem_expires_at: None,
-            min_valid_epoch: 1,
-            advertised_suites: vec![super::envelope::SUITE_ID],
-        })
-    }
-
-    /// Generate with the default bucket count (16).
+    /// Alias of [`Self::generate`].
     pub fn generate_default(now_ms: i64) -> Result<Self, IdentityError> {
-        Self::generate(DEFAULT_INBOX_BUCKETS, now_ms)
+        Self::generate(now_ms)
+    }
+
+    /// Generate with an explicit encryption-subkey lifetime (`None`: no expiry).
+    pub fn generate_with(
+        now_ms: i64,
+        enc_validity: Option<Duration>,
+    ) -> Result<Self, IdentityError> {
+        let cert = pgp::generate_cert(now_ms, enc_validity, None).map_err(crypto_err)?;
+        let address = pgp::cert_address(&cert).map_err(|_| IdentityError::Crypto("address"))?;
+        Ok(Self {
+            cert,
+            address,
+            retained: Vec::new(),
+            created_at: now_ms,
+            kem_expires_at: enc_validity
+                .map(|d| now_ms.saturating_add(i64::try_from(d.as_millis()).unwrap_or(i64::MAX))),
+        })
     }
 
     /// The agent's address.
@@ -249,68 +146,77 @@ impl Identity {
         self.address
     }
 
-    /// Number of inbox buckets this identity advertises.
-    pub fn inbox_buckets(&self) -> u16 {
-        self.inbox_buckets
-    }
-
     /// Identity creation time (Unix ms).
     pub fn created_at(&self) -> i64 {
         self.created_at
     }
 
-    /// Expiry of the current KEM key as advertised in the contact record.
+    /// Expiry of the current encryption subkey as published in the certificate.
     pub fn kem_expires_at(&self) -> Option<i64> {
         self.kem_expires_at
     }
 
-    /// Creation time of the current KEM key (the contact record's `created_at`).
-    pub fn kem_created_at(&self) -> i64 {
-        self.kem.created_at
-    }
-
-    /// Epoch of the current KEM key (starts at 1; +1 per rotation).
-    pub fn key_epoch(&self) -> u64 {
-        self.kem.epoch
-    }
-
-    /// KEM epochs strictly below this value have been revoked by this identity.
-    pub fn min_valid_epoch(&self) -> u64 {
-        self.min_valid_epoch
-    }
-
-    /// Suites listed in the published contact record.
-    pub fn advertised_suites(&self) -> &[u8] {
-        &self.advertised_suites
-    }
-
-    /// Set the suites listed in the published contact record (the engine sets
-    /// this from its message-protection registry). Not persisted.
-    pub fn set_advertised_suites(&mut self, suites: Vec<u8>) {
-        self.advertised_suites = suites;
-    }
-
-    /// Current KEM public key.
-    pub fn kem_public_key(&self) -> [u8; 32] {
-        self.kem.pk
-    }
-
-    /// Number of retired KEM keys still held.
+    /// Number of retired encryption subkeys whose secret is still held.
     pub fn previous_kem_count(&self) -> usize {
-        self.previous.len()
+        self.retained.len()
     }
 
     /// Content topic of this identity's inbox.
     pub fn inbox_topic(&self) -> ContentTopic {
-        self.address.inbox_topic(self.inbox_buckets)
+        self.address.inbox_topic()
     }
 
-    /// Create the signed, shareable contact record for the current KEM key.
-    pub fn contact_record(&self) -> SignedContactRecord {
-        SignedContactRecord::create(self, &self.advertised_suites)
+    /// The shareable contact record: the public certificate (secret material
+    /// removed, sanitized).
+    pub fn contact_record(&self) -> ContactRecord {
+        let public = self.cert.clone().strip_secret_key_material();
+        let public = pgp::sanitize(public).unwrap_or(public_fallback(&self.cert));
+        let public = match public.to_vec() {
+            Ok(v) if v.len() <= pgp::MAX_CERT_LEN => public,
+            // too many retired subkeys: drop the oldest retired ones
+            _ => pgp::normalize(public.clone(), crate::clock::system_now_ms()).unwrap_or(public),
+        };
+        ContactRecord::from_cert(&public)
     }
 
-    /// Create a signed identity-revocation tombstone for this address
+    /// The public certificate (tests).
+    #[cfg(any(test, feature = "test-support"))]
+    pub(crate) fn public_cert(&self) -> Cert {
+        self.cert.clone().strip_secret_key_material()
+    }
+
+    /// An identity whose PRIMARY key expires `primary_validity` after creation
+    /// (tests of expired certificates; real identities never expire).
+    #[cfg(any(test, feature = "test-support"))]
+    #[doc(hidden)]
+    pub fn generate_with_primary_expiry_for_tests(
+        now_ms: i64,
+        primary_validity: Duration,
+    ) -> Result<Self, IdentityError> {
+        let enc = Some(Duration::from_secs(DEFAULT_KEM_VALIDITY_DAYS * 86_400));
+        let cert = pgp::generate_cert(now_ms, enc, Some(primary_validity)).map_err(crypto_err)?;
+        let address = pgp::cert_address(&cert).map_err(|_| IdentityError::Crypto("address"))?;
+        Ok(Self {
+            cert,
+            address,
+            retained: Vec::new(),
+            created_at: now_ms,
+            kem_expires_at: None,
+        })
+    }
+
+    /// The primary key's signing key pair (internal).
+    pub(crate) fn signer(&self) -> Option<KeyPair> {
+        pgp::primary_keypair(&self.cert)
+    }
+
+    /// The v6 fingerprint of the primary key.
+    pub(crate) fn primary_fingerprint(&self) -> Fingerprint {
+        self.cert.fingerprint()
+    }
+
+    /// Create the identity-revocation document for this identity: the public
+    /// certificate carrying a primary-key revocation signature
     /// (`reason`: 1..=256 bytes, no control characters). This only builds the
     /// document; persisting it and marking the local identity revoked is the
     /// caller's job (the daemon's `identity revoke`).
@@ -322,28 +228,45 @@ impl Identity {
         SignedRevocation::create(self, reason, now_ms)
     }
 
-    /// Sign `domain || msg` with the Ed25519 signing key.
-    pub(crate) fn sign(&self, domain: &[u8], msg: &[u8]) -> [u8; 64] {
-        let mut m = Vec::with_capacity(domain.len() + msg.len());
-        m.extend_from_slice(domain);
-        m.extend_from_slice(msg);
-        self.signing.sign(&m).to_bytes()
+    pub(crate) fn cert(&self) -> &Cert {
+        &self.cert
     }
 
-    /// KEM keys usable for decryption at `now_ms`: the current key, then every
-    /// retired key whose `retire_at` is still in the future.
-    pub(crate) fn decryption_keys(&self, now_ms: i64) -> impl Iterator<Item = &KemKeypair> {
-        std::iter::once(&self.kem).chain(
-            self.previous
+    /// Key pairs of every encryption subkey usable for decryption at `now_ms`:
+    /// the current subkey (even past its expiry) and retired subkeys until
+    /// their retire time.
+    pub(crate) fn decryption_keypairs(&self, now_ms: i64) -> Vec<KeyPair> {
+        let mut out = Vec::new();
+        for ka in self.cert.keys().subkeys().unencrypted_secret() {
+            let key = ka.key();
+            if key.pk_algo() != PublicKeyAlgorithm::X25519 {
+                continue;
+            }
+            let fp = key.fingerprint();
+            if self
+                .retained
                 .iter()
-                .filter(move |p| p.retire_at > now_ms && p.kem.epoch >= self.min_valid_epoch)
-                .map(|p| &p.kem),
-        )
+                .any(|r| r.fp == fp && r.retire_at <= now_ms)
+            {
+                continue;
+            }
+            if let Ok(kp) = key.clone().into_keypair() {
+                out.push(kp);
+            }
+        }
+        out
     }
 
-    /// Replace the KEM key. The old key stays usable for decryption until
-    /// `keep_previous_until_ms`. The signing key and address do not change.
-    /// `new_expiry` is the `kem_expires_at` to advertise for the new key.
+    /// Number of encryption subkeys usable for decryption at `now_ms`.
+    pub fn decryption_key_count(&self, now_ms: i64) -> usize {
+        self.decryption_keypairs(now_ms).len()
+    }
+
+    /// Replace the encryption subkey. The old subkey is retired (a standard
+    /// subkey revocation, "key retired", so senders that merge the update stop
+    /// encrypting to it) and stays usable for decryption until
+    /// `keep_previous_until_ms`. The primary key and the address do not change.
+    /// `new_expiry` is the absolute expiry (Unix ms) of the new subkey.
     pub fn rotate_kem(
         &mut self,
         now_ms: i64,
@@ -353,13 +276,11 @@ impl Identity {
         self.rotate_kem_with(now_ms, keep_previous_until_ms, new_expiry, false)
     }
 
-    /// Replace the KEM key and increment `key_epoch`.
-    ///
-    /// Without `revoke_previous` the old key stays usable for decryption until
-    /// `keep_previous_until_ms`. With it, *every* earlier KEM secret key is
-    /// destroyed immediately (frames sealed to them can never be opened again,
-    /// including undelivered ones: senders must re-seal after learning the new
-    /// record) and the new record carries `revoked_kem_epochs_below = new epoch`.
+    /// [`Self::rotate_kem`]; with `revoke_previous` every earlier encryption
+    /// subkey is revoked as compromised (a hard subkey revocation) and its
+    /// secret key destroyed immediately: frames sealed to it can never be
+    /// opened again, including undelivered ones (senders must re-seal after
+    /// merging the update).
     pub fn rotate_kem_with(
         &mut self,
         now_ms: i64,
@@ -367,61 +288,75 @@ impl Identity {
         new_expiry: Option<i64>,
         revoke_previous: bool,
     ) -> Result<(), IdentityError> {
-        let next_epoch = self
-            .kem
-            .epoch
-            .checked_add(1)
-            .ok_or(IdentityError::Malformed("key epoch overflow"))?;
-        let fresh = KemKeypair::generate(now_ms, next_epoch)?;
-        let old = std::mem::replace(&mut self.kem, fresh);
-        if revoke_previous {
-            // Dropping the keypairs zeroizes their secrets.
-            drop(old);
-            self.previous.clear();
-            self.min_valid_epoch = next_epoch;
+        let validity = match new_expiry {
+            Some(e) if e > now_ms => Some(Duration::from_millis(
+                u64::try_from(e - now_ms).unwrap_or(u64::MAX),
+            )),
+            Some(_) => return Err(IdentityError::Malformed("new expiry is not in the future")),
+            None => None,
+        };
+        let (reason, text): (_, &[u8]) = if revoke_previous {
+            (ReasonForRevocation::KeyCompromised, b"compromised")
         } else {
-            self.previous.push(RetiredKem {
-                kem: old,
-                retire_at: keep_previous_until_ms,
-            });
-            while self.previous.len() > MAX_PREVIOUS_KEMS {
-                self.previous.remove(0);
+            (ReasonForRevocation::KeyRetired, b"rotated")
+        };
+        let (cert, retired) =
+            pgp::rotate_cert(&self.cert, now_ms, validity, reason, text).map_err(crypto_err)?;
+        let cert = if revoke_previous {
+            self.retained.clear();
+            pgp::strip_subkey_secrets(&cert, &retired).map_err(crypto_err)?
+        } else {
+            for fp in retired {
+                self.retained.push(Retained {
+                    fp,
+                    retire_at: keep_previous_until_ms,
+                });
             }
-        }
+            while self.retained.len() > MAX_PREVIOUS_KEMS {
+                self.retained.remove(0);
+            }
+            cert
+        };
+        self.cert = cert;
         self.kem_expires_at = new_expiry;
         Ok(())
     }
 
-    /// Drop retired KEM keys whose `retire_at` has passed.
+    /// Destroy the secret keys of retired subkeys whose `retire_at` has passed.
     pub fn prune_retired(&mut self, now_ms: i64) {
-        self.previous.retain(|p| p.retire_at > now_ms);
+        let gone: Vec<Fingerprint> = self
+            .retained
+            .iter()
+            .filter(|r| r.retire_at <= now_ms)
+            .map(|r| r.fp.clone())
+            .collect();
+        if gone.is_empty() {
+            return;
+        }
+        if let Ok(c) = pgp::strip_subkey_secrets(&self.cert, &gone) {
+            self.cert = c;
+        }
+        self.retained.retain(|r| r.retire_at > now_ms);
     }
 
     // ------------------------------------------------------------ persistence
 
     fn to_file_bytes(&self) -> Result<Zeroizing<Vec<u8>>, IdentityError> {
-        let seed = Zeroizing::new(self.signing.to_bytes());
+        let tsk = Zeroizing::new(self.cert.as_tsk().to_vec().map_err(crypto_err)?);
         let f = IdentityFile {
             v: IDENTITY_FILE_VERSION,
             address: self.address.to_string(),
-            signing_sk: B64.encode(seed.as_slice()),
-            kem_sk: B64.encode(self.kem.sk.as_slice()),
-            kem_created_at: self.kem.created_at,
-            inbox_buckets: self.inbox_buckets,
             created_at: self.created_at,
             kem_expires_at: self.kem_expires_at,
-            previous_kems: self
-                .previous
+            certificate: B64.encode(tsk.as_slice()),
+            retained_subkeys: self
+                .retained
                 .iter()
-                .map(|p| PreviousKemFile {
-                    kem_sk: B64.encode(p.kem.sk.as_slice()),
-                    created_at: p.kem.created_at,
-                    retire_at: p.retire_at,
-                    epoch: p.kem.epoch,
+                .map(|r| RetainedFile {
+                    fingerprint: fp_hex(&r.fp),
+                    retire_at: r.retire_at,
                 })
                 .collect(),
-            kem_epoch: self.kem.epoch,
-            min_valid_epoch: self.min_valid_epoch,
         };
         let bytes = serde_json::to_vec_pretty(&f)
             .map_err(|_| IdentityError::Malformed("serialization failed"))?;
@@ -434,19 +369,25 @@ impl Identity {
         }
         let ver: VersionOnly = serde_json::from_slice(bytes)
             .map_err(|_| IdentityError::Malformed("not an identity JSON object"))?;
+        if ver.v == 1 {
+            return Err(IdentityError::LegacyFormat);
+        }
         if ver.v != IDENTITY_FILE_VERSION {
             return Err(IdentityError::UnsupportedVersion(ver.v));
         }
         let f: IdentityFile = serde_json::from_slice(bytes)
             .map_err(|e| IdentityError::Malformed(crate::error::json_reason(&e)))?;
-        check_buckets(f.inbox_buckets)?;
-        if f.previous_kems.len() > MAX_PREVIOUS_KEMS {
-            return Err(IdentityError::Malformed("too many previous KEM keys"));
+        if f.retained_subkeys.len() > MAX_PREVIOUS_KEMS {
+            return Err(IdentityError::Malformed("too many retired subkeys"));
         }
-        let seed = decode_secret(&f.signing_sk)?;
-        let signing = SigningKey::from_bytes(&seed);
-        let address = Address::from_verifying_key(&signing.verifying_key())
-            .map_err(|_| IdentityError::Malformed("signing key is weak"))?;
+        let tsk = Zeroizing::new(
+            B64.decode(&f.certificate)
+                .map_err(|_| IdentityError::Malformed("certificate is not base64url"))?,
+        );
+        let cert = Cert::from_bytes(tsk.as_slice())
+            .map_err(|_| IdentityError::Malformed("not an OpenPGP secret key"))?;
+        let address = pgp::cert_address(&cert)
+            .map_err(|_| IdentityError::Malformed("certificate is not a v6 Ed25519 key"))?;
         let stored: Address = f
             .address
             .parse()
@@ -454,49 +395,24 @@ impl Identity {
         if stored != address {
             return Err(IdentityError::AddressMismatch);
         }
-        // Files written before epochs existed carry 0: number the retired keys
-        // 1..=n in order and the current key n+1.
-        let n_prev = u64::try_from(f.previous_kems.len()).unwrap_or(0);
-        let cur_epoch = if f.kem_epoch == 0 {
-            n_prev.saturating_add(1)
-        } else {
-            f.kem_epoch
-        };
-        let kem = KemKeypair::from_secret(decode_secret(&f.kem_sk)?, f.kem_created_at, cur_epoch)?;
-        let mut previous = Vec::with_capacity(f.previous_kems.len());
-        for (i, p) in f.previous_kems.iter().enumerate() {
-            let epoch = if p.epoch == 0 {
-                u64::try_from(i).unwrap_or(0).saturating_add(1)
-            } else {
-                p.epoch
-            };
-            if epoch >= cur_epoch {
-                return Err(IdentityError::Malformed(
-                    "retired KEM epoch is not below the current one",
-                ));
-            }
-            previous.push(RetiredKem {
-                kem: KemKeypair::from_secret(decode_secret(&p.kem_sk)?, p.created_at, epoch)?,
-                retire_at: p.retire_at,
+        if pgp::primary_keypair(&cert).is_none() {
+            return Err(IdentityError::Malformed("the primary secret key is missing"));
+        }
+        let mut retained = Vec::new();
+        for r in &f.retained_subkeys {
+            let fp = Fingerprint::from_hex(&r.fingerprint)
+                .map_err(|_| IdentityError::Malformed("invalid retired subkey fingerprint"))?;
+            retained.push(Retained {
+                fp,
+                retire_at: r.retire_at,
             });
         }
-        let min_valid_epoch = f.min_valid_epoch.max(1);
-        if min_valid_epoch > cur_epoch {
-            return Err(IdentityError::Malformed(
-                "min_valid_epoch is above the current epoch",
-            ));
-        }
-        previous.retain(|p| p.kem.epoch >= min_valid_epoch);
         Ok(Self {
-            signing,
+            cert,
             address,
-            kem,
-            previous,
-            inbox_buckets: f.inbox_buckets,
+            retained,
             created_at: f.created_at,
             kem_expires_at: f.kem_expires_at,
-            min_valid_epoch,
-            advertised_suites: vec![super::envelope::SUITE_ID],
         })
     }
 
@@ -542,7 +458,8 @@ impl Identity {
     }
 
     /// Export the identity as an ASCII-armored age file encrypted to a
-    /// passphrase (scrypt recipient).
+    /// passphrase (scrypt recipient). The `age` tool is an existing, reviewed
+    /// file-encryption format; AgentNet defines nothing around it.
     pub fn export_encrypted(&self, passphrase: &str) -> Result<Vec<u8>, IdentityError> {
         if passphrase.is_empty() {
             return Err(IdentityError::EmptyPassphrase);
@@ -570,6 +487,26 @@ impl Identity {
             Zeroizing::new(age::decrypt(&ident, bytes).map_err(|_| IdentityError::Decrypt)?);
         Self::from_file_bytes(&plain)
     }
+
+    /// The raw secret-key bytes of the identity file, for the test that checks
+    /// that no debug output contains them.
+    #[cfg(any(test, feature = "test-support"))]
+    #[doc(hidden)]
+    pub fn secret_fragments_for_tests(&self) -> Vec<String> {
+        let tsk = self.cert.as_tsk().to_vec().unwrap_or_default();
+        let b = B64.encode(&tsk);
+        // a fragment from the middle of the secret part
+        vec![b[b.len() / 2..b.len() / 2 + 24].to_string(), hex_of(&tsk[tsk.len() / 2..tsk.len() / 2 + 8])]
+    }
+}
+
+#[cfg(any(test, feature = "test-support"))]
+fn hex_of(b: &[u8]) -> String {
+    b.iter().map(|x| format!("{x:02x}")).collect()
+}
+
+fn public_fallback(c: &Cert) -> Cert {
+    c.clone().strip_secret_key_material()
 }
 
 fn io_err(path: &Path) -> impl Fn(std::io::Error) -> IdentityError + '_ {
@@ -644,96 +581,3 @@ fn write_private_file_atomic(
     Ok(())
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn generate_validates_buckets() {
-        assert!(Identity::generate(0, 0).is_err());
-        assert!(Identity::generate(257, 0).is_err());
-        assert!(Identity::generate(1, 0).is_ok());
-        assert!(Identity::generate(256, 0).is_ok());
-        assert_eq!(Identity::generate_default(0).unwrap().inbox_buckets(), 16);
-    }
-
-    #[test]
-    fn debug_has_no_secrets() {
-        let id = Identity::generate_default(1).unwrap();
-        let s = format!("{id:?}");
-        let seed = B64.encode(id.signing.to_bytes());
-        let kem = B64.encode(id.kem.sk.as_slice());
-        assert!(!s.contains(&seed) && !s.contains(&kem));
-        assert!(s.contains(&id.address().to_string()));
-    }
-
-    #[test]
-    fn file_roundtrip_in_memory() {
-        let mut id = Identity::generate(32, 1000).unwrap();
-        id.rotate_kem(2000, 9000, Some(50_000)).unwrap();
-        let bytes = id.to_file_bytes().unwrap();
-        let back = Identity::from_file_bytes(&bytes).unwrap();
-        assert_eq!(back.address(), id.address());
-        assert_eq!(back.kem_public_key(), id.kem_public_key());
-        assert_eq!(back.previous_kem_count(), 1);
-        assert_eq!(back.kem_expires_at(), Some(50_000));
-        assert_eq!(back.inbox_buckets(), 32);
-        assert_eq!(back.created_at(), 1000);
-        assert_eq!(back.kem_created_at(), 2000);
-    }
-
-    #[test]
-    fn file_validation() {
-        let id = Identity::generate_default(1).unwrap();
-        let good = String::from_utf8(id.to_file_bytes().unwrap().to_vec()).unwrap();
-        // unknown version
-        let bad = good.replacen("\"v\": 1", "\"v\": 2", 1);
-        assert!(matches!(
-            Identity::from_file_bytes(bad.as_bytes()),
-            Err(IdentityError::UnsupportedVersion(2))
-        ));
-        // unknown field
-        let bad = good.replacen("\"v\": 1,", "\"v\": 1, \"extra\": 1,", 1);
-        assert!(Identity::from_file_bytes(bad.as_bytes()).is_err());
-        // wrong address
-        let other = Identity::generate_default(1).unwrap();
-        let bad = good.replace(&id.address().to_string(), &other.address().to_string());
-        assert!(matches!(
-            Identity::from_file_bytes(bad.as_bytes()),
-            Err(IdentityError::AddressMismatch)
-        ));
-        // bad buckets
-        let bad = good.replace("\"inbox_buckets\": 16", "\"inbox_buckets\": 0");
-        assert!(matches!(
-            Identity::from_file_bytes(bad.as_bytes()),
-            Err(IdentityError::InvalidInboxBuckets)
-        ));
-        // garbage never panics
-        for g in [&b""[..], b"{", b"null", b"[]", b"{\"v\":1}", &[0xff, 0xfe]] {
-            assert!(Identity::from_file_bytes(g).is_err());
-        }
-    }
-
-    #[test]
-    fn rotation_and_prune() {
-        let mut id = Identity::generate_default(0).unwrap();
-        let old = id.kem_public_key();
-        id.rotate_kem(10, 100, None).unwrap();
-        assert_ne!(id.kem_public_key(), old);
-        assert_eq!(id.decryption_keys(50).count(), 2);
-        assert_eq!(id.decryption_keys(100).count(), 1);
-        id.prune_retired(99);
-        assert_eq!(id.previous_kem_count(), 1);
-        id.prune_retired(100);
-        assert_eq!(id.previous_kem_count(), 0);
-    }
-
-    #[test]
-    fn previous_keys_are_capped() {
-        let mut id = Identity::generate_default(0).unwrap();
-        for i in 0..(MAX_PREVIOUS_KEMS as i64 + 5) {
-            id.rotate_kem(i, i64::MAX, None).unwrap();
-        }
-        assert_eq!(id.previous_kem_count(), MAX_PREVIOUS_KEMS);
-    }
-}
