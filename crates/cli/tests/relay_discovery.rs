@@ -376,12 +376,12 @@ async fn phase_enabled(
     // cross-topic replay: the unmodified frame, republished on another configured topic,
     // must NOT be listed (the topic is part of the signed record).
     inject(ctrl_topic, &frame);
-    // tampered: flip one character in the middle of the signature (base64url) field
+    // tampered: the advert is an OpenPGP signed message (one-pass signature,
+    // literal data, then the signature packet last), so a byte flipped near the
+    // end of the frame lands in the signature and must fail verification.
     let mut bad = frame.clone();
-    let s = String::from_utf8(frame[3..].to_vec()).unwrap();
-    let sig_at = s.find("\"sig\":\"").unwrap() + 7 + 20;
-    let pos = 3 + sig_at;
-    bad[pos] = if bad[pos] == b'A' { b'B' } else { b'A' };
+    let pos = frame.len() - 20;
+    bad[pos] ^= 0x01;
     assert_ne!(bad, frame);
     inject(tamper_topic, &bad);
     // same-topic replay (positive control for the injection path): accepted as a duplicate

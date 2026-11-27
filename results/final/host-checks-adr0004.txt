@@ -1,0 +1,677 @@
+FMT_OK
+    Checking agentnet-core v0.1.0 (/Users/dennison/develop/FIC-elipsis/crates/core)
+    Checking agentnet-mcp v0.1.0 (/Users/dennison/develop/FIC-elipsis/crates/mcp)
+    Checking agentnet-daemon v0.1.0 (/Users/dennison/develop/FIC-elipsis/crates/daemon)
+    Checking agentnet-acceptance v0.1.0 (/Users/dennison/develop/FIC-elipsis/tests/acceptance)
+    Checking agentnet-cli v0.1.0 (/Users/dennison/develop/FIC-elipsis/crates/cli)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 5.62s
+CLIPPY_OK
+   Compiling agentnet-core v0.1.0 (/Users/dennison/develop/FIC-elipsis/crates/core)
+   Compiling agentnet-mcp v0.1.0 (/Users/dennison/develop/FIC-elipsis/crates/mcp)
+   Compiling agentnet-daemon v0.1.0 (/Users/dennison/develop/FIC-elipsis/crates/daemon)
+   Compiling agentnet-cli v0.1.0 (/Users/dennison/develop/FIC-elipsis/crates/cli)
+   Compiling agentnet-acceptance v0.1.0 (/Users/dennison/develop/FIC-elipsis/tests/acceptance)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 11.91s
+     Running unittests src/main.rs (target/debug/deps/agentnet_acceptance-459e351598a4b888)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/deps/agentnet-0dccafa8e3db974c)
+
+running 17 tests
+test doctor::tests::isolation_line_in_each_mode ... ok
+test doctor::tests::not_ready_when_a_required_check_was_skipped_or_not_run ... ok
+test doctor::tests::not_ready_when_the_daemon_socket_is_unavailable ... ok
+test doctor::tests::history_sync_probe_levels ... ok
+test doctor::tests::kem_expiry_levels ... ok
+test doctor::tests::not_ready_when_the_transport_is_not_ready ... ok
+test doctor::tests::not_ready_when_the_isolation_audit_fails ... ok
+test doctor::tests::http_date ... ok
+test doctor::tests::peer_ids ... ok
+test doctor::tests::ready_in_plain_public_mode_never_claims_isolation_ok ... ok
+test render::hint_tests::bare_serve_hint_gets_the_data_dir_and_other_text_is_unchanged ... ok
+test render::hint_tests::expired_key_hint_names_the_cli_command ... ok
+test render::hint_tests::shell_quoting_handles_spaces_and_single_quotes ... ok
+test doctor::tests::ready_when_every_required_check_is_ok_even_with_the_single_instance_warning ... ok
+test render::hint_tests::unknown_recipient_becomes_the_cli_command_with_the_real_directory ... ok
+test render::tests::network_status_isolation_line_per_mode ... ok
+test render::tests::network_status_json_exposes_isolation_audited ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/cli.rs (target/debug/deps/cli-2f228a6ded2d94c8)
+
+running 29 tests
+test discovery_help_warns_that_adverts_are_public ... ok
+test doctor_always_warns_that_a_second_instance_of_the_identity_cannot_be_detected ... ok
+test doctor_ready_mode_with_a_failing_check_still_exits_7_and_json_stays_a_check_array ... ok
+test doctor_exit_zero_with_the_daemon_down_but_ready_mode_fails_and_says_why ... ok
+test doctor_reports_problems_with_actions_and_exit_code_7 ... ok
+test doctor_ready_mode_passes_for_a_running_daemon_with_a_ready_transport ... ok
+test every_command_has_help_and_the_top_level_documents_exit_codes ... ok
+test discovery_commands_are_denied_by_default ... ok
+test init_creates_private_files_and_refuses_to_overwrite ... ok
+test identity_revoke_writes_a_key_revocation_and_blocks_further_changes ... ok
+test contact_revoke_imports_a_tombstone_into_a_running_daemon ... ok
+test init_public_relay_needs_a_peer_and_private_peers_stay_private ... ok
+test init_with_a_public_peer_fails_and_names_the_public_relay_flag ... ok
+test init_without_peers_warns_and_serve_refuses_until_configured ... ok
+test init_public_relay_writes_the_audited_public_config_and_doctor_accepts_it ... ok
+test mcp_without_a_daemon_starts_and_every_tool_says_unavailable ... ok
+test missing_daemon_error_names_the_data_dir ... ok
+test relay_print_config_has_the_verified_flags_and_marks_tailscale_untested ... ok
+test discovery_advertise_list_add_contact_and_withdraw_via_the_cli ... ok
+test printed_next_steps_keep_the_data_dir_shell_quoted ... ok
+test mcp_embedded_runs_the_daemon_in_process_and_holds_the_lock ... ok
+test top_level_help_says_the_cryptography_is_not_audited ... ok
+test rotate_kem_keeps_the_address_and_changes_the_record ... ok
+test rotate_kem_with_revoke_previous_destroys_old_keys_and_publishes_a_new_subkey ... ok
+test sending_to_an_unknown_recipient_prescribes_the_cli_command ... ok
+test serve_runs_rejects_a_second_instance_and_stops_cleanly_on_sigterm ... ok
+test mcp_stdio_is_a_thin_client_of_a_running_daemon ... ok
+test identity_import_starts_in_replay_guard_mode_unless_told_otherwise ... ok
+test identity_export_import_round_trip_gives_the_same_address ... ok
+
+test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.17s
+
+     Running tests/relay_discovery.rs (target/debug/deps/relay_discovery-c0fd0813720c3853)
+
+running 1 test
+test signed_capability_discovery_works_over_the_private_relay ... ignored, needs the local relay topology: run with AGENTNET_RELAY_TESTS=1 -- --ignored
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/relay_e2e.rs (target/debug/deps/relay_e2e-d3c069a28fe8867e)
+
+running 1 test
+test two_agentnet_serve_processes_exchange_messages_over_the_private_relay ... ignored, needs the local relay topology: run with AGENTNET_RELAY_TESTS=1 -- --ignored
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/agentnet_core-6ed5f29b0617034c)
+
+running 12 tests
+test crypto::address::tests::ordering_and_hash ... ok
+test config::tests::defaults_are_valid_and_match_the_documented_values ... ok
+test config::tests::partial_toml_like_json_and_unknown_keys ... ok
+test config::tests::discovery_validation ... ok
+test crypto::address::tests::strictness ... ok
+test cursor::tests::roundtrip_and_kind_checks ... ok
+test crypto::address::tests::trailing_bits_must_be_zero ... ok
+test crypto::address::tests::topic_and_all_buckets_valid ... ok
+test crypto::address::tests::roundtrip_and_serde ... ok
+test store::tests::refuses_a_newer_database ... ok
+test store::tests::migrates_a_v1_database ... ok
+test store::tests::migrates_a_v2_database_to_v3 ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/architecture.rs (target/debug/deps/architecture-c50f2f221cc8715b)
+
+running 4 tests
+test the_reference_matcher_works ... ok
+test transport_mcp_daemon_and_cli_do_not_depend_on_the_cryptographic_crates ... ok
+test the_engine_goes_through_the_message_protection_trait ... ok
+test only_the_crypto_module_references_the_cryptographic_crates ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/crypto.rs (target/debug/deps/crypto-ea29f779592eff9b)
+
+running 41 tests
+test a_certificate_dated_ahead_of_the_clock_is_accepted_only_within_the_skew ... ok
+test a_payload_recipient_that_is_not_me_is_rejected_after_a_valid_signature ... ok
+test a_different_signer_is_unknown_or_a_mismatch ... ok
+test a_signature_without_intended_recipient_is_rejected_even_when_forwarded ... ok
+test a_receipt_from_an_unknown_sender_cannot_be_authenticated ... ok
+test a_stripped_or_forged_subkey_binding_is_refused ... ok
+test a_revoked_subkey_is_never_encrypted_to ... ok
+test constants_match_spec ... ok
+test contact_documents_are_validated ... ok
+test debug_output_has_no_secret_material ... ok
+test a_revoked_or_expired_sender_is_rejected_with_its_own_error ... ok
+test an_embedded_certificate_of_another_address_is_rejected ... ok
+test an_unsigned_message_is_rejected ... ok
+test frame_size_limits_are_enforced_before_any_cryptography ... ok
+test junk_in_a_certificate_is_dropped_before_anything_is_stored ... ok
+test a_third_party_padded_message_is_accepted ... ok
+test revocations_accumulate_and_are_never_dropped ... ok
+test identity_file_roundtrip_permissions_and_atomic_writes ... ok
+test rotation_publishes_a_new_subkey_and_keeps_old_messages_readable_until_retire_time ... ok
+test measured_frame_sizes_for_the_body_limit ... ok
+test sealing_to_a_certificate_with_a_revoked_primary_is_refused ... ok
+test seal_rejects_mismatches ... ok
+test round_trip_all_message_types ... ok
+test sealing_to_an_expired_primary_is_refused ... ok
+test sealing_to_an_expired_subkey_is_refused ... ok
+test secret_key_material_is_never_accepted_as_a_contact ... ok
+test surreptitious_forwarding_is_rejected_by_the_intended_recipient ... ok
+test the_generated_certificate_has_the_profile_of_adr_0004 ... ok
+test policy_violations_have_distinct_errors ... ok
+test too_large_messages_are_refused_with_a_hint ... ok
+test unknown_sender_is_authenticated_by_the_embedded_certificate ... ok
+test unicode_bodies_are_byte_exact ... ok
+test updates_are_merges_only_and_a_different_primary_is_refused ... ok
+test wrong_recipient_is_not_for_us ... ok
+test the_payload_is_strict_json ... ok
+test equal_frame_length_within_a_bucket_and_steps_between ... ok
+test time_checks_and_exact_boundaries ... ok
+test arbitrary_bytes_never_panic ... ok
+test valid_prefix_then_garbage_never_panics ... ok
+test every_single_byte_flip_and_truncation_is_rejected_without_panic ... ok
+test encrypted_export_import ... ok
+
+test result: ok. 41 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.63s
+
+     Running tests/engine_delivery.rs (target/debug/deps/engine_delivery-8d4870e7ce12f04c)
+
+running 26 tests
+test a_to_b_message_ack_status_hints_and_event ... ok
+test crash_between_inbox_commit_and_ack_publish_ack_still_goes_out ... ok
+test contact_management ... ok
+test crash_between_send_message_and_step_send ... ok
+test expired_recipient_kem_key_is_refused_with_clear_error ... ok
+test disk_failure_inbound_not_acked_then_recovered ... ok
+test crash_receiver_mid_stream_no_duplicate_processing ... ok
+test invalid_config_is_refused ... ok
+test backoff_ceiling_caps_and_is_seed_deterministic ... ok
+test history_past_retention_is_not_recovered_and_sender_expires ... ok
+test history_unavailable_keeps_watermark_and_recovers_later ... ok
+test idempotency_key_semantics ... ok
+test isolation_violation_blocks_everything_until_cleared ... ok
+test lost_publish_retries_with_backoff_bounds_then_delivers ... ok
+test late_ack_after_expiry_still_marks_delivered ... ok
+test inbox_saturation_not_acked_then_accepted_after_space_frees ... ok
+test opening_store_with_different_identity_is_refused ... ok
+test repeated_history_cursor_is_a_failed_pass_and_the_interval_is_requeried ... ok
+test published_acks_and_reacks_are_pruned_after_retention ... ok
+test self_send_works_through_relay_echo ... ok
+test duplicates_reordering_and_lost_ack ... ok
+test outbox_saturation_returns_unavailable ... ok
+test send_validation ... ok
+test ttl_expiry_of_outbox_and_cap ... ok
+test offline_recipient_recovers_20_via_history ... ok
+test a_192_frame_burst_in_one_poll_reaches_the_inbox_without_history_sync ... ok
+
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.05s
+
+     Running tests/engine_discovery.rs (target/debug/deps/engine_discovery-d2312b014084317a)
+
+running 27 tests
+test a_failed_publish_is_retried_soon ... ok
+test a_topic_outside_the_host_list_is_denied ... ok
+test a_topic_less_version_1_advert_is_rejected_not_accepted_for_any_topic ... ok
+test a_revoked_local_identity_advertises_nothing ... ok
+test a_higher_seq_replaces_and_a_replay_of_an_older_one_is_ignored ... ok
+test a_withdrawal_replayed_onto_another_topic_does_not_remove_the_advert_there ... ok
+test advertise_then_another_node_discovers_it_and_can_add_the_contact ... ok
+test a_new_kem_key_re_issues_the_advert_with_the_current_contact_record ... ok
+test disabled_by_default_subscribes_to_nothing_and_denies_the_tools ... ok
+test adverts_and_sealed_frames_never_cross_topics ... ok
+test enabled_subscribes_to_exactly_the_listed_topics ... ok
+test an_advert_replayed_onto_another_enabled_topic_is_rejected ... ok
+test own_publication_coming_back_is_ignored ... ok
+test expired_adverts_are_not_returned_and_are_pruned ... ok
+test a_late_starting_node_learns_live_adverts_through_history_sync ... ok
+test republish_schedule_follows_the_interval_until_expiry ... ok
+test request_validation ... ok
+test garbage_oversize_and_malformed_frames_do_not_panic ... ok
+test receiving_adverts_has_no_side_effects_on_contacts_events_or_triggers ... ok
+test forged_adverts_are_rejected_and_counted ... ok
+test republished_frames_deduplicate_and_a_live_plus_history_copy_is_one_row ... ok
+test ttl_is_defaulted_and_capped ... ok
+test the_sequence_number_survives_a_restart ... ok
+test withdrawal_removes_the_advert_and_blocks_a_replay ... ok
+test blocked_and_revoked_advertisers_are_dropped_purged_and_never_evict ... ok
+test capability_filter_is_an_exact_match_and_results_paginate ... ok
+test the_table_is_capped_by_evicting_the_soonest_expiring ... ok
+
+test result: ok. 27 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.71s
+
+     Running tests/engine_hardening.rs (target/debug/deps/engine_hardening-91a43afe599bf9bf)
+
+running 20 tests
+test forged_tombstones_are_rejected_and_out_of_band_import_works ... ok
+test contact_records_are_merged_never_replaced ... ok
+test accepting_a_rollback_requarantines_held_messages_of_a_distrusted_sender ... ok
+test concurrent_identity_in_two_data_dirs_is_not_prevented ... ok
+test accepting_a_rollback_does_not_release_held_messages_of_a_blocked_sender ... ok
+test accepting_a_rollback_does_not_release_held_messages_of_a_revoked_sender ... ok
+test accept_rollback_releases_unexpired_held_messages ... ok
+test contact_updates_from_wrong_untrusted_or_replayed_sources_are_not_applied ... ok
+test identity_revocation_propagates_and_blocks_the_revoked_contact ... ok
+test key_update_during_a_pending_publish_publishes_the_resealed_frame ... ok
+test replay_across_kem_revocation_and_after_pruning ... ok
+test replay_after_restart_is_rejected ... ok
+test missing_sidecar_next_to_a_database_means_unknown_history ... ok
+test revocation_during_a_pending_publish_stops_later_frames_of_the_batch ... ok
+test migration_guard_by_default_and_full_state_copy_keeps_history ... ok
+test rollback_guard_holds_replays_from_a_sender_clock_ahead_within_the_skew ... ok
+test rollback_enters_the_replay_guard_and_holds_replayed_frames ... ok
+test rotation_with_overlap_keeps_old_frames_openable_and_announces_the_new_record ... ok
+test rotation_with_revoke_reseals_pending_messages_after_contact_update ... ok
+test tombstones_delivered_in_envelopes_are_applied_only_when_relevant ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.31s
+
+     Running tests/engine_openpgp_regressions.rs (target/debug/deps/engine_openpgp_regressions-043c5c317b10a73e)
+
+running 2 tests
+test a_message_without_the_intended_recipient_fingerprint_is_rejected_by_the_receive_step ... ok
+test send_to_a_contact_with_a_revoked_primary_key_is_refused_and_nothing_is_published ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s
+
+     Running tests/engine_random.rs (target/debug/deps/engine_random-373828faa55b71c1)
+
+running 1 test
+test random_schedules_converge_exactly_once ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 28.17s
+
+     Running tests/engine_run.rs (target/debug/deps/engine_run-117873054d63060f)
+
+running 3 tests
+test run_smoke_delivers_and_shuts_down_promptly ... ok
+test run_recovers_via_history_when_transport_comes_back ... ok
+test inbound_channel_applies_backpressure_and_loses_nothing ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.31s
+
+     Running tests/engine_security.rs (target/debug/deps/engine_security-ff8d6de4c711ca11)
+
+running 11 tests
+test max_attempts_stops_publishing_until_expiry ... ok
+test replay_now_and_after_dedupe_pruning ... ok
+test get_message_never_returns_quarantined_content ... ok
+test quarantine_hides_message_and_emits_nothing ... ok
+test get_message_follows_inbox_visibility_and_disambiguates_senders ... ok
+test time_checks_skew_expiry_ttl ... ok
+test ack_rules_wrong_party_unknown_id_untrusted_and_no_ping_pong ... ok
+test too_large_publish_is_permanent_failure ... ok
+test tampered_foreign_forged_and_forwarded_frames_create_nothing ... ok
+test reject_blocked_accept_untrusted_and_quarantine_cap ... ok
+test quarantine_listing_is_paged_within_a_byte_budget ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.80s
+
+     Running tests/engine_triggers.rs (target/debug/deps/engine_triggers-06ecac1f2d368520)
+
+running 11 tests
+test delete_trigger_is_idempotent ... ok
+test once_trigger_consumed_exactly_once_under_duplicates_and_two_messages ... ok
+test rate_budget_blocks_recording_and_does_not_consume_once_triggers ... ok
+test policy_gates_on_create_trigger ... ok
+test filter_combinations ... ok
+test trigger_expiry ... ok
+test events_replay_ack_and_pruning ... ok
+test since_cursor_closes_reply_before_trigger_race ... ok
+test pagination_cursors_for_inbox_outbox_conversation ... ok
+test unauthorized_senders_never_match ... ok
+test limit_defaults_and_caps ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.40s
+
+     Running tests/migration.rs (target/debug/deps/migration-f288a413479be753)
+
+running 4 tests
+test the_legacy_fixture_files_are_all_present ... ok
+test the_fixture_is_an_old_format_database ... ok
+test a_second_migration_finds_nothing_left_to_convert ... ok
+test migration_keeps_history_fails_pending_rows_and_keeps_old_contacts_unusable ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/vectors.rs (target/debug/deps/vectors-c1cff6179d0c3e14)
+
+running 7 tests
+test rfc6234_sha256_vectors ... ok
+test rfc4648_base32_vectors_and_the_address_alphabet ... ok
+test rfc9580_a3_is_accepted_as_a_contact_and_names_the_published_fingerprint ... ok
+test rfc9580_a3_and_a4_fingerprint_and_policy ... ok
+test rfc9580_a7_tampered_message_does_not_verify ... ok
+test rfc9580_a85_seipd2_ocb_with_padding_packet_decrypts ... ok
+test rfc9580_a7_inline_signature_verifies ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running unittests src/lib.rs (target/debug/deps/agentnet_daemon-4c6a14d5f5e2f798)
+
+running 20 tests
+test config::tests::node_config_reports_whether_isolation_is_audited ... ok
+test config::tests::mcp_http_bind_must_be_loopback ... ok
+test config::tests::engine_errors_are_surfaced ... ok
+test config::tests::private_mode_surfaces_transport_errors ... ok
+test config::tests::mapping_to_node_and_transport_configs ... ok
+test config::tests::enforce_peer_allowlist_rejections_are_actionable ... ok
+test config::tests::defaults_are_private_and_need_peers ... ok
+test config::tests::public_requires_the_flag_and_flags_are_checked ... ok
+test config::tests::enforce_peer_allowlist_with_a_public_wss_relay ... ok
+test config::tests::unknown_keys_are_rejected ... ok
+test config::tests::webhook_matrix ... ok
+test datadir::tests::hex_round_trip ... ok
+test datadir::tests::lock_is_exclusive_and_released_on_drop ... ok
+test config::tests::samples_parse_and_validate ... ok
+test webhook::tests::blocklist ... ok
+test webhook::tests::signature_round_trip_and_failures ... ok
+test proto::tests::bounded_line_reader ... ok
+test proto::tests::hello_debug_hides_the_token ... ok
+test datadir::tests::dir_perms_and_tokens ... ok
+test webhook::tests::localhost_resolves_to_a_pinned_loopback_address ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/discovery.rs (target/debug/deps/discovery-9307378108190db8)
+
+running 3 tests
+test discovery_config_is_off_by_default_and_parses ... ok
+test disabled_daemon_denies_over_the_socket_and_stays_off_the_wire ... ok
+test advertise_and_discover_end_to_end_through_two_daemons ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.24s
+
+     Running tests/harness.rs (target/debug/deps/harness-3aa71b17020b7600)
+
+running 5 tests
+test documented_sample_configs_match_the_code ... ok
+test embed_example_runs ... ok
+test fetch_mode_resolves_the_event_message_id_with_get_message_then_acknowledges ... ok
+test webhook_mode_verifies_signatures_and_dedupes ... ok
+test socket_mode_records_one_turn_per_event_and_resumes_from_its_cursor ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.07s
+
+     Running tests/migrate.rs (target/debug/deps/migrate-ec9793ec4d556dc4)
+
+running 2 tests
+test an_unmigrated_data_directory_is_refused_with_the_command_to_run ... ok
+test migrate_creates_a_fresh_identity_and_keeps_the_history ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/rotation_revocation.rs (target/debug/deps/rotation_revocation-cb23d011ce26370c)
+
+running 3 tests
+test accept_rollback_is_a_no_op_on_a_healthy_store_and_needs_the_lock ... ok
+test a_revoked_identity_only_delivers_its_tombstone ... ok
+test offline_rotation_with_revoke_is_announced_at_the_next_start ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.43s
+
+     Running tests/socket_api.rs (target/debug/deps/socket_api-fd52936ec291cdd1)
+
+running 16 tests
+test http_mcp_serves_with_its_token_and_only_on_loopback ... ok
+test lock_exclusivity_and_graceful_shutdown_cleanup ... ok
+test every_method_round_trips_and_equals_the_direct_node ... ok
+test crash_recovery_reacquires_the_lock_and_keeps_state ... ok
+test quarantine_list_and_release_through_the_socket ... ok
+test remote_agent_reports_unavailable_when_down_and_recovers ... ok
+test remote_agent_with_a_wrong_token_is_denied_not_unavailable ... ok
+test event_stream_survives_a_daemon_restart_by_resuming_from_the_cursor ... ok
+test shutdown_request_through_the_socket ... ok
+test startup_refuses_bad_configuration_and_permissions ... ok
+test socket_auth_matrix ... ok
+test socket_file_is_private ... ok
+test changes_stream_resubscribes_after_a_daemon_restart ... ok
+test events_replay_live_ack_and_reconnect_without_loss ... ok
+test quarantine_list_is_paged_through_the_socket ... ok
+test hello_timeout_closes_the_connection ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.34s
+
+     Running tests/webhook_triggers.rs (target/debug/deps/webhook_triggers-6a5c223e0cad6f3b)
+
+running 11 tests
+test message_received_can_be_enabled_and_disabled_per_config ... ok
+test redirects_are_not_followed ... ok
+test parks_after_max_attempts_and_continues_with_the_next_event ... ok
+test retries_on_500_then_succeeds_with_one_effect_per_event_id ... ok
+test triggers_are_off_by_default ... ok
+test signed_delivery_verifies_and_carries_no_plaintext ... ok
+test startup_rejects_unsafe_webhook_setups ... ok
+test resumes_from_its_cursor_after_a_restart_without_loss_or_repeat ... ok
+test one_shot_trigger_yields_exactly_one_event_despite_duplicate_deliveries ... ok
+test unauthorized_senders_never_produce_trigger_events ... ok
+test a_failed_parking_insert_does_not_advance_the_cursor_and_the_event_is_retried ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.61s
+
+     Running unittests src/lib.rs (target/debug/deps/agentnet_mcp-0482db3e1b757136)
+
+running 7 tests
+test uris::tests::hints_map_to_uris ... ok
+test uris::tests::parses_base_uris ... ok
+test uris::tests::parses_query_and_decodes ... ok
+test uris::tests::percent_roundtrip ... ok
+test uris::tests::subscribable_rules ... ok
+test uris::tests::unknown_uris_are_not_found ... ok
+test uris::tests::rejects_bad_queries ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/resources.rs (target/debug/deps/resources-64e9654cf597695a)
+
+running 10 tests
+test capabilities_and_server_info ... ok
+test legacy_clients_get_the_legacy_not_found_code ... ok
+test lists_resources_and_templates ... ok
+test reads_are_uncacheable_json_documents ... ok
+test inbox_pagination_by_cursor_in_the_uri ... ok
+test engine_errors_on_resource_reads_map_to_standard_codes ... ok
+test invalid_query_arguments_are_invalid_params ... ok
+test outbox_and_conversation_pagination ... ok
+test resource_documents_have_the_documented_shape ... ok
+test unknown_uri_is_the_standard_not_found_error ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/subscriptions.rs (target/debug/deps/subscriptions-b69356771130b738)
+
+running 17 tests
+test client_disconnect_ends_listens_promptly_on_the_stdio_code_path ... ok
+test http_shutdown_ends_open_streams_promptly ... ok
+test cancel_stops_notifications_and_releases_resources ... ok
+test legacy_pump_ends_when_session_ends ... ok
+test hint_right_after_acknowledgment_is_not_lost ... ok
+test legacy_subscribe_rejects_unknown_uris_and_2026_listen_is_unavailable ... ok
+test bursts_under_capacity_are_coalesced ... ok
+test many_listens_open_and_close_without_leaks ... ok
+test only_known_uris_are_accepted ... ok
+test server_shutdown_token_ends_listens ... ok
+test each_hint_kind_maps_to_its_uri ... ok
+test legacy_lagged_receiver_notifies_all_subscribed_uris ... ok
+test http_listen_filters_cancels_and_cleans_up ... ok
+test conversation_template_instances_are_subscribable ... ok
+test lagged_receiver_notifies_every_subscribed_uri_once ... ok
+test listen_notifies_only_for_the_subscribed_uri ... ok
+test legacy_subscribe_and_unsubscribe ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.59s
+
+     Running tests/tools.rs (target/debug/deps/tools-9ca57ee490e91b22)
+
+running 18 tests
+test discovery_policy_errors_map_to_policy_denied ... ok
+test discovery_tool_descriptions_carry_the_warnings ... ok
+test engine_domain_errors_surface_actionably ... ok
+test discovery_input_schemas_encode_the_documented_limits ... ok
+test get_message_returns_one_visible_message_and_hides_quarantined ... ok
+test input_schemas_encode_the_documented_limits ... ok
+test mutating_tools_emit_hints_after_persistence ... ok
+test discovery_tools_happy_path_pagination_and_output_schemas ... ok
+test list_contacts_pages_and_exposes_only_public_fields ... ok
+test tool_descriptions_state_the_trust_and_delivery_semantics ... ok
+test tool_annotations_mark_read_only_tools ... ok
+test schema_violations_are_tool_errors_not_protocol_errors ... ok
+test happy_paths_every_tool_and_outputs_match_declared_schemas ... ok
+test session_ids_follow_the_engine_rule_and_errors_say_how ... ok
+test unknown_tool_is_a_protocol_error ... ok
+test every_api_error_code_maps_consistently ... ok
+test boundary_validation_rejects_before_reaching_the_engine ... ok
+test tools_list_has_all_tools_with_valid_documented_schemas ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/transports.rs (target/debug/deps/transports-8c61ffbe5bab9aca)
+
+running 17 tests
+test http_options_debug_redacts_the_token ... ok
+test serve_http_refuses_unsafe_configuration ... ok
+test router_fails_closed_with_an_unusable_token ... ok
+test http_configured_origins_and_hosts_are_honoured ... ok
+test http_auth_origin_and_host_rules ... ok
+test http_version_negotiation_table ... ok
+test fifty_concurrent_tool_calls_over_http ... ok
+   Compiling agentnet-core v0.1.0 (/Users/dennison/develop/FIC-elipsis/crates/core)
+   Compiling agentnet-mcp v0.1.0 (/Users/dennison/develop/FIC-elipsis/crates/mcp)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 4.59s
+test stdio_raw_discover_and_unsupported_versions ... ok
+test stdio_exits_promptly_on_eof_without_listeners ... ok
+test stdio_seeded_pagination_through_the_process ... ok
+test stdio_stdout_carries_only_protocol_frames ... ok
+test http_binary_refuses_non_loopback_and_serves_loopback ... ok
+test fifty_concurrent_tool_calls_over_stdio ... ok
+test tools_and_resources_over_http ... ok
+test stdio_version_negotiation_table ... ok
+test stdio_exits_promptly_on_eof_with_an_active_listener ... ok
+test stdio_listen_and_legacy_subscribe_end_to_end ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.13s
+
+     Running unittests src/lib.rs (target/debug/deps/agentnet_transport-5325f0da29b581a5)
+
+running 91 tests
+test logos_rest::config::tests::multiaddr_peer_id_extraction ... ok
+test logos_rest::config::tests::accepts_private_hosts ... ok
+test logos_rest::config::tests::deserializes_with_defaults_and_durations ... ok
+test logos_rest::config::tests::public_mode_rules ... ok
+test logos_rest::config::tests::enforced_public_mode_needs_peers_and_a_private_cluster ... ok
+test logos_rest::config::tests::private_peer_addrs_reject_relay_hops_and_extra_components ... ok
+test logos_rest::config::tests::private_mode_rejects_preset_clusters_and_empty_allowlist ... ok
+test logos_rest::config::tests::enforce_flag_is_rejected_in_private_mode_and_plain_public_is_unchanged ... ok
+test logos_rest::config::tests::shard_and_numeric_limits ... ok
+test logos_rest::config::tests::rejects_public_hosts_in_private_mode ... ok
+test logos_rest::config::tests::store_peer_must_be_private_and_allowlisted ... ok
+test logos_rest::config::tests::static_peers_validation_and_derived_allowlist ... ok
+test logos_rest::config::tests::rejects_malformed_urls ... ok
+test logos_rest::config::tests::enforced_public_mode_accepts_public_ip_and_dns_forms ... ok
+test logos_rest::config::tests::enforced_public_mode_rejects_bad_forms ... ok
+test logos_rest::tests::enforced_public_mode_fails_closed_without_the_admin_api ... ok
+test logos_rest::tests::enforced_public_mode_redials_the_static_peers ... ok
+test logos_rest::tests::enforced_public_mode_publishes_with_only_the_allowlisted_peer ... ok
+test logos_rest::tests::enforced_public_mode_fails_closed_with_a_foreign_peer ... ok
+test logos_rest::tests::foreign_connected_peer_fails_closed_everywhere ... ok
+test logos_rest::tests::new_rejects_public_hosts_and_bad_config ... ok
+test logos_rest::tests::history_request_shape_and_hash_verification ... ok
+test logos_rest::tests::no_redirects_and_no_proxy_env ... ok
+test logos_rest::tests::long_error_bodies_are_truncated ... ok
+test logos_rest::tests::plain_public_publish_issues_no_audit_get ... ok
+test logos_rest::tests::plain_public_status_does_not_call_peers_allowed ... ok
+test logos_rest::tests::history_window_and_error_mapping ... ok
+test logos_rest::tests::no_dial_when_peer_already_connected_or_no_static_peers ... ok
+test logos_rest::tests::public_mode_skips_the_audit ... ok
+test logos_rest::tests::poll_truncated_tail_delivers_complete_frames_and_reports ... ok
+test logos_rest::tests::publish_audits_immediately_before_every_publish_enforced_public ... ok
+test logos_rest::tests::admin_unavailable_fails_closed_as_unavailable ... ok
+test logos_rest::tests::publish_audits_immediately_before_every_publish_private ... ok
+test logos_rest::tests::poll_subscribes_lazily_and_maps_errors ... ok
+test logos_rest::tests::publish_sends_expected_request_and_returns_local_hash ... ok
+test logos_rest::tests::redial_also_runs_from_poll_and_history_with_cached_audit ... ok
+test logos_rest::tests::rejected_config_never_contacts_the_node_or_dials ... ok
+test logos_rest::tests::poll_skips_and_counts_an_oversized_frame_in_the_middle ... ok
+test logos_rest::tests::redial_issued_when_disconnected_and_only_static_peers_in_body ... ok
+test logos_rest::tests::status_reports_peers_and_readiness ... ok
+test logos_rest::tests::publish_error_mapping_end_to_end ... ok
+test logos_rest::tests::timestamps_are_unique_under_concurrency ... ok
+test logos_rest::tests::wrong_allowlist_is_a_violation ... ok
+test logos_rest::wire::tests::hash_matches_real_node_vector ... ok
+test logos_rest::wire::tests::parse_hash_forms ... ok
+test logos_rest::wire::tests::peers_parsing_and_audit ... ok
+test logos_rest::wire::tests::peers_parsing_is_strict ... ok
+test logos_rest::wire::tests::percent_encoding ... ok
+test logos_rest::wire::tests::publish_error_mapping ... ok
+test logos_rest::tests::subscribe_and_poll_with_resubscribe_on_404 ... ok
+test logos_rest::wire::tests::relay_poll_meta_participates_in_hash_and_oversize_is_skipped ... ok
+test logos_rest::wire::tests::relay_poll_parsing ... ok
+test logos_rest::wire::tests::relay_response_bound_covers_a_full_node_cache ... ok
+test logos_rest::wire::tests::relay_stream_truncation_keeps_complete_frames ... ok
+test logos_rest::wire::tests::store_envelope_is_required ... ok
+test logos_rest::wire::tests::store_page_counts_mismatch_and_malformed ... ok
+test logos_rest::wire::tests::store_page_errors ... ok
+test logos_rest::wire::tests::store_page_with_real_vector ... ok
+test logos_rest::wire::tests::varints_and_size_arithmetic ... ok
+test mock::tests::clock_is_manual ... ok
+test mock::tests::delay_holds_until_release ... ok
+test mock::tests::drop_next_publishes_is_accepted_but_lost ... ok
+test mock::tests::duplicate_delivery_repeats_frames ... ok
+test mock::tests::expire_before_removes_old_frames ... ok
+test mock::tests::fail_next_publishes_returns_unavailable_without_effect ... ok
+test mock::tests::history_availability_switch ... ok
+test mock::tests::history_pagination_and_window ... ok
+test mock::tests::history_retention_by_capacity ... ok
+test mock::tests::history_retention_by_time ... ok
+test mock::tests::inject_raw_is_delivered_stored_and_introspectable ... ok
+test mock::tests::isolation_violation_blocks_everything_and_is_reported ... ok
+test mock::tests::live_queue_overflow_drops_oldest_and_counts ... ok
+test mock::tests::max_payload_enforced ... ok
+test mock::tests::node_restart_resubscribes_transparently ... ok
+test mock::tests::offline_endpoint_misses_live_but_has_history ... ok
+test mock::tests::publish_counts_are_per_topic ... ok
+test mock::tests::publish_delivers_to_all_including_publisher ... ok
+test mock::tests::reorder_is_seeded_and_deterministic ... ok
+test mock::tests::status_reports_configured_peers ... ok
+test mock::tests::timestamps_strictly_increase_even_with_frozen_clock ... ok
+test mock::tests::topics_are_separated_in_poll ... ok
+test mock::tests::transport_id_is_deterministic_and_matches_history ... ok
+test mock::tests::unsubscribed_endpoint_gets_nothing_live_but_history_has_it ... ok
+test tests::content_topic_validation ... ok
+test logos_rest::wire::tests::relay_stream_bounds_memory_and_survives_odd_chunking ... ok
+test logos_rest::tests::too_large_is_rejected_locally_without_touching_the_node ... ok
+test logos_rest::tests::violation_clears_when_peers_recover_after_interval ... ok
+test logos_rest::tests::audit_is_cached_then_refreshed_after_interval ... ok
+test logos_rest::tests::connection_refused_and_timeout_are_unavailable ... ok
+test logos_rest::tests::redial_is_rate_limited_and_failures_are_not_fatal ... ok
+test logos_rest::tests::poll_delivers_192_maximum_size_frames_in_one_response ... ok
+
+test result: ok. 91 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.46s
+
+     Running tests/logos_rest_relay.rs (target/debug/deps/logos_rest_relay-0299415694626a66)
+
+running 6 tests
+test a_to_b_and_b_to_a_with_identical_ids_in_live_and_history ... ignored, needs the local relay topology: run with AGENTNET_RELAY_TESTS=1 -- --ignored
+test adapter_redial_restores_a_disconnected_client ... ignored, needs the local relay topology: run with AGENTNET_RELAY_TESTS=1 -- --ignored
+test history_paginates_across_pages_and_dedupes_against_live ... ignored, needs the local relay topology: run with AGENTNET_RELAY_TESTS=1 -- --ignored
+test isolation_audit_passes_with_right_allowlist_and_fails_closed_with_wrong_one ... ignored, needs the local relay topology: run with AGENTNET_RELAY_TESTS=1 -- --ignored
+test max_payload_len_is_accepted_and_delivered_and_one_more_is_rejected_locally ... ignored, needs the local relay topology: run with AGENTNET_RELAY_TESTS=1 -- --ignored
+test private_mode_config_rejects_public_ip_and_hostnames ... ok
+
+test result: ok. 1 passed; 0 failed; 5 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Doc-tests agentnet_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests agentnet_daemon
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests agentnet_mcp
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests agentnet_transport
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+TEST_OK

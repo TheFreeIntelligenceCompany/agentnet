@@ -1,0 +1,259 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.50s
+     Running unittests src/main.rs (target/debug/deps/agentnet_acceptance-459e351598a4b888)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/deps/agentnet-0dccafa8e3db974c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 17 filtered out; finished in 0.00s
+
+     Running tests/cli.rs (target/debug/deps/cli-2f228a6ded2d94c8)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 29 filtered out; finished in 0.00s
+
+     Running tests/relay_discovery.rs (target/debug/deps/relay_discovery-c0fd0813720c3853)
+
+running 1 test
+test signed_capability_discovery_works_over_the_private_relay ... FAILED
+
+failures:
+
+---- signed_capability_discovery_works_over_the_private_relay stdout ----
+[1795753572] relay discovery: topology = spike/relay (localhost / docker bridge, NOT cross-machine)
+[1795753572] ok: node A health
+[1795753572] ok: node B health
+[1795753574] A = an26g5w6gm44ldokd4ln7nc5em3r7i72crzwu57ne233muk3lvjgcyykgxnju
+B = an2ygqdvzqcoaw2fjykw6gwh6qyezidwn46zxxzwvtbp5aspwyovkc3uprt7a
+topics = ["rd1795753572", "rd1795753572-tamper", "rd1795753572-ctrl"] capability = relay-cap-1795753572
+[1795753574] ok: serve A ready
+[1795753574] ok: serve B ready
+[1795753574] A advertise: {"capabilities":[{"description":"relay discovery test","name":"relay-cap-1795753572"}],"expires_at":1795755374963,"issued_at":1795753574963,"seq":1,"topic":"rd1795753572"}
+[1795753575] ok: B lists A's advert (CLI)
+[1795753575] advert visible at B after 547.810833ms
+[1795753575] B list: [{"address":"an26g5w6gm44ldokd4ln7nc5em3r7i72crzwu57ne233muk3lvjgcyykgxnju","capabilities":[{"description":"relay discovery test","name":"relay-cap-1795753572"}],"contact_record":"xioGawkGZhsAAAAg_zClw4sicufIlrEIMb1G9i3Ex_tcwPveJT6n1lwCjs7CpgYfGwoAAAA3BYJrCQZmAwsJBwMVCggCmwMCHgkiIQbxu28ZnOLG5Q-Lb9oukZuP0f0KObU79pNb2yitrqkwsQAAAAA1biCfR7i_R6IKO6R7D0poRIQN6lOttZkRD-G3nNc1eQK7Zo7JONBbspsxbAH34cECa2XO9RVqF229LwwX8wQI9JGi1WbjkfK001VQWfr6XYhX2gwJpwIXKMggZvwunYYSVg3OKgZrCQZmGQAAACBQDPqOX1cwfOweWobZA0D-xt_avyA8d4qCcWHvZ3UzbsKhBhgbCgAAADIFgmsJBmYFiQHhM4ACmwQiIQbxu28ZnOLG5Q-Lb9oukZuP0f0KObU79pNb2yitrqkwsQAAAACcKiBFHAP9FzP5cw5cIgI4R1y2cYYRhA7D6oSRtGOhMS4S8N_t3cCs0rE7uSMkqcrUEybLsF4eHkVFOuY_pdGXNXsutPcrjlEhBcufLSIedWpTAfQrsFEsuXLkctVsFa6AtQI","display_name":"Relay Tester","expires_at":1795755374963,"is_contact":false,"issued_at":1795753574963,"trust":"unknown"}]
+[1795753575] B added the discovered contact_record with --expect an26g5w6gm44ldokd4ln7nc5em3r7i72crzwu57ne233muk3lvjgcyykgxnju: ok
+[1795753575] B mcp discover_agents: {"agents":[{"address":"an26g5w6gm44ldokd4ln7nc5em3r7i72crzwu57ne233muk3lvjgcyykgxnju","capabilities":[{"description":"relay discovery test","name":"relay-cap-1795753572"}],"contact_record":"xioGawkGZhsAAAAg_zClw4sicufIlrEIMb1G9i3Ex_tcwPveJT6n1lwCjs7CpgYfGwoAAAA3BYJrCQZmAwsJBwMVCggCmwMCHgkiIQbxu28ZnOLG5Q-Lb9oukZuP0f0KObU79pNb2yitrqkwsQAAAAA1biCfR7i_R6IKO6R7D0poRIQN6lOttZkRD-G3nNc1eQK7Zo7JONBbspsxbAH34cECa2XO9RVqF229LwwX8wQI9JGi1WbjkfK001VQWfr6XYhX2gwJpwIXKMggZvwunYYSVg3OKgZrCQZmGQAAACBQDPqOX1cwfOweWobZA0D-xt_avyA8d4qCcWHvZ3UzbsKhBhgbCgAAADIFgmsJBmYFiQHhM4ACmwQiIQbxu28ZnOLG5Q-Lb9oukZuP0f0KObU79pNb2yitrqkwsQAAAACcKiBFHAP9FzP5cw5cIgI4R1y2cYYRhA7D6oSRtGOhMS4S8N_t3cCs0rE7uSMkqcrUEybLsF4eHkVFOuY_pdGXNXsutPcrjlEhBcufLSIedWpTAfQrsFEsuXLkctVsFa6AtQI","display_name":"Relay Tester","expires_at":1795755374963,"is_contact":true,"issued_at":1795753574963,"trust":"trusted"}],"has_more":false,"next_cursor":"YWR2ZXJ0OjE"}
+[1795753575] B mcp discover_agents unknown topic: {"error":{"code":"policy_denied","message":"topic \"not-configured\" is not an authorized discovery topic (host policy: discovery.topics)","retryable":false}}
+[1795753575] ok: advert frame in the relay Store
+[1795753575] store frame: 1463 bytes, prefix [41, 44, 01]
+[1795753575] inject on rd1795753572-ctrl: node answered "OK"
+
+thread 'tokio-rt-worker' (7892021) panicked at crates/cli/tests/relay_discovery.rs:382:39:
+called `Option::unwrap()` on a `None` value
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+[1795753575] serve A log: 4 lines
+[1795753575] serve B log: 4 lines
+
+
+failures:
+    signed_capability_discovery_works_over_the_private_relay
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.21s
+
+error: test failed, to rerun pass `-p agentnet-cli --test relay_discovery`
+     Running tests/relay_e2e.rs (target/debug/deps/relay_e2e-d3c069a28fe8867e)
+
+running 1 test
+test two_agentnet_serve_processes_exchange_messages_over_the_private_relay ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.99s
+
+     Running unittests src/lib.rs (target/debug/deps/agentnet_core-6ed5f29b0617034c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 12 filtered out; finished in 0.00s
+
+     Running tests/architecture.rs (target/debug/deps/architecture-c50f2f221cc8715b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/crypto.rs (target/debug/deps/crypto-ea29f779592eff9b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 41 filtered out; finished in 0.00s
+
+     Running tests/engine_delivery.rs (target/debug/deps/engine_delivery-8d4870e7ce12f04c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 26 filtered out; finished in 0.00s
+
+     Running tests/engine_discovery.rs (target/debug/deps/engine_discovery-d2312b014084317a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 27 filtered out; finished in 0.00s
+
+     Running tests/engine_hardening.rs (target/debug/deps/engine_hardening-91a43afe599bf9bf)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 20 filtered out; finished in 0.00s
+
+     Running tests/engine_openpgp_regressions.rs (target/debug/deps/engine_openpgp_regressions-043c5c317b10a73e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/engine_random.rs (target/debug/deps/engine_random-373828faa55b71c1)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/engine_run.rs (target/debug/deps/engine_run-117873054d63060f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/engine_security.rs (target/debug/deps/engine_security-ff8d6de4c711ca11)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.00s
+
+     Running tests/engine_triggers.rs (target/debug/deps/engine_triggers-06ecac1f2d368520)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.00s
+
+     Running tests/migration.rs (target/debug/deps/migration-f288a413479be753)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/vectors.rs (target/debug/deps/vectors-c1cff6179d0c3e14)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/agentnet_daemon-4c6a14d5f5e2f798)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 20 filtered out; finished in 0.00s
+
+     Running tests/discovery.rs (target/debug/deps/discovery-9307378108190db8)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/harness.rs (target/debug/deps/harness-3aa71b17020b7600)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/migrate.rs (target/debug/deps/migrate-ec9793ec4d556dc4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/rotation_revocation.rs (target/debug/deps/rotation_revocation-cb23d011ce26370c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/socket_api.rs (target/debug/deps/socket_api-fd52936ec291cdd1)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 16 filtered out; finished in 0.00s
+
+     Running tests/webhook_triggers.rs (target/debug/deps/webhook_triggers-6a5c223e0cad6f3b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/agentnet_mcp-0482db3e1b757136)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+     Running tests/resources.rs (target/debug/deps/resources-64e9654cf597695a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.00s
+
+     Running tests/subscriptions.rs (target/debug/deps/subscriptions-b69356771130b738)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 17 filtered out; finished in 0.00s
+
+     Running tests/tools.rs (target/debug/deps/tools-9ca57ee490e91b22)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 18 filtered out; finished in 0.00s
+
+     Running tests/transports.rs (target/debug/deps/transports-8c61ffbe5bab9aca)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 17 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/agentnet_transport-5325f0da29b581a5)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 91 filtered out; finished in 0.00s
+
+     Running tests/logos_rest_relay.rs (target/debug/deps/logos_rest_relay-0299415694626a66)
+
+running 5 tests
+test max_payload_len_is_accepted_and_delivered_and_one_more_is_rejected_locally ... ok
+test a_to_b_and_b_to_a_with_identical_ids_in_live_and_history ... ok
+test adapter_redial_restores_a_disconnected_client ... ok
+test isolation_audit_passes_with_right_allowlist_and_fails_closed_with_wrong_one ... ok
+test history_paginates_across_pages_and_dedupes_against_live ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 10.93s
+
+   Doc-tests agentnet_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests agentnet_daemon
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests agentnet_mcp
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests agentnet_transport
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: 1 target failed:
+    `-p agentnet-cli --test relay_discovery`
