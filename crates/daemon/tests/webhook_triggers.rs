@@ -271,6 +271,85 @@ async fn parks_after_max_attempts_and_continues_with_the_next_event() {
     b.daemon.unwrap().shutdown().await;
 }
 
+fn stored_cursor(path: &std::path::Path) -> Option<String> {
+    let db = rusqlite::Connection::open(path.join("webhook.db")).unwrap();
+    db.query_row("SELECT v FROM kv WHERE k='cursor'", [], |r| r.get(0))
+        .ok()
+}
+
+/// Review finding P2: when the parking insert fails, the cursor must not advance past the event
+/// (it used to: the insert result was ignored and the cursor was written separately), so the same
+/// event is retried, in-process and after a restart, and is never silently skipped.
+#[tokio::test]
+async fn a_failed_parking_insert_does_not_advance_the_cursor_and_the_event_is_retried() {
+    let w = World::new();
+    let (rx, addr) = receiver().await;
+    rx.always_fail.store(true, Ordering::SeqCst);
+    let (a, mut b) = setup(&w, addr, "/hook", 2).await;
+    trigger(&b, &a, false).await;
+    // Make every insert into `parked` fail.
+    {
+        let db = rusqlite::Connection::open(b.path.join("webhook.db")).unwrap();
+        db.execute_batch(
+            "CREATE TRIGGER fail_park BEFORE INSERT ON parked
+             BEGIN SELECT RAISE(ABORT, 'injected park failure'); END;",
+        )
+        .unwrap();
+    }
+    a.send(&b, "one").await;
+    wait_until("first round of attempts", || async {
+        rx.calls.lock().unwrap().len() >= 2
+    })
+    .await;
+    tokio::time::sleep(Duration::from_millis(300)).await;
+    // Events the webhook does not want may legitimately be passed; the failing one must not be.
+    let failing: EventRecord = serde_json::from_slice(&rx.calls.lock().unwrap()[0].body).unwrap();
+    assert_ne!(
+        stored_cursor(&b.path).as_deref(),
+        Some(failing.cursor.as_str()),
+        "cursor must not advance past the event that failed to park"
+    );
+    assert_eq!(b.d().webhook_stats().unwrap().parked, 0);
+    // The same event is attempted again in-process.
+    wait_until("event retried", || async {
+        rx.calls.lock().unwrap().len() >= 4
+    })
+    .await;
+    let ids: HashSet<String> = rx
+        .calls
+        .lock()
+        .unwrap()
+        .iter()
+        .map(|c| c.event_id.clone())
+        .collect();
+    assert_eq!(ids.len(), 1, "always the same event");
+    b.daemon.take().unwrap().shutdown().await;
+    assert_ne!(
+        stored_cursor(&b.path).as_deref(),
+        Some(failing.cursor.as_str())
+    );
+
+    // Restart with a healthy receiver and a healthy store: the event is delivered, not skipped.
+    {
+        let db = rusqlite::Connection::open(b.path.join("webhook.db")).unwrap();
+        db.execute_batch("DROP TRIGGER fail_park").unwrap();
+    }
+    rx.always_fail.store(false, Ordering::SeqCst);
+    let calls_before = rx.calls.lock().unwrap().len();
+    b.daemon = Some(w.start(&b.path, wh_cfg(addr, "/hook", 2)).await);
+    wait_until("delivered after restart", || async {
+        b.d().webhook_stats().unwrap().delivered == 1
+    })
+    .await;
+    assert!(rx.calls.lock().unwrap().len() > calls_before);
+    wait_until("cursor advances on success", || async {
+        stored_cursor(&b.path).as_deref() == Some(failing.cursor.as_str())
+    })
+    .await;
+    a.daemon.unwrap().shutdown().await;
+    b.daemon.unwrap().shutdown().await;
+}
+
 #[tokio::test]
 async fn redirects_are_not_followed() {
     let w = World::new();

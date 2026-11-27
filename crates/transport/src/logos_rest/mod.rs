@@ -39,13 +39,14 @@ use crate::{
     TransportError, TransportStatus,
 };
 use wire::{
-    encode_component, evaluate_peers, hex, map_publish_failure, max_payload_for, parse_peers,
-    parse_relay_messages, parse_store_page, snippet, StoreParseError,
+    encode_component, evaluate_peers, hex, map_publish_failure, max_payload_for,
+    max_relay_response_bytes, parse_peers, parse_store_page, snippet, RelayStream, StoreParseError,
 };
 
 /// Store queries may cover at most 24 hours.
 pub const MAX_HISTORY_WINDOW_NS: i64 = 24 * 3600 * 1_000_000_000;
-/// Upper bound on any response body we are willing to buffer.
+/// Upper bound on any response body we are willing to buffer. Relay polls are NOT subject to it:
+/// they are parsed incrementally (see `RelayStream`) and bounded by `max_relay_response_bytes`.
 const MAX_RESPONSE_BYTES: usize = 32 * 1024 * 1024;
 
 static LAST_TIMESTAMP_NS: AtomicI64 = AtomicI64::new(0);
@@ -80,6 +81,9 @@ pub struct LogosRestMetrics {
     pub audits_run: u64,
     /// Redial requests (`POST /admin/v1/peers` with the static peers) sent.
     pub redials: u64,
+    /// Polls whose response ended early or broke off mid-body: the complete frames before the
+    /// break were still delivered (a poll with no complete frame is an error instead).
+    pub partial_polls: u64,
 }
 
 #[derive(Default)]
@@ -89,6 +93,7 @@ struct Counters {
     resubscribes: AtomicU64,
     audits: AtomicU64,
     redials: AtomicU64,
+    partial_polls: AtomicU64,
 }
 
 #[derive(Default)]
@@ -174,6 +179,7 @@ impl LogosRestTransport {
             resubscribes: self.counters.resubscribes.load(Ordering::Relaxed),
             audits_run: self.counters.audits.load(Ordering::Relaxed),
             redials: self.counters.redials.load(Ordering::Relaxed),
+            partial_polls: self.counters.partial_polls.load(Ordering::Relaxed),
         }
     }
 
@@ -185,14 +191,28 @@ impl LogosRestTransport {
         path_and_query: &str,
         json_body: Option<Vec<u8>>,
     ) -> Result<Resp, NetErr> {
+        let mut resp = self.send(method, path_and_query, json_body).await?;
+        let status = resp.status().as_u16();
+        let body = Self::read_body(&mut resp).await?;
+        Ok(Resp { status, body })
+    }
+
+    async fn send(
+        &self,
+        method: Method,
+        path_and_query: &str,
+        json_body: Option<Vec<u8>>,
+    ) -> Result<reqwest::Response, NetErr> {
         let mut req = self
             .http
             .request(method, format!("{}{}", self.base, path_and_query));
         if let Some(b) = json_body {
             req = req.header("content-type", "application/json").body(b);
         }
-        let mut resp = req.send().await.map_err(describe_reqwest_error)?;
-        let status = resp.status().as_u16();
+        req.send().await.map_err(describe_reqwest_error)
+    }
+
+    async fn read_body(resp: &mut reqwest::Response) -> Result<Vec<u8>, NetErr> {
         let mut body = Vec::new();
         loop {
             match resp.chunk().await {
@@ -202,11 +222,66 @@ impl LogosRestTransport {
                     }
                     body.extend_from_slice(&c);
                 }
-                Ok(None) => break,
+                Ok(None) => return Ok(body),
                 Err(e) => return Err(describe_reqwest_error(e)),
             }
         }
-        Ok(Resp { status, body })
+    }
+
+    /// `GET` of the relay cache. The node has already DRAINED its cache when it answers, so a
+    /// frame dropped here is lost to the live path. The body is therefore parsed as it streams in:
+    /// one element is buffered at a time, a bad or oversized element is skipped and counted, and a
+    /// body that breaks off (truncated, connection error, size bound) still yields every complete
+    /// frame before the break. Only a poll with no frame at all and an error is an `Err`.
+    async fn poll_relay(
+        &self,
+        topic: &ContentTopic,
+        path: &str,
+    ) -> Result<Result<Vec<InboundFrame>, Resp>, TransportError> {
+        let unavailable = |e: NetErr| TransportError::Unavailable(format!("poll failed: {}", e.0));
+        let mut resp = self
+            .send(Method::GET, path, None)
+            .await
+            .map_err(unavailable)?;
+        let status = resp.status().as_u16();
+        if status != 200 {
+            let body = Self::read_body(&mut resp).await.map_err(unavailable)?;
+            return Ok(Err(Resp { status, body }));
+        }
+        let limit = max_relay_response_bytes(self.cfg.max_message_bytes);
+        let mut parser = RelayStream::new(topic, &self.pubsub, self.cfg.max_message_bytes);
+        let mut read = 0usize;
+        let mut net_err: Option<String> = None;
+        loop {
+            match resp.chunk().await {
+                Ok(Some(c)) => {
+                    read = read.saturating_add(c.len());
+                    if read > limit {
+                        net_err = Some(format!("relay poll response exceeds {limit} bytes"));
+                        break;
+                    }
+                    parser.feed(&c);
+                }
+                Ok(None) => break,
+                Err(e) => {
+                    net_err = Some(describe_reqwest_error(e).0);
+                    break;
+                }
+            }
+        }
+        let parsed = parser.finish();
+        self.counters
+            .malformed
+            .fetch_add(parsed.counts.malformed, Ordering::Relaxed);
+        let problem = net_err.or(parsed.error);
+        match problem {
+            None => Ok(Ok(parsed.frames)),
+            Some(_) if !parsed.frames.is_empty() => {
+                self.counters.partial_polls.fetch_add(1, Ordering::Relaxed);
+                Ok(Ok(parsed.frames))
+            }
+            Some(why) => Err(TransportError::Protocol(why)),
+        }
     }
 
     // ----- isolation audit -----------------------------------------------
@@ -423,19 +498,11 @@ impl Transport for LogosRestTransport {
             "/relay/v1/auto/messages/{}",
             encode_component(topic.as_str())
         );
-        let r = self
-            .call(Method::GET, &path, None)
-            .await
-            .map_err(|e| TransportError::Unavailable(format!("poll failed: {}", e.0)))?;
+        let r = match self.poll_relay(topic, &path).await? {
+            Ok(frames) => return Ok(frames),
+            Err(r) => r,
+        };
         match r.status {
-            200 => {
-                let (frames, counts) =
-                    parse_relay_messages(&r.body, topic, &self.pubsub, self.cfg.max_message_bytes)?;
-                self.counters
-                    .malformed
-                    .fetch_add(counts.malformed, Ordering::Relaxed);
-                Ok(frames)
-            }
             404 => {
                 // The node lost its subscriptions (restart): re-subscribe once.
                 self.post_subscribe(topic).await?;

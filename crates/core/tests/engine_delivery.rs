@@ -1066,5 +1066,29 @@ async fn published_acks_and_reacks_are_pruned_after_retention() {
     assert_eq!(b.n("outbox"), 0, "published acks must be pruned");
 }
 
+/// Review finding P1: the node's REST cache (1000 entries, drained on read) can hand over a burst
+/// of 192 frames in ONE poll. Live receive alone (no history sync step is ever run here) must put
+/// all of them in the inbox.
+#[tokio::test]
+async fn a_192_frame_burst_in_one_poll_reaches_the_inbox_without_history_sync() {
+    let w = World::new();
+    let a = w.agent("a", cfg_with(|c| c.delivery.max_outbox_pending = 1000));
+    let b = w.agent("b", cfg());
+    exchange(&a, &b).await;
+    a.node.step_receive().await.unwrap();
+    b.node.step_receive().await.unwrap();
+    b.transport.set_live_capacity(1000);
+    for i in 0..192 {
+        a.send(&b, &format!("burst {i}")).await;
+    }
+    for _ in 0..40 {
+        a.node.step_send().await.unwrap();
+    }
+    // exactly one receive step; step_history is never called
+    b.node.step_receive().await.unwrap();
+    assert_eq!(b.n("inbox"), 192);
+    assert_eq!(b.inbox().await.len(), 192);
+}
+
 #[allow(dead_code)]
 fn _t(_: &MockNetwork, _: &dyn Transport) {}
