@@ -325,7 +325,9 @@ pub enum ContactCmd {
     /// Add a contact from its public OpenPGP certificate, or merge an update into a known one.
     ///
     /// First contact pins the certificate's fingerprint: pass --expect with the
-    /// address obtained out of band. An update for a known address is merged into the
+    /// address obtained out of band. Without --expect the contact is added as
+    /// untrusted (a warning says how to verify and raise trust) and --trust
+    /// trusted is refused. An update for a known address is merged into the
     /// stored certificate (new subkeys, expiry, revocations); it never replaces it.
     Add {
         /// The certificate (base64url or ASCII armor), `@FILE` to read it from a file, or `-` for stdin.
@@ -336,7 +338,7 @@ pub enum ContactCmd {
         /// Local nickname.
         #[arg(long, value_name = "ALIAS")]
         alias: Option<String>,
-        /// Trust decision (default: trusted).
+        /// Trust decision (default: trusted with --expect, untrusted without it).
         #[arg(long, value_enum)]
         trust: Option<TrustArg>,
     },

@@ -231,8 +231,9 @@ pub struct AddContactInput {
     /// into the stored certificate, never substituted.
     #[schemars(length(min = 1, max = 16384))]
     pub contact_record: String,
-    /// Strongly recommended: the address you obtained from the peer out of band.
-    /// The call is rejected if the certificate is for a different address.
+    /// The address you obtained from the peer out of band. The call is rejected
+    /// if the certificate is for a different address. Without it a new contact
+    /// is added as `untrusted` (with a warning) and `trust: trusted` is refused.
     #[serde(default)]
     #[schemars(length(min = 4, max = 128), regex(pattern = ADDRESS_PATTERN))]
     pub expected_address: Option<String>,
@@ -240,7 +241,8 @@ pub struct AddContactInput {
     #[serde(default)]
     #[schemars(length(min = 1, max = 64))]
     pub alias: Option<String>,
-    /// Trust decision, default `trusted`. Only trust a contact whose address you
+    /// Trust decision, default `trusted` with `expected_address` and `untrusted`
+    /// without it (`trusted` then needs `expected_address`). Only trust a contact whose address you
     /// verified out of band: trusted senders can match triggers.
     #[serde(default)]
     pub trust: Option<TrustChoice>,
@@ -584,6 +586,10 @@ pub struct ContactOutput {
     pub kem_expires_at: Option<i64>,
     /// True when merging the certificate changed the stored one.
     pub updated: bool,
+    /// Present when the contact was added without `expected_address`: it is
+    /// `untrusted` until the user verifies the address out of band.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub warning: Option<String>,
 }
 
 impl From<core::ContactInfo> for ContactOutput {
@@ -596,6 +602,7 @@ impl From<core::ContactInfo> for ContactOutput {
             added_at: c.added_at,
             kem_expires_at: c.kem_expires_at,
             updated: c.updated,
+            warning: c.warning,
         }
     }
 }

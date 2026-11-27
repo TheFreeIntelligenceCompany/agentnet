@@ -208,6 +208,7 @@ impl Agent {
         self.node
             .add_contact(AddContactRequest {
                 contact_record: other.record.clone(),
+                expected_address: Some(other.addr.clone()),
                 ..Default::default()
             })
             .await

@@ -782,6 +782,7 @@ async fn migration_guard_by_default_and_full_state_copy_keeps_history() {
         let _ = n
             .add_contact(AddContactRequest {
                 contact_record: a.record.clone(),
+                expected_address: Some(a.addr.clone()),
                 ..Default::default()
             })
             .await;
@@ -837,6 +838,7 @@ async fn concurrent_identity_in_two_data_dirs_is_not_prevented() {
     node2
         .add_contact(AddContactRequest {
             contact_record: a.record.clone(),
+            expected_address: Some(a.addr.clone()),
             ..Default::default()
         })
         .await

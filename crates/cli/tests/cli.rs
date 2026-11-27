@@ -616,7 +616,7 @@ async fn mcp_stdio_is_a_thin_client_of_a_running_daemon() {
             .unwrap();
     // contacts via the CLI (blocking commands run on a blocking thread)
     let (ra, rb) = (contact_record(&a), contact_record(&b));
-    let (a2, b2, addr_b2) = (a.clone(), b.clone(), addr_b.clone());
+    let (a2, b2, addr_b2, addr_a2) = (a.clone(), b.clone(), addr_b.clone(), addr_a.clone());
     tokio::task::spawn_blocking(move || {
         let fa = write_file(&a2, "peer.json", &rb);
         let fb = write_file(&b2, "peer.json", &ra);
@@ -630,7 +630,16 @@ async fn mcp_stdio_is_a_thin_client_of_a_running_daemon() {
                 &addr_b2,
             ],
         );
-        ok(&b2, &["contact", "add", &format!("@{}", fb.display())]);
+        ok(
+            &b2,
+            &[
+                "contact",
+                "add",
+                &format!("@{}", fb.display()),
+                "--expect",
+                &addr_a2,
+            ],
+        );
     })
     .await
     .unwrap();
@@ -915,7 +924,16 @@ async fn contact_revoke_imports_a_tombstone_into_a_running_daemon() {
     let (a2, addr_b2) = (a.clone(), addr_b.clone());
     let out = tokio::task::spawn_blocking(move || {
         let fr = write_file(&a2, "peer.json", &record_b);
-        ok(&a2, &["contact", "add", &format!("@{}", fr.display())]);
+        ok(
+            &a2,
+            &[
+                "contact",
+                "add",
+                &format!("@{}", fr.display()),
+                "--expect",
+                &addr_b2,
+            ],
+        );
         let ft = write_file(&a2, "tomb.json", &rev);
         let first = json_ok(&a2, &["contact", "revoke", &format!("@{}", ft.display())]);
         let again = json_ok(&a2, &["contact", "revoke", &format!("@{}", ft.display())]);

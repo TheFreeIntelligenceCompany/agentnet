@@ -401,6 +401,7 @@ impl AgentApi for FakeAgent {
             kem_expires_at: None,
             updated,
             revoked: false,
+            warning: None,
         };
         s.contacts.insert(address, info.clone());
         Ok(info)

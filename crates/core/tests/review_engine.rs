@@ -390,3 +390,52 @@ async fn m1_a_stale_contact_update_does_not_resurrect_a_revoked_subkey() {
     }
     assert_eq!(opened, 1);
 }
+
+// ------------------------------------------------------------------- L9
+
+/// L9: a first contact without `expected_address` is not trusted and says how
+/// to verify it; `trusted` needs `expected_address`.
+#[tokio::test]
+async fn l9_first_contact_without_expected_address_is_untrusted() {
+    use agentnet_core::api::ErrorCode;
+    use agentnet_core::api::{AddContactRequest, AgentApi, Trust};
+    let w = World::new();
+    let a = w.agent("a", cfg());
+    let b = w.agent("b", cfg());
+    let c = w.agent("c", cfg());
+    let d = w.agent("d", cfg());
+    let req = |x: &Agent, expected: bool, trust: Option<Trust>| AddContactRequest {
+        contact_record: x.record.clone(),
+        expected_address: expected.then(|| x.addr.clone()),
+        trust,
+        ..Default::default()
+    };
+    // no expectation: untrusted, with a warning naming the address and the way up
+    let info = a.node.add_contact(req(&b, false, None)).await.unwrap();
+    assert_eq!(info.trust, Trust::Untrusted);
+    let warning = info.warning.unwrap();
+    assert!(
+        warning.contains(&b.addr) && warning.contains("--expect"),
+        "{warning}"
+    );
+    // asking for trusted without the expectation is refused, nothing is stored
+    let e = a
+        .node
+        .add_contact(req(&c, false, Some(Trust::Trusted)))
+        .await
+        .unwrap_err();
+    assert_eq!(e.code, ErrorCode::InvalidArgument);
+    assert_eq!(a.n("contacts"), 1);
+    // with it: trusted, no warning
+    let info = a.node.add_contact(req(&d, true, None)).await.unwrap();
+    assert_eq!(info.trust, Trust::Trusted);
+    assert!(info.warning.is_none());
+    // re-adding the first contact with the expectation does not downgrade or
+    // upgrade by itself; trust is raised explicitly
+    let again = a
+        .node
+        .add_contact(req(&b, true, Some(Trust::Trusted)))
+        .await
+        .unwrap();
+    assert_eq!(again.trust, Trust::Trusted);
+}

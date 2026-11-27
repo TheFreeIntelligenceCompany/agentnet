@@ -241,7 +241,9 @@ pub struct AddContactRequest {
     pub expected_address: Option<String>,
     #[serde(default)]
     pub alias: Option<String>,
-    /// Defaults to `trusted`.
+    /// Defaults to `trusted` when `expected_address` is given and to
+    /// `untrusted` for a new contact without it. `trusted` for a new contact
+    /// (or raising an existing one) requires `expected_address`.
     #[serde(default)]
     pub trust: Option<Trust>,
 }
@@ -260,6 +262,10 @@ pub struct ContactInfo {
     /// cannot be re-trusted.
     #[serde(default)]
     pub revoked: bool,
+    /// Set when the contact was added without `expected_address`: it is
+    /// untrusted until the user verifies the address out of band.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub warning: Option<String>,
 }
 
 /// Result of importing an identity-revocation tombstone.
