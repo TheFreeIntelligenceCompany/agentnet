@@ -158,3 +158,42 @@ async fn m3_a_mutated_duplicate_is_not_re_acked_but_a_byte_identical_retry_is() 
     assert_eq!(published_by(&w, &b).len(), before + 1);
     a.node.step_receive().await.unwrap();
 }
+
+// ------------------------------------------------------------------- L1
+
+/// L1 at engine level: a frame signed 10 minutes ahead is deferred (not marked
+/// seen, no `bad_signature` count) and accepted once the clock has caught up.
+#[tokio::test]
+async fn l1_a_frame_signed_in_the_future_is_deferred_then_accepted() {
+    let w = World::new();
+    let a = w.agent("a", cfg());
+    let b = w.agent("b", cfg());
+    a.node.step_receive().await.unwrap();
+    b.node.step_receive().await.unwrap();
+    exchange(&a, &b).await;
+    let id = load(&a);
+    let vc = VerifiedContact::parse_and_verify(&b.record, w.now_ms()).unwrap();
+    let env = Envelope::new(
+        id.address(),
+        vc.address,
+        "message",
+        "from the future".to_owned(),
+        w.now_ms(),
+        TTL,
+    )
+    .unwrap();
+    let ahead = 600_000;
+    let frame = seal(&id, &vc, &env, w.now_ms() + ahead, 150_000).unwrap();
+    inject(&w, &b, &frame);
+    let seen_before = b.n("transport_seen");
+    b.node.step_receive().await.unwrap();
+    assert_eq!(b.metric("open_error.from_future"), 1);
+    assert_eq!(b.metric("open_error.bad_signature"), 0);
+    assert_eq!(b.n("transport_seen"), seen_before, "a deferred frame is not marked seen");
+    assert!(b.inbox().await.is_empty());
+    // the history sync (or a re-poll) offers it again after the clock caught up
+    w.advance(ahead);
+    inject(&w, &b, &frame);
+    b.node.step_receive().await.unwrap();
+    assert_eq!(b.inbox().await.len(), 1);
+}

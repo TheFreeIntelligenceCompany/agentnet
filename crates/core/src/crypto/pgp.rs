@@ -26,6 +26,7 @@ use openpgp::cert::{CertRevocationBuilder, SubkeyRevocationBuilder};
 use openpgp::crypto::{KeyPair, SessionKey};
 use openpgp::packet::key::{Key6, SecretParts, SubordinateRole};
 use openpgp::packet::prelude::*;
+use openpgp::packet::key;
 use openpgp::packet::Tag;
 use openpgp::parse::stream::*;
 use openpgp::parse::{Dearmor, PacketParserBuilder, PacketParserResult, Parse};
@@ -221,12 +222,17 @@ fn issued_by_primary(s: &Signature, primary: &KeyHandle) -> bool {
     s.get_issuers().iter().any(|h| h.aliases(primary))
 }
 
-/// Keep only what AgentNet uses of a certificate: the primary key, subkeys,
-/// and the primary's own direct-key / key-revocation signatures and the
-/// subkeys' own binding / revocation signatures. User IDs, user attributes,
-/// third-party certifications, designated-revoker revocations, unknown packets
-/// and markers are dropped (a certificate-flooding and third-party-
-/// certification defence; `docs/threat-model.md`).
+/// Rebuild a certificate from validated components only (review finding L3):
+/// the primary key, the subkeys, and the primary's own direct-key / key-revocation
+/// signatures and the subkeys' own binding / revocation signatures, each of which
+/// must VERIFY cryptographically against the primary key (an invalid signature that
+/// merely claims the primary as issuer is dropped). The unhashed subpacket area of
+/// every kept signature is cleared (it is not covered by the signature, so anyone
+/// can fill it: bloat or smuggling). User IDs, user attributes, third-party
+/// certifications, designated-revoker revocations, unknown packets and markers are
+/// dropped (a certificate-flooding and third-party-certification defence;
+/// `docs/threat-model.md`). The result is canonical: a clean certificate and the
+/// same certificate with junk added sanitize to the same bytes.
 pub(crate) fn sanitize(cert: Cert) -> Result<Cert, ContactError> {
     #[derive(PartialEq, Clone, Copy)]
     enum Ctx {
@@ -235,7 +241,9 @@ pub(crate) fn sanitize(cert: Cert) -> Result<Cert, ContactError> {
         Skip,
     }
     let primary_fp = cert.fingerprint();
-    let primary: KeyHandle = primary_fp.clone().into();
+    let primary_handle: KeyHandle = primary_fp.clone().into();
+    let primary = cert.primary_key().key().clone();
+    let mut sub: Option<Key<key::PublicParts, key::SubordinateRole>> = None;
     let mut ctx = Ctx::Skip;
     let mut out: Vec<Packet> = Vec::new();
     for pkt in cert.into_packets() {
@@ -244,23 +252,33 @@ pub(crate) fn sanitize(cert: Cert) -> Result<Cert, ContactError> {
                 ctx = Ctx::Primary;
                 out.push(pkt);
             }
-            Packet::PublicSubkey(_) => {
+            Packet::PublicSubkey(k) => {
                 ctx = Ctx::Sub;
-                out.push(pkt);
+                sub = Some(k.clone());
+                out.push(Packet::PublicSubkey(k));
             }
-            Packet::Signature(ref s) => {
-                let ok = matches!(
-                    (ctx, s.typ()),
-                    (
-                        Ctx::Primary,
-                        SignatureType::DirectKey | SignatureType::KeyRevocation
-                    ) | (
-                        Ctx::Sub,
-                        SignatureType::SubkeyBinding | SignatureType::SubkeyRevocation
-                    )
-                );
-                if ok && issued_by_primary(s, &primary) {
-                    out.push(pkt);
+            Packet::Signature(mut s) => {
+                if !issued_by_primary(&s, &primary_handle) {
+                    continue;
+                }
+                let ok = match (ctx, s.typ()) {
+                    (Ctx::Primary, SignatureType::DirectKey) => {
+                        s.verify_direct_key(&primary, &primary).is_ok()
+                    }
+                    (Ctx::Primary, SignatureType::KeyRevocation) => {
+                        s.verify_primary_key_revocation(&primary, &primary).is_ok()
+                    }
+                    (Ctx::Sub, SignatureType::SubkeyBinding) => sub
+                        .as_ref()
+                        .is_some_and(|k| s.verify_subkey_binding(&primary, &primary, k).is_ok()),
+                    (Ctx::Sub, SignatureType::SubkeyRevocation) => sub
+                        .as_ref()
+                        .is_some_and(|k| s.verify_subkey_revocation(&primary, &primary, k).is_ok()),
+                    _ => false,
+                };
+                if ok {
+                    s.unhashed_area_mut().clear();
+                    out.push(Packet::Signature(s));
                 }
             }
             // secret keys never get here (refused earlier); everything else is dropped
@@ -732,6 +750,18 @@ impl VerificationHelper for Helper<'_> {
                 } else {
                     Err(self.reject(OpenError::UnknownSender))
                 }
+            }
+            // A signature made after the verification time (a sender whose clock
+            // is ahead by more than the permitted skew) is "from the future",
+            // which the engine defers and re-evaluates, not a bad signature
+            // (review finding L1).
+            Err(VerificationError::BadSignature { error, .. })
+                if matches!(
+                    error.downcast_ref::<openpgp::Error>(),
+                    Some(openpgp::Error::NotYetLive(_))
+                ) =>
+            {
+                Err(self.reject(OpenError::FromFuture))
             }
             Err(_) => Err(self.reject(OpenError::BadSignature)),
         }

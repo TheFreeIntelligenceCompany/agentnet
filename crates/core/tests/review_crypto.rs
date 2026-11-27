@@ -505,3 +505,70 @@ fn m3_an_ack_has_the_size_of_the_smallest_ordinary_message() {
         let _ = cb;
     }
 }
+
+// ------------------------------------------------------------------- L1
+
+/// L1: a sender whose clock is ahead has a signature time in the future. Within
+/// the permitted skew the frame opens; beyond it the frame is "from the future"
+/// (deferred and re-evaluated later), not a bad signature.
+#[test]
+fn l1_a_signature_time_ahead_of_the_clock_is_from_future_not_bad_signature() {
+    let (a, b) = (ident(), ident());
+    let dir = Pinned(vec![contact_at(&a, NOW + 600_000)]);
+    // the envelope's created_at is honest (NOW); only the signature time is ahead
+    for (ahead_ms, expect) in [
+        (0, None),
+        (60_000, None),
+        (119_000, None),
+        (121_000, Some(OpenError::FromFuture)),
+        (600_000, Some(OpenError::FromFuture)),
+    ] {
+        let f = OpenPgpProtection
+            .seal(
+                &a,
+                &contact_at(&b, NOW + 600_000),
+                &env(&a, &b, "x", NOW),
+                NOW + ahead_ms,
+                MAX_FRAME,
+            )
+            .unwrap();
+        let r = OpenPgpProtection.open(&b, &f, NOW, &lim(), &dir);
+        match expect {
+            None => {
+                r.unwrap_or_else(|e| panic!("signature {ahead_ms} ms ahead: {e:?}"));
+            }
+            Some(e) => assert_eq!(r.unwrap_err(), e, "signature {ahead_ms} ms ahead"),
+        }
+    }
+}
+
+// ------------------------------------------------------------------- L3
+
+/// L3: junk in unhashed subpacket areas and corrupted copies of binding
+/// signatures that name the primary as issuer are dropped: the stored form of
+/// the bloated certificate is byte-identical to the clean one, so a bloated copy
+/// cannot use up the size cap.
+#[test]
+fn l3_unhashed_junk_and_invalid_signatures_do_not_survive_sanitising() {
+    use agentnet_core::crypto::testing as t;
+    let mut b = ident();
+    b.rotate_kem_with(NOW + 10_000, NOW + 10_000, None, true).unwrap();
+    let clean = b.contact_record().to_document();
+    let bloated = t::public_cert_bloated(&b, 4, 2);
+    assert!(
+        bloated.len() > 3 * clean.len(),
+        "the test input must be much larger ({} vs {})",
+        bloated.len(),
+        clean.len()
+    );
+    let t0 = NOW + 20_000;
+    let vc_clean = VerifiedContact::parse_and_verify(&clean, t0).unwrap();
+    let vc_bloated = VerifiedContact::parse_and_verify(&bloated, t0).unwrap();
+    assert!(
+        vc_bloated.document() == vc_clean.document(),
+        "the stored form of the bloated certificate differs from the clean one"
+    );
+    // and merging the bloated copy into a stored contact changes nothing
+    let merged = vc_clean.merge(&vc_bloated, t0).unwrap();
+    assert!(merged.document() == vc_clean.document());
+}

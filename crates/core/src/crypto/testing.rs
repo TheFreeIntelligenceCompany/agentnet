@@ -656,3 +656,51 @@ pub fn prefix_signature_form(msg: &[u8]) -> Vec<u8> {
     out.extend_from_slice(&lit.expect("literal").to_vec().expect("serialize"));
     out
 }
+
+/// `id`'s public certificate with its signatures bloated: `junk` unhashed
+/// subpackets of 200 bytes added to every signature (not covered by the
+/// signature, so they stay valid) and `copies` corrupted copies of every
+/// binding signature that still name the primary as issuer. Document form.
+pub fn public_cert_bloated(id: &Identity, junk: usize, copies: usize) -> String {
+    use openpgp::packet::signature::subpacket::{Subpacket, SubpacketValue};
+    let cert = id.public_cert();
+    let mut out: Vec<Packet> = Vec::new();
+    for pkt in cert.into_packets() {
+        match pkt {
+            Packet::Signature(mut s) => {
+                for i in 0..junk {
+                    let _ = s.unhashed_area_mut().add(
+                        Subpacket::new(
+                            SubpacketValue::Unknown {
+                                tag: openpgp::packet::signature::subpacket::SubpacketTag::Private(
+                                    100 + (i as u8 % 8),
+                                ),
+                                body: vec![0xAB; 200],
+                            },
+                            false,
+                        )
+                        .expect("subpacket"),
+                    );
+                }
+                let mut bad: Vec<Packet> = Vec::new();
+                if matches!(s.typ(), SignatureType::SubkeyBinding) {
+                    for _ in 0..copies {
+                        // flip the last bit of the signature value: still parses,
+                        // still names the primary as issuer, no longer verifies
+                        let mut raw = Packet::from(s.clone()).to_vec().expect("serialize");
+                        let last = raw.len() - 1;
+                        raw[last] ^= 0x01;
+                        if let Ok(p) = <Packet as Parse<Packet>>::from_bytes(&raw) {
+                            bad.push(p);
+                        }
+                    }
+                }
+                out.push(Packet::Signature(s));
+                out.extend(bad);
+            }
+            other => out.push(other),
+        }
+    }
+    let c = Cert::from_packets(out.into_iter()).expect("cert");
+    super::protection::b64(&c.to_vec().expect("serialize"))
+}
