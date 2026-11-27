@@ -108,8 +108,12 @@ impl VerifiedContact {
     pub fn parse_and_verify(doc: &str, now_ms: i64) -> Result<Self, ContactError> {
         let c = Self::parse_and_verify_allow_expired(doc, now_ms)?;
         if c.revocation(now_ms).is_none() {
-            pgp::check_primary_usable(&c.cert, now_ms)?;
-            if !pgp::has_live_kem(&c.cert, now_ms) {
+            // a certificate made by a peer whose clock runs a little ahead is not "not yet valid"
+            let t = now_ms
+                .max(c.created_at.saturating_add(2_000))
+                .min(now_ms.saturating_add(MAX_CREATED_AT_FUTURE_MS));
+            pgp::check_primary_usable(&c.cert, t)?;
+            if !pgp::has_live_kem(&c.cert, t) {
                 return Err(ContactError::NoEncryptionKey);
             }
         }

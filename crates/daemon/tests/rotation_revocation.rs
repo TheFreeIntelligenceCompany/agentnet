@@ -29,14 +29,13 @@ async fn offline_rotation_with_revoke_is_announced_at_the_next_start() {
     .await;
 
     b.daemon.take().unwrap().shutdown().await;
-    let info = offline::rotate_kem(&b.path, Some(1), true).unwrap();
-    assert_eq!(info.key_epoch, 2);
+    let info = offline::rotate_kem(&b.path, Some(1), true, None).unwrap();
+    assert!(info.kem_expires_at.is_some());
     b.daemon = Some(w.start(&b.path, cfg()).await);
 
-    wait_until("A learned B's new record", || async {
-        contact_of(&a, &b).await.key_epoch == 2
-    })
-    .await;
+    // A either merges the contact.update before sending (seals to the new subkey) or
+    // re-seals the pending message when it arrives; the old subkey is destroyed, so
+    // delivery below proves A learned the new certificate.
     let m1 = a.send(&b, "after").await;
     wait_until("delivery to the rotated key", || async {
         a.remote.get_message_status(m1.clone()).await.unwrap().state == DeliveryState::Delivered
@@ -71,7 +70,7 @@ async fn a_revoked_identity_only_delivers_its_tombstone() {
         offline::show_revocation(&b.path).unwrap().as_deref(),
         Some(rep.document.as_str())
     );
-    assert!(offline::rotate_kem(&b.path, None, false).is_err());
+    assert!(offline::rotate_kem(&b.path, None, false, None).is_err());
     b.daemon = Some(w.start(&b.path, cfg()).await);
 
     // B reports it and refuses to send

@@ -83,10 +83,17 @@ impl Node {
                 "this identity has been revoked; it can only deliver its revocation notice",
             ));
         }
-        let recipient: Address = req
-            .recipient
-            .parse()
-            .map_err(|_| ApiError::invalid("recipient is not a valid agent address"))?;
+        let recipient: Address = req.recipient.parse().map_err(|e| {
+            if req.recipient.starts_with("an1") {
+                ApiError::invalid(
+                    "an1 addresses belong to the retired HPKE format; add the contact's new \
+                     certificate (an2 address) with `contact add --expect`",
+                )
+            } else {
+                let _ = e;
+                ApiError::invalid("recipient is not a valid agent address")
+            }
+        })?;
         let mtype = req.message_type.as_deref().unwrap_or(MESSAGE_TYPE_MESSAGE);
         match mtype {
             MESSAGE_TYPE_MESSAGE | MESSAGE_TYPE_TASK_REQUEST | MESSAGE_TYPE_TASK_RESULT => {}

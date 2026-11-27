@@ -56,7 +56,8 @@ pub(crate) fn policy() -> StandardPolicy<'static> {
 
 /// Unix milliseconds to a `SystemTime` (negative values clamp to the epoch).
 pub(crate) fn st(ms: i64) -> SystemTime {
-    UNIX_EPOCH + Duration::from_millis(u64::try_from(ms).unwrap_or(0))
+    // OpenPGP times are 32-bit seconds (until 2106): clamp instead of overflowing.
+    UNIX_EPOCH + Duration::from_millis(u64::try_from(ms.clamp(0, 4_000_000_000_000)).unwrap_or(0))
 }
 
 /// `SystemTime` to Unix milliseconds.

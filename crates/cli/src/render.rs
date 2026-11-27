@@ -22,7 +22,7 @@ pub fn present_error(dir: &Path, msg: &str) -> String {
     let contact_add = format!("`{}`", cmd(dir, "contact add @<file> --expect <address>"));
     if msg.contains("recipient is not a known contact") {
         return format!(
-            "Recipient is not a known contact. Add their signed record with {contact_add}."
+            "Recipient is not a known contact. Add their public certificate with {contact_add}."
         );
     }
     msg.replace(
@@ -312,7 +312,7 @@ mod hint_tests {
         );
         assert_eq!(
             m,
-            "Recipient is not a known contact. Add their signed record with `agentnet --data-dir '/home/a b/.agentnet' contact add @<file> --expect <address>`."
+            "Recipient is not a known contact. Add their public certificate with `agentnet --data-dir '/home/a b/.agentnet' contact add @<file> --expect <address>`."
         );
     }
 
@@ -320,7 +320,7 @@ mod hint_tests {
     fn expired_key_hint_names_the_cli_command() {
         let m = present_error(
             Path::new("/d"),
-            "the recipient's contact record has an expired encryption key; ask them for a fresh record and import it with add_contact",
+            "the recipient's certificate has no usable encryption subkey (all expired or revoked); ask them for a fresh certificate and import it with add_contact",
         );
         assert!(
             m.ends_with(
