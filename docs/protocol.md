@@ -78,6 +78,16 @@ Acceptance (`crypto::contact`, `crypto::pgp`):
    exceed 4096 bytes.
 4. For a new contact: the primary must be alive and not revoked and at least one
    encryption subkey must be live (bound, not expired, not revoked, v6 X25519).
+5. A certificate whose **primary key is revoked** is still parsed (it is how a
+   revocation travels); it is treated as a revocation of that address, not as a
+   usable contact, and revocations made by designated revokers are ignored.
+6. **Future-dated certificates.** Signatures dated ahead of the local clock are
+   accepted only up to `MAX_CREATED_AT_FUTURE_MS` (`crypto/contact.rs`), 120 s:
+   the default `clock_skew_s`, the same tolerance the frame freshness check
+   applies, so a peer whose clock runs ahead by no more than the permitted skew
+   can still rotate. It is a constant and not the configured `clock_skew_s`
+   because the certificate parsers have no access to the node configuration
+   (raising `clock_skew_s` does not widen it). Before 2026-11-26 it was 24 h.
 
 **Updates are merges, never replacements** (`VerifiedContact::merge`): the
 incoming certificate must have the same primary key (otherwise

@@ -3,6 +3,7 @@ upstream/
 *.db
 *.db-wal
 *.db-shm
+!crates/core/tests/fixtures/**/*.db
 .DS_Store
 *.key
 results/**/data/

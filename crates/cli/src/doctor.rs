@@ -155,6 +155,50 @@ fn now_ms() -> i64 {
         .unwrap_or(0)
 }
 
+/// Days before expiry at which `doctor` starts to warn about the encryption subkey.
+pub const KEM_EXPIRY_WARN_DAYS: i64 = 30;
+
+/// The live encryption subkey's expiry. Nothing rotates it automatically: a
+/// subkey that has expired makes the agent unreachable for new senders.
+/// `None` when the subkey never expires (nothing to report).
+pub fn kem_expiry_check(dir: &Path, expires_at_ms: Option<i64>, now_ms: i64) -> Option<Check> {
+    let exp = expires_at_ms?;
+    let fix = format!(
+        "rotate it with the daemon stopped: `{}`",
+        agentnet_command(dir, "identity rotate-kem")
+    );
+    let day_ms = 86_400_000;
+    let left = exp - now_ms;
+    Some(if left <= 0 {
+        check(
+            "encryption subkey",
+            Level::Fail,
+            format!(
+                "the encryption subkey expired {} day(s) ago: new senders cannot encrypt to this agent",
+                (-left) / day_ms
+            ),
+            fix,
+        )
+    } else if left < KEM_EXPIRY_WARN_DAYS * day_ms {
+        check(
+            "encryption subkey",
+            Level::Warn,
+            format!(
+                "the encryption subkey expires in {} day(s); nothing rotates it automatically",
+                left / day_ms
+            ),
+            fix,
+        )
+    } else {
+        check(
+            "encryption subkey",
+            Level::Ok,
+            format!("expires in {} day(s)", left / day_ms),
+            "",
+        )
+    })
+}
+
 /// Probe of the relay Store path through what the daemon already reports: the
 /// time of the last history pass that read every page without a Store failure
 /// (`last_history_sync_at`). The watermark does not advance after a failed
@@ -379,6 +423,7 @@ pub async fn run(dir: &Path) -> Vec<Check> {
                 format!("address {}", i.agent_id),
                 "",
             ));
+            out.extend(kem_expiry_check(dir, i.kem_expires_at, now_ms()));
             Some(i)
         }
         Err(e) => {
@@ -795,6 +840,31 @@ mod tests {
         assert_eq!(
             history_sync_check(Some(now - 1000), now, 15, true).level,
             Level::Warn
+        );
+    }
+
+    #[test]
+    fn kem_expiry_levels() {
+        let d = Path::new("/data/agent");
+        let now = 1_000_000_000_000;
+        let day = 86_400_000;
+        assert!(kem_expiry_check(d, None, now).is_none());
+        let ok = kem_expiry_check(d, Some(now + 31 * day), now).unwrap();
+        assert_eq!(ok.level, Level::Ok);
+        let warn = kem_expiry_check(d, Some(now + 29 * day), now).unwrap();
+        assert_eq!(warn.level, Level::Warn);
+        assert!(warn.detail.contains("29 day"), "{}", warn.detail);
+        assert!(
+            warn.fix.contains("identity rotate-kem") && warn.fix.contains("--data-dir"),
+            "{}",
+            warn.fix
+        );
+        let fail = kem_expiry_check(d, Some(now - 2 * day), now).unwrap();
+        assert_eq!(fail.level, Level::Fail);
+        assert!(fail.fix.contains("identity rotate-kem"), "{}", fail.fix);
+        assert_eq!(
+            kem_expiry_check(d, Some(now), now).unwrap().level,
+            Level::Fail
         );
     }
 

@@ -17,10 +17,32 @@ use agentnet_transport::mock::MockNetwork;
 use agentnet_transport::Transport;
 use common::cfg;
 
+/// The fixture database is a binary that `.gitignore` would drop by its `*.db`
+/// rule (a negation rule keeps it). Fail with a clear message if it is missing.
+fn assert_fixture_present(dir: &std::path::Path) {
+    for f in ["agentnet.db", "identity.json", "manifest.json", "README.md"] {
+        assert!(
+            dir.join(f).is_file(),
+            "legacy-v3 fixture file {f} is missing from {}: it must be committed (the database needs \
+             `git add -f` unless .gitignore has the negation rule); regenerate it as described in \
+             tests/fixtures/legacy-v3/README.md",
+            dir.display()
+        );
+    }
+}
+
+#[test]
+fn the_legacy_fixture_files_are_all_present() {
+    assert_fixture_present(
+        &PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/legacy-v3"),
+    );
+}
+
 fn fixture() -> (tempfile::TempDir, PathBuf, serde_json::Value) {
     let src = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/legacy-v3");
     let dir = tempfile::tempdir().unwrap();
     let db = dir.path().join("agentnet.db");
+    assert_fixture_present(&src);
     std::fs::copy(src.join("agentnet.db"), &db).unwrap();
     let manifest: serde_json::Value =
         serde_json::from_slice(&std::fs::read(src.join("manifest.json")).unwrap()).unwrap();

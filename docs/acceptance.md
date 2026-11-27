@@ -11,6 +11,8 @@ Everything is produced by one script, `scripts/acceptance.sh`, plus the Rust dri
 
 ## Latest result
 
+> **Note (2026-11-26, ADR 0004).** Message protection changed on 2026-11-26 from HPKE + Ed25519 (ADR 0002, `an1` addresses) to RFC 9580 OpenPGP (ADR 0004, `an2` addresses). All runs recorded in this file (runs 1 to 7, addresses such as `an1...`) were made on the ADR 0002 tree and are kept as dated records. The acceptance script was **not re-run on the OpenPGP tree** (UNTESTED there until a new run is recorded).
+
 Run 7 (`results/acceptance/20261126T180008Z/SUMMARY.md`), executed by the lead on the final tree (git `0d3258f` plus the
 script fix described under run 5: both external reviews' fixes, signed advert topics, relay `tcp_retries2=6`),
 `FRESH_TOPOLOGY=1`: **52 PASS, 0 FAIL, 1 UNTESTED (Tailscale: this script only looks for a local `tailscale` CLI; the
