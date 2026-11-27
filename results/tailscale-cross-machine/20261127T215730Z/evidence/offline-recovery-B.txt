@@ -1,0 +1,17 @@
+22:02:56.866Z stop node B
+stopped
+22:02:58.516Z 5 queued while B node is down
+{"state":"sent","attempts":4,"last_error":null}
+{"state":"sent","attempts":3,"last_error":null}
+{"state":"sent","attempts":3,"last_error":null}
+{"state":"sent","attempts":3,"last_error":null}
+{"state":"sent","attempts":3,"last_error":null}
+22:03:11.457Z start node B
+started
+22:03:12.869Z delivered=0/5
+22:03:15.328Z delivered=5/5
+{"state":"delivered","attempts":4,"delivered_s_after_start_issued":3.2309999465942383}
+{"state":"delivered","attempts":3,"delivered_s_after_start_issued":3.25}
+{"state":"delivered","attempts":3,"delivered_s_after_start_issued":3.2699999809265137}
+{"state":"delivered","attempts":4,"delivered_s_after_start_issued":3.296999931335449}
+{"state":"delivered","attempts":3,"delivered_s_after_start_issued":3.371000051498413}

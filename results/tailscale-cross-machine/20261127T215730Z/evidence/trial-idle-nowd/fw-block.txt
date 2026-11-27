@@ -1,0 +1,3 @@
+       1      155 DROP       tcp  --  *      *       <TS_IP_A>       <TS_IP_B>       tcp dpt:60000 /* an-ts */
+       0        0 ACCEPT     tcp  --  *      *       <TS_IP_B>       <TS_IP_B>       tcp dpt:60000 /* an-ts */
+       0        0 ACCEPT     tcp  --  *      *       172.28.66.22         <TS_IP_B>       tcp dpt:60000 /* an-ts */

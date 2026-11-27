@@ -1,0 +1,9 @@
+# versions 2026-11-27T23:11:02Z
+repo HEAD tested on box: 301b12d3b0f71909cfa32c64e851234f650a45dc
+Mac binary: agentnet 0.1.0 (built from 481eb15; HEAD 301b12d only adds a log file)
+box binary: agentnet 0.1.0
+box: Linux 6.18.60-instabox x86_64;Docker version 29.8.2, build 7fc2dff;rustc 1.99.0 (b940084d7 2026-09-28);1.104.7;
+Mac: 26.6.2 arm64; tailscale 1.102.3; colima docker: 29.5.2
+R tcp_retries2: 6  (box host default: 15)
+node image: sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73 wakuorg/nwaku@sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73
+sequoia-openpgp: name = "sequoia-openpgp" version = "2.5.0" 

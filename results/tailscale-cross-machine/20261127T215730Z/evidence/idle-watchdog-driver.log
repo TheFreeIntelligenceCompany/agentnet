@@ -1,0 +1,10 @@
+22:44:37.866Z BLOCK 1 start (30 s)
+22:44:39.080Z block rule installed (command returned)
+22:45:12.426Z RESTORED 1 (command returned)
+22:45:24.563Z BLOCK 2 start (75 s)
+22:45:25.448Z block rule installed (command returned)
+22:46:42.513Z RESTORED 2 (command returned)
+22:46:43.201Z probe message queued right after restore 2: ecb44768-f089-4d0f-b80a-3732fd964ffe
+22:46:50.301Z message delivered
+22:46:50.686Z done waiting
+22:54:25.280Z mac sampler done

@@ -1,0 +1,9 @@
+# Manual `ss -tnoi` in R's network namespace (sudo nsenter -t <R pid> -n ss -tnoi state all 'sport = :60000') at 22:34:46Z during trial-idle-after-restore.
+# The path had been restored at 22:31:35.9Z; the Mac's node could not get a connection (REST: CannotConnect, status of the queued probe: queued, last_error NoPeersToPublish).
+# The ESTAB socket to the Mac (docker-bridge gateway 172.28.66.1, source port 50330, the one R reported as 'Connected' for the Mac's peer id) has NO timer, nothing in
+# flight, lastsnd = lastrcv = 275.9 s (last packet 22:30:10Z, just before the second drop started at 22:30:19Z). The other ESTAB socket (50684) is node B, healthy.
+ESTAB 0 0 172.28.66.10:60000 172.28.66.1:50330
+  ts sack ecn ecnseen cubic wscale:6,10 rto:280 rtt:76.408/5.685 ... bytes_sent:44762 bytes_retrans:138 bytes_acked:44624 bytes_received:42709 ... lastsnd:275900 lastrcv:275900 lastack:275828 ... retrans:0/3
+ESTAB 0 0 172.28.66.10:60000 172.28.66.1:50684       (node B, healthy: lastsnd:3440 lastrcv:4148)
+# R's peer list at that moment: Mac's peer id Connected via 172.28.66.1:50330 (stale), and the Mac's node: connected=CannotConnect.
+# The 11 TIME-WAIT entries in the same listing are the Mac's refused/closed new connection attempts (R closes them).

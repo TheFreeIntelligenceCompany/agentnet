@@ -1,0 +1,13 @@
+22:16:02.441Z BLOCK start (raw PREROUTING DROP for Mac tailnet IP -> tcp/60000), 75 s
+       1      155 DROP       tcp  --  *      *       <TS_IP_A>       <TS_IP_B>       tcp dpt:60000 /* an-ts */
+       0        0 ACCEPT     tcp  --  *      *       <TS_IP_B>       <TS_IP_B>       tcp dpt:60000 /* an-ts */
+       0        0 ACCEPT     tcp  --  *      *       172.28.66.22         <TS_IP_B>       tcp dpt:60000 /* an-ts */
+22:16:04.284Z block rule installed (box clock at command return)
+       0        0 ACCEPT     tcp  --  *      *       <TS_IP_A>       <TS_IP_B>       tcp dpt:60000 /* an-ts */
+       0        0 ACCEPT     tcp  --  *      *       <TS_IP_B>       <TS_IP_B>       tcp dpt:60000 /* an-ts */
+       0        0 ACCEPT     tcp  --  *      *       172.28.66.22         <TS_IP_B>       tcp dpt:60000 /* an-ts */
+22:17:21.718Z RESTORED
+22:17:22.187Z probe message queued right after restore: b04d1411-d17c-4eab-8000-ac5f171addd5
+22:17:28.477Z message delivered
+22:17:28.524Z done waiting
+22:28:49.760Z mac sampler done

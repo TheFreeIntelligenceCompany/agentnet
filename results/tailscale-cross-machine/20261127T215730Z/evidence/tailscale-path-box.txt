@@ -1,0 +1,9 @@
+# box 2026-11-27T22:00:37Z
+<TS_IP_A>   <mac-device>  <peer>@  macOS  active; direct [<pub-v6>]:41641, tx 40076 rx 41108  
+pong from <mac-device> (<TS_IP_A>) via [<pub-v6>]:41641 in 80ms
+	* UDP: true
+	* IPv4: yes
+	* IPv6: yes
+	* MappingVariesByDestIP: false
+	* Nearest DERP: Seattle
+1.104.7

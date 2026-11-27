@@ -1,0 +1,4 @@
+# A inbox (expect 1 first-BtoA + 20 burstBA)
+records=21 unique_ids=21 burstBA=20
+# B inbox (first-AtoB + mcp + 20 burstAB = 22)
+records=22 unique_ids=22 burstAB=20

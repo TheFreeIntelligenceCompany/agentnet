@@ -1,0 +1,5 @@
+# node B
+{"multiaddr":"/ip4/<TS_IP_B>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV","connected":"Connected"}
+# R
+{"multiaddr":"/ip4/172.28.66.1/tcp/62003/p2p/16Uiu2HAmGS2YsMyWiQWCZq85Fvb5b4LaamhohgeDtA3TCpX7qgj9","connected":"Connected"}
+{"multiaddr":"/ip4/172.28.66.1/tcp/44518/p2p/16Uiu2HAmGGTNKYN2QDGjGj2HK1fXFUZ4js6P5K1VmMvEofo4MfAZ","connected":"Connected"}

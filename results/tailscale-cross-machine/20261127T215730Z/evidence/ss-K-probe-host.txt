@@ -1,0 +1,10 @@
+iproute2: ss utility, iproute2-6.15.0  kernel: 6.18.60-instabox
+## A: filter that matches nothing
+exit=0 stderr=[RTNETLINK answers: Invalid argument]
+## B: real established pair on loopback, kill server-side socket (sport 45678)
+Recv-Q Send-Q Local Address:Port  Peer Address:Port 
+0      0          127.0.0.1:46866    127.0.0.1:45678
+0      0          127.0.0.1:45678    127.0.0.1:46866
+exit=0 stderr=[RTNETLINK answers: Invalid argument]
+after:
+Recv-Q Send-Q Local Address:Port Peer Address:Port

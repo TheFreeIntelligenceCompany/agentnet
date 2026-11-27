@@ -1,0 +1,8 @@
+# capture on the box, ~40 s: tcpdump -i eth0 'tcp port 60000 or udp port 41641' and -i tailscale0 'tcp port 60000'
+tailscale0 tcp/60000 packets captured: 205
+eth0 (public/primary interface) tcp/60000 packets: 0 (/tmp/eth0-tcp60000.txt had 0 lines)
+eth0 udp/41641 (WireGuard) packets:      270
+eth0 sample (first 3 WireGuard packets):
+22:05:50.267249 IP6 <pub-v6>.41641 > <pub-v6>.41641: UDP, length 128
+22:05:50.267409 IP6 <pub-v6>.41641 > <pub-v6>.41641: UDP, length 288
+22:05:50.270472 IP6 <pub-v6>.41641 > <pub-v6>.41641: UDP, length 96

@@ -1,0 +1,14 @@
+# Wire sizes (b): TCP payload bytes of the larger libp2p/noise records on tailscale0, direction as seen from the Mac (A) and R.
+# Sources: packet-capture-tailscale0.txt (full tcpdump text of the ~40 s capture). Sends at (box clock, epoch s): A->B one-char "x" at 157.45 / 163.72 / 170.46 (command start), B->A one-char "y" at 177.06.
+# Data packets with payload >= 1000 B, grouped (one 2303-byte record appears as 2303 or as 1228+1075 when tcpdump saw the TCP segments before coalescing):
+#   158.560  A->R 1228+1075 = 2303   message "x" #1 (smallest message, 1 char)
+#   158.805  R->A 2303               authenticated delivery receipt (ack) from B for #1, forwarded by R
+#   165.475  A->R 2303               message "x" #2
+#   165.553  R->A 2303               ack for #2
+#   172.613  A->R 2303               message "x" #3
+#   172.802  R->A 2303               ack for #3
+#   177.627  R->A 2303               message "y" from B arriving at A (smallest message, B->A)
+#   178.186  A->R 2303               A's ack for "y"
+# Result: ack == smallest message == 2303 bytes of TCP payload on the wire (same size class), in both directions.
+# Not explained by us (listed, not hidden): A->R 2303 at 167.570 and 174.185 and R->A 2456+2217 at 167.055, 2456x3+1917 at 183.10 (the latter look like periodic Store-sync query responses, 15 s interval; the former two are additional 2303-byte records from A whose cause was not identified).
+# All other packets are small (30-139 B): libp2p ping, gossipsub heartbeat/IHAVE, yamux window updates.

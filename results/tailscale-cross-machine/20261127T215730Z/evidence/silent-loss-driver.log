@@ -1,0 +1,13 @@
+22:08:11.613Z BLOCK start (raw PREROUTING DROP for Mac tailnet IP -> tcp/60000), 120 s
+       0        0 DROP       tcp  --  *      *       <TS_IP_A>       <TS_IP_B>       tcp dpt:60000 /* an-ts */
+       0        0 ACCEPT     tcp  --  *      *       <TS_IP_B>       <TS_IP_B>       tcp dpt:60000 /* an-ts */
+       0        0 ACCEPT     tcp  --  *      *       172.28.66.22         <TS_IP_B>       tcp dpt:60000 /* an-ts */
+22:08:13.605Z block rule installed (box clock at command return)
+22:08:25.356Z message queued during the blackhole: f2d126d5-5960-4a51-a61e-e000fac1be81
+       0        0 ACCEPT     tcp  --  *      *       <TS_IP_A>       <TS_IP_B>       tcp dpt:60000 /* an-ts */
+       0        0 ACCEPT     tcp  --  *      *       <TS_IP_B>       <TS_IP_B>       tcp dpt:60000 /* an-ts */
+       0        0 ACCEPT     tcp  --  *      *       172.28.66.22         <TS_IP_B>       tcp dpt:60000 /* an-ts */
+22:10:16.640Z RESTORED
+22:10:49.958Z message delivered
+22:10:50.206Z done waiting
+22:14:58.025Z mac sampler done

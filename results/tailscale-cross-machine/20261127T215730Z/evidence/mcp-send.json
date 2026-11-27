@@ -1,0 +1,33 @@
+{
+ "tools": [
+  "acknowledge_message",
+  "add_contact",
+  "advertise_agent",
+  "create_trigger",
+  "delete_trigger",
+  "discover_agents",
+  "get_identity",
+  "get_message",
+  "get_message_status",
+  "list_contacts",
+  "list_triggers",
+  "network_status",
+  "read_inbox",
+  "send_message",
+  "withdraw_advert"
+ ],
+ "elapsed_ms": 47,
+ "is_error": false,
+ "protocol": "2025-06-18",
+ "server_info": {
+  "name": "agentnet",
+  "version": "0.1.0"
+ },
+ "result": {
+  "conversation_id": "2a573dd2-0a5a-4125-8b86-2fd8d72b12df",
+  "deduplicated": false,
+  "expires_at": 1795903270507,
+  "message_id": "5c364506-a7c4-4b9f-a063-38b803352fd3",
+  "status": "queued"
+ }
+}

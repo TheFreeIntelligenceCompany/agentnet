@@ -1,0 +1,18 @@
+started
+1795817157.452 send A->B x1
+1795817163.718 send A->B x2
+1795817170.464 send A->B x3
+1795817177.057 send B->A (1 char)
+sent
+  205 /tmp/ts0.txt
+    0 /tmp/eth0-tcp60000.txt
+  270 /tmp/eth0-udp.txt
+  475 total
+tcpdump: listening on tailscale0, link-type RAW (Raw IP), snapshot length 262144 bytes
+205 packets captured
+205 packets received by filter
+0 packets dropped by kernel
+tcpdump: listening on eth0, link-type EN10MB (Ethernet), snapshot length 262144 bytes
+270 packets captured
+274 packets received by filter
+0 packets dropped by kernel

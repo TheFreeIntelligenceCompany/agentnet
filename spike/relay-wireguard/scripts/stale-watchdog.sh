@@ -18,6 +18,8 @@
 PORT=${1:-60000}; IDLE=${2:-60}; EVERY=${3:-10}
 SS=${SS:-ss}; RECHECK_DELAY_S=${RECHECK_DELAY_S:-1}; STRIKES=${STRIKES:-3}; CAPEFF_FILE=${CAPEFF_FILE:-/proc/self/status}
 ts() { date -u +%FT%TZ; }
+# iproute2-6.15 / kernel 6.18 print "RTNETLINK answers: Invalid argument" on stderr with exit 0 even when ss -K works; treat that exact line as benign. Success is still verified by the socket re-check.
+benign() { [ -z "$1" ] || [ "$1" = "RTNETLINK answers: Invalid argument" ]; }
 
 # True when the NET_ADMIN bit (12) is absent from CapEff; unknown (no file) counts as present.
 lacks_net_admin() {
@@ -33,7 +35,7 @@ probe() {
   fi
   # A filter that matches no socket: only exit status and stderr of the option itself are exercised.
   out=$("$SS" -K state established "( sport = :$PORT and dport = :0 )" 2>&1 >/dev/null); rc=$?
-  if [ "$rc" -ne 0 ] || [ -n "$out" ]; then
+  if [ "$rc" -ne 0 ] || ! benign "$out"; then
     echo "$(ts) stale-watchdog: FATAL: 'ss -K' is not usable here (exit $rc): ${out:-no diagnostic}" >&2
     return 1
   fi
@@ -55,7 +57,7 @@ socket_present() { # $1 ip, $2 port
 destroy() { # $1 peer, $2 lastrcv_ms
   ip=${1%:*}; p=${1##*:}
   err=$("$SS" -K state established "( sport = :$PORT and dst $ip and dport = :$p )" 2>&1 >/dev/null); rc=$?
-  if [ "$rc" -ne 0 ] || [ -n "$err" ]; then
+  if [ "$rc" -ne 0 ] || ! benign "$err"; then
     echo "$(ts) stale-watchdog: FAILED to destroy idle socket from $1 (ss -K exit $rc): ${err:-no diagnostic}" >&2
     return 1
   fi

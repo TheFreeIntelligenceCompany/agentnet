@@ -1,0 +1,9 @@
+# Mac 2026-11-27T22:00:35Z
+<TS_IP_B>   agentnet-ts-test            <peer>@  linux  active; direct [<pub-v6>]:41641, tx 43828 rx 37724  
+pong from agentnet-ts-test (<TS_IP_B>) via [<pub-v6>]:41641 in 90ms
+	* UDP: true
+	* IPv4: yes
+	* IPv6: yes
+	* MappingVariesByDestIP: false
+	* Nearest DERP: Ashburn
+1.102.3

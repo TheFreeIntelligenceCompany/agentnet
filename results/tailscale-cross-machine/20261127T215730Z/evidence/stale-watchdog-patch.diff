@@ -1,0 +1,11 @@
+20a21,22
+> # PATCH (tailscale run 20261127T215730Z): iproute2-6.15 / kernel 6.18 print "RTNETLINK answers: Invalid argument" on stderr with exit 0 even when ss -K works; treat that exact line as benign. Success is still verified by the socket re-check.
+> benign() { [ -z "$1" ] || [ "$1" = "RTNETLINK answers: Invalid argument" ]; }
+36c38
+<   if [ "$rc" -ne 0 ] || [ -n "$out" ]; then
+---
+>   if [ "$rc" -ne 0 ] || ! benign "$out"; then
+58c60
+<   if [ "$rc" -ne 0 ] || [ -n "$err" ]; then
+---
+>   if [ "$rc" -ne 0 ] || ! benign "$err"; then

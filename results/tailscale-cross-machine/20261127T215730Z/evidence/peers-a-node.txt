@@ -1,0 +1,2 @@
+# node A 2026-11-27T22:02:06Z
+{"multiaddr":"/ip4/<TS_IP_B>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV","connected":"Connected"}

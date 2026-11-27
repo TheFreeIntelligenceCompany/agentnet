@@ -1,0 +1,1 @@
+2026-11-27T22:42:27Z stale-watchdog: FATAL: 'ss -K' is not usable here (exit 0): RTNETLINK answers: Invalid argument
