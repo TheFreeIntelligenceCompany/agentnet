@@ -1,8 +1,8 @@
 {
   "v": 1,
-  "address": "an1geasorhzdxnk6eimu2w2e4tg63omdymtwwa25cskrl5njzb5bwyevtuzk4",
-  "signing_sk": "jHCCkwOoXbIAH-MLaMz2bleOpUwnQ13Ea1I-_aBGrxc",
-  "kem_sk": "Ao1gGd8p7ropoVbeOKtPQwemja_QOLv-7zm-OFmn_7w",
+  "address": "an1m6uniboh6lukidmzxsv6lsb2kppj56vtmpl2xg6znfk5tlq743bc6vch4q",
+  "signing_sk": "2sTJ8AosEW4leRgjSHKqoyUh-Gdgkb2cmY_j1jopHx4",
+  "kem_sk": "mwsIZs-cM7Ede8h5t--iM6aipKtoRM05e4wsfcWYtiU",
   "kem_created_at": 1700000000000,
   "inbox_buckets": 16,
   "created_at": 1700000000000,

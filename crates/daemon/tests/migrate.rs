@@ -14,6 +14,12 @@ fn legacy_dir() -> (tempfile::TempDir, PathBuf) {
     std::fs::create_dir(&root).unwrap();
     std::fs::set_permissions(&root, std::fs::Permissions::from_mode(0o700)).unwrap();
     for f in ["identity.json", "agentnet.db"] {
+        assert!(
+            src.join(f).is_file(),
+            "legacy-v3 fixture file {f} is missing from {}: commit it (the database needs `git add -f` \
+             unless .gitignore has the negation rule) or regenerate it per its README.md",
+            src.display()
+        );
         std::fs::copy(src.join(f), root.join(f)).unwrap();
         std::fs::set_permissions(root.join(f), std::fs::Permissions::from_mode(0o600)).unwrap();
     }
