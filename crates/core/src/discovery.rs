@@ -48,8 +48,9 @@ struct OwnAdvert {
     display_name: Option<String>,
     issued_at: i64,
     expires_at: i64,
-    /// Key epoch of the contact record embedded in `document`.
-    key_epoch: u64,
+    /// Identifier of the certificate embedded in `document` (see `Node::cert_id`).
+    #[serde(default)]
+    cert_id: u64,
     /// When the document is due for (re-)publication; `None` = nothing to publish.
     next_publish_at: Option<i64>,
 }
@@ -226,7 +227,7 @@ impl Node {
                         display_name: req.display_name.clone(),
                         issued_at: now,
                         expires_at,
-                        key_epoch: self.identity.key_epoch(),
+                        cert_id: self.cert_id(),
                         next_publish_at: Some(now),
                     },
                 )?;
@@ -285,7 +286,7 @@ impl Node {
                 st.capabilities = Vec::new();
                 st.issued_at = now;
                 st.expires_at = expires_at;
-                st.key_epoch = self.identity.key_epoch();
+                st.cert_id = self.cert_id();
                 st.next_publish_at = Some(now);
                 save_own(tx, &topic, &st)?;
                 Ok(true)
@@ -370,14 +371,14 @@ impl Node {
         if self.disc_topics.is_empty() || self.local_revocation.is_some() {
             return Ok(());
         }
-        let epoch = self.identity.key_epoch();
+        let epoch = self.cert_id();
         let n = self.store.tx(|tx| {
             let mut n = 0usize;
             for (name, _) in &self.disc_topics {
                 let Some(mut st) = load_own(tx, name)? else {
                     continue;
                 };
-                if st.withdrawn || st.expires_at <= now || st.key_epoch == epoch {
+                if st.withdrawn || st.expires_at <= now || st.cert_id == epoch {
                     continue;
                 }
                 let seq = st
@@ -402,7 +403,7 @@ impl Node {
                 st.document = signed.to_document();
                 st.issued_at = now;
                 st.expires_at = expires_at;
-                st.key_epoch = epoch;
+                st.cert_id = epoch;
                 st.next_publish_at = Some(now);
                 save_own(tx, name, &st)?;
                 n += 1;

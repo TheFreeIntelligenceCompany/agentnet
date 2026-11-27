@@ -1,0 +1,465 @@
+{
+  "events": {
+    "by_type": {
+      "message.received": 21
+    },
+    "duplicate_message_received_events": 0,
+    "records": [
+      {
+        "agent_id": "an2rdkb7gbx3v2foe6ynj4l27hzy4uuhwgffnqunjkmn62epskcpaokqjdlca",
+        "cursor": "ZXZlbnQ6MQ",
+        "event_id": "c1e83b33-24e5-4242-9943-2b3881ca0664",
+        "event_type": "message.received",
+        "message_id": "fa6b1c3d-24e3-4f01-a165-0b2eedcc4638",
+        "target_session": null,
+        "timestamp": 1795753890254,
+        "trigger_id": null
+      },
+      {
+        "agent_id": "an2rdkb7gbx3v2foe6ynj4l27hzy4uuhwgffnqunjkmn62epskcpaokqjdlca",
+        "cursor": "ZXZlbnQ6Mg",
+        "event_id": "be67bcf8-500e-40be-9775-16ef371678ec",
+        "event_type": "message.received",
+        "message_id": "f046591b-385b-4591-9771-c68a150f2efd",
+        "target_session": null,
+        "timestamp": 1795753920950,
+        "trigger_id": null
+      },
+      {
+        "agent_id": "an2rdkb7gbx3v2foe6ynj4l27hzy4uuhwgffnqunjkmn62epskcpaokqjdlca",
+        "cursor": "ZXZlbnQ6Mw",
+        "event_id": "8c4f0053-9da1-41af-ab62-8aafa9a55f50",
+        "event_type": "message.received",
+        "message_id": "2f0a0278-e924-4da9-a312-12fc20e4e156",
+        "target_session": null,
+        "timestamp": 1795753920959,
+        "trigger_id": null
+      },
+      {
+        "agent_id": "an2rdkb7gbx3v2foe6ynj4l27hzy4uuhwgffnqunjkmn62epskcpaokqjdlca",
+        "cursor": "ZXZlbnQ6NA",
+        "event_id": "68806c8b-0d9d-4aa0-9f6b-b687e26578cb",
+        "event_type": "message.received",
+        "message_id": "16cb337b-8ef7-4617-beec-b9406d64f093",
+        "target_session": null,
+        "timestamp": 1795753920969,
+        "trigger_id": null
+      },
+      {
+        "agent_id": "an2rdkb7gbx3v2foe6ynj4l27hzy4uuhwgffnqunjkmn62epskcpaokqjdlca",
+        "cursor": "ZXZlbnQ6NQ",
+        "event_id": "fce3d019-c816-4773-a042-f40a9d04f72b",
+        "event_type": "message.received",
+        "message_id": "5cb487dd-885b-461f-a0c5-30dc66276d83",
+        "target_session": null,
+        "timestamp": 1795753920980,
+        "trigger_id": null
+      },
+      {
+        "agent_id": "an2rdkb7gbx3v2foe6ynj4l27hzy4uuhwgffnqunjkmn62epskcpaokqjdlca",
+        "cursor": "ZXZlbnQ6Ng",
+        "event_id": "b2160ade-502f-42d7-bd35-0ea5dfd68f40",
+        "event_type": "message.received",
+        "message_id": "67f2310e-4062-414a-b0d8-274a742e7549",
+        "target_session": null,
+        "timestamp": 1795753920988,
+        "trigger_id": null
+      },
+      {
+        "agent_id": "an2rdkb7gbx3v2foe6ynj4l27hzy4uuhwgffnqunjkmn62epskcpaokqjdlca",
+        "cursor": "ZXZlbnQ6Nw",
+        "event_id": "ece2aeb5-befd-4ee6-a450-95a7313c5589",
+        "event_type": "message.received",
+        "message_id": "736d065a-6ce9-49e7-aa65-7c281c57a17d",
+        "target_session": null,
+        "timestamp": 1795753920996,
+        "trigger_id": null
+      },
+      {
+        "agent_id": "an2rdkb7gbx3v2foe6ynj4l27hzy4uuhwgffnqunjkmn62epskcpaokqjdlca",
+        "cursor": "ZXZlbnQ6OA",
+        "event_id": "30e1421b-de0f-417f-bd4e-f76a8f862b76",
+        "event_type": "message.received",
+        "message_id": "42fbc5f3-050a-440d-8818-d1983d2a8d6a",
+        "target_session": null,
+        "timestamp": 1795753921004,
+        "trigger_id": null
+      },
+      {
+        "agent_id": "an2rdkb7gbx3v2foe6ynj4l27hzy4uuhwgffnqunjkmn62epskcpaokqjdlca",
+        "cursor": "ZXZlbnQ6OQ",
+        "event_id": "03d4db4d-3a57-4c63-b737-64d88eda8a8d",
+        "event_type": "message.received",
+        "message_id": "2c528166-8ca1-41b8-a37b-98292900b2e8",
+        "target_session": null,
+        "timestamp": 1795753921013,
+        "trigger_id": null
+      },
+      {
+        "agent_id": "an2rdkb7gbx3v2foe6ynj4l27hzy4uuhwgffnqunjkmn62epskcpaokqjdlca",
+        "cursor": "ZXZlbnQ6MTA",
+        "event_id": "30fe5f5e-dc65-4aee-ad60-342a1ee61294",
+        "event_type": "message.received",
+        "message_id": "748e8648-594f-4268-a5a8-5b6f722464d0",
+        "target_session": null,
+        "timestamp": 1795753921915,
+        "trigger_id": null
+      },
+      {
+        "agent_id": "an2rdkb7gbx3v2foe6ynj4l27hzy4uuhwgffnqunjkmn62epskcpaokqjdlca",
+        "cursor": "ZXZlbnQ6MTE",
+        "event_id": "c5dc0ccc-eda0-4200-b9ce-50bf4c9bda2c",
+        "event_type": "message.received",
+        "message_id": "ab227a20-7a70-456f-8ec0-0cf8b38e0194",
+        "target_session": null,
+        "timestamp": 1795753922914,
+        "trigger_id": null
+      },
+      {
+        "agent_id": "an2rdkb7gbx3v2foe6ynj4l27hzy4uuhwgffnqunjkmn62epskcpaokqjdlca",
+        "cursor": "ZXZlbnQ6MTI",
+        "event_id": "505bb177-ec54-4da3-888f-26da49f32df6",
+        "event_type": "message.received",
+        "message_id": "ba315258-100c-4d4e-b194-6923776c047e",
+        "target_session": null,
+        "timestamp": 1795753930914,
+        "trigger_id": null
+      },
+      {
+        "agent_id": "an2rdkb7gbx3v2foe6ynj4l27hzy4uuhwgffnqunjkmn62epskcpaokqjdlca",
+        "cursor": "ZXZlbnQ6MTM",
+        "event_id": "128d8dd8-cbf6-4b3c-ab3c-dba8918b2d01",
+        "event_type": "message.received",
+        "message_id": "a599171c-1c67-48c4-9100-d9f5db7aabae",
+        "target_session": null,
+        "timestamp": 1795753935756,
+        "trigger_id": null
+      },
+      {
+        "agent_id": "an2rdkb7gbx3v2foe6ynj4l27hzy4uuhwgffnqunjkmn62epskcpaokqjdlca",
+        "cursor": "ZXZlbnQ6MTQ",
+        "event_id": "231cf224-e91d-4112-8ea7-305299b90b15",
+        "event_type": "message.received",
+        "message_id": "1d907592-0239-4067-b5b9-3505672c0122",
+        "target_session": null,
+        "timestamp": 1795753935774,
+        "trigger_id": null
+      },
+      {
+        "agent_id": "an2rdkb7gbx3v2foe6ynj4l27hzy4uuhwgffnqunjkmn62epskcpaokqjdlca",
+        "cursor": "ZXZlbnQ6MTU",
+        "event_id": "6dab015f-0a0d-41cf-9aa0-aa9b14b2f78e",
+        "event_type": "message.received",
+        "message_id": "26aad226-6311-4d53-add2-b46015c0702d",
+        "target_session": null,
+        "timestamp": 1795753935791,
+        "trigger_id": null
+      },
+      {
+        "agent_id": "an2rdkb7gbx3v2foe6ynj4l27hzy4uuhwgffnqunjkmn62epskcpaokqjdlca",
+        "cursor": "ZXZlbnQ6MTY",
+        "event_id": "48d3cae2-7ddb-4cb7-bae6-106eb004b608",
+        "event_type": "message.received",
+        "message_id": "d094a9e5-fc85-4bd1-b80c-bee6cce7ac8f",
+        "target_session": null,
+        "timestamp": 1795753935802,
+        "trigger_id": null
+      },
+      {
+        "agent_id": "an2rdkb7gbx3v2foe6ynj4l27hzy4uuhwgffnqunjkmn62epskcpaokqjdlca",
+        "cursor": "ZXZlbnQ6MTc",
+        "event_id": "a85e9ccb-6971-4982-9a97-72b09a9d70d3",
+        "event_type": "message.received",
+        "message_id": "14f19f47-3d06-4af7-96a0-96c93e4f9662",
+        "target_session": null,
+        "timestamp": 1795753935813,
+        "trigger_id": null
+      },
+      {
+        "agent_id": "an2rdkb7gbx3v2foe6ynj4l27hzy4uuhwgffnqunjkmn62epskcpaokqjdlca",
+        "cursor": "ZXZlbnQ6MTg",
+        "event_id": "c91bb610-fe0a-489d-8b5c-0c5807516422",
+        "event_type": "message.received",
+        "message_id": "613ac4c5-d1cb-4b7a-83fc-af6d5386a0bf",
+        "target_session": null,
+        "timestamp": 1795753935825,
+        "trigger_id": null
+      },
+      {
+        "agent_id": "an2rdkb7gbx3v2foe6ynj4l27hzy4uuhwgffnqunjkmn62epskcpaokqjdlca",
+        "cursor": "ZXZlbnQ6MTk",
+        "event_id": "1ec0a369-0a69-4a96-8a85-b6d1b0fa315e",
+        "event_type": "message.received",
+        "message_id": "5f00eee4-d53d-47b0-a3c0-59b266375d30",
+        "target_session": null,
+        "timestamp": 1795753935839,
+        "trigger_id": null
+      },
+      {
+        "agent_id": "an2rdkb7gbx3v2foe6ynj4l27hzy4uuhwgffnqunjkmn62epskcpaokqjdlca",
+        "cursor": "ZXZlbnQ6MjA",
+        "event_id": "39368ed8-3f42-498e-9ba4-9fae244131fe",
+        "event_type": "message.received",
+        "message_id": "b1aa8364-d10e-4f51-b1fb-6b9916a71aa5",
+        "target_session": null,
+        "timestamp": 1795753935849,
+        "trigger_id": null
+      },
+      {
+        "agent_id": "an2rdkb7gbx3v2foe6ynj4l27hzy4uuhwgffnqunjkmn62epskcpaokqjdlca",
+        "cursor": "ZXZlbnQ6MjE",
+        "event_id": "2b0d479d-0067-4352-8782-74f85553f749",
+        "event_type": "message.received",
+        "message_id": "dd01a556-8ecb-44ce-a261-1018666455b1",
+        "target_session": null,
+        "timestamp": 1795753935859,
+        "trigger_id": null
+      }
+    ],
+    "total": 21,
+    "unique_event_ids": 21
+  },
+  "inbox": {
+    "quarantined": 0,
+    "records": [
+      {
+        "body": "ACCEPTANCE-STEP2-PLAINTEXT-MARKER-1795753890218",
+        "conversation_id": "acc-step2",
+        "created_at": 1795753890218,
+        "cursor": "aW5ib3g6MQ",
+        "message_id": "fa6b1c3d-24e3-4f01-a165-0b2eedcc4638",
+        "message_type": "message",
+        "quarantined": false,
+        "received_at": 1795753890254,
+        "sender": "an2dtf5n2jhsthvu3r3jjs3hfydpqz2jszfc6fomc4l5udvstdltptruenkl4"
+      },
+      {
+        "body": "s3-offline-12",
+        "conversation_id": "s3",
+        "created_at": 1795753894318,
+        "cursor": "aW5ib3g6Mg",
+        "message_id": "f046591b-385b-4591-9771-c68a150f2efd",
+        "message_type": "message",
+        "quarantined": false,
+        "received_at": 1795753920950,
+        "sender": "an2dtf5n2jhsthvu3r3jjs3hfydpqz2jszfc6fomc4l5udvstdltptruenkl4"
+      },
+      {
+        "body": "s3-offline-14",
+        "conversation_id": "s3",
+        "created_at": 1795753894344,
+        "cursor": "aW5ib3g6Mw",
+        "message_id": "2f0a0278-e924-4da9-a312-12fc20e4e156",
+        "message_type": "message",
+        "quarantined": false,
+        "received_at": 1795753920959,
+        "sender": "an2dtf5n2jhsthvu3r3jjs3hfydpqz2jszfc6fomc4l5udvstdltptruenkl4"
+      },
+      {
+        "body": "s3-offline-16",
+        "conversation_id": "s3",
+        "created_at": 1795753894370,
+        "cursor": "aW5ib3g6NA",
+        "message_id": "16cb337b-8ef7-4617-beec-b9406d64f093",
+        "message_type": "message",
+        "quarantined": false,
+        "received_at": 1795753920969,
+        "sender": "an2dtf5n2jhsthvu3r3jjs3hfydpqz2jszfc6fomc4l5udvstdltptruenkl4"
+      },
+      {
+        "body": "s3-offline-9",
+        "conversation_id": "s3",
+        "created_at": 1795753894260,
+        "cursor": "aW5ib3g6NQ",
+        "message_id": "5cb487dd-885b-461f-a0c5-30dc66276d83",
+        "message_type": "message",
+        "quarantined": false,
+        "received_at": 1795753920980,
+        "sender": "an2dtf5n2jhsthvu3r3jjs3hfydpqz2jszfc6fomc4l5udvstdltptruenkl4"
+      },
+      {
+        "body": "s3-offline-11",
+        "conversation_id": "s3",
+        "created_at": 1795753894286,
+        "cursor": "aW5ib3g6Ng",
+        "message_id": "67f2310e-4062-414a-b0d8-274a742e7549",
+        "message_type": "message",
+        "quarantined": false,
+        "received_at": 1795753920988,
+        "sender": "an2dtf5n2jhsthvu3r3jjs3hfydpqz2jszfc6fomc4l5udvstdltptruenkl4"
+      },
+      {
+        "body": "s3-offline-6",
+        "conversation_id": "s3",
+        "created_at": 1795753894221,
+        "cursor": "aW5ib3g6Nw",
+        "message_id": "736d065a-6ce9-49e7-aa65-7c281c57a17d",
+        "message_type": "message",
+        "quarantined": false,
+        "received_at": 1795753920996,
+        "sender": "an2dtf5n2jhsthvu3r3jjs3hfydpqz2jszfc6fomc4l5udvstdltptruenkl4"
+      },
+      {
+        "body": "s3-offline-10",
+        "conversation_id": "s3",
+        "created_at": 1795753894273,
+        "cursor": "aW5ib3g6OA",
+        "message_id": "42fbc5f3-050a-440d-8818-d1983d2a8d6a",
+        "message_type": "message",
+        "quarantined": false,
+        "received_at": 1795753921004,
+        "sender": "an2dtf5n2jhsthvu3r3jjs3hfydpqz2jszfc6fomc4l5udvstdltptruenkl4"
+      },
+      {
+        "body": "s3-offline-13",
+        "conversation_id": "s3",
+        "created_at": 1795753894331,
+        "cursor": "aW5ib3g6OQ",
+        "message_id": "2c528166-8ca1-41b8-a37b-98292900b2e8",
+        "message_type": "message",
+        "quarantined": false,
+        "received_at": 1795753921013,
+        "sender": "an2dtf5n2jhsthvu3r3jjs3hfydpqz2jszfc6fomc4l5udvstdltptruenkl4"
+      },
+      {
+        "body": "s3-offline-20",
+        "conversation_id": "s3",
+        "created_at": 1795753894421,
+        "cursor": "aW5ib3g6MTA",
+        "message_id": "748e8648-594f-4268-a5a8-5b6f722464d0",
+        "message_type": "message",
+        "quarantined": false,
+        "received_at": 1795753921915,
+        "sender": "an2dtf5n2jhsthvu3r3jjs3hfydpqz2jszfc6fomc4l5udvstdltptruenkl4"
+      },
+      {
+        "body": "s3-offline-7",
+        "conversation_id": "s3",
+        "created_at": 1795753894234,
+        "cursor": "aW5ib3g6MTE",
+        "message_id": "ab227a20-7a70-456f-8ec0-0cf8b38e0194",
+        "message_type": "message",
+        "quarantined": false,
+        "received_at": 1795753922914,
+        "sender": "an2dtf5n2jhsthvu3r3jjs3hfydpqz2jszfc6fomc4l5udvstdltptruenkl4"
+      },
+      {
+        "body": "s3-offline-17",
+        "conversation_id": "s3",
+        "created_at": 1795753894382,
+        "cursor": "aW5ib3g6MTI",
+        "message_id": "ba315258-100c-4d4e-b194-6923776c047e",
+        "message_type": "message",
+        "quarantined": false,
+        "received_at": 1795753930914,
+        "sender": "an2dtf5n2jhsthvu3r3jjs3hfydpqz2jszfc6fomc4l5udvstdltptruenkl4"
+      },
+      {
+        "body": "s3-offline-1",
+        "conversation_id": "s3",
+        "created_at": 1795753894158,
+        "cursor": "aW5ib3g6MTM",
+        "message_id": "a599171c-1c67-48c4-9100-d9f5db7aabae",
+        "message_type": "message",
+        "quarantined": false,
+        "received_at": 1795753935756,
+        "sender": "an2dtf5n2jhsthvu3r3jjs3hfydpqz2jszfc6fomc4l5udvstdltptruenkl4"
+      },
+      {
+        "body": "s3-offline-2",
+        "conversation_id": "s3",
+        "created_at": 1795753894171,
+        "cursor": "aW5ib3g6MTQ",
+        "message_id": "1d907592-0239-4067-b5b9-3505672c0122",
+        "message_type": "message",
+        "quarantined": false,
+        "received_at": 1795753935774,
+        "sender": "an2dtf5n2jhsthvu3r3jjs3hfydpqz2jszfc6fomc4l5udvstdltptruenkl4"
+      },
+      {
+        "body": "s3-offline-3",
+        "conversation_id": "s3",
+        "created_at": 1795753894184,
+        "cursor": "aW5ib3g6MTU",
+        "message_id": "26aad226-6311-4d53-add2-b46015c0702d",
+        "message_type": "message",
+        "quarantined": false,
+        "received_at": 1795753935791,
+        "sender": "an2dtf5n2jhsthvu3r3jjs3hfydpqz2jszfc6fomc4l5udvstdltptruenkl4"
+      },
+      {
+        "body": "s3-offline-4",
+        "conversation_id": "s3",
+        "created_at": 1795753894196,
+        "cursor": "aW5ib3g6MTY",
+        "message_id": "d094a9e5-fc85-4bd1-b80c-bee6cce7ac8f",
+        "message_type": "message",
+        "quarantined": false,
+        "received_at": 1795753935802,
+        "sender": "an2dtf5n2jhsthvu3r3jjs3hfydpqz2jszfc6fomc4l5udvstdltptruenkl4"
+      },
+      {
+        "body": "s3-offline-5",
+        "conversation_id": "s3",
+        "created_at": 1795753894209,
+        "cursor": "aW5ib3g6MTc",
+        "message_id": "14f19f47-3d06-4af7-96a0-96c93e4f9662",
+        "message_type": "message",
+        "quarantined": false,
+        "received_at": 1795753935813,
+        "sender": "an2dtf5n2jhsthvu3r3jjs3hfydpqz2jszfc6fomc4l5udvstdltptruenkl4"
+      },
+      {
+        "body": "s3-offline-8",
+        "conversation_id": "s3",
+        "created_at": 1795753894247,
+        "cursor": "aW5ib3g6MTg",
+        "message_id": "613ac4c5-d1cb-4b7a-83fc-af6d5386a0bf",
+        "message_type": "message",
+        "quarantined": false,
+        "received_at": 1795753935825,
+        "sender": "an2dtf5n2jhsthvu3r3jjs3hfydpqz2jszfc6fomc4l5udvstdltptruenkl4"
+      },
+      {
+        "body": "s3-offline-15",
+        "conversation_id": "s3",
+        "created_at": 1795753894357,
+        "cursor": "aW5ib3g6MTk",
+        "message_id": "5f00eee4-d53d-47b0-a3c0-59b266375d30",
+        "message_type": "message",
+        "quarantined": false,
+        "received_at": 1795753935839,
+        "sender": "an2dtf5n2jhsthvu3r3jjs3hfydpqz2jszfc6fomc4l5udvstdltptruenkl4"
+      },
+      {
+        "body": "s3-offline-18",
+        "conversation_id": "s3",
+        "created_at": 1795753894395,
+        "cursor": "aW5ib3g6MjA",
+        "message_id": "b1aa8364-d10e-4f51-b1fb-6b9916a71aa5",
+        "message_type": "message",
+        "quarantined": false,
+        "received_at": 1795753935849,
+        "sender": "an2dtf5n2jhsthvu3r3jjs3hfydpqz2jszfc6fomc4l5udvstdltptruenkl4"
+      },
+      {
+        "body": "s3-offline-19",
+        "conversation_id": "s3",
+        "created_at": 1795753894408,
+        "cursor": "aW5ib3g6MjE",
+        "message_id": "dd01a556-8ecb-44ce-a261-1018666455b1",
+        "message_type": "message",
+        "quarantined": false,
+        "received_at": 1795753935859,
+        "sender": "an2dtf5n2jhsthvu3r3jjs3hfydpqz2jszfc6fomc4l5udvstdltptruenkl4"
+      }
+    ],
+    "rows": 21,
+    "unique_message_ids": 21
+  },
+  "outbox": {
+    "by_state": {},
+    "records": [],
+    "rows": 0
+  }
+}

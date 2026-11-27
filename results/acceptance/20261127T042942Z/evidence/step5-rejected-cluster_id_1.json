@@ -1,0 +1,1 @@
+{"case":"cluster_id_1","setting":"[network] cluster_id = 1","exit_code":4,"stderr":"error: invalid configuration: network: isolation violation: private mode: cluster id 1 selects a public preset"}

@@ -34,7 +34,6 @@ pub fn identity_info(id: &Identity) -> IdentityInfo {
         inbox_topic: id.inbox_topic().to_string(),
         created_at: id.created_at(),
         kem_expires_at: id.kem_expires_at(),
-        key_epoch: id.key_epoch(),
         revoked: false,
     }
 }
@@ -76,7 +75,6 @@ pub fn init_data_dir(
     root: &Path,
     node_url: &str,
     peers: &[String],
-    inbox_buckets: u16,
     public_relay: bool,
 ) -> Result<InitReport, DaemonError> {
     // Validate before anything is created: a rejected peer writes nothing.
@@ -85,7 +83,7 @@ pub fn init_data_dir(
     dir.create_private()?;
     let _lock = dir.acquire_lock()?;
     refuse_existing(&dir)?;
-    let id = Identity::generate(inbox_buckets, SystemClock.now_ms()).map_err(ident_err)?;
+    let id = Identity::generate(SystemClock.now_ms()).map_err(ident_err)?;
     id.save(&dir.identity(), false).map_err(ident_err)?;
     let peers_missing = write_support_files(&dir, &config_text, peers.is_empty())?;
     Ok(InitReport {
@@ -157,19 +155,21 @@ pub fn import_identity(
     })
 }
 
-/// Generate a new agreement key and increment the key epoch.
+/// Add a new encryption subkey (with an expiry of `expires_in_days`, default
+/// 365) and retire the previous one with a standard subkey revocation.
 ///
-/// Without `revoke_previous` the previous key keeps decrypting for `keep_hours`
-/// (default: `storage.retention_hours` of the config). With it, every earlier
-/// KEM secret key is destroyed at once and the new record carries
-/// `revoked_kem_epochs_below`; messages already sealed to the old key are lost
-/// unless the sender re-seals them after learning the new record. At the next
-/// daemon start the engine sends a `contact.update` to every Trusted contact.
-/// Returns the new public identity.
+/// Without `revoke_previous` the previous subkey keeps decrypting for
+/// `keep_hours` (default: `storage.retention_hours` of the config). With it,
+/// every earlier encryption subkey is revoked as compromised and its secret key
+/// destroyed at once; messages already sealed to it are lost unless the sender
+/// re-seals them after merging the new certificate. At the next daemon start
+/// the engine sends a `contact.update` (the new certificate, a merge input) to
+/// every Trusted contact. Returns the new public identity.
 pub fn rotate_kem(
     root: &Path,
     keep_hours: Option<u64>,
     revoke_previous: bool,
+    expires_in_days: Option<u64>,
 ) -> Result<IdentityInfo, DaemonError> {
     let dir = DataDir::new(root);
     dir.check_dir_perms()?;
@@ -189,7 +189,10 @@ pub fn rotate_kem(
             "this identity has been revoked; rotate-kem is pointless (use a new identity)".into(),
         ));
     }
-    id.rotate_kem_with(now, keep_until, None, revoke_previous)
+    let days = expires_in_days.unwrap_or(agentnet_core::identity::DEFAULT_KEM_VALIDITY_DAYS);
+    let expiry =
+        now.saturating_add(i64::try_from(days.saturating_mul(86_400_000)).unwrap_or(i64::MAX / 2));
+    id.rotate_kem_with(now, keep_until, Some(expiry), revoke_previous)
         .map_err(ident_err)?;
     id.save(&dir.identity(), true).map_err(ident_err)?;
     Ok(identity_info_of(&dir, &id))
@@ -200,15 +203,16 @@ pub fn rotate_kem(
 pub struct RevokeReport {
     /// Public identity (with `revoked = true`).
     pub identity: IdentityInfo,
-    /// The signed tombstone document to distribute out of band.
+    /// The revocation document (the revoked public certificate) to distribute out of band.
     pub document: String,
 }
 
-/// Revoke the signing identity: create a signed tombstone, write it next to the
-/// identity (`revocation.json`, mode 0600, never overwritten) and thereby mark
-/// the local identity revoked. The next daemon start only delivers the
-/// tombstone (to Trusted contacts) and sends nothing else. Requires the daemon
-/// to be stopped. This is irreversible for this address.
+/// Revoke the identity: create a primary-key revocation (a standard OpenPGP key
+/// revocation signature, distributed as the revoked public certificate), write
+/// it next to the identity (`revocation.json`, mode 0600, never overwritten)
+/// and thereby mark the local identity revoked. The next daemon start only
+/// delivers the revocation (to Trusted contacts) and sends nothing else.
+/// Requires the daemon to be stopped. This is irreversible for this address.
 pub fn revoke_identity(root: &Path, reason: &str) -> Result<RevokeReport, DaemonError> {
     let dir = DataDir::new(root);
     dir.check_dir_perms()?;
@@ -233,7 +237,7 @@ pub fn revoke_identity(root: &Path, reason: &str) -> Result<RevokeReport, Daemon
     })
 }
 
-/// The stored tombstone of a revoked identity (for out-of-band distribution).
+/// The stored revocation of a revoked identity (for out-of-band distribution).
 pub fn show_revocation(root: &Path) -> Result<Option<String>, DaemonError> {
     let dir = DataDir::new(root);
     dir.check_dir_perms()?;
@@ -263,4 +267,72 @@ pub fn accept_rollback(root: &Path) -> Result<bool, DaemonError> {
     dir.check_dir_perms()?;
     let _lock = dir.acquire_lock()?;
     guard::accept_rollback(&dir.db()).map_err(|e| DaemonError::Identity(e.to_string()))
+}
+
+/// Result of `identity migrate`.
+#[derive(Clone, Debug)]
+pub struct MigrateReport {
+    /// The new public identity (fresh OpenPGP certificate).
+    pub identity: IdentityInfo,
+    /// What happened to the store (None when the data directory had no store yet).
+    pub store: Option<agentnet_core::migrate::MigrationReport>,
+    /// Where the retired identity file was moved (kept for rollback; it holds secrets).
+    pub legacy_identity_file: std::path::PathBuf,
+}
+
+/// `agentnet identity migrate` (ADR 0004, lead decision 2): explicit, never run
+/// by `serve`. Generates a fresh OpenPGP identity (an old Ed25519 key is never
+/// reused), moves the retired `identity.json` (and `revocation.json`) aside as
+/// `*.legacy-v1`, and migrates the store (see `agentnet_core::migrate`):
+/// pending old-format messages are failed and listed, old contacts become
+/// unverified legacy entries, inbox history and dedupe state are kept. Requires
+/// the daemon to be stopped. Refuses a data directory that is already migrated.
+pub fn migrate_data_dir(root: &Path) -> Result<MigrateReport, DaemonError> {
+    use agentnet_core::error::IdentityError;
+    let dir = DataDir::new(root);
+    dir.check_dir_perms()?;
+    let _lock = dir.acquire_lock()?;
+    match Identity::load(&dir.identity()) {
+        Err(IdentityError::LegacyFormat) => {}
+        Ok(_) => {
+            return Err(DaemonError::Identity(
+                "this data directory already uses the OpenPGP format; nothing to migrate".into(),
+            ))
+        }
+        Err(e) => return Err(ident_err(e)),
+    }
+    let legacy = dir.root().join("identity.json.legacy-v1");
+    if legacy.exists() {
+        return Err(DaemonError::DataDir(format!(
+            "{} already exists; move it away before migrating",
+            legacy.display()
+        )));
+    }
+    let now = SystemClock.now_ms();
+    let id = Identity::generate(now).map_err(ident_err)?;
+    let tmp = dir.root().join("identity.json.new");
+    let _ = std::fs::remove_file(&tmp);
+    id.save(&tmp, false).map_err(ident_err)?;
+    let store = if dir.db().exists() {
+        Some(
+            agentnet_core::migrate::migrate_store(&dir.db(), &id.address().to_string(), now)
+                .map_err(|e| DaemonError::Identity(format!("migrating the store: {e}")))?,
+        )
+    } else {
+        None
+    };
+    std::fs::rename(dir.identity(), &legacy)
+        .map_err(|e| DaemonError::io("moving the old identity aside", e))?;
+    if dir.revocation().exists() {
+        let rev_legacy = dir.root().join("revocation.json.legacy-v1");
+        std::fs::rename(dir.revocation(), rev_legacy)
+            .map_err(|e| DaemonError::io("moving the old revocation aside", e))?;
+    }
+    std::fs::rename(&tmp, dir.identity())
+        .map_err(|e| DaemonError::io("installing the new identity", e))?;
+    Ok(MigrateReport {
+        identity: identity_info(&id),
+        store,
+        legacy_identity_file: legacy,
+    })
 }

@@ -1,5 +1,7 @@
 # ADR 0002 — End-to-end encryption: HPKE base mode with an inner Ed25519 signature
 
+> **Superseded by [ADR 0004](0004-openpgp-message-protection.md) (accepted 2026-11-26).** The owner ruled that this scheme, while built on standard primitives, defines its own message-protection protocol and so fails the no-hand-rolled-cryptography requirement. It is kept as the record of the MVP decision.
+
 Status: **accepted by the repository owner on 2026-11-25, with conditions** (see "Owner acceptance and conditions"). Owner of the code: lead agent.
 
 ## Context

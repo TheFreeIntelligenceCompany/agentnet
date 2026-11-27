@@ -215,12 +215,11 @@ async fn run(cli: Cli) -> CliResult<i32> {
     let remote = || RemoteAgent::new(&dir);
     match cli.command {
         Command::Init {
-            inbox_buckets,
             node_url,
             peer,
             public_relay,
         } => {
-            let rep = offline::init_data_dir(&dir, &node_url, &peer, inbox_buckets, public_relay)?;
+            let rep = offline::init_data_dir(&dir, &node_url, &peer, public_relay)?;
             let out = json!({
                 "data_dir": dir,
                 "address": rep.identity.agent_id,
@@ -229,7 +228,7 @@ async fn run(cli: Cli) -> CliResult<i32> {
             });
             emit(json, &out, |_| {
                 let mut s = format!(
-                    "Created {} (directory 0700, files 0600)\nAddress: {}\nContact record (share it with peers; they must verify the address out of band):\n{}\n",
+                    "Created {} (directory 0700, files 0600)\nAddress: {}\nPublic certificate (share it with peers; they must verify the address out of band):\n{}\n",
                     dir.display(),
                     rep.identity.agent_id,
                     rep.identity.contact_record
@@ -274,7 +273,7 @@ async fn run(cli: Cli) -> CliResult<i32> {
                 let i = offline::show_identity(&dir)?;
                 emit(json, &i, |i| {
                     format!(
-                        "Address: {}\nInbox topic: {}\nCreated: {}\nKEM key expires: {}\nContact record:\n{}",
+                        "Address: {}\nInbox topic: {}\nCreated: {}\nEncryption subkey expires: {}\nPublic certificate:\n{}",
                         i.agent_id,
                         i.inbox_topic,
                         render::time(i.created_at),
@@ -335,23 +334,80 @@ async fn run(cli: Cli) -> CliResult<i32> {
                 });
             }
             IdentityCmd::RotateKem {
+                expires_in_days,
                 keep_hours,
                 revoke_previous,
             } => {
-                let i = offline::rotate_kem(&dir, keep_hours, revoke_previous)?;
+                let i = offline::rotate_kem(&dir, keep_hours, revoke_previous, expires_in_days)?;
                 emit(json, &i, |i| {
-                    let mut s = format!(
-                        "Rotated the agreement key of {} (key epoch {}).",
-                        i.agent_id, i.key_epoch
-                    );
+                    let mut s = format!("Added a new encryption subkey to {}.", i.agent_id);
                     if revoke_previous {
-                        s.push_str(" All earlier KEM keys were destroyed: messages already sealed to them are lost unless their senders re-seal them after learning the new record.");
+                        s.push_str(" All earlier encryption subkeys were revoked as compromised and their secret keys destroyed: messages already sealed to them are lost unless their senders re-seal them after merging the new certificate.");
                     } else {
                         s.push_str(
-                            " The previous key keeps decrypting until the retention window ends.",
+                            " The previous subkey was retired and keeps decrypting until the retention window ends.",
                         );
                     }
-                    s.push_str(&format!("\nAt the next `agentnet serve` every Trusted contact is sent the new record; you can also give it to peers directly:\n{}", i.contact_record));
+                    s.push_str(&format!("\nAt the next `agentnet serve` every Trusted contact is sent the new certificate (they merge it); you can also give it to peers directly:\n{}", i.contact_record));
+                    s
+                });
+            }
+            IdentityCmd::Migrate => {
+                let r = offline::migrate_data_dir(&dir)?;
+                let store = r.store.clone();
+                let v = json!({
+                    "address": r.identity.agent_id,
+                    "contact_record": r.identity.contact_record,
+                    "legacy_identity_file": r.legacy_identity_file,
+                    "store": store,
+                });
+                emit(json, &v, |_| {
+                    let mut s = format!(
+                        "Migrated {} to the OpenPGP format.\nNew address: {}\nPublic certificate (give it to peers; they must verify the address out of band):\n{}\nThe retired identity file was moved to {} (it holds secrets; delete it when you no longer need it).\n",
+                        dir.display(),
+                        r.identity.agent_id,
+                        r.identity.contact_record,
+                        r.legacy_identity_file.display()
+                    );
+                    if let Some(st) = &r.store {
+                        s.push_str(&format!(
+                            "Kept: {} inbox message(s) and {} dedupe record(s).\n",
+                            st.inbox_rows, st.seen_rows
+                        ));
+                        if st.failed_outbox.is_empty() {
+                            s.push_str("No pending outbound messages.\n");
+                        } else {
+                            s.push_str(&format!("{} pending outbound message(s) were NOT converted and are marked failed; re-send them after adding the recipient's new certificate:\n", st.failed_outbox.len()));
+                            for m in &st.failed_outbox {
+                                s.push_str(&format!(
+                                    "  {} to {} ({}, was {})\n",
+                                    m.message_id, m.recipient, m.message_type, m.state_before
+                                ));
+                            }
+                        }
+                        if st.failed_hidden_rows > 0 {
+                            s.push_str(&format!(
+                                "{} pending receipt/system row(s) were dropped.\n",
+                                st.failed_hidden_rows
+                            ));
+                        }
+                        if st.legacy_contacts.is_empty() {
+                            s.push_str("No contacts.\n");
+                        } else {
+                            s.push_str(&format!("{} old contact(s) are kept as unverified legacy entries and cannot be sent to until you add each contact's NEW certificate with `contact add --expect <new address>`:\n", st.legacy_contacts.len()));
+                            for c in &st.legacy_contacts {
+                                s.push_str(&format!(
+                                    "  {}{}\n",
+                                    c.address,
+                                    c.alias
+                                        .as_deref()
+                                        .map(|a| format!(" ({a})"))
+                                        .unwrap_or_default()
+                                ));
+                            }
+                        }
+                    }
+                    s.push_str(&format!("\nNext: {}", render::cmd(&dir, "serve")));
                     s
                 });
             }
@@ -360,7 +416,7 @@ async fn run(cli: Cli) -> CliResult<i32> {
                 let v = json!({"address": r.identity.agent_id, "revocation": r.document});
                 emit(json, &v, |_| {
                     format!(
-                        "Revoked {}. This is irreversible for this address; the daemon now sends nothing except this notice, which goes to every Trusted contact at the next `agentnet serve`.\nIt reaches only contacts that are reachable within the TTL/retry limits or that get it out of band; there is no global revocation list. Distribute it:\n{}",
+                        "Revoked {}. This is irreversible for this address; the daemon now sends nothing except this revocation notice, which goes to every Trusted contact at the next `agentnet serve`.\nIt reaches only contacts that are reachable within the TTL/retry limits or that get it out of band; there is no global revocation list. Distribute it:\n{}",
                         r.identity.agent_id, r.document
                     )
                 });
@@ -775,7 +831,7 @@ async fn run(cli: Cli) -> CliResult<i32> {
                             .collect::<Vec<_>>()
                             .join("\n");
                         out.push_str(
-                            "\nall of the above are unverified claims by remote parties; discovery added no contact (use --json to get the contact record for `contact add --expect <address>`)",
+                            "\nall of the above are unverified claims by remote parties; discovery added no contact (use --json to get the certificate for `contact add --expect <address>`)",
                         );
                         if let (true, Some(c)) = (p.has_more, &p.next_cursor) {
                             out.push_str(&format!("\nmore: --cursor {c}"));

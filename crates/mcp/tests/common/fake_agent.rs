@@ -17,9 +17,9 @@ use agentnet_core::api::*;
 use async_trait::async_trait;
 use tokio::sync::broadcast;
 
-pub const SELF_ADDRESS: &str = "an1selfselfselfselfselfselfselfselfselfselfselfselfselfself";
-pub const BOB: &str = "an1bobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbob";
-pub const ECHO_ADDRESS: &str = "an1echoechoechoechoechoechoechoechoechoechoechoechoechoecho";
+pub const SELF_ADDRESS: &str = "an2selfselfselfselfselfselfselfselfselfselfselfselfselfself";
+pub const BOB: &str = "an2bobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbob";
+pub const ECHO_ADDRESS: &str = "an2echoechoechoechoechoechoechoechoechoechoechoechoechoecho";
 
 #[derive(Default)]
 struct State {
@@ -224,7 +224,6 @@ impl AgentApi for FakeAgent {
             inbox_topic: "/agentnet/1/inbox-03/proto".into(),
             created_at: 1_700_000_000_000,
             kem_expires_at: Some(1_800_000_000_000),
-            key_epoch: 1,
             revoked: false,
         })
     }
@@ -401,7 +400,6 @@ impl AgentApi for FakeAgent {
             added_at: now(),
             kem_expires_at: None,
             updated,
-            key_epoch: 1,
             revoked: false,
         };
         s.contacts.insert(address, info.clone());

@@ -670,7 +670,7 @@ async fn engine_domain_errors_surface_actionably() {
     let r = call(
         peer,
         "send_message",
-        json!({"recipient": "an1zzzzzzzz", "body": "x"}),
+        json!({"recipient": "an2zzzzzzzz", "body": "x"}),
     )
     .await
     .unwrap();
@@ -892,10 +892,10 @@ async fn discovery_tools_happy_path_pagination_and_output_schemas() {
 
     for (i, caps) in [&["a"][..], &["a", "b"], &["b"]].into_iter().enumerate() {
         d.agent
-            .add_discovered("general", discovered(&format!("an1peer{i}"), caps));
+            .add_discovered("general", discovered(&format!("an2peer{i}"), caps));
     }
     d.agent
-        .add_discovered("team-1", discovered("an1elsewhere", &["a"]));
+        .add_discovered("team-1", discovered("an2elsewhere", &["a"]));
     let r = call(
         peer,
         "discover_agents",

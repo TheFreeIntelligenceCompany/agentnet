@@ -8,8 +8,8 @@ daemon in about 0.5 s, signature-tampered frame not listed, withdraw, disabled-b
 refusal with nothing published, ordinary messaging alongside), evidence in
 `results/discovery-relay/20261126T151341Z/`. Still UNTESTED on a relay: the receiver's
 invalid-advert counter for the tampered frame, history recovery for a late starter,
-the republish cadence, flooding and cross-machine use. The cryptography is the same unaudited Ed25519 signing as everywhere else
-in AgentNet; this feature adds one signing domain and no new construction (see
+the republish cadence, flooding and cross-machine use. The cryptography is the same unaudited OpenPGP Ed25519 signing as everywhere else
+in AgentNet; this feature adds no construction: the advert is a standard OpenPGP signed message (see
 `docs/crypto-requirements.md`).
 
 Discovery lets an agent say "this address offers these capabilities until this time"
@@ -98,10 +98,10 @@ max_capabilities = 16            # per advertisement, issued and accepted
 Record bytes (UTF-8 JSON, at most 8192 bytes, unknown fields rejected):
 
 ```json
-{"v":2,
+{"v":3,
  "topic":"general",
- "address":"an1...",
- "contact_record":"<the advertiser's current signed contact-record document, as a string>",
+ "address":"an2...",
+ "contact_record":"<the advertiser's current public certificate document, as a string>",
  "capabilities":[{"name":"translate.de","description":"German to English"}],
  "display_name":"Translator",
  "issued_at":1795644344166,
@@ -109,9 +109,9 @@ Record bytes (UTF-8 JSON, at most 8192 bytes, unknown fields rejected):
  "seq":3}
 ```
 
-* `v`: `2`. Version 1 (no `topic`) is refused as `unknown_version`, never read as
-  "any topic"; a version 2 record without `topic` is `malformed`. The format is not frozen
-  (pre-release, no deployed peers), so version 1 was replaced rather than kept alongside.
+* `v`: `3` (the content is signed as an OpenPGP message, ADR 0004). Earlier versions are refused as
+  `unknown_version`, never read as "any topic"; a record without `topic` is `malformed`. The
+  format is not frozen (pre-release, no deployed peers).
 * `topic`: the discovery topic **name** (`[a-z0-9-]{1,32}`, the `general` of
   `/agentnet/1/discovery-general/proto`) the advert is published on. It is covered by the
   signature. Withdrawals (empty capability list) are ordinary records and carry it too.
@@ -122,18 +122,20 @@ Record bytes (UTF-8 JSON, at most 8192 bytes, unknown fields rejected):
   absent; `null` is accepted as absent).
 * `seq`: unsigned integer; this implementation requires `seq <= 2^63 - 1` (SQLite
   integer range).
-* Document: `{"record": base64url(record_bytes), "sig": base64url(sig)}`, at most 12 288
-  bytes. `sig = Ed25519(address signing key, "agentnet/v1/capability-advert\0" || record_bytes)`
-  (`\0` is one NUL byte), verified with `verify_strict` under the key encoded in
-  `address`.
+* Document: base64url of ONE OpenPGP **signed (not encrypted) message** (one-pass signature, Literal Data
+  holding `record_bytes`, v6 Ed25519 data signature by the agent's primary key), at most 12 288 bytes. The
+  verifier first reads the content without trusting it to find the embedded certificate, then verifies the
+  signature against that certificate; the signer must be the primary key whose fingerprint is `address`.
+  There is no signature context string any more (`docs/crypto-requirements.md` condition 4); the signed
+  `v`, `topic` and the strict schema take that role.
 * **Frame** published on the discovery content topic: `b"AD" || 0x01 || document_bytes`
-  (at most 12 291 bytes). Sealed message frames start with `b"AN"`, so the two can never
+  (at most 12 291 bytes). Sealed message frames start with an OpenPGP packet tag byte (high bit set), advert frames with `A`, so the two can never
   be mistaken for each other, and the engine routes strictly by topic:
 
 | Frame arrives on | Treated as |
 |---|---|
 | an inbox topic (any topic that is not a configured discovery topic) | sealed path; a frame starting with `AD` is **dropped and counted** (`advert.cross_topic.advert_on_inbox`) |
-| a configured discovery topic | advert path; a frame starting with `AN` is **dropped and counted** (`advert.cross_topic.sealed_on_discovery`); anything else that is not a valid advert is counted `advert.invalid.<kind>` |
+| a configured discovery topic | advert path; a frame that looks like a sealed message (packet tag byte) is **dropped and counted** (`advert.cross_topic.sealed_on_discovery`); anything else that is not a valid advert is counted `advert.invalid.<kind>` |
 
 Implemented in `crates/core/src/crypto/advert.rs` (all signing and parsing, modelled on
 `contact.rs` and `revocation.rs`), `crates/core/src/discovery.rs` (engine) and
@@ -146,7 +148,7 @@ An advertisement is accepted only if all of these hold at the receiver's `now`:
 1. frame and document sizes within limits, JSON well formed, `v == 1`, no unknown fields;
 2. the signature verifies under `address`;
 3. the embedded contact record verifies (`VerifiedContact::parse_and_verify`, including
-   that its KEM key has not expired) **and is for the same address**;
+   that its encryption subkey has not expired) **and is for the same address**;
 4. `expires_at > now`; `expires_at > issued_at`;
    `expires_at - issued_at <= max_advert_ttl_s` (the **receiver's** value);
    `issued_at <= now + clock_skew_s` (a frame from slightly in the future is deferred,
@@ -202,7 +204,7 @@ earlier than the advert it replaces.
   `max_advert_ttl_s` are capped; the expiry is also capped at the contact record's
   `kem_expires_at` (the embedded record stops verifying then).
 * **KEM rotation**: the identity is read at start. If the KEM key was rotated while the
-  daemon was stopped (key epoch differs from the one embedded in the stored advert), the
+  daemon was stopped (the certificate differs from the one embedded in the stored advert), the
   advert is re-issued at start with a new `seq`, the same capabilities and expiry, and a
   fresh embedded contact record.
 * **Revoked local identity**: `advertise_agent` and `withdraw_advert` are `policy_denied`
@@ -229,7 +231,7 @@ arrival order and returns each candidate's `is_contact` and local `trust`.
 
 | Party | Sees |
 |---|---|
-| Relay / store operator, any node on the relay, any passive observer of the relay | for every advert: the advertiser's address (a public key), capability names and descriptions, display name, the signed contact record (KEM key, key epoch, inbox bucket count, suites), `issued_at`/`expires_at`/`seq`, the publication times and the republish cadence, the publisher's network identity, and the topic name. It also learns that the address is active on the relay. |
+| Relay / store operator, any node on the relay, any passive observer of the relay | for every advert: the advertiser's address (a public key), capability names and descriptions, display name, the embedded public OpenPGP certificate (its encryption subkeys and their expiry, the inbox bucket count), `issued_at`/`expires_at`/`seq`, the publication times and the republish cadence, the publisher's network identity, and the topic name. It also learns that the address is active on the relay. |
 | Other agents on the relay that subscribe to the topic | the same, parsed |
 | Agents on the relay that do not subscribe | nothing, but the frames are in the relay's store and readable by anyone who queries it |
 | The advertiser's contacts | the same; an advert also tells them the advertiser is online and when it was last re-issued |

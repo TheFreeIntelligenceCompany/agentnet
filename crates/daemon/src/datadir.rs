@@ -3,7 +3,7 @@
 //! ```text
 //! <data dir>/            0700
 //!   identity.json        0600   secret keys (written by `agentnet init`)
-//!   revocation.json      0600   signed identity-revocation tombstone (only after `identity revoke`)
+//!   revocation.json      0600   revoked public certificate (only after `identity revoke`)
 //!   agentnet.toml        0600   configuration
 //!   agentnet.db          0600   engine store (SQLite, WAL)
 //!   webhook.db           0600   webhook dispatcher cursor

@@ -49,12 +49,9 @@ pub struct Cli {
 pub enum Command {
     /// Create a data directory with a new identity, a private-mode config (or, with --public-relay, the audited public mode) and access tokens.
     ///
-    /// Refuses to touch an existing agent. Prints the address and the signed
-    /// contact record to share with peers.
+    /// Refuses to touch an existing agent. Prints the address (`an2...`, the v6
+    /// fingerprint of your OpenPGP key) and the public certificate to share with peers.
     Init {
-        /// Number of shared inbox topics (anonymity set vs bandwidth); advertised in the contact record.
-        #[arg(long, default_value_t = 16, value_name = "N")]
-        inbox_buckets: u16,
         /// REST URL of your local Logos Delivery node (loopback or private address).
         #[arg(long, default_value = "http://127.0.0.1:8645", value_name = "URL")]
         node_url: String,
@@ -102,7 +99,7 @@ pub enum Command {
     },
     /// Send a message to a contact.
     Send {
-        /// Recipient address (an1...). Must be a known contact.
+        /// Recipient address (an2...). Must be a known contact.
         recipient: String,
         /// Message body; `-` reads it from stdin.
         body: String,
@@ -255,37 +252,55 @@ pub enum IdentityCmd {
         #[arg(long)]
         no_replay_guard: bool,
     },
-    /// Generate a new agreement (KEM) key and increment the key epoch; the address stays the same.
+    /// Add a new encryption subkey (with an expiry); the address stays the same.
     ///
-    /// By default the previous key keeps decrypting until the retention window
-    /// ends. At the next `agentnet serve` the new signed record is sent to every
-    /// Trusted contact as a `contact.update`, and their pending messages to you are
-    /// re-sealed to the new key. With --revoke-previous all earlier KEM keys are
-    /// destroyed at once: messages already sealed to them are lost unless re-sealed
-    /// by their senders after they learn the new record.
+    /// The previous subkey is retired (a standard subkey revocation, "key retired")
+    /// and keeps decrypting until the retention window ends. At the next
+    /// `agentnet serve` the new public certificate is sent to every Trusted contact
+    /// as a `contact.update` (they merge it) and their pending messages to you are
+    /// re-sealed to the new subkey. With --revoke-previous every earlier subkey is
+    /// revoked as compromised and its secret key destroyed at once: messages already
+    /// sealed to it are lost unless re-sealed by their senders. There is no forward
+    /// secrecy against a later compromise of a subkey you still hold.
     RotateKem {
+        /// Lifetime of the new encryption subkey in days (default 365).
+        #[arg(long, value_name = "DAYS")]
+        expires_in_days: Option<u64>,
         /// How long the previous key keeps decrypting (default: storage.retention_hours).
         #[arg(long, value_name = "HOURS")]
         keep_hours: Option<u64>,
-        /// Destroy every earlier KEM key immediately and publish `revoked_kem_epochs_below`.
+        /// Revoke every earlier encryption subkey as compromised and destroy its secret key immediately.
         #[arg(long)]
         revoke_previous: bool,
     },
-    /// Revoke this identity (the signing key): irreversible for this address.
+    /// Revoke this identity (the primary key): irreversible for this address.
     ///
-    /// Writes a signed tombstone next to the identity and marks the local identity
-    /// revoked: the daemon then sends nothing except the tombstone, which it delivers
-    /// to every Trusted contact at the next start. Reaches only contacts that are
+    /// Creates a standard OpenPGP key revocation, writes it next to the identity
+    /// (as the revoked public certificate) and marks the local identity revoked: the
+    /// daemon then sends nothing except the revocation notice, which it delivers to
+    /// every Trusted contact at the next start. Reaches only contacts that are
     /// reachable within the TTL/retry limits or that receive the document out of band
     /// (`identity show-revocation`). There is no global revocation list; a thief of the
-    /// signing key can also issue a tombstone (denial of service only).
+    /// primary secret key can also issue a revocation (denial of service only).
     Revoke {
         /// Why (1-256 bytes, no control characters); shown to contacts.
         #[arg(long, value_name = "TEXT")]
         reason: String,
     },
-    /// Print the signed revocation document of a revoked identity (for out-of-band distribution).
+    /// Print the revocation document (the revoked certificate) of a revoked identity.
     ShowRevocation,
+    /// Migrate a data directory written by the retired HPKE + Ed25519 format (`an2`).
+    ///
+    /// Explicit and never automatic (`serve` refuses an old data directory and names
+    /// this command). Generates a fresh OpenPGP identity (the old key is not reused;
+    /// an `an2` address cannot become an `an2` address), moves the old identity file
+    /// aside as `identity.json.legacy-v1`, keeps the inbox history and the dedupe state,
+    /// lists every pending old-format outbound message and marks it failed (re-send it
+    /// after adding the recipient's new certificate), and keeps old contacts as
+    /// unverified legacy entries that cannot be sent to until re-added with
+    /// `contact add --expect <new address>`. Prints the new address. Requires the
+    /// daemon to be stopped.
+    Migrate,
 }
 
 #[derive(Clone, Copy, ValueEnum)]
@@ -307,11 +322,15 @@ impl From<TrustArg> for Trust {
 
 #[derive(Subcommand)]
 pub enum ContactCmd {
-    /// Add or update a contact from its signed record.
+    /// Add a contact from its public OpenPGP certificate, or merge an update into a known one.
+    ///
+    /// First contact pins the certificate's fingerprint: pass --expect with the
+    /// address obtained out of band. An update for a known address is merged into the
+    /// stored certificate (new subkeys, expiry, revocations); it never replaces it.
     Add {
-        /// The record JSON, `@FILE` to read it from a file, or `-` for stdin.
+        /// The certificate (base64url or ASCII armor), `@FILE` to read it from a file, or `-` for stdin.
         record: String,
-        /// Require the record to be for exactly this address (obtained out of band).
+        /// Require the certificate to be for exactly this address (obtained out of band).
         #[arg(long, value_name = "ADDRESS")]
         expect: Option<String>,
         /// Local nickname.
@@ -331,12 +350,12 @@ pub enum ContactCmd {
         #[arg(value_enum)]
         level: TrustArg,
     },
-    /// Import a signed identity-revocation tombstone obtained out of band.
+    /// Import an identity revocation (a revoked certificate) obtained out of band.
     ///
     /// The contact (if any) becomes blocked, sends to it are refused, pending
-    /// messages to it fail, and it cannot be re-trusted or replaced by a new record.
+    /// messages to it fail, and it cannot be re-trusted or re-added.
     Revoke {
-        /// The tombstone document, `@FILE` to read it from a file, or `-` for stdin.
+        /// The revocation document, `@FILE` to read it from a file, or `-` for stdin.
         document: String,
     },
     /// Delete a contact (already queued messages are still sent).

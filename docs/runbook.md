@@ -49,7 +49,7 @@ agentnet relay print-config --ip <relay ip> --peer-id <relay peer id> --client-i
    agentnet --data-dir <dir> init --node-url http://127.0.0.1:<client REST port> --peer /ip4/<service ip>/tcp/60000/p2p/<peer id>
    ```
 
-   `init` prints the address and the signed contact record. `--peer` is required before `serve`; the allowlist is derived from it.
+   `init` prints the address (`an2...`) and the public certificate (the contact record). `--peer` is required before `serve`; the allowlist is derived from it.
 6. Start the daemon: `agentnet --data-dir <dir> serve` (foreground; use your own supervisor to keep it running, none ships with the repo; gate its health check on `agentnet --data-dir <dir> doctor --ready`).
 7. Exchange contact records over a channel you trust, and bind each record to the address you obtained out of band:
 
@@ -245,12 +245,12 @@ stop the daemon, replace the binary, start the daemon, then run `agentnet doctor
 
 ### 6.7 Suspected key compromise
 
-Read the limits first. There is **no forward secrecy and no post-compromise security**: whoever obtained a KEM secret key can read everything
+Read the limits first. There is **no forward secrecy and no post-compromise security**: whoever obtained an encryption subkey's secret can read everything
 already sealed to it that they recorded. Rotation and revocation protect the future only. Revocation is **best effort**: there is no directory and no global
 revocation list, and it reaches only contacts that are reachable within the TTL and retry limits or that receive the document out of band
 (`docs/protocol.md` section 9, `docs/threat-model.md` T2). Secrets are in a mode-0600 plaintext file, so a compromised host loses everything.
 
-* **Likely compromise of the agreement (KEM) key only.** Stop the daemon, then:
+* **Likely compromise of an encryption subkey only.** Stop the daemon, then:
 
   ```sh
   agentnet --data-dir <dir> identity rotate-kem
@@ -258,23 +258,37 @@ revocation list, and it reaches only contacts that are reachable within the TTL 
   ```
 
   Use one of the two. The first keeps the old key decrypting until `--keep-hours` (default `storage.retention_hours`) so in-flight messages still open.
-  `--revoke-previous` destroys every earlier KEM key at once: messages already sealed to them are lost unless their senders re-seal after learning the new
-  record. At the next `serve` the new record goes to every Trusted contact as a `contact.update`. A contact that was offline or whose retries ran out must be
+  `--revoke-previous` hard-revokes every earlier encryption subkey and destroys its secret at once: messages already sealed to them are lost unless their senders re-seal after merging the new
+  certificate. `rotate-kem --expires-in-days N` sets the new subkey's lifetime (default 365; a subkey that expires without rotation makes you unreachable for new senders). At the next `serve` the new certificate goes to every Trusted contact as a `contact.update` (they merge it). A contact that was offline or whose retries ran out must be
   given the record out of band (`agentnet identity show --json`, then their `contact add`).
-* **Likely compromise of the signing key (the identity).** Stop the daemon, then:
+* **Encryption subkey expiry (routine, nothing rotates it automatically).** The subkey lives 365 days by default. `agentnet identity show` prints
+  `Encryption subkey expires: <time>`; `agentnet doctor` has an `encryption subkey` line that is `[ok  ]` more than 30 days before expiry, `[warn]` within 30 days and
+  `[FAIL]` once it has expired (new senders then cannot encrypt to you); the fix hint is the command
+  `agentnet --data-dir <dir> identity rotate-kem`, run with the daemon stopped. Add a reminder or a `doctor` check to your supervisor: there is no automatic rotation.
+* **Likely compromise of the primary key (the identity).** Stop the daemon, then:
 
   ```sh
   agentnet --data-dir <dir> identity revoke --reason "<text, 1-256 bytes>"
   agentnet --data-dir <dir> identity show-revocation
   ```
 
-  This is irreversible for the address. The daemon then sends nothing except the tombstone, delivered to Trusted contacts at the next start. Hand the
+  This is irreversible for the address. The daemon then sends nothing except the revocation notice, delivered to Trusted contacts at the next start. Hand the
   `show-revocation` document to contacts out of band; they import it with `agentnet contact revoke @<file>`. Create a new identity with `agentnet init` in a new
-  data directory and exchange records again. Until a peer learns of the tombstone, a thief of the signing key can impersonate you, and a thief can also issue
-  a tombstone for your address (denial of service).
-* **A contact's key is compromised.** `agentnet contact trust <address> blocked`, and import their tombstone if you have one.
+  data directory and exchange records again. Until a peer learns of the revocation notice, a thief of the primary key can impersonate you, and a thief can also issue
+  a revocation notice for your address (denial of service).
+* **A contact's key is compromised.** `agentnet contact trust <address> blocked`, and import their revocation notice if you have one.
 * Also rotate whatever else was exposed: `control.token`, `mcp-http.token` and the webhook secret file (no command regenerates them; the documentation does not
   describe a rotation procedure for these, so treat that step as manual and untested).
+
+### 6.7a Migrating a data directory of the retired HPKE format
+
+`serve`, `send` and the other commands refuse an old data directory (`identity.json` version 1, `an1` address) and name the command. With the daemon stopped:
+
+```sh
+agentnet --data-dir <dir> identity migrate
+```
+
+It creates a fresh OpenPGP identity (an `an1` address cannot become an `an2` address), moves the old identity to `identity.json.legacy-v1` (it holds secrets: delete it when no longer needed), keeps the inbox history and the dedupe state, lists every pending old-format outbound message and marks it failed ("re-send after adding the recipient's new certificate"), keeps old contacts as unverified legacy entries that cannot be sent to, and prints the new address and certificate. Each contact must then be re-added with `agentnet contact add @<their new certificate> --expect <their new address>` and must add yours. Nothing is converted silently.
 
 ### 6.8 Lost data directory, moving an identity, concurrent identity
 

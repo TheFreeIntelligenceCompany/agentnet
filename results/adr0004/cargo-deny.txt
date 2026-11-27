@@ -1,0 +1,2032 @@
+# cargo-deny 0.22.1 (rustc 1.95.0 toolchain, throwaway --root), run 2026-11-27T04:18:12Z, macOS arm64 host, advisory DB fetched from network
+# command: cargo-deny --locked check   (stdout+stderr combined) exit=0
+warning[duplicate]: found 2 duplicate entries for crate 'base64'
+   ┌─ /Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a56980baffbf87bb7/Cargo.lock:32:1
+   │  
+32 │ ╭ base64 0.22.1 registry+https://github.com/rust-lang/crates.io-index
+33 │ │ base64 0.23.1 registry+https://github.com/rust-lang/crates.io-index
+   │ ╰───────────────────────────────────────────────────────────────────┘ lock entries
+   │  
+   ├ base64 v0.22.1
+     ├── age v0.12.1
+     │   └── agentnet-core v0.1.0
+     │       ├── agentnet-acceptance v0.1.0
+     │       ├── agentnet-cli v0.1.0
+     │       ├── (dev) agentnet-core v0.1.0 (*)
+     │       ├── agentnet-daemon v0.1.0
+     │       │   ├── agentnet-acceptance v0.1.0 (*)
+     │       │   └── agentnet-cli v0.1.0 (*)
+     │       └── agentnet-mcp v0.1.0
+     │           ├── agentnet-cli v0.1.0 (*)
+     │           └── agentnet-daemon v0.1.0 (*)
+     ├── age-core v0.12.0
+     │   └── age v0.12.1 (*)
+     ├── (dev) agentnet-cli v0.1.0 (*)
+     ├── agentnet-core v0.1.0 (*)
+     ├── (dev) agentnet-transport v0.1.0
+     │   ├── agentnet-cli v0.1.0 (*)
+     │   ├── agentnet-core v0.1.0 (*)
+     │   └── agentnet-daemon v0.1.0 (*)
+     ├── reqwest v0.12.28
+     │   ├── agentnet-cli v0.1.0 (*)
+     │   ├── agentnet-daemon v0.1.0 (*)
+     │   └── (dev) agentnet-transport v0.1.0 (*)
+     └── sequoia-openpgp v2.5.0
+         └── agentnet-core v0.1.0 (*)
+   ├ base64 v0.23.1
+     ├── hyper-util v0.1.21
+     │   ├── axum v0.8.9
+     │   │   ├── (dev) agentnet-daemon v0.1.0
+     │   │   │   ├── agentnet-acceptance v0.1.0
+     │   │   │   └── agentnet-cli v0.1.0
+     │   │   └── agentnet-mcp v0.1.0
+     │   │       ├── agentnet-cli v0.1.0 (*)
+     │   │       └── agentnet-daemon v0.1.0 (*)
+     │   ├── hyper-rustls v0.27.10
+     │   │   ├── reqwest v0.12.28
+     │   │   │   ├── agentnet-cli v0.1.0 (*)
+     │   │   │   ├── agentnet-daemon v0.1.0 (*)
+     │   │   │   └── (dev) agentnet-transport v0.1.0
+     │   │   │       ├── agentnet-cli v0.1.0 (*)
+     │   │   │       ├── agentnet-core v0.1.0
+     │   │   │       │   ├── agentnet-acceptance v0.1.0 (*)
+     │   │   │       │   ├── agentnet-cli v0.1.0 (*)
+     │   │   │       │   ├── (dev) agentnet-core v0.1.0 (*)
+     │   │   │       │   ├── agentnet-daemon v0.1.0 (*)
+     │   │   │       │   └── agentnet-mcp v0.1.0 (*)
+     │   │   │       └── agentnet-daemon v0.1.0 (*)
+     │   │   └── reqwest v0.13.5
+     │   │       ├── (dev) agentnet-mcp v0.1.0 (*)
+     │   │       └── rmcp v3.11.0
+     │   │           ├── agentnet-acceptance v0.1.0 (*)
+     │   │           ├── (dev) agentnet-cli v0.1.0 (*)
+     │   │           └── (dev) agentnet-mcp v0.1.0 (*)
+     │   ├── reqwest v0.12.28 (*)
+     │   └── reqwest v0.13.5 (*)
+     ├── reqwest v0.13.5 (*)
+     └── rmcp v3.11.0 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'block-buffer'
+   ┌─ /Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a56980baffbf87bb7/Cargo.lock:44:1
+   │  
+44 │ ╭ block-buffer 0.10.4 registry+https://github.com/rust-lang/crates.io-index
+45 │ │ block-buffer 0.12.1 registry+https://github.com/rust-lang/crates.io-index
+   │ ╰─────────────────────────────────────────────────────────────────────────┘ lock entries
+   │  
+   ├ block-buffer v0.10.4
+     └── digest v0.10.7
+         ├── blake2 v0.10.6
+         │   └── argon2 v0.5.3
+         │       └── sequoia-openpgp v2.5.0
+         │           └── agentnet-core v0.1.0
+         │               ├── agentnet-acceptance v0.1.0
+         │               ├── agentnet-cli v0.1.0
+         │               ├── (dev) agentnet-core v0.1.0 (*)
+         │               ├── agentnet-daemon v0.1.0
+         │               │   ├── agentnet-acceptance v0.1.0 (*)
+         │               │   └── agentnet-cli v0.1.0 (*)
+         │               └── agentnet-mcp v0.1.0
+         │                   ├── agentnet-cli v0.1.0 (*)
+         │                   └── agentnet-daemon v0.1.0 (*)
+         ├── elliptic-curve v0.13.8
+         │   ├── p256 v0.13.2
+         │   │   ├── age v0.12.1
+         │   │   │   └── agentnet-core v0.1.0 (*)
+         │   │   └── hpke v0.12.0
+         │   │       ├── age v0.12.1 (*)
+         │   │       └── age-core v0.12.0
+         │   │           └── age v0.12.1 (*)
+         │   └── primeorder v0.13.6
+         │       └── p256 v0.13.2 (*)
+         ├── hmac v0.12.1
+         │   ├── age v0.12.1 (*)
+         │   ├── agentnet-daemon v0.1.0 (*)
+         │   ├── hkdf v0.12.4
+         │   │   ├── age v0.12.1 (*)
+         │   │   ├── age-core v0.12.0 (*)
+         │   │   ├── elliptic-curve v0.13.8 (*)
+         │   │   └── hpke v0.12.0 (*)
+         │   ├── hpke v0.12.0 (*)
+         │   └── pbkdf2 v0.12.2
+         │       └── scrypt v0.11.0
+         │           └── age v0.12.1 (*)
+         ├── hpke v0.12.0 (*)
+         ├── pbkdf2 v0.12.2 (*)
+         ├── sha2 v0.10.9
+         │   ├── age v0.12.1 (*)
+         │   ├── age-core v0.12.0 (*)
+         │   ├── agentnet-core v0.1.0 (*)
+         │   ├── agentnet-daemon v0.1.0 (*)
+         │   ├── agentnet-transport v0.1.0
+         │   │   ├── agentnet-cli v0.1.0 (*)
+         │   │   ├── agentnet-core v0.1.0 (*)
+         │   │   └── agentnet-daemon v0.1.0 (*)
+         │   ├── hpke v0.12.0 (*)
+         │   └── scrypt v0.11.0 (*)
+         └── sha3 v0.10.9
+             ├── age v0.12.1 (*)
+             └── ml-kem v0.2.3
+                 └── age v0.12.1 (*)
+   ├ block-buffer v0.12.1
+     └── digest v0.11.3
+         ├── sha2 v0.11.2
+         │   ├── rmcp v3.11.0
+         │   │   ├── agentnet-acceptance v0.1.0
+         │   │   ├── (dev) agentnet-cli v0.1.0
+         │   │   └── (dev) agentnet-mcp v0.1.0
+         │   │       ├── agentnet-cli v0.1.0 (*)
+         │   │       └── agentnet-daemon v0.1.0
+         │   │           ├── agentnet-acceptance v0.1.0 (*)
+         │   │           └── agentnet-cli v0.1.0 (*)
+         │   └── rust-embed-utils v8.14.0
+         │       ├── rust-embed v8.14.0
+         │       │   ├── age v0.12.1
+         │       │   │   └── agentnet-core v0.1.0
+         │       │   │       ├── agentnet-acceptance v0.1.0 (*)
+         │       │   │       ├── agentnet-cli v0.1.0 (*)
+         │       │   │       ├── (dev) agentnet-core v0.1.0 (*)
+         │       │   │       ├── agentnet-daemon v0.1.0 (*)
+         │       │   │       └── agentnet-mcp v0.1.0 (*)
+         │       │   └── i18n-embed v0.16.0
+         │       │       ├── age v0.12.1 (*)
+         │       │       └── i18n-embed-fl v0.10.1
+         │       │           └── age v0.12.1 (*)
+         │       └── rust-embed-impl v8.14.0
+         │           └── rust-embed v8.14.0 (*)
+         └── sha3 v0.12.0
+             └── lalrpop v0.23.2
+                 └── (build) sequoia-openpgp v2.5.0
+                     └── agentnet-core v0.1.0 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'chacha20'
+   ┌─ /Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a56980baffbf87bb7/Cargo.lock:54:1
+   │  
+54 │ ╭ chacha20 0.9.1 registry+https://github.com/rust-lang/crates.io-index
+55 │ │ chacha20 0.10.2 registry+https://github.com/rust-lang/crates.io-index
+   │ ╰─────────────────────────────────────────────────────────────────────┘ lock entries
+   │  
+   ├ chacha20 v0.9.1
+     └── chacha20poly1305 v0.10.1
+         ├── age v0.12.1
+         │   └── agentnet-core v0.1.0
+         │       ├── agentnet-acceptance v0.1.0
+         │       ├── agentnet-cli v0.1.0
+         │       ├── (dev) agentnet-core v0.1.0 (*)
+         │       ├── agentnet-daemon v0.1.0
+         │       │   ├── agentnet-acceptance v0.1.0 (*)
+         │       │   └── agentnet-cli v0.1.0 (*)
+         │       └── agentnet-mcp v0.1.0
+         │           ├── agentnet-cli v0.1.0 (*)
+         │           └── agentnet-daemon v0.1.0 (*)
+         ├── age-core v0.12.0
+         │   └── age v0.12.1 (*)
+         └── hpke v0.12.0
+             ├── age v0.12.1 (*)
+             └── age-core v0.12.0 (*)
+   ├ chacha20 v0.10.2
+     ├── proptest v1.12.0
+     │   └── (dev) agentnet-core v0.1.0
+     │       ├── agentnet-acceptance v0.1.0
+     │       ├── agentnet-cli v0.1.0
+     │       ├── (dev) agentnet-core v0.1.0 (*)
+     │       ├── agentnet-daemon v0.1.0
+     │       │   ├── agentnet-acceptance v0.1.0 (*)
+     │       │   └── agentnet-cli v0.1.0 (*)
+     │       └── agentnet-mcp v0.1.0
+     │           ├── agentnet-cli v0.1.0 (*)
+     │           └── agentnet-daemon v0.1.0 (*)
+     └── rand v0.10.4
+         ├── proptest v1.12.0 (*)
+         └── rmcp v3.11.0
+             ├── agentnet-acceptance v0.1.0 (*)
+             ├── (dev) agentnet-cli v0.1.0 (*)
+             └── (dev) agentnet-mcp v0.1.0 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'const-oid'
+   ┌─ /Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a56980baffbf87bb7/Cargo.lock:66:1
+   │  
+66 │ ╭ const-oid 0.9.6 registry+https://github.com/rust-lang/crates.io-index
+67 │ │ const-oid 0.10.3 registry+https://github.com/rust-lang/crates.io-index
+   │ ╰──────────────────────────────────────────────────────────────────────┘ lock entries
+   │  
+   ├ const-oid v0.9.6
+     └── der v0.7.10
+         └── sec1 v0.7.3
+             └── elliptic-curve v0.13.8
+                 ├── p256 v0.13.2
+                 │   ├── age v0.12.1
+                 │   │   └── agentnet-core v0.1.0
+                 │   │       ├── agentnet-acceptance v0.1.0
+                 │   │       ├── agentnet-cli v0.1.0
+                 │   │       ├── (dev) agentnet-core v0.1.0 (*)
+                 │   │       ├── agentnet-daemon v0.1.0
+                 │   │       │   ├── agentnet-acceptance v0.1.0 (*)
+                 │   │       │   └── agentnet-cli v0.1.0 (*)
+                 │   │       └── agentnet-mcp v0.1.0
+                 │   │           ├── agentnet-cli v0.1.0 (*)
+                 │   │           └── agentnet-daemon v0.1.0 (*)
+                 │   └── hpke v0.12.0
+                 │       ├── age v0.12.1 (*)
+                 │       └── age-core v0.12.0
+                 │           └── age v0.12.1 (*)
+                 └── primeorder v0.13.6
+                     └── p256 v0.13.2 (*)
+   ├ const-oid v0.10.3
+     └── digest v0.11.3
+         ├── sha2 v0.11.2
+         │   ├── rmcp v3.11.0
+         │   │   ├── agentnet-acceptance v0.1.0
+         │   │   ├── (dev) agentnet-cli v0.1.0
+         │   │   └── (dev) agentnet-mcp v0.1.0
+         │   │       ├── agentnet-cli v0.1.0 (*)
+         │   │       └── agentnet-daemon v0.1.0
+         │   │           ├── agentnet-acceptance v0.1.0 (*)
+         │   │           └── agentnet-cli v0.1.0 (*)
+         │   └── rust-embed-utils v8.14.0
+         │       ├── rust-embed v8.14.0
+         │       │   ├── age v0.12.1
+         │       │   │   └── agentnet-core v0.1.0
+         │       │   │       ├── agentnet-acceptance v0.1.0 (*)
+         │       │   │       ├── agentnet-cli v0.1.0 (*)
+         │       │   │       ├── (dev) agentnet-core v0.1.0 (*)
+         │       │   │       ├── agentnet-daemon v0.1.0 (*)
+         │       │   │       └── agentnet-mcp v0.1.0 (*)
+         │       │   └── i18n-embed v0.16.0
+         │       │       ├── age v0.12.1 (*)
+         │       │       └── i18n-embed-fl v0.10.1
+         │       │           └── age v0.12.1 (*)
+         │       └── rust-embed-impl v8.14.0
+         │           └── rust-embed v8.14.0 (*)
+         └── sha3 v0.12.0
+             └── lalrpop v0.23.2
+                 └── (build) sequoia-openpgp v2.5.0
+                     └── agentnet-core v0.1.0 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'cpufeatures'
+   ┌─ /Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a56980baffbf87bb7/Cargo.lock:72:1
+   │  
+72 │ ╭ cpufeatures 0.2.17 registry+https://github.com/rust-lang/crates.io-index
+73 │ │ cpufeatures 0.3.1 registry+https://github.com/rust-lang/crates.io-index
+   │ ╰───────────────────────────────────────────────────────────────────────┘ lock entries
+   │  
+   ├ cpufeatures v0.2.17
+     ├── aes v0.8.4
+     │   └── aes-gcm v0.10.3
+     │       └── hpke v0.12.0
+     │           ├── age v0.12.1
+     │           │   └── agentnet-core v0.1.0
+     │           │       ├── agentnet-acceptance v0.1.0
+     │           │       ├── agentnet-cli v0.1.0
+     │           │       ├── (dev) agentnet-core v0.1.0 (*)
+     │           │       ├── agentnet-daemon v0.1.0
+     │           │       │   ├── agentnet-acceptance v0.1.0 (*)
+     │           │       │   └── agentnet-cli v0.1.0 (*)
+     │           │       └── agentnet-mcp v0.1.0
+     │           │           ├── agentnet-cli v0.1.0 (*)
+     │           │           └── agentnet-daemon v0.1.0 (*)
+     │           └── age-core v0.12.0
+     │               └── age v0.12.1 (*)
+     ├── argon2 v0.5.3
+     │   └── sequoia-openpgp v2.5.0
+     │       └── agentnet-core v0.1.0 (*)
+     ├── chacha20 v0.9.1
+     │   └── chacha20poly1305 v0.10.1
+     │       ├── age v0.12.1 (*)
+     │       ├── age-core v0.12.0 (*)
+     │       └── hpke v0.12.0 (*)
+     ├── curve25519-dalek v4.1.3
+     │   └── x25519-dalek v2.0.1
+     │       └── age v0.12.1 (*)
+     ├── keccak v0.1.6
+     │   └── sha3 v0.10.9
+     │       ├── age v0.12.1 (*)
+     │       └── ml-kem v0.2.3
+     │           └── age v0.12.1 (*)
+     ├── poly1305 v0.8.0
+     │   └── chacha20poly1305 v0.10.1 (*)
+     ├── polyval v0.6.2
+     │   └── ghash v0.5.1
+     │       └── aes-gcm v0.10.3 (*)
+     └── sha2 v0.10.9
+         ├── age v0.12.1 (*)
+         ├── age-core v0.12.0 (*)
+         ├── agentnet-core v0.1.0 (*)
+         ├── agentnet-daemon v0.1.0 (*)
+         ├── agentnet-transport v0.1.0
+         │   ├── agentnet-cli v0.1.0 (*)
+         │   ├── agentnet-core v0.1.0 (*)
+         │   └── agentnet-daemon v0.1.0 (*)
+         ├── hpke v0.12.0 (*)
+         └── scrypt v0.11.0
+             └── age v0.12.1 (*)
+   ├ cpufeatures v0.3.1
+     ├── chacha20 v0.10.2
+     │   ├── proptest v1.12.0
+     │   │   └── (dev) agentnet-core v0.1.0
+     │   │       ├── agentnet-acceptance v0.1.0
+     │   │       ├── agentnet-cli v0.1.0
+     │   │       ├── (dev) agentnet-core v0.1.0 (*)
+     │   │       ├── agentnet-daemon v0.1.0
+     │   │       │   ├── agentnet-acceptance v0.1.0 (*)
+     │   │       │   └── agentnet-cli v0.1.0 (*)
+     │   │       └── agentnet-mcp v0.1.0
+     │   │           ├── agentnet-cli v0.1.0 (*)
+     │   │           └── agentnet-daemon v0.1.0 (*)
+     │   └── rand v0.10.4
+     │       ├── proptest v1.12.0 (*)
+     │       └── rmcp v3.11.0
+     │           ├── agentnet-acceptance v0.1.0 (*)
+     │           ├── (dev) agentnet-cli v0.1.0 (*)
+     │           └── (dev) agentnet-mcp v0.1.0 (*)
+     ├── keccak v0.2.2
+     │   └── sha3 v0.12.0
+     │       └── lalrpop v0.23.2
+     │           └── (build) sequoia-openpgp v2.5.0
+     │               └── agentnet-core v0.1.0 (*)
+     └── sha2 v0.11.2
+         ├── rmcp v3.11.0 (*)
+         └── rust-embed-utils v8.14.0
+             ├── rust-embed v8.14.0
+             │   ├── age v0.12.1
+             │   │   └── agentnet-core v0.1.0 (*)
+             │   └── i18n-embed v0.16.0
+             │       ├── age v0.12.1 (*)
+             │       └── i18n-embed-fl v0.10.1
+             │           └── age v0.12.1 (*)
+             └── rust-embed-impl v8.14.0
+                 └── rust-embed v8.14.0 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'crypto-common'
+   ┌─ /Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a56980baffbf87bb7/Cargo.lock:75:1
+   │  
+75 │ ╭ crypto-common 0.1.7 registry+https://github.com/rust-lang/crates.io-index
+76 │ │ crypto-common 0.2.2 registry+https://github.com/rust-lang/crates.io-index
+   │ ╰─────────────────────────────────────────────────────────────────────────┘ lock entries
+   │  
+   ├ crypto-common v0.1.7
+     ├── aead v0.5.2
+     │   ├── aes-gcm v0.10.3
+     │   │   └── hpke v0.12.0
+     │   │       ├── age v0.12.1
+     │   │       │   └── agentnet-core v0.1.0
+     │   │       │       ├── agentnet-acceptance v0.1.0
+     │   │       │       ├── agentnet-cli v0.1.0
+     │   │       │       ├── (dev) agentnet-core v0.1.0 (*)
+     │   │       │       ├── agentnet-daemon v0.1.0
+     │   │       │       │   ├── agentnet-acceptance v0.1.0 (*)
+     │   │       │       │   └── agentnet-cli v0.1.0 (*)
+     │   │       │       └── agentnet-mcp v0.1.0
+     │   │       │           ├── agentnet-cli v0.1.0 (*)
+     │   │       │           └── agentnet-daemon v0.1.0 (*)
+     │   │       └── age-core v0.12.0
+     │   │           └── age v0.12.1 (*)
+     │   ├── chacha20poly1305 v0.10.1
+     │   │   ├── age v0.12.1 (*)
+     │   │   ├── age-core v0.12.0 (*)
+     │   │   └── hpke v0.12.0 (*)
+     │   └── hpke v0.12.0 (*)
+     ├── cipher v0.4.4
+     │   ├── aes v0.8.4
+     │   │   └── aes-gcm v0.10.3 (*)
+     │   ├── aes-gcm v0.10.3 (*)
+     │   ├── age v0.12.1 (*)
+     │   ├── chacha20 v0.9.1
+     │   │   └── chacha20poly1305 v0.10.1 (*)
+     │   ├── chacha20poly1305 v0.10.1 (*)
+     │   ├── ctr v0.9.2
+     │   │   └── aes-gcm v0.10.3 (*)
+     │   └── salsa20 v0.10.2
+     │       └── scrypt v0.11.0
+     │           └── age v0.12.1 (*)
+     ├── digest v0.10.7
+     │   ├── blake2 v0.10.6
+     │   │   └── argon2 v0.5.3
+     │   │       └── sequoia-openpgp v2.5.0
+     │   │           └── agentnet-core v0.1.0 (*)
+     │   ├── elliptic-curve v0.13.8
+     │   │   ├── p256 v0.13.2
+     │   │   │   ├── age v0.12.1 (*)
+     │   │   │   └── hpke v0.12.0 (*)
+     │   │   └── primeorder v0.13.6
+     │   │       └── p256 v0.13.2 (*)
+     │   ├── hmac v0.12.1
+     │   │   ├── age v0.12.1 (*)
+     │   │   ├── agentnet-daemon v0.1.0 (*)
+     │   │   ├── hkdf v0.12.4
+     │   │   │   ├── age v0.12.1 (*)
+     │   │   │   ├── age-core v0.12.0 (*)
+     │   │   │   ├── elliptic-curve v0.13.8 (*)
+     │   │   │   └── hpke v0.12.0 (*)
+     │   │   ├── hpke v0.12.0 (*)
+     │   │   └── pbkdf2 v0.12.2
+     │   │       └── scrypt v0.11.0 (*)
+     │   ├── hpke v0.12.0 (*)
+     │   ├── pbkdf2 v0.12.2 (*)
+     │   ├── sha2 v0.10.9
+     │   │   ├── age v0.12.1 (*)
+     │   │   ├── age-core v0.12.0 (*)
+     │   │   ├── agentnet-core v0.1.0 (*)
+     │   │   ├── agentnet-daemon v0.1.0 (*)
+     │   │   ├── agentnet-transport v0.1.0
+     │   │   │   ├── agentnet-cli v0.1.0 (*)
+     │   │   │   ├── agentnet-core v0.1.0 (*)
+     │   │   │   └── agentnet-daemon v0.1.0 (*)
+     │   │   ├── hpke v0.12.0 (*)
+     │   │   └── scrypt v0.11.0 (*)
+     │   └── sha3 v0.10.9
+     │       ├── age v0.12.1 (*)
+     │       └── ml-kem v0.2.3
+     │           └── age v0.12.1 (*)
+     └── universal-hash v0.5.1
+         ├── poly1305 v0.8.0
+         │   └── chacha20poly1305 v0.10.1 (*)
+         └── polyval v0.6.2
+             └── ghash v0.5.1
+                 └── aes-gcm v0.10.3 (*)
+   ├ crypto-common v0.2.2
+     └── digest v0.11.3
+         ├── sha2 v0.11.2
+         │   ├── rmcp v3.11.0
+         │   │   ├── agentnet-acceptance v0.1.0
+         │   │   ├── (dev) agentnet-cli v0.1.0
+         │   │   └── (dev) agentnet-mcp v0.1.0
+         │   │       ├── agentnet-cli v0.1.0 (*)
+         │   │       └── agentnet-daemon v0.1.0
+         │   │           ├── agentnet-acceptance v0.1.0 (*)
+         │   │           └── agentnet-cli v0.1.0 (*)
+         │   └── rust-embed-utils v8.14.0
+         │       ├── rust-embed v8.14.0
+         │       │   ├── age v0.12.1
+         │       │   │   └── agentnet-core v0.1.0
+         │       │   │       ├── agentnet-acceptance v0.1.0 (*)
+         │       │   │       ├── agentnet-cli v0.1.0 (*)
+         │       │   │       ├── (dev) agentnet-core v0.1.0 (*)
+         │       │   │       ├── agentnet-daemon v0.1.0 (*)
+         │       │   │       └── agentnet-mcp v0.1.0 (*)
+         │       │   └── i18n-embed v0.16.0
+         │       │       ├── age v0.12.1 (*)
+         │       │       └── i18n-embed-fl v0.10.1
+         │       │           └── age v0.12.1 (*)
+         │       └── rust-embed-impl v8.14.0
+         │           └── rust-embed v8.14.0 (*)
+         └── sha3 v0.12.0
+             └── lalrpop v0.23.2
+                 └── (build) sequoia-openpgp v2.5.0
+                     └── agentnet-core v0.1.0 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'digest'
+   ┌─ /Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a56980baffbf87bb7/Cargo.lock:86:1
+   │  
+86 │ ╭ digest 0.10.7 registry+https://github.com/rust-lang/crates.io-index
+87 │ │ digest 0.11.3 registry+https://github.com/rust-lang/crates.io-index
+   │ ╰───────────────────────────────────────────────────────────────────┘ lock entries
+   │  
+   ├ digest v0.10.7
+     ├── blake2 v0.10.6
+     │   └── argon2 v0.5.3
+     │       └── sequoia-openpgp v2.5.0
+     │           └── agentnet-core v0.1.0
+     │               ├── agentnet-acceptance v0.1.0
+     │               ├── agentnet-cli v0.1.0
+     │               ├── (dev) agentnet-core v0.1.0 (*)
+     │               ├── agentnet-daemon v0.1.0
+     │               │   ├── agentnet-acceptance v0.1.0 (*)
+     │               │   └── agentnet-cli v0.1.0 (*)
+     │               └── agentnet-mcp v0.1.0
+     │                   ├── agentnet-cli v0.1.0 (*)
+     │                   └── agentnet-daemon v0.1.0 (*)
+     ├── elliptic-curve v0.13.8
+     │   ├── p256 v0.13.2
+     │   │   ├── age v0.12.1
+     │   │   │   └── agentnet-core v0.1.0 (*)
+     │   │   └── hpke v0.12.0
+     │   │       ├── age v0.12.1 (*)
+     │   │       └── age-core v0.12.0
+     │   │           └── age v0.12.1 (*)
+     │   └── primeorder v0.13.6
+     │       └── p256 v0.13.2 (*)
+     ├── hmac v0.12.1
+     │   ├── age v0.12.1 (*)
+     │   ├── agentnet-daemon v0.1.0 (*)
+     │   ├── hkdf v0.12.4
+     │   │   ├── age v0.12.1 (*)
+     │   │   ├── age-core v0.12.0 (*)
+     │   │   ├── elliptic-curve v0.13.8 (*)
+     │   │   └── hpke v0.12.0 (*)
+     │   ├── hpke v0.12.0 (*)
+     │   └── pbkdf2 v0.12.2
+     │       └── scrypt v0.11.0
+     │           └── age v0.12.1 (*)
+     ├── hpke v0.12.0 (*)
+     ├── pbkdf2 v0.12.2 (*)
+     ├── sha2 v0.10.9
+     │   ├── age v0.12.1 (*)
+     │   ├── age-core v0.12.0 (*)
+     │   ├── agentnet-core v0.1.0 (*)
+     │   ├── agentnet-daemon v0.1.0 (*)
+     │   ├── agentnet-transport v0.1.0
+     │   │   ├── agentnet-cli v0.1.0 (*)
+     │   │   ├── agentnet-core v0.1.0 (*)
+     │   │   └── agentnet-daemon v0.1.0 (*)
+     │   ├── hpke v0.12.0 (*)
+     │   └── scrypt v0.11.0 (*)
+     └── sha3 v0.10.9
+         ├── age v0.12.1 (*)
+         └── ml-kem v0.2.3
+             └── age v0.12.1 (*)
+   ├ digest v0.11.3
+     ├── sha2 v0.11.2
+     │   ├── rmcp v3.11.0
+     │   │   ├── agentnet-acceptance v0.1.0
+     │   │   ├── (dev) agentnet-cli v0.1.0
+     │   │   └── (dev) agentnet-mcp v0.1.0
+     │   │       ├── agentnet-cli v0.1.0 (*)
+     │   │       └── agentnet-daemon v0.1.0
+     │   │           ├── agentnet-acceptance v0.1.0 (*)
+     │   │           └── agentnet-cli v0.1.0 (*)
+     │   └── rust-embed-utils v8.14.0
+     │       ├── rust-embed v8.14.0
+     │       │   ├── age v0.12.1
+     │       │   │   └── agentnet-core v0.1.0
+     │       │   │       ├── agentnet-acceptance v0.1.0 (*)
+     │       │   │       ├── agentnet-cli v0.1.0 (*)
+     │       │   │       ├── (dev) agentnet-core v0.1.0 (*)
+     │       │   │       ├── agentnet-daemon v0.1.0 (*)
+     │       │   │       └── agentnet-mcp v0.1.0 (*)
+     │       │   └── i18n-embed v0.16.0
+     │       │       ├── age v0.12.1 (*)
+     │       │       └── i18n-embed-fl v0.10.1
+     │       │           └── age v0.12.1 (*)
+     │       └── rust-embed-impl v8.14.0
+     │           └── rust-embed v8.14.0 (*)
+     └── sha3 v0.12.0
+         └── lalrpop v0.23.2
+             └── (build) sequoia-openpgp v2.5.0
+                 └── agentnet-core v0.1.0 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'foldhash'
+    ┌─ /Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a56980baffbf87bb7/Cargo.lock:111:1
+    │  
+111 │ ╭ foldhash 0.1.5 registry+https://github.com/rust-lang/crates.io-index
+112 │ │ foldhash 0.2.0 registry+https://github.com/rust-lang/crates.io-index
+    │ ╰────────────────────────────────────────────────────────────────────┘ lock entries
+    │  
+    ├ foldhash v0.1.5
+      └── hashbrown v0.15.5
+          └── petgraph v0.8.3
+              └── lalrpop v0.23.2
+                  └── (build) sequoia-openpgp v2.5.0
+                      └── agentnet-core v0.1.0
+                          ├── agentnet-acceptance v0.1.0
+                          ├── agentnet-cli v0.1.0
+                          ├── (dev) agentnet-core v0.1.0 (*)
+                          ├── agentnet-daemon v0.1.0
+                          │   ├── agentnet-acceptance v0.1.0 (*)
+                          │   └── agentnet-cli v0.1.0 (*)
+                          └── agentnet-mcp v0.1.0
+                              ├── agentnet-cli v0.1.0 (*)
+                              └── agentnet-daemon v0.1.0 (*)
+    ├ foldhash v0.2.0
+      └── hashbrown v0.17.2
+          ├── hashlink v0.12.2
+          │   └── rusqlite v0.42.0
+          │       ├── agentnet-core v0.1.0
+          │       │   ├── agentnet-acceptance v0.1.0
+          │       │   ├── agentnet-cli v0.1.0
+          │       │   ├── (dev) agentnet-core v0.1.0 (*)
+          │       │   ├── agentnet-daemon v0.1.0
+          │       │   │   ├── agentnet-acceptance v0.1.0 (*)
+          │       │   │   └── agentnet-cli v0.1.0 (*)
+          │       │   └── agentnet-mcp v0.1.0
+          │       │       ├── agentnet-cli v0.1.0 (*)
+          │       │       └── agentnet-daemon v0.1.0 (*)
+          │       └── agentnet-daemon v0.1.0 (*)
+          ├── indexmap v2.14.2
+          │   ├── petgraph v0.8.3
+          │   │   └── lalrpop v0.23.2
+          │   │       └── (build) sequoia-openpgp v2.5.0
+          │   │           └── agentnet-core v0.1.0 (*)
+          │   ├── process-wrap v10.0.2
+          │   │   └── rmcp v3.11.0
+          │   │       ├── agentnet-acceptance v0.1.0 (*)
+          │   │       ├── (dev) agentnet-cli v0.1.0 (*)
+          │   │       └── (dev) agentnet-mcp v0.1.0 (*)
+          │   └── rmcp v3.11.0 (*)
+          └── referencing v0.63.1
+              └── jsonschema v0.63.1
+                  └── (dev) agentnet-mcp v0.1.0 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'getrandom'
+    ┌─ /Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a56980baffbf87bb7/Cargo.lock:127:1
+    │  
+127 │ ╭ getrandom 0.2.17 registry+https://github.com/rust-lang/crates.io-index
+128 │ │ getrandom 0.4.3 registry+https://github.com/rust-lang/crates.io-index
+    │ ╰─────────────────────────────────────────────────────────────────────┘ lock entries
+    │  
+    ├ getrandom v0.2.17
+      ├── rand_core v0.6.4
+      │   ├── crypto-bigint v0.5.5
+      │   │   └── elliptic-curve v0.13.8
+      │   │       ├── p256 v0.13.2
+      │   │       │   ├── age v0.12.1
+      │   │       │   │   └── agentnet-core v0.1.0
+      │   │       │   │       ├── agentnet-acceptance v0.1.0
+      │   │       │   │       ├── agentnet-cli v0.1.0
+      │   │       │   │       ├── (dev) agentnet-core v0.1.0 (*)
+      │   │       │   │       ├── agentnet-daemon v0.1.0
+      │   │       │   │       │   ├── agentnet-acceptance v0.1.0 (*)
+      │   │       │   │       │   └── agentnet-cli v0.1.0 (*)
+      │   │       │   │       └── agentnet-mcp v0.1.0
+      │   │       │   │           ├── agentnet-cli v0.1.0 (*)
+      │   │       │   │           └── agentnet-daemon v0.1.0 (*)
+      │   │       │   └── hpke v0.12.0
+      │   │       │       ├── age v0.12.1 (*)
+      │   │       │       └── age-core v0.12.0
+      │   │       │           └── age v0.12.1 (*)
+      │   │       └── primeorder v0.13.6
+      │   │           └── p256 v0.13.2 (*)
+      │   ├── crypto-common v0.1.7
+      │   │   ├── aead v0.5.2
+      │   │   │   ├── aes-gcm v0.10.3
+      │   │   │   │   └── hpke v0.12.0 (*)
+      │   │   │   ├── chacha20poly1305 v0.10.1
+      │   │   │   │   ├── age v0.12.1 (*)
+      │   │   │   │   ├── age-core v0.12.0 (*)
+      │   │   │   │   └── hpke v0.12.0 (*)
+      │   │   │   └── hpke v0.12.0 (*)
+      │   │   ├── cipher v0.4.4
+      │   │   │   ├── aes v0.8.4
+      │   │   │   │   └── aes-gcm v0.10.3 (*)
+      │   │   │   ├── aes-gcm v0.10.3 (*)
+      │   │   │   ├── age v0.12.1 (*)
+      │   │   │   ├── chacha20 v0.9.1
+      │   │   │   │   └── chacha20poly1305 v0.10.1 (*)
+      │   │   │   ├── chacha20poly1305 v0.10.1 (*)
+      │   │   │   ├── ctr v0.9.2
+      │   │   │   │   └── aes-gcm v0.10.3 (*)
+      │   │   │   └── salsa20 v0.10.2
+      │   │   │       └── scrypt v0.11.0
+      │   │   │           └── age v0.12.1 (*)
+      │   │   ├── digest v0.10.7
+      │   │   │   ├── blake2 v0.10.6
+      │   │   │   │   └── argon2 v0.5.3
+      │   │   │   │       └── sequoia-openpgp v2.5.0
+      │   │   │   │           └── agentnet-core v0.1.0 (*)
+      │   │   │   ├── elliptic-curve v0.13.8 (*)
+      │   │   │   ├── hmac v0.12.1
+      │   │   │   │   ├── age v0.12.1 (*)
+      │   │   │   │   ├── agentnet-daemon v0.1.0 (*)
+      │   │   │   │   ├── hkdf v0.12.4
+      │   │   │   │   │   ├── age v0.12.1 (*)
+      │   │   │   │   │   ├── age-core v0.12.0 (*)
+      │   │   │   │   │   ├── elliptic-curve v0.13.8 (*)
+      │   │   │   │   │   └── hpke v0.12.0 (*)
+      │   │   │   │   ├── hpke v0.12.0 (*)
+      │   │   │   │   └── pbkdf2 v0.12.2
+      │   │   │   │       └── scrypt v0.11.0 (*)
+      │   │   │   ├── hpke v0.12.0 (*)
+      │   │   │   ├── pbkdf2 v0.12.2 (*)
+      │   │   │   ├── sha2 v0.10.9
+      │   │   │   │   ├── age v0.12.1 (*)
+      │   │   │   │   ├── age-core v0.12.0 (*)
+      │   │   │   │   ├── agentnet-core v0.1.0 (*)
+      │   │   │   │   ├── agentnet-daemon v0.1.0 (*)
+      │   │   │   │   ├── agentnet-transport v0.1.0
+      │   │   │   │   │   ├── agentnet-cli v0.1.0 (*)
+      │   │   │   │   │   ├── agentnet-core v0.1.0 (*)
+      │   │   │   │   │   └── agentnet-daemon v0.1.0 (*)
+      │   │   │   │   ├── hpke v0.12.0 (*)
+      │   │   │   │   └── scrypt v0.11.0 (*)
+      │   │   │   └── sha3 v0.10.9
+      │   │   │       ├── age v0.12.1 (*)
+      │   │   │       └── ml-kem v0.2.3
+      │   │   │           └── age v0.12.1 (*)
+      │   │   └── universal-hash v0.5.1
+      │   │       ├── poly1305 v0.8.0
+      │   │       │   └── chacha20poly1305 v0.10.1 (*)
+      │   │       └── polyval v0.6.2
+      │   │           └── ghash v0.5.1
+      │   │               └── aes-gcm v0.10.3 (*)
+      │   ├── elliptic-curve v0.13.8 (*)
+      │   ├── ff v0.13.1
+      │   │   ├── elliptic-curve v0.13.8 (*)
+      │   │   └── group v0.13.0
+      │   │       └── elliptic-curve v0.13.8 (*)
+      │   ├── group v0.13.0 (*)
+      │   ├── hpke v0.12.0 (*)
+      │   ├── kem v0.3.0-pre.0
+      │   │   └── ml-kem v0.2.3 (*)
+      │   ├── ml-kem v0.2.3 (*)
+      │   ├── password-hash v0.5.0
+      │   │   └── argon2 v0.5.3 (*)
+      │   ├── rand v0.8.8
+      │   │   ├── age v0.12.1 (*)
+      │   │   └── age-core v0.12.0 (*)
+      │   ├── rand_chacha v0.3.1
+      │   │   └── rand v0.8.8 (*)
+      │   └── x25519-dalek v2.0.1
+      │       └── age v0.12.1 (*)
+      └── ring v0.17.14
+          ├── rustls v0.23.46
+          │   ├── hyper-rustls v0.27.10
+          │   │   ├── reqwest v0.12.28
+          │   │   │   ├── agentnet-cli v0.1.0 (*)
+          │   │   │   ├── agentnet-daemon v0.1.0 (*)
+          │   │   │   └── (dev) agentnet-transport v0.1.0 (*)
+          │   │   └── reqwest v0.13.5
+          │   │       ├── (dev) agentnet-mcp v0.1.0 (*)
+          │   │       └── rmcp v3.11.0
+          │   │           ├── agentnet-acceptance v0.1.0 (*)
+          │   │           ├── (dev) agentnet-cli v0.1.0 (*)
+          │   │           └── (dev) agentnet-mcp v0.1.0 (*)
+          │   ├── reqwest v0.12.28 (*)
+          │   ├── reqwest v0.13.5 (*)
+          │   ├── rustls-platform-verifier v0.7.1
+          │   │   └── reqwest v0.13.5 (*)
+          │   └── tokio-rustls v0.26.6
+          │       ├── hyper-rustls v0.27.10 (*)
+          │       ├── reqwest v0.12.28 (*)
+          │       └── reqwest v0.13.5 (*)
+          └── rustls-webpki v0.103.17
+              ├── rustls v0.23.46 (*)
+              └── rustls-platform-verifier v0.7.1 (*)
+    ├ getrandom v0.4.3
+      ├── agentnet-core v0.1.0
+      │   ├── agentnet-acceptance v0.1.0
+      │   ├── agentnet-cli v0.1.0
+      │   ├── (dev) agentnet-core v0.1.0 (*)
+      │   ├── agentnet-daemon v0.1.0
+      │   │   ├── agentnet-acceptance v0.1.0 (*)
+      │   │   └── agentnet-cli v0.1.0 (*)
+      │   └── agentnet-mcp v0.1.0
+      │       ├── agentnet-cli v0.1.0 (*)
+      │       └── agentnet-daemon v0.1.0 (*)
+      ├── agentnet-daemon v0.1.0 (*)
+      ├── ahash v0.8.14
+      │   ├── jsonschema v0.63.1
+      │   │   └── (dev) agentnet-mcp v0.1.0 (*)
+      │   ├── jsonschema-value v0.63.1
+      │   │   └── jsonschema v0.63.1 (*)
+      │   └── referencing v0.63.1
+      │       └── jsonschema v0.63.1 (*)
+      ├── rand v0.10.4
+      │   ├── proptest v1.12.0
+      │   │   └── (dev) agentnet-core v0.1.0 (*)
+      │   └── rmcp v3.11.0
+      │       ├── agentnet-acceptance v0.1.0 (*)
+      │       ├── (dev) agentnet-cli v0.1.0 (*)
+      │       └── (dev) agentnet-mcp v0.1.0 (*)
+      ├── tempfile v3.27.0
+      │   ├── (dev) agentnet-cli v0.1.0 (*)
+      │   ├── (dev) agentnet-core v0.1.0 (*)
+      │   ├── (dev) agentnet-daemon v0.1.0 (*)
+      │   ├── proptest v1.12.0 (*)
+      │   └── rusty-fork v0.3.1
+      │       └── proptest v1.12.0 (*)
+      └── uuid v1.29.3
+          ├── agentnet-core v0.1.0 (*)
+          └── rmcp v3.11.0 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'hashbrown'
+    ┌─ /Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a56980baffbf87bb7/Cargo.lock:132:1
+    │  
+132 │ ╭ hashbrown 0.15.5 registry+https://github.com/rust-lang/crates.io-index
+133 │ │ hashbrown 0.17.2 registry+https://github.com/rust-lang/crates.io-index
+    │ ╰──────────────────────────────────────────────────────────────────────┘ lock entries
+    │  
+    ├ hashbrown v0.15.5
+      └── petgraph v0.8.3
+          └── lalrpop v0.23.2
+              └── (build) sequoia-openpgp v2.5.0
+                  └── agentnet-core v0.1.0
+                      ├── agentnet-acceptance v0.1.0
+                      ├── agentnet-cli v0.1.0
+                      ├── (dev) agentnet-core v0.1.0 (*)
+                      ├── agentnet-daemon v0.1.0
+                      │   ├── agentnet-acceptance v0.1.0 (*)
+                      │   └── agentnet-cli v0.1.0 (*)
+                      └── agentnet-mcp v0.1.0
+                          ├── agentnet-cli v0.1.0 (*)
+                          └── agentnet-daemon v0.1.0 (*)
+    ├ hashbrown v0.17.2
+      ├── hashlink v0.12.2
+      │   └── rusqlite v0.42.0
+      │       ├── agentnet-core v0.1.0
+      │       │   ├── agentnet-acceptance v0.1.0
+      │       │   ├── agentnet-cli v0.1.0
+      │       │   ├── (dev) agentnet-core v0.1.0 (*)
+      │       │   ├── agentnet-daemon v0.1.0
+      │       │   │   ├── agentnet-acceptance v0.1.0 (*)
+      │       │   │   └── agentnet-cli v0.1.0 (*)
+      │       │   └── agentnet-mcp v0.1.0
+      │       │       ├── agentnet-cli v0.1.0 (*)
+      │       │       └── agentnet-daemon v0.1.0 (*)
+      │       └── agentnet-daemon v0.1.0 (*)
+      ├── indexmap v2.14.2
+      │   ├── petgraph v0.8.3
+      │   │   └── lalrpop v0.23.2
+      │   │       └── (build) sequoia-openpgp v2.5.0
+      │   │           └── agentnet-core v0.1.0 (*)
+      │   ├── process-wrap v10.0.2
+      │   │   └── rmcp v3.11.0
+      │   │       ├── agentnet-acceptance v0.1.0 (*)
+      │   │       ├── (dev) agentnet-cli v0.1.0 (*)
+      │   │       └── (dev) agentnet-mcp v0.1.0 (*)
+      │   └── rmcp v3.11.0 (*)
+      └── referencing v0.63.1
+          └── jsonschema v0.63.1
+              └── (dev) agentnet-mcp v0.1.0 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'hybrid-array'
+    ┌─ /Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a56980baffbf87bb7/Cargo.lock:144:1
+    │  
+144 │ ╭ hybrid-array 0.2.3 registry+https://github.com/rust-lang/crates.io-index
+145 │ │ hybrid-array 0.4.15 registry+https://github.com/rust-lang/crates.io-index
+    │ ╰─────────────────────────────────────────────────────────────────────────┘ lock entries
+    │  
+    ├ hybrid-array v0.2.3
+      └── ml-kem v0.2.3
+          └── age v0.12.1
+              └── agentnet-core v0.1.0
+                  ├── agentnet-acceptance v0.1.0
+                  ├── agentnet-cli v0.1.0
+                  ├── (dev) agentnet-core v0.1.0 (*)
+                  ├── agentnet-daemon v0.1.0
+                  │   ├── agentnet-acceptance v0.1.0 (*)
+                  │   └── agentnet-cli v0.1.0 (*)
+                  └── agentnet-mcp v0.1.0
+                      ├── agentnet-cli v0.1.0 (*)
+                      └── agentnet-daemon v0.1.0 (*)
+    ├ hybrid-array v0.4.15
+      ├── block-buffer v0.12.1
+      │   └── digest v0.11.3
+      │       ├── sha2 v0.11.2
+      │       │   ├── rmcp v3.11.0
+      │       │   │   ├── agentnet-acceptance v0.1.0
+      │       │   │   ├── (dev) agentnet-cli v0.1.0
+      │       │   │   └── (dev) agentnet-mcp v0.1.0
+      │       │   │       ├── agentnet-cli v0.1.0 (*)
+      │       │   │       └── agentnet-daemon v0.1.0
+      │       │   │           ├── agentnet-acceptance v0.1.0 (*)
+      │       │   │           └── agentnet-cli v0.1.0 (*)
+      │       │   └── rust-embed-utils v8.14.0
+      │       │       ├── rust-embed v8.14.0
+      │       │       │   ├── age v0.12.1
+      │       │       │   │   └── agentnet-core v0.1.0
+      │       │       │   │       ├── agentnet-acceptance v0.1.0 (*)
+      │       │       │   │       ├── agentnet-cli v0.1.0 (*)
+      │       │       │   │       ├── (dev) agentnet-core v0.1.0 (*)
+      │       │       │   │       ├── agentnet-daemon v0.1.0 (*)
+      │       │       │   │       └── agentnet-mcp v0.1.0 (*)
+      │       │       │   └── i18n-embed v0.16.0
+      │       │       │       ├── age v0.12.1 (*)
+      │       │       │       └── i18n-embed-fl v0.10.1
+      │       │       │           └── age v0.12.1 (*)
+      │       │       └── rust-embed-impl v8.14.0
+      │       │           └── rust-embed v8.14.0 (*)
+      │       └── sha3 v0.12.0
+      │           └── lalrpop v0.23.2
+      │               └── (build) sequoia-openpgp v2.5.0
+      │                   └── agentnet-core v0.1.0 (*)
+      └── crypto-common v0.2.2
+          └── digest v0.11.3 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'itertools'
+    ┌─ /Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a56980baffbf87bb7/Cargo.lock:170:1
+    │  
+170 │ ╭ itertools 0.13.0 registry+https://github.com/rust-lang/crates.io-index
+171 │ │ itertools 0.15.0 registry+https://github.com/rust-lang/crates.io-index
+    │ ╰──────────────────────────────────────────────────────────────────────┘ lock entries
+    │  
+    ├ itertools v0.13.0
+      └── bindgen v0.72.1
+          ├── (build) openssl-sys v0.9.118
+          │   ├── ossl v1.5.5
+          │   │   └── sequoia-openpgp v2.5.0
+          │   │       └── agentnet-core v0.1.0
+          │   │           ├── agentnet-acceptance v0.1.0
+          │   │           ├── agentnet-cli v0.1.0
+          │   │           ├── (dev) agentnet-core v0.1.0 (*)
+          │   │           ├── agentnet-daemon v0.1.0
+          │   │           │   ├── agentnet-acceptance v0.1.0 (*)
+          │   │           │   └── agentnet-cli v0.1.0 (*)
+          │   │           └── agentnet-mcp v0.1.0
+          │   │               ├── agentnet-cli v0.1.0 (*)
+          │   │               └── agentnet-daemon v0.1.0 (*)
+          │   └── sequoia-openpgp v2.5.0 (*)
+          └── (build) ossl v1.5.5 (*)
+    ├ itertools v0.15.0
+      └── lalrpop v0.23.2
+          └── (build) sequoia-openpgp v2.5.0
+              └── agentnet-core v0.1.0
+                  ├── agentnet-acceptance v0.1.0
+                  ├── agentnet-cli v0.1.0
+                  ├── (dev) agentnet-core v0.1.0 (*)
+                  ├── agentnet-daemon v0.1.0
+                  │   ├── agentnet-acceptance v0.1.0 (*)
+                  │   └── agentnet-cli v0.1.0 (*)
+                  └── agentnet-mcp v0.1.0
+                      ├── agentnet-cli v0.1.0 (*)
+                      └── agentnet-daemon v0.1.0 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'keccak'
+    ┌─ /Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a56980baffbf87bb7/Cargo.lock:177:1
+    │  
+177 │ ╭ keccak 0.1.6 registry+https://github.com/rust-lang/crates.io-index
+178 │ │ keccak 0.2.2 registry+https://github.com/rust-lang/crates.io-index
+    │ ╰──────────────────────────────────────────────────────────────────┘ lock entries
+    │  
+    ├ keccak v0.1.6
+      └── sha3 v0.10.9
+          ├── age v0.12.1
+          │   └── agentnet-core v0.1.0
+          │       ├── agentnet-acceptance v0.1.0
+          │       ├── agentnet-cli v0.1.0
+          │       ├── (dev) agentnet-core v0.1.0 (*)
+          │       ├── agentnet-daemon v0.1.0
+          │       │   ├── agentnet-acceptance v0.1.0 (*)
+          │       │   └── agentnet-cli v0.1.0 (*)
+          │       └── agentnet-mcp v0.1.0
+          │           ├── agentnet-cli v0.1.0 (*)
+          │           └── agentnet-daemon v0.1.0 (*)
+          └── ml-kem v0.2.3
+              └── age v0.12.1 (*)
+    ├ keccak v0.2.2
+      └── sha3 v0.12.0
+          └── lalrpop v0.23.2
+              └── (build) sequoia-openpgp v2.5.0
+                  └── agentnet-core v0.1.0
+                      ├── agentnet-acceptance v0.1.0
+                      ├── agentnet-cli v0.1.0
+                      ├── (dev) agentnet-core v0.1.0 (*)
+                      ├── agentnet-daemon v0.1.0
+                      │   ├── agentnet-acceptance v0.1.0 (*)
+                      │   └── agentnet-cli v0.1.0 (*)
+                      └── agentnet-mcp v0.1.0
+                          ├── agentnet-cli v0.1.0 (*)
+                          └── agentnet-daemon v0.1.0 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'nom'
+    ┌─ /Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a56980baffbf87bb7/Cargo.lock:204:1
+    │  
+204 │ ╭ nom 7.1.3 registry+https://github.com/rust-lang/crates.io-index
+205 │ │ nom 8.0.0 registry+https://github.com/rust-lang/crates.io-index
+    │ ╰───────────────────────────────────────────────────────────────┘ lock entries
+    │  
+    ├ nom v7.1.3
+      └── cexpr v0.6.0
+          └── bindgen v0.72.1
+              ├── (build) openssl-sys v0.9.118
+              │   ├── ossl v1.5.5
+              │   │   └── sequoia-openpgp v2.5.0
+              │   │       └── agentnet-core v0.1.0
+              │   │           ├── agentnet-acceptance v0.1.0
+              │   │           ├── agentnet-cli v0.1.0
+              │   │           ├── (dev) agentnet-core v0.1.0 (*)
+              │   │           ├── agentnet-daemon v0.1.0
+              │   │           │   ├── agentnet-acceptance v0.1.0 (*)
+              │   │           │   └── agentnet-cli v0.1.0 (*)
+              │   │           └── agentnet-mcp v0.1.0
+              │   │               ├── agentnet-cli v0.1.0 (*)
+              │   │               └── agentnet-daemon v0.1.0 (*)
+              │   └── sequoia-openpgp v2.5.0 (*)
+              └── (build) ossl v1.5.5 (*)
+    ├ nom v8.0.0
+      ├── age v0.12.1
+      │   └── agentnet-core v0.1.0
+      │       ├── agentnet-acceptance v0.1.0
+      │       ├── agentnet-cli v0.1.0
+      │       ├── (dev) agentnet-core v0.1.0 (*)
+      │       ├── agentnet-daemon v0.1.0
+      │       │   ├── agentnet-acceptance v0.1.0 (*)
+      │       │   └── agentnet-cli v0.1.0 (*)
+      │       └── agentnet-mcp v0.1.0
+      │           ├── agentnet-cli v0.1.0 (*)
+      │           └── agentnet-daemon v0.1.0 (*)
+      └── age-core v0.12.0
+          └── age v0.12.1 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'rand'
+    ┌─ /Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a56980baffbf87bb7/Cargo.lock:248:1
+    │  
+248 │ ╭ rand 0.8.8 registry+https://github.com/rust-lang/crates.io-index
+249 │ │ rand 0.10.4 registry+https://github.com/rust-lang/crates.io-index
+    │ ╰─────────────────────────────────────────────────────────────────┘ lock entries
+    │  
+    ├ rand v0.8.8
+      ├── age v0.12.1
+      │   └── agentnet-core v0.1.0
+      │       ├── agentnet-acceptance v0.1.0
+      │       ├── agentnet-cli v0.1.0
+      │       ├── (dev) agentnet-core v0.1.0 (*)
+      │       ├── agentnet-daemon v0.1.0
+      │       │   ├── agentnet-acceptance v0.1.0 (*)
+      │       │   └── agentnet-cli v0.1.0 (*)
+      │       └── agentnet-mcp v0.1.0
+      │           ├── agentnet-cli v0.1.0 (*)
+      │           └── agentnet-daemon v0.1.0 (*)
+      └── age-core v0.12.0
+          └── age v0.12.1 (*)
+    ├ rand v0.10.4
+      ├── proptest v1.12.0
+      │   └── (dev) agentnet-core v0.1.0
+      │       ├── agentnet-acceptance v0.1.0
+      │       ├── agentnet-cli v0.1.0
+      │       ├── (dev) agentnet-core v0.1.0 (*)
+      │       ├── agentnet-daemon v0.1.0
+      │       │   ├── agentnet-acceptance v0.1.0 (*)
+      │       │   └── agentnet-cli v0.1.0 (*)
+      │       └── agentnet-mcp v0.1.0
+      │           ├── agentnet-cli v0.1.0 (*)
+      │           └── agentnet-daemon v0.1.0 (*)
+      └── rmcp v3.11.0
+          ├── agentnet-acceptance v0.1.0 (*)
+          ├── (dev) agentnet-cli v0.1.0 (*)
+          └── (dev) agentnet-mcp v0.1.0 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'rand_core'
+    ┌─ /Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a56980baffbf87bb7/Cargo.lock:251:1
+    │  
+251 │ ╭ rand_core 0.6.4 registry+https://github.com/rust-lang/crates.io-index
+252 │ │ rand_core 0.10.1 registry+https://github.com/rust-lang/crates.io-index
+    │ ╰──────────────────────────────────────────────────────────────────────┘ lock entries
+    │  
+    ├ rand_core v0.6.4
+      ├── crypto-bigint v0.5.5
+      │   └── elliptic-curve v0.13.8
+      │       ├── p256 v0.13.2
+      │       │   ├── age v0.12.1
+      │       │   │   └── agentnet-core v0.1.0
+      │       │   │       ├── agentnet-acceptance v0.1.0
+      │       │   │       ├── agentnet-cli v0.1.0
+      │       │   │       ├── (dev) agentnet-core v0.1.0 (*)
+      │       │   │       ├── agentnet-daemon v0.1.0
+      │       │   │       │   ├── agentnet-acceptance v0.1.0 (*)
+      │       │   │       │   └── agentnet-cli v0.1.0 (*)
+      │       │   │       └── agentnet-mcp v0.1.0
+      │       │   │           ├── agentnet-cli v0.1.0 (*)
+      │       │   │           └── agentnet-daemon v0.1.0 (*)
+      │       │   └── hpke v0.12.0
+      │       │       ├── age v0.12.1 (*)
+      │       │       └── age-core v0.12.0
+      │       │           └── age v0.12.1 (*)
+      │       └── primeorder v0.13.6
+      │           └── p256 v0.13.2 (*)
+      ├── crypto-common v0.1.7
+      │   ├── aead v0.5.2
+      │   │   ├── aes-gcm v0.10.3
+      │   │   │   └── hpke v0.12.0 (*)
+      │   │   ├── chacha20poly1305 v0.10.1
+      │   │   │   ├── age v0.12.1 (*)
+      │   │   │   ├── age-core v0.12.0 (*)
+      │   │   │   └── hpke v0.12.0 (*)
+      │   │   └── hpke v0.12.0 (*)
+      │   ├── cipher v0.4.4
+      │   │   ├── aes v0.8.4
+      │   │   │   └── aes-gcm v0.10.3 (*)
+      │   │   ├── aes-gcm v0.10.3 (*)
+      │   │   ├── age v0.12.1 (*)
+      │   │   ├── chacha20 v0.9.1
+      │   │   │   └── chacha20poly1305 v0.10.1 (*)
+      │   │   ├── chacha20poly1305 v0.10.1 (*)
+      │   │   ├── ctr v0.9.2
+      │   │   │   └── aes-gcm v0.10.3 (*)
+      │   │   └── salsa20 v0.10.2
+      │   │       └── scrypt v0.11.0
+      │   │           └── age v0.12.1 (*)
+      │   ├── digest v0.10.7
+      │   │   ├── blake2 v0.10.6
+      │   │   │   └── argon2 v0.5.3
+      │   │   │       └── sequoia-openpgp v2.5.0
+      │   │   │           └── agentnet-core v0.1.0 (*)
+      │   │   ├── elliptic-curve v0.13.8 (*)
+      │   │   ├── hmac v0.12.1
+      │   │   │   ├── age v0.12.1 (*)
+      │   │   │   ├── agentnet-daemon v0.1.0 (*)
+      │   │   │   ├── hkdf v0.12.4
+      │   │   │   │   ├── age v0.12.1 (*)
+      │   │   │   │   ├── age-core v0.12.0 (*)
+      │   │   │   │   ├── elliptic-curve v0.13.8 (*)
+      │   │   │   │   └── hpke v0.12.0 (*)
+      │   │   │   ├── hpke v0.12.0 (*)
+      │   │   │   └── pbkdf2 v0.12.2
+      │   │   │       └── scrypt v0.11.0 (*)
+      │   │   ├── hpke v0.12.0 (*)
+      │   │   ├── pbkdf2 v0.12.2 (*)
+      │   │   ├── sha2 v0.10.9
+      │   │   │   ├── age v0.12.1 (*)
+      │   │   │   ├── age-core v0.12.0 (*)
+      │   │   │   ├── agentnet-core v0.1.0 (*)
+      │   │   │   ├── agentnet-daemon v0.1.0 (*)
+      │   │   │   ├── agentnet-transport v0.1.0
+      │   │   │   │   ├── agentnet-cli v0.1.0 (*)
+      │   │   │   │   ├── agentnet-core v0.1.0 (*)
+      │   │   │   │   └── agentnet-daemon v0.1.0 (*)
+      │   │   │   ├── hpke v0.12.0 (*)
+      │   │   │   └── scrypt v0.11.0 (*)
+      │   │   └── sha3 v0.10.9
+      │   │       ├── age v0.12.1 (*)
+      │   │       └── ml-kem v0.2.3
+      │   │           └── age v0.12.1 (*)
+      │   └── universal-hash v0.5.1
+      │       ├── poly1305 v0.8.0
+      │       │   └── chacha20poly1305 v0.10.1 (*)
+      │       └── polyval v0.6.2
+      │           └── ghash v0.5.1
+      │               └── aes-gcm v0.10.3 (*)
+      ├── elliptic-curve v0.13.8 (*)
+      ├── ff v0.13.1
+      │   ├── elliptic-curve v0.13.8 (*)
+      │   └── group v0.13.0
+      │       └── elliptic-curve v0.13.8 (*)
+      ├── group v0.13.0 (*)
+      ├── hpke v0.12.0 (*)
+      ├── kem v0.3.0-pre.0
+      │   └── ml-kem v0.2.3 (*)
+      ├── ml-kem v0.2.3 (*)
+      ├── password-hash v0.5.0
+      │   └── argon2 v0.5.3 (*)
+      ├── rand v0.8.8
+      │   ├── age v0.12.1 (*)
+      │   └── age-core v0.12.0 (*)
+      ├── rand_chacha v0.3.1
+      │   └── rand v0.8.8 (*)
+      └── x25519-dalek v2.0.1
+          └── age v0.12.1 (*)
+    ├ rand_core v0.10.1
+      ├── chacha20 v0.10.2
+      │   ├── proptest v1.12.0
+      │   │   └── (dev) agentnet-core v0.1.0
+      │   │       ├── agentnet-acceptance v0.1.0
+      │   │       ├── agentnet-cli v0.1.0
+      │   │       ├── (dev) agentnet-core v0.1.0 (*)
+      │   │       ├── agentnet-daemon v0.1.0
+      │   │       │   ├── agentnet-acceptance v0.1.0 (*)
+      │   │       │   └── agentnet-cli v0.1.0 (*)
+      │   │       └── agentnet-mcp v0.1.0
+      │   │           ├── agentnet-cli v0.1.0 (*)
+      │   │           └── agentnet-daemon v0.1.0 (*)
+      │   └── rand v0.10.4
+      │       ├── proptest v1.12.0 (*)
+      │       └── rmcp v3.11.0
+      │           ├── agentnet-acceptance v0.1.0 (*)
+      │           ├── (dev) agentnet-cli v0.1.0 (*)
+      │           └── (dev) agentnet-mcp v0.1.0 (*)
+      ├── getrandom v0.4.3
+      │   ├── agentnet-core v0.1.0 (*)
+      │   ├── agentnet-daemon v0.1.0 (*)
+      │   ├── ahash v0.8.14
+      │   │   ├── jsonschema v0.63.1
+      │   │   │   └── (dev) agentnet-mcp v0.1.0 (*)
+      │   │   ├── jsonschema-value v0.63.1
+      │   │   │   └── jsonschema v0.63.1 (*)
+      │   │   └── referencing v0.63.1
+      │   │       └── jsonschema v0.63.1 (*)
+      │   ├── rand v0.10.4 (*)
+      │   ├── tempfile v3.27.0
+      │   │   ├── (dev) agentnet-cli v0.1.0 (*)
+      │   │   ├── (dev) agentnet-core v0.1.0 (*)
+      │   │   ├── (dev) agentnet-daemon v0.1.0 (*)
+      │   │   ├── proptest v1.12.0 (*)
+      │   │   └── rusty-fork v0.3.1
+      │   │       └── proptest v1.12.0 (*)
+      │   └── uuid v1.29.3
+      │       ├── agentnet-core v0.1.0 (*)
+      │       └── rmcp v3.11.0 (*)
+      ├── rand v0.10.4 (*)
+      └── rand_xorshift v0.5.0
+          └── proptest v1.12.0 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'reqwest'
+    ┌─ /Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a56980baffbf87bb7/Cargo.lock:260:1
+    │  
+260 │ ╭ reqwest 0.12.28 registry+https://github.com/rust-lang/crates.io-index
+261 │ │ reqwest 0.13.5 registry+https://github.com/rust-lang/crates.io-index
+    │ ╰────────────────────────────────────────────────────────────────────┘ lock entries
+    │  
+    ├ reqwest v0.12.28
+      ├── agentnet-cli v0.1.0
+      ├── agentnet-daemon v0.1.0
+      │   ├── agentnet-acceptance v0.1.0
+      │   └── agentnet-cli v0.1.0 (*)
+      └── (dev) agentnet-transport v0.1.0
+          ├── agentnet-cli v0.1.0 (*)
+          ├── agentnet-core v0.1.0
+          │   ├── agentnet-acceptance v0.1.0 (*)
+          │   ├── agentnet-cli v0.1.0 (*)
+          │   ├── (dev) agentnet-core v0.1.0 (*)
+          │   ├── agentnet-daemon v0.1.0 (*)
+          │   └── agentnet-mcp v0.1.0
+          │       ├── agentnet-cli v0.1.0 (*)
+          │       └── agentnet-daemon v0.1.0 (*)
+          └── agentnet-daemon v0.1.0 (*)
+    ├ reqwest v0.13.5
+      ├── (dev) agentnet-mcp v0.1.0
+      │   ├── agentnet-cli v0.1.0
+      │   └── agentnet-daemon v0.1.0
+      │       ├── agentnet-acceptance v0.1.0
+      │       └── agentnet-cli v0.1.0 (*)
+      └── rmcp v3.11.0
+          ├── agentnet-acceptance v0.1.0 (*)
+          ├── (dev) agentnet-cli v0.1.0 (*)
+          └── (dev) agentnet-mcp v0.1.0 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'sha2'
+    ┌─ /Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a56980baffbf87bb7/Cargo.lock:303:1
+    │  
+303 │ ╭ sha2 0.10.9 registry+https://github.com/rust-lang/crates.io-index
+304 │ │ sha2 0.11.2 registry+https://github.com/rust-lang/crates.io-index
+    │ ╰─────────────────────────────────────────────────────────────────┘ lock entries
+    │  
+    ├ sha2 v0.10.9
+      ├── age v0.12.1
+      │   └── agentnet-core v0.1.0
+      │       ├── agentnet-acceptance v0.1.0
+      │       ├── agentnet-cli v0.1.0
+      │       ├── (dev) agentnet-core v0.1.0 (*)
+      │       ├── agentnet-daemon v0.1.0
+      │       │   ├── agentnet-acceptance v0.1.0 (*)
+      │       │   └── agentnet-cli v0.1.0 (*)
+      │       └── agentnet-mcp v0.1.0
+      │           ├── agentnet-cli v0.1.0 (*)
+      │           └── agentnet-daemon v0.1.0 (*)
+      ├── age-core v0.12.0
+      │   └── age v0.12.1 (*)
+      ├── agentnet-core v0.1.0 (*)
+      ├── agentnet-daemon v0.1.0 (*)
+      ├── agentnet-transport v0.1.0
+      │   ├── agentnet-cli v0.1.0 (*)
+      │   ├── agentnet-core v0.1.0 (*)
+      │   └── agentnet-daemon v0.1.0 (*)
+      ├── hpke v0.12.0
+      │   ├── age v0.12.1 (*)
+      │   └── age-core v0.12.0 (*)
+      └── scrypt v0.11.0
+          └── age v0.12.1 (*)
+    ├ sha2 v0.11.2
+      ├── rmcp v3.11.0
+      │   ├── agentnet-acceptance v0.1.0
+      │   ├── (dev) agentnet-cli v0.1.0
+      │   └── (dev) agentnet-mcp v0.1.0
+      │       ├── agentnet-cli v0.1.0 (*)
+      │       └── agentnet-daemon v0.1.0
+      │           ├── agentnet-acceptance v0.1.0 (*)
+      │           └── agentnet-cli v0.1.0 (*)
+      └── rust-embed-utils v8.14.0
+          ├── rust-embed v8.14.0
+          │   ├── age v0.12.1
+          │   │   └── agentnet-core v0.1.0
+          │   │       ├── agentnet-acceptance v0.1.0 (*)
+          │   │       ├── agentnet-cli v0.1.0 (*)
+          │   │       ├── (dev) agentnet-core v0.1.0 (*)
+          │   │       ├── agentnet-daemon v0.1.0 (*)
+          │   │       └── agentnet-mcp v0.1.0 (*)
+          │   └── i18n-embed v0.16.0
+          │       ├── age v0.12.1 (*)
+          │       └── i18n-embed-fl v0.10.1
+          │           └── age v0.12.1 (*)
+          └── rust-embed-impl v8.14.0
+              └── rust-embed v8.14.0 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'sha3'
+    ┌─ /Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a56980baffbf87bb7/Cargo.lock:305:1
+    │  
+305 │ ╭ sha3 0.10.9 registry+https://github.com/rust-lang/crates.io-index
+306 │ │ sha3 0.12.0 registry+https://github.com/rust-lang/crates.io-index
+    │ ╰─────────────────────────────────────────────────────────────────┘ lock entries
+    │  
+    ├ sha3 v0.10.9
+      ├── age v0.12.1
+      │   └── agentnet-core v0.1.0
+      │       ├── agentnet-acceptance v0.1.0
+      │       ├── agentnet-cli v0.1.0
+      │       ├── (dev) agentnet-core v0.1.0 (*)
+      │       ├── agentnet-daemon v0.1.0
+      │       │   ├── agentnet-acceptance v0.1.0 (*)
+      │       │   └── agentnet-cli v0.1.0 (*)
+      │       └── agentnet-mcp v0.1.0
+      │           ├── agentnet-cli v0.1.0 (*)
+      │           └── agentnet-daemon v0.1.0 (*)
+      └── ml-kem v0.2.3
+          └── age v0.12.1 (*)
+    ├ sha3 v0.12.0
+      └── lalrpop v0.23.2
+          └── (build) sequoia-openpgp v2.5.0
+              └── agentnet-core v0.1.0
+                  ├── agentnet-acceptance v0.1.0
+                  ├── agentnet-cli v0.1.0
+                  ├── (dev) agentnet-core v0.1.0 (*)
+                  ├── agentnet-daemon v0.1.0
+                  │   ├── agentnet-acceptance v0.1.0 (*)
+                  │   └── agentnet-cli v0.1.0 (*)
+                  └── agentnet-mcp v0.1.0
+                      ├── agentnet-cli v0.1.0 (*)
+                      └── agentnet-daemon v0.1.0 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'shlex'
+    ┌─ /Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a56980baffbf87bb7/Cargo.lock:308:1
+    │  
+308 │ ╭ shlex 1.3.0 registry+https://github.com/rust-lang/crates.io-index
+309 │ │ shlex 2.0.1 registry+https://github.com/rust-lang/crates.io-index
+    │ ╰─────────────────────────────────────────────────────────────────┘ lock entries
+    │  
+    ├ shlex v1.3.0
+      └── bindgen v0.72.1
+          ├── (build) openssl-sys v0.9.118
+          │   ├── ossl v1.5.5
+          │   │   └── sequoia-openpgp v2.5.0
+          │   │       └── agentnet-core v0.1.0
+          │   │           ├── agentnet-acceptance v0.1.0
+          │   │           ├── agentnet-cli v0.1.0
+          │   │           ├── (dev) agentnet-core v0.1.0 (*)
+          │   │           ├── agentnet-daemon v0.1.0
+          │   │           │   ├── agentnet-acceptance v0.1.0 (*)
+          │   │           │   └── agentnet-cli v0.1.0 (*)
+          │   │           └── agentnet-mcp v0.1.0
+          │   │               ├── agentnet-cli v0.1.0 (*)
+          │   │               └── agentnet-daemon v0.1.0 (*)
+          │   └── sequoia-openpgp v2.5.0 (*)
+          └── (build) ossl v1.5.5 (*)
+    ├ shlex v2.0.1
+      └── cc v1.11.3
+          ├── (build) aws-lc-sys v0.47.0
+          │   └── aws-lc-rs v1.19.0
+          │       ├── rustls v0.23.46
+          │       │   ├── hyper-rustls v0.27.10
+          │       │   │   ├── reqwest v0.12.28
+          │       │   │   │   ├── agentnet-cli v0.1.0
+          │       │   │   │   ├── agentnet-daemon v0.1.0
+          │       │   │   │   │   ├── agentnet-acceptance v0.1.0
+          │       │   │   │   │   └── agentnet-cli v0.1.0 (*)
+          │       │   │   │   └── (dev) agentnet-transport v0.1.0
+          │       │   │   │       ├── agentnet-cli v0.1.0 (*)
+          │       │   │   │       ├── agentnet-core v0.1.0
+          │       │   │   │       │   ├── agentnet-acceptance v0.1.0 (*)
+          │       │   │   │       │   ├── agentnet-cli v0.1.0 (*)
+          │       │   │   │       │   ├── (dev) agentnet-core v0.1.0 (*)
+          │       │   │   │       │   ├── agentnet-daemon v0.1.0 (*)
+          │       │   │   │       │   └── agentnet-mcp v0.1.0
+          │       │   │   │       │       ├── agentnet-cli v0.1.0 (*)
+          │       │   │   │       │       └── agentnet-daemon v0.1.0 (*)
+          │       │   │   │       └── agentnet-daemon v0.1.0 (*)
+          │       │   │   └── reqwest v0.13.5
+          │       │   │       ├── (dev) agentnet-mcp v0.1.0 (*)
+          │       │   │       └── rmcp v3.11.0
+          │       │   │           ├── agentnet-acceptance v0.1.0 (*)
+          │       │   │           ├── (dev) agentnet-cli v0.1.0 (*)
+          │       │   │           └── (dev) agentnet-mcp v0.1.0 (*)
+          │       │   ├── reqwest v0.12.28 (*)
+          │       │   ├── reqwest v0.13.5 (*)
+          │       │   ├── rustls-platform-verifier v0.7.1
+          │       │   │   └── reqwest v0.13.5 (*)
+          │       │   └── tokio-rustls v0.26.6
+          │       │       ├── hyper-rustls v0.27.10 (*)
+          │       │       ├── reqwest v0.12.28 (*)
+          │       │       └── reqwest v0.13.5 (*)
+          │       └── rustls-webpki v0.103.17
+          │           ├── rustls v0.23.46 (*)
+          │           └── rustls-platform-verifier v0.7.1 (*)
+          ├── cmake v0.1.58
+          │   └── (build) aws-lc-sys v0.47.0 (*)
+          ├── (build) libsqlite3-sys v0.40.0
+          │   └── rusqlite v0.42.0
+          │       ├── agentnet-core v0.1.0 (*)
+          │       └── agentnet-daemon v0.1.0 (*)
+          ├── (build) openssl-sys v0.9.118
+          │   ├── ossl v1.5.5
+          │   │   └── sequoia-openpgp v2.5.0
+          │   │       └── agentnet-core v0.1.0 (*)
+          │   └── sequoia-openpgp v2.5.0 (*)
+          └── (build) ring v0.17.14
+              ├── rustls v0.23.46 (*)
+              └── rustls-webpki v0.103.17 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'syn'
+    ┌─ /Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a56980baffbf87bb7/Cargo.lock:323:1
+    │  
+323 │ ╭ syn 2.0.119 registry+https://github.com/rust-lang/crates.io-index
+324 │ │ syn 3.0.10 registry+https://github.com/rust-lang/crates.io-index
+    │ ╰────────────────────────────────────────────────────────────────┘ lock entries
+    │  
+    ├ syn v2.0.119
+      ├── bindgen v0.72.1
+      │   ├── (build) openssl-sys v0.9.118
+      │   │   ├── ossl v1.5.5
+      │   │   │   └── sequoia-openpgp v2.5.0
+      │   │   │       └── agentnet-core v0.1.0
+      │   │   │           ├── agentnet-acceptance v0.1.0
+      │   │   │           ├── agentnet-cli v0.1.0
+      │   │   │           ├── (dev) agentnet-core v0.1.0 (*)
+      │   │   │           ├── agentnet-daemon v0.1.0
+      │   │   │           │   ├── agentnet-acceptance v0.1.0 (*)
+      │   │   │           │   └── agentnet-cli v0.1.0 (*)
+      │   │   │           └── agentnet-mcp v0.1.0
+      │   │   │               ├── agentnet-cli v0.1.0 (*)
+      │   │   │               └── agentnet-daemon v0.1.0 (*)
+      │   │   └── sequoia-openpgp v2.5.0 (*)
+      │   └── (build) ossl v1.5.5 (*)
+      ├── curve25519-dalek-derive v0.1.1
+      │   └── curve25519-dalek v4.1.3
+      │       └── x25519-dalek v2.0.1
+      │           └── age v0.12.1
+      │               └── agentnet-core v0.1.0 (*)
+      ├── i18n-embed-fl v0.10.1
+      │   └── age v0.12.1 (*)
+      ├── i18n-embed-impl v0.8.4
+      │   └── i18n-embed v0.16.0
+      │       ├── age v0.12.1 (*)
+      │       └── i18n-embed-fl v0.10.1 (*)
+      ├── prettyplease v0.2.37
+      │   └── bindgen v0.72.1 (*)
+      ├── rust-embed-impl v8.14.0
+      │   └── rust-embed v8.14.0
+      │       ├── age v0.12.1 (*)
+      │       └── i18n-embed v0.16.0 (*)
+      ├── strum_macros v0.28.0
+      │   └── strum v0.28.0
+      │       └── jsonschema v0.63.1
+      │           └── (dev) agentnet-mcp v0.1.0 (*)
+      ├── thiserror-impl v1.0.69
+      │   └── thiserror v1.0.69
+      │       ├── i18n-config v0.4.8
+      │       │   ├── i18n-embed-fl v0.10.1 (*)
+      │       │   └── i18n-embed-impl v0.8.4 (*)
+      │       └── i18n-embed v0.16.0 (*)
+      ├── tracing-attributes v0.1.31
+      │   └── tracing v0.1.44
+      │       ├── agentnet-cli v0.1.0 (*)
+      │       ├── agentnet-core v0.1.0 (*)
+      │       ├── agentnet-daemon v0.1.0 (*)
+      │       ├── agentnet-mcp v0.1.0 (*)
+      │       ├── hyper-util v0.1.21
+      │       │   ├── axum v0.8.9
+      │       │   │   ├── (dev) agentnet-daemon v0.1.0 (*)
+      │       │   │   └── agentnet-mcp v0.1.0 (*)
+      │       │   ├── hyper-rustls v0.27.10
+      │       │   │   ├── reqwest v0.12.28
+      │       │   │   │   ├── agentnet-cli v0.1.0 (*)
+      │       │   │   │   ├── agentnet-daemon v0.1.0 (*)
+      │       │   │   │   └── (dev) agentnet-transport v0.1.0
+      │       │   │   │       ├── agentnet-cli v0.1.0 (*)
+      │       │   │   │       ├── agentnet-core v0.1.0 (*)
+      │       │   │   │       └── agentnet-daemon v0.1.0 (*)
+      │       │   │   └── reqwest v0.13.5
+      │       │   │       ├── (dev) agentnet-mcp v0.1.0 (*)
+      │       │   │       └── rmcp v3.11.0
+      │       │   │           ├── agentnet-acceptance v0.1.0 (*)
+      │       │   │           ├── (dev) agentnet-cli v0.1.0 (*)
+      │       │   │           └── (dev) agentnet-mcp v0.1.0 (*)
+      │       │   ├── reqwest v0.12.28 (*)
+      │       │   └── reqwest v0.13.5 (*)
+      │       ├── process-wrap v10.0.2
+      │       │   └── rmcp v3.11.0 (*)
+      │       ├── rmcp v3.11.0 (*)
+      │       └── tracing-subscriber v0.3.23
+      │           ├── agentnet-cli v0.1.0 (*)
+      │           └── (dev) agentnet-mcp v0.1.0 (*)
+      └── zeroize_derive v1.5.0
+          └── zeroize v1.9.2
+              ├── age v0.12.1 (*)
+              ├── agentnet-core v0.1.0 (*)
+              ├── aws-lc-rs v1.19.0
+              │   ├── rustls v0.23.46
+              │   │   ├── hyper-rustls v0.27.10 (*)
+              │   │   ├── reqwest v0.12.28 (*)
+              │   │   ├── reqwest v0.13.5 (*)
+              │   │   ├── rustls-platform-verifier v0.7.1
+              │   │   │   └── reqwest v0.13.5 (*)
+              │   │   └── tokio-rustls v0.26.6
+              │   │       ├── hyper-rustls v0.27.10 (*)
+              │   │       ├── reqwest v0.12.28 (*)
+              │   │       └── reqwest v0.13.5 (*)
+              │   └── rustls-webpki v0.103.17
+              │       ├── rustls v0.23.46 (*)
+              │       └── rustls-platform-verifier v0.7.1 (*)
+              ├── chacha20poly1305 v0.10.1
+              │   ├── age v0.12.1 (*)
+              │   ├── age-core v0.12.0
+              │   │   └── age v0.12.1 (*)
+              │   └── hpke v0.12.0
+              │       ├── age v0.12.1 (*)
+              │       └── age-core v0.12.0 (*)
+              ├── cipher v0.4.4
+              │   ├── aes v0.8.4
+              │   │   └── aes-gcm v0.10.3
+              │   │       └── hpke v0.12.0 (*)
+              │   ├── aes-gcm v0.10.3 (*)
+              │   ├── age v0.12.1 (*)
+              │   ├── chacha20 v0.9.1
+              │   │   └── chacha20poly1305 v0.10.1 (*)
+              │   ├── chacha20poly1305 v0.10.1 (*)
+              │   ├── ctr v0.9.2
+              │   │   └── aes-gcm v0.10.3 (*)
+              │   └── salsa20 v0.10.2
+              │       └── scrypt v0.11.0
+              │           └── age v0.12.1 (*)
+              ├── crypto-bigint v0.5.5
+              │   └── elliptic-curve v0.13.8
+              │       ├── p256 v0.13.2
+              │       │   ├── age v0.12.1 (*)
+              │       │   └── hpke v0.12.0 (*)
+              │       └── primeorder v0.13.6
+              │           └── p256 v0.13.2 (*)
+              ├── curve25519-dalek v4.1.3 (*)
+              ├── der v0.7.10
+              │   └── sec1 v0.7.3
+              │       └── elliptic-curve v0.13.8 (*)
+              ├── elliptic-curve v0.13.8 (*)
+              ├── generic-array v0.14.7
+              │   ├── aead v0.5.2
+              │   │   ├── aes-gcm v0.10.3 (*)
+              │   │   ├── chacha20poly1305 v0.10.1 (*)
+              │   │   └── hpke v0.12.0 (*)
+              │   ├── block-buffer v0.10.4
+              │   │   └── digest v0.10.7
+              │   │       ├── blake2 v0.10.6
+              │   │       │   └── argon2 v0.5.3
+              │   │       │       └── sequoia-openpgp v2.5.0 (*)
+              │   │       ├── elliptic-curve v0.13.8 (*)
+              │   │       ├── hmac v0.12.1
+              │   │       │   ├── age v0.12.1 (*)
+              │   │       │   ├── agentnet-daemon v0.1.0 (*)
+              │   │       │   ├── hkdf v0.12.4
+              │   │       │   │   ├── age v0.12.1 (*)
+              │   │       │   │   ├── age-core v0.12.0 (*)
+              │   │       │   │   ├── elliptic-curve v0.13.8 (*)
+              │   │       │   │   └── hpke v0.12.0 (*)
+              │   │       │   ├── hpke v0.12.0 (*)
+              │   │       │   └── pbkdf2 v0.12.2
+              │   │       │       └── scrypt v0.11.0 (*)
+              │   │       ├── hpke v0.12.0 (*)
+              │   │       ├── pbkdf2 v0.12.2 (*)
+              │   │       ├── sha2 v0.10.9
+              │   │       │   ├── age v0.12.1 (*)
+              │   │       │   ├── age-core v0.12.0 (*)
+              │   │       │   ├── agentnet-core v0.1.0 (*)
+              │   │       │   ├── agentnet-daemon v0.1.0 (*)
+              │   │       │   ├── agentnet-transport v0.1.0 (*)
+              │   │       │   ├── hpke v0.12.0 (*)
+              │   │       │   └── scrypt v0.11.0 (*)
+              │   │       └── sha3 v0.10.9
+              │   │           ├── age v0.12.1 (*)
+              │   │           └── ml-kem v0.2.3
+              │   │               └── age v0.12.1 (*)
+              │   ├── crypto-bigint v0.5.5 (*)
+              │   ├── crypto-common v0.1.7
+              │   │   ├── aead v0.5.2 (*)
+              │   │   ├── cipher v0.4.4 (*)
+              │   │   ├── digest v0.10.7 (*)
+              │   │   └── universal-hash v0.5.1
+              │   │       ├── poly1305 v0.8.0
+              │   │       │   └── chacha20poly1305 v0.10.1 (*)
+              │   │       └── polyval v0.6.2
+              │   │           └── ghash v0.5.1
+              │   │               └── aes-gcm v0.10.3 (*)
+              │   ├── elliptic-curve v0.13.8 (*)
+              │   ├── hpke v0.12.0 (*)
+              │   ├── inout v0.1.4
+              │   │   └── cipher v0.4.4 (*)
+              │   ├── sec1 v0.7.3 (*)
+              │   └── sha1collisiondetection v0.3.4
+              │       └── sequoia-openpgp v2.5.0 (*)
+              ├── hpke v0.12.0 (*)
+              ├── kem v0.3.0-pre.0
+              │   └── ml-kem v0.2.3 (*)
+              ├── rustls v0.23.46 (*)
+              ├── rustls-pki-types v1.16.0
+              │   ├── reqwest v0.12.28 (*)
+              │   ├── reqwest v0.13.5 (*)
+              │   ├── rustls v0.23.46 (*)
+              │   ├── rustls-native-certs v0.8.5
+              │   │   └── rustls-platform-verifier v0.7.1 (*)
+              │   ├── rustls-webpki v0.103.17 (*)
+              │   └── webpki-roots v1.0.12
+              │       ├── hyper-rustls v0.27.10 (*)
+              │       └── reqwest v0.12.28 (*)
+              ├── sec1 v0.7.3 (*)
+              ├── secrecy v0.10.3
+              │   └── age-core v0.12.0 (*)
+              └── x25519-dalek v2.0.1 (*)
+    ├ syn v3.0.10
+      ├── async-trait v0.1.92
+      │   ├── agentnet-core v0.1.0
+      │   │   ├── agentnet-acceptance v0.1.0
+      │   │   ├── agentnet-cli v0.1.0
+      │   │   ├── (dev) agentnet-core v0.1.0 (*)
+      │   │   ├── agentnet-daemon v0.1.0
+      │   │   │   ├── agentnet-acceptance v0.1.0 (*)
+      │   │   │   └── agentnet-cli v0.1.0 (*)
+      │   │   └── agentnet-mcp v0.1.0
+      │   │       ├── agentnet-cli v0.1.0 (*)
+      │   │       └── agentnet-daemon v0.1.0 (*)
+      │   ├── agentnet-daemon v0.1.0 (*)
+      │   ├── (dev) agentnet-mcp v0.1.0 (*)
+      │   ├── agentnet-transport v0.1.0
+      │   │   ├── agentnet-cli v0.1.0 (*)
+      │   │   ├── agentnet-core v0.1.0 (*)
+      │   │   └── agentnet-daemon v0.1.0 (*)
+      │   └── rmcp v3.11.0
+      │       ├── agentnet-acceptance v0.1.0 (*)
+      │       ├── (dev) agentnet-cli v0.1.0 (*)
+      │       └── (dev) agentnet-mcp v0.1.0 (*)
+      ├── clap_derive v4.6.9
+      │   └── clap v4.6.10
+      │       └── agentnet-cli v0.1.0 (*)
+      ├── darling_core v0.24.1
+      │   ├── darling v0.24.1
+      │   │   └── rmcp-macros v3.11.0
+      │   │       └── rmcp v3.11.0 (*)
+      │   └── darling_macro v0.24.1
+      │       └── darling v0.24.1 (*)
+      ├── darling_macro v0.24.1 (*)
+      ├── displaydoc v0.2.7
+      │   ├── icu_collections v2.4.0
+      │   │   ├── icu_normalizer v2.4.0
+      │   │   │   └── idna_adapter v1.2.2
+      │   │   │       └── idna v1.1.0
+      │   │   │           ├── sequoia-openpgp v2.5.0
+      │   │   │           │   └── agentnet-core v0.1.0 (*)
+      │   │   │           └── url v2.5.9
+      │   │   │               ├── agentnet-daemon v0.1.0 (*)
+      │   │   │               ├── agentnet-transport v0.1.0 (*)
+      │   │   │               ├── reqwest v0.12.28
+      │   │   │               │   ├── agentnet-cli v0.1.0 (*)
+      │   │   │               │   ├── agentnet-daemon v0.1.0 (*)
+      │   │   │               │   └── (dev) agentnet-transport v0.1.0 (*)
+      │   │   │               ├── reqwest v0.13.5
+      │   │   │               │   ├── (dev) agentnet-mcp v0.1.0 (*)
+      │   │   │               │   └── rmcp v3.11.0 (*)
+      │   │   │               └── tower-http v0.6.11
+      │   │   │                   ├── reqwest v0.12.28 (*)
+      │   │   │                   └── reqwest v0.13.5 (*)
+      │   │   └── icu_properties v2.4.0
+      │   │       └── idna_adapter v1.2.2 (*)
+      │   ├── icu_locale_core v2.4.0
+      │   │   ├── icu_properties v2.4.0 (*)
+      │   │   └── icu_provider v2.4.0
+      │   │       ├── icu_normalizer v2.4.0 (*)
+      │   │       └── icu_properties v2.4.0 (*)
+      │   ├── icu_properties v2.4.0 (*)
+      │   ├── icu_provider v2.4.0 (*)
+      │   ├── tinystr v0.8.5
+      │   │   ├── icu_locale_core v2.4.0 (*)
+      │   │   └── unic-langid-impl v0.9.6
+      │   │       └── unic-langid v0.9.6
+      │   │           ├── fluent v0.17.0
+      │   │           │   ├── i18n-embed v0.16.0
+      │   │           │   │   ├── age v0.12.1
+      │   │           │   │   │   └── agentnet-core v0.1.0 (*)
+      │   │           │   │   └── i18n-embed-fl v0.10.1
+      │   │           │   │       └── age v0.12.1 (*)
+      │   │           │   └── i18n-embed-fl v0.10.1 (*)
+      │   │           ├── fluent-bundle v0.16.0
+      │   │           │   └── fluent v0.17.0 (*)
+      │   │           ├── fluent-langneg v0.13.1
+      │   │           │   ├── fluent-bundle v0.16.0 (*)
+      │   │           │   └── i18n-embed v0.16.0 (*)
+      │   │           ├── i18n-config v0.4.8
+      │   │           │   ├── i18n-embed-fl v0.10.1 (*)
+      │   │           │   └── i18n-embed-impl v0.8.4
+      │   │           │       └── i18n-embed v0.16.0 (*)
+      │   │           ├── i18n-embed v0.16.0 (*)
+      │   │           ├── i18n-embed-fl v0.10.1 (*)
+      │   │           ├── intl-memoizer v0.5.3
+      │   │           │   ├── fluent-bundle v0.16.0 (*)
+      │   │           │   └── i18n-embed v0.16.0 (*)
+      │   │           └── intl_pluralrules v7.0.2
+      │   │               └── fluent-bundle v0.16.0 (*)
+      │   └── zerotrie v0.2.5
+      │       ├── icu_properties v2.4.0 (*)
+      │       └── icu_provider v2.4.0 (*)
+      ├── futures-macro v0.3.34
+      │   └── futures-util v0.3.34
+      │       ├── axum v0.8.9
+      │       │   ├── (dev) agentnet-daemon v0.1.0 (*)
+      │       │   └── agentnet-mcp v0.1.0 (*)
+      │       ├── futures v0.3.34
+      │       │   ├── cookie-factory v0.3.3
+      │       │   │   ├── age v0.12.1 (*)
+      │       │   │   └── age-core v0.12.0
+      │       │   │       └── age v0.12.1 (*)
+      │       │   ├── process-wrap v10.0.2
+      │       │   │   └── rmcp v3.11.0 (*)
+      │       │   └── rmcp v3.11.0 (*)
+      │       ├── futures-executor v0.3.34
+      │       │   └── futures v0.3.34 (*)
+      │       ├── hyper-util v0.1.21
+      │       │   ├── axum v0.8.9 (*)
+      │       │   ├── hyper-rustls v0.27.10
+      │       │   │   ├── reqwest v0.12.28 (*)
+      │       │   │   └── reqwest v0.13.5 (*)
+      │       │   ├── reqwest v0.12.28 (*)
+      │       │   └── reqwest v0.13.5 (*)
+      │       ├── reqwest v0.13.5 (*)
+      │       ├── sse-stream v0.2.6
+      │       │   └── rmcp v3.11.0 (*)
+      │       ├── tower v0.5.3
+      │       │   ├── axum v0.8.9 (*)
+      │       │   ├── reqwest v0.12.28 (*)
+      │       │   ├── reqwest v0.13.5 (*)
+      │       │   └── tower-http v0.6.11 (*)
+      │       └── tower-http v0.6.11 (*)
+      ├── pin-project-internal v1.2.0
+      │   └── pin-project v1.2.0
+      │       └── age v0.12.1 (*)
+      ├── proc-macro-error3 v3.1.1
+      │   └── i18n-embed-fl v0.10.1 (*)
+      ├── ref-cast-impl v1.0.27
+      │   └── ref-cast v1.0.27
+      │       ├── fluent-uri v0.4.1
+      │       │   └── referencing v0.63.1
+      │       │       └── jsonschema v0.63.1
+      │       │           └── (dev) agentnet-mcp v0.1.0 (*)
+      │       └── schemars v1.2.3
+      │           └── rmcp v3.11.0 (*)
+      ├── rmcp-macros v3.11.0 (*)
+      ├── schemars_derive v1.2.3
+      │   └── schemars v1.2.3 (*)
+      ├── serde_derive v1.0.229
+      │   ├── i18n-config v0.4.8 (*)
+      │   └── serde v1.0.229
+      │       ├── agentnet-acceptance v0.1.0 (*)
+      │       ├── agentnet-cli v0.1.0 (*)
+      │       ├── agentnet-core v0.1.0 (*)
+      │       ├── agentnet-daemon v0.1.0 (*)
+      │       ├── agentnet-mcp v0.1.0 (*)
+      │       ├── agentnet-transport v0.1.0 (*)
+      │       ├── ahash v0.8.14
+      │       │   ├── jsonschema v0.63.1 (*)
+      │       │   ├── jsonschema-value v0.63.1
+      │       │   │   └── jsonschema v0.63.1 (*)
+      │       │   └── referencing v0.63.1 (*)
+      │       ├── basic-toml v0.1.10
+      │       │   └── i18n-config v0.4.8 (*)
+      │       ├── chrono v0.4.45
+      │       │   ├── rmcp v3.11.0 (*)
+      │       │   └── schemars v1.2.3 (*)
+      │       ├── email_address v0.2.10
+      │       │   └── jsonschema v0.63.1 (*)
+      │       ├── fluent-uri v0.4.1 (*)
+      │       ├── i18n-config v0.4.8 (*)
+      │       ├── jsonschema v0.63.1 (*)
+      │       ├── reqwest v0.12.28 (*)
+      │       ├── reqwest v0.13.5 (*)
+      │       ├── rmcp v3.11.0 (*)
+      │       ├── schemars v1.2.3 (*)
+      │       ├── serde_urlencoded v0.7.1
+      │       │   └── reqwest v0.12.28 (*)
+      │       ├── toml v0.5.11
+      │       │   └── find-crate v0.6.3
+      │       │       ├── i18n-embed-fl v0.10.1 (*)
+      │       │       └── i18n-embed-impl v0.8.4 (*)
+      │       └── unic-langid-impl v0.9.6 (*)
+      ├── serde_derive_internals v0.30.0
+      │   └── schemars_derive v1.2.3 (*)
+      ├── synstructure v0.14.0
+      │   ├── yoke-derive v0.8.4
+      │   │   └── yoke v0.8.4
+      │   │       ├── icu_collections v2.4.0 (*)
+      │   │       ├── icu_provider v2.4.0 (*)
+      │   │       ├── zerotrie v0.2.5 (*)
+      │   │       └── zerovec v0.11.9
+      │   │           ├── icu_collections v2.4.0 (*)
+      │   │           ├── icu_locale_core v2.4.0 (*)
+      │   │           ├── icu_normalizer v2.4.0 (*)
+      │   │           ├── icu_properties v2.4.0 (*)
+      │   │           ├── icu_provider v2.4.0 (*)
+      │   │           ├── potential_utf v0.1.6
+      │   │           │   └── icu_collections v2.4.0 (*)
+      │   │           └── tinystr v0.8.5 (*)
+      │   └── zerofrom-derive v0.1.8
+      │       └── zerofrom v0.1.8
+      │           ├── icu_collections v2.4.0 (*)
+      │           ├── icu_provider v2.4.0 (*)
+      │           ├── yoke v0.8.4 (*)
+      │           ├── zerotrie v0.2.5 (*)
+      │           └── zerovec v0.11.9 (*)
+      ├── thiserror-impl v2.0.21
+      │   └── thiserror v2.0.21
+      │       ├── agentnet-core v0.1.0 (*)
+      │       ├── agentnet-daemon v0.1.0 (*)
+      │       ├── agentnet-mcp v0.1.0 (*)
+      │       ├── agentnet-transport v0.1.0 (*)
+      │       ├── fluent-syntax v0.12.0
+      │       │   ├── fluent-bundle v0.16.0 (*)
+      │       │   ├── i18n-embed v0.16.0 (*)
+      │       │   └── i18n-embed-fl v0.10.1 (*)
+      │       ├── rmcp v3.11.0 (*)
+      │       └── sequoia-openpgp v2.5.0 (*)
+      ├── tokio-macros v2.7.2
+      │   └── tokio v1.54.1
+      │       ├── agentnet-acceptance v0.1.0 (*)
+      │       ├── agentnet-cli v0.1.0 (*)
+      │       ├── agentnet-core v0.1.0 (*)
+      │       ├── agentnet-daemon v0.1.0 (*)
+      │       ├── agentnet-mcp v0.1.0 (*)
+      │       ├── (dev) agentnet-transport v0.1.0 (*)
+      │       ├── axum v0.8.9 (*)
+      │       ├── hyper v1.13.0
+      │       │   ├── axum v0.8.9 (*)
+      │       │   ├── hyper-rustls v0.27.10 (*)
+      │       │   ├── hyper-util v0.1.21 (*)
+      │       │   ├── reqwest v0.12.28 (*)
+      │       │   └── reqwest v0.13.5 (*)
+      │       ├── hyper-rustls v0.27.10 (*)
+      │       ├── hyper-util v0.1.21 (*)
+      │       ├── process-wrap v10.0.2 (*)
+      │       ├── reqwest v0.12.28 (*)
+      │       ├── reqwest v0.13.5 (*)
+      │       ├── rmcp v3.11.0 (*)
+      │       ├── tokio-rustls v0.26.6
+      │       │   ├── hyper-rustls v0.27.10 (*)
+      │       │   ├── reqwest v0.12.28 (*)
+      │       │   └── reqwest v0.13.5 (*)
+      │       ├── tokio-stream v0.1.19
+      │       │   └── rmcp v3.11.0 (*)
+      │       ├── tokio-util v0.7.20
+      │       │   ├── agentnet-cli v0.1.0 (*)
+      │       │   ├── agentnet-core v0.1.0 (*)
+      │       │   ├── agentnet-daemon v0.1.0 (*)
+      │       │   ├── agentnet-mcp v0.1.0 (*)
+      │       │   ├── reqwest v0.13.5 (*)
+      │       │   └── rmcp v3.11.0 (*)
+      │       └── tower v0.5.3 (*)
+      ├── yoke-derive v0.8.4 (*)
+      ├── zerofrom-derive v0.1.8 (*)
+      └── zerovec-derive v0.11.7
+          └── zerovec v0.11.9 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'thiserror'
+    ┌─ /Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a56980baffbf87bb7/Cargo.lock:330:1
+    │  
+330 │ ╭ thiserror 1.0.69 registry+https://github.com/rust-lang/crates.io-index
+331 │ │ thiserror 2.0.21 registry+https://github.com/rust-lang/crates.io-index
+    │ ╰──────────────────────────────────────────────────────────────────────┘ lock entries
+    │  
+    ├ thiserror v1.0.69
+      ├── i18n-config v0.4.8
+      │   ├── i18n-embed-fl v0.10.1
+      │   │   └── age v0.12.1
+      │   │       └── agentnet-core v0.1.0
+      │   │           ├── agentnet-acceptance v0.1.0
+      │   │           ├── agentnet-cli v0.1.0
+      │   │           ├── (dev) agentnet-core v0.1.0 (*)
+      │   │           ├── agentnet-daemon v0.1.0
+      │   │           │   ├── agentnet-acceptance v0.1.0 (*)
+      │   │           │   └── agentnet-cli v0.1.0 (*)
+      │   │           └── agentnet-mcp v0.1.0
+      │   │               ├── agentnet-cli v0.1.0 (*)
+      │   │               └── agentnet-daemon v0.1.0 (*)
+      │   └── i18n-embed-impl v0.8.4
+      │       └── i18n-embed v0.16.0
+      │           ├── age v0.12.1 (*)
+      │           └── i18n-embed-fl v0.10.1 (*)
+      └── i18n-embed v0.16.0 (*)
+    ├ thiserror v2.0.21
+      ├── agentnet-core v0.1.0
+      │   ├── agentnet-acceptance v0.1.0
+      │   ├── agentnet-cli v0.1.0
+      │   ├── (dev) agentnet-core v0.1.0 (*)
+      │   ├── agentnet-daemon v0.1.0
+      │   │   ├── agentnet-acceptance v0.1.0 (*)
+      │   │   └── agentnet-cli v0.1.0 (*)
+      │   └── agentnet-mcp v0.1.0
+      │       ├── agentnet-cli v0.1.0 (*)
+      │       └── agentnet-daemon v0.1.0 (*)
+      ├── agentnet-daemon v0.1.0 (*)
+      ├── agentnet-mcp v0.1.0 (*)
+      ├── agentnet-transport v0.1.0
+      │   ├── agentnet-cli v0.1.0 (*)
+      │   ├── agentnet-core v0.1.0 (*)
+      │   └── agentnet-daemon v0.1.0 (*)
+      ├── fluent-syntax v0.12.0
+      │   ├── fluent-bundle v0.16.0
+      │   │   └── fluent v0.17.0
+      │   │       ├── i18n-embed v0.16.0
+      │   │       │   ├── age v0.12.1
+      │   │       │   │   └── agentnet-core v0.1.0 (*)
+      │   │       │   └── i18n-embed-fl v0.10.1
+      │   │       │       └── age v0.12.1 (*)
+      │   │       └── i18n-embed-fl v0.10.1 (*)
+      │   ├── i18n-embed v0.16.0 (*)
+      │   └── i18n-embed-fl v0.10.1 (*)
+      ├── rmcp v3.11.0
+      │   ├── agentnet-acceptance v0.1.0 (*)
+      │   ├── (dev) agentnet-cli v0.1.0 (*)
+      │   └── (dev) agentnet-mcp v0.1.0 (*)
+      └── sequoia-openpgp v2.5.0
+          └── agentnet-core v0.1.0 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'thiserror-impl'
+    ┌─ /Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a56980baffbf87bb7/Cargo.lock:332:1
+    │  
+332 │ ╭ thiserror-impl 1.0.69 registry+https://github.com/rust-lang/crates.io-index
+333 │ │ thiserror-impl 2.0.21 registry+https://github.com/rust-lang/crates.io-index
+    │ ╰───────────────────────────────────────────────────────────────────────────┘ lock entries
+    │  
+    ├ thiserror-impl v1.0.69
+      └── thiserror v1.0.69
+          ├── i18n-config v0.4.8
+          │   ├── i18n-embed-fl v0.10.1
+          │   │   └── age v0.12.1
+          │   │       └── agentnet-core v0.1.0
+          │   │           ├── agentnet-acceptance v0.1.0
+          │   │           ├── agentnet-cli v0.1.0
+          │   │           ├── (dev) agentnet-core v0.1.0 (*)
+          │   │           ├── agentnet-daemon v0.1.0
+          │   │           │   ├── agentnet-acceptance v0.1.0 (*)
+          │   │           │   └── agentnet-cli v0.1.0 (*)
+          │   │           └── agentnet-mcp v0.1.0
+          │   │               ├── agentnet-cli v0.1.0 (*)
+          │   │               └── agentnet-daemon v0.1.0 (*)
+          │   └── i18n-embed-impl v0.8.4
+          │       └── i18n-embed v0.16.0
+          │           ├── age v0.12.1 (*)
+          │           └── i18n-embed-fl v0.10.1 (*)
+          └── i18n-embed v0.16.0 (*)
+    ├ thiserror-impl v2.0.21
+      └── thiserror v2.0.21
+          ├── agentnet-core v0.1.0
+          │   ├── agentnet-acceptance v0.1.0
+          │   ├── agentnet-cli v0.1.0
+          │   ├── (dev) agentnet-core v0.1.0 (*)
+          │   ├── agentnet-daemon v0.1.0
+          │   │   ├── agentnet-acceptance v0.1.0 (*)
+          │   │   └── agentnet-cli v0.1.0 (*)
+          │   └── agentnet-mcp v0.1.0
+          │       ├── agentnet-cli v0.1.0 (*)
+          │       └── agentnet-daemon v0.1.0 (*)
+          ├── agentnet-daemon v0.1.0 (*)
+          ├── agentnet-mcp v0.1.0 (*)
+          ├── agentnet-transport v0.1.0
+          │   ├── agentnet-cli v0.1.0 (*)
+          │   ├── agentnet-core v0.1.0 (*)
+          │   └── agentnet-daemon v0.1.0 (*)
+          ├── fluent-syntax v0.12.0
+          │   ├── fluent-bundle v0.16.0
+          │   │   └── fluent v0.17.0
+          │   │       ├── i18n-embed v0.16.0
+          │   │       │   ├── age v0.12.1
+          │   │       │   │   └── agentnet-core v0.1.0 (*)
+          │   │       │   └── i18n-embed-fl v0.10.1
+          │   │       │       └── age v0.12.1 (*)
+          │   │       └── i18n-embed-fl v0.10.1 (*)
+          │   ├── i18n-embed v0.16.0 (*)
+          │   └── i18n-embed-fl v0.10.1 (*)
+          ├── rmcp v3.11.0
+          │   ├── agentnet-acceptance v0.1.0 (*)
+          │   ├── (dev) agentnet-cli v0.1.0 (*)
+          │   └── (dev) agentnet-mcp v0.1.0 (*)
+          └── sequoia-openpgp v2.5.0
+              └── agentnet-core v0.1.0 (*)
+
+warning[duplicate]: found 2 duplicate entries for crate 'toml'
+    ┌─ /Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a56980baffbf87bb7/Cargo.lock:342:1
+    │  
+342 │ ╭ toml 0.5.11 registry+https://github.com/rust-lang/crates.io-index
+343 │ │ toml 0.9.12+spec-1.1.0 registry+https://github.com/rust-lang/crates.io-index
+    │ ╰────────────────────────────────────────────────────────────────────────────┘ lock entries
+    │  
+    ├ toml v0.5.11
+      └── find-crate v0.6.3
+          ├── i18n-embed-fl v0.10.1
+          │   └── age v0.12.1
+          │       └── agentnet-core v0.1.0
+          │           ├── agentnet-acceptance v0.1.0
+          │           ├── agentnet-cli v0.1.0
+          │           ├── (dev) agentnet-core v0.1.0 (*)
+          │           ├── agentnet-daemon v0.1.0
+          │           │   ├── agentnet-acceptance v0.1.0 (*)
+          │           │   └── agentnet-cli v0.1.0 (*)
+          │           └── agentnet-mcp v0.1.0
+          │               ├── agentnet-cli v0.1.0 (*)
+          │               └── agentnet-daemon v0.1.0 (*)
+          └── i18n-embed-impl v0.8.4
+              └── i18n-embed v0.16.0
+                  ├── age v0.12.1 (*)
+                  └── i18n-embed-fl v0.10.1 (*)
+    ├ toml v0.9.12+spec-1.1.0
+      └── agentnet-daemon v0.1.0
+          ├── agentnet-acceptance v0.1.0
+          └── agentnet-cli v0.1.0
+
+warning[duplicate]: found 2 duplicate entries for crate 'winnow'
+    ┌─ /Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a56980baffbf87bb7/Cargo.lock:383:1
+    │  
+383 │ ╭ winnow 0.7.15 registry+https://github.com/rust-lang/crates.io-index
+384 │ │ winnow 1.0.5 registry+https://github.com/rust-lang/crates.io-index
+    │ ╰──────────────────────────────────────────────────────────────────┘ lock entries
+    │  
+    ├ winnow v0.7.15
+      └── toml v0.9.12+spec-1.1.0
+          └── agentnet-daemon v0.1.0
+              ├── agentnet-acceptance v0.1.0
+              └── agentnet-cli v0.1.0
+    ├ winnow v1.0.5
+      └── toml_parser v1.1.7+spec-1.1.0
+          └── toml v0.9.12+spec-1.1.0
+              └── agentnet-daemon v0.1.0
+                  ├── agentnet-acceptance v0.1.0
+                  └── agentnet-cli v0.1.0
+
+advisories ok, bans ok, licenses ok, sources ok

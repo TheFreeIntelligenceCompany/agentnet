@@ -1,0 +1,87 @@
+$ /Users/dennison/develop/FIC-elipsis/target/release/agentnet-acceptance step2 --bin /Users/dennison/develop/FIC-elipsis/target/release/agentnet --a /tmp/an-acc.hGa5xk/a --b /tmp/an-acc.hGa5xk/b --b-addr an2rdkb7gbx3v2foe6ynj4l27hzy4uuhwgffnqunjkmn62epskcpaokqjdlca --out /Users/dennison/develop/FIC-elipsis/results/acceptance/20261127T042942Z/evidence/step2-mcp.json
+{
+  "A_final_status": {
+    "attempts": 1,
+    "conversation_id": "acc-step2",
+    "created_at": 1795753890218,
+    "delivered_at": 1795753890493,
+    "expires_at": 1795840290218,
+    "last_attempt_at": 1795753890220,
+    "last_error": null,
+    "message_id": "fa6b1c3d-24e3-4f01-a165-0b2eedcc4638",
+    "message_type": "message",
+    "next_attempt_at": null,
+    "recipient": "an2rdkb7gbx3v2foe6ynj4l27hzy4uuhwgffnqunjkmn62epskcpaokqjdlca",
+    "sent_at": 1795753890220,
+    "state": "delivered"
+  },
+  "A_status_timeline": [
+    {
+      "source": "send_message response",
+      "state": "queued",
+      "t_ms": 1
+    },
+    {
+      "attempts": 0,
+      "source": "get_message_status",
+      "state": "queued",
+      "t_ms": 1
+    },
+    {
+      "attempts": 1,
+      "source": "get_message_status",
+      "state": "sent",
+      "t_ms": 44
+    },
+    {
+      "attempts": 1,
+      "source": "get_message_status",
+      "state": "delivered",
+      "t_ms": 302
+    }
+  ],
+  "B_inbox_record": {
+    "acknowledged": false,
+    "body": "ACCEPTANCE-STEP2-PLAINTEXT-MARKER-1795753890218",
+    "conversation_id": "acc-step2",
+    "correlation_id": null,
+    "created_at": 1795753890218,
+    "cursor": "aW5ib3g6MQ",
+    "expires_at": 1795840290218,
+    "message_id": "fa6b1c3d-24e3-4f01-a165-0b2eedcc4638",
+    "message_type": "message",
+    "quarantined": false,
+    "received_at": 1795753890254,
+    "sender": "an2dtf5n2jhsthvu3r3jjs3hfydpqz2jszfc6fomc4l5udvstdltptruenkl4",
+    "sender_trust": "trusted"
+  },
+  "a_addr": "an2dtf5n2jhsthvu3r3jjs3hfydpqz2jszfc6fomc4l5udvstdltptruenkl4",
+  "b_addr": "an2rdkb7gbx3v2foe6ynj4l27hzy4uuhwgffnqunjkmn62epskcpaokqjdlca",
+  "body_marker": "ACCEPTANCE-STEP2-PLAINTEXT-MARKER-1795753890218",
+  "latency_ms": {
+    "A_status_delivered": 302,
+    "B_read_inbox_returned": 303,
+    "B_resource_notification": 46,
+    "send_message_returned": 1
+  },
+  "message_id": "fa6b1c3d-24e3-4f01-a165-0b2eedcc4638",
+  "notification": "Some(ResourceUpdatedNotification(Notification { method: ResourceUpdatedNotificationMethod, params: ResourceUpdatedNotificationParam { uri: \"agentnet://inbox\", meta: None }, extensions: Extensions }))",
+  "ok": true,
+  "protocol_client_A": {
+    "negotiated_protocol_version": "2026-07-28",
+    "server_info": {
+      "name": "agentnet",
+      "version": "0.1.0"
+    }
+  },
+  "protocol_client_B": {
+    "negotiated_protocol_version": "2026-07-28",
+    "server_info": {
+      "name": "agentnet",
+      "version": "0.1.0"
+    }
+  },
+  "send_wall_clock_ms": 1795753890218
+}
+[stderr] B listening on agentnet://inbox
+[exit 0]

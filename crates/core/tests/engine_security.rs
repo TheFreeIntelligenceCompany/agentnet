@@ -5,8 +5,9 @@ mod common;
 use agentnet_core::api::*;
 use agentnet_core::config::UnknownSenders;
 use agentnet_core::contact::VerifiedContact;
-use agentnet_core::envelope::testing::{seal_presigned, sign_envelope_bytes};
-use agentnet_core::envelope::{seal, Envelope, MESSAGE_TYPE_ACK_RECEIVED, MESSAGE_TYPE_MESSAGE};
+use agentnet_core::crypto::protection::seal;
+use agentnet_core::crypto::testing as t;
+use agentnet_core::envelope::{Envelope, MESSAGE_TYPE_ACK_RECEIVED, MESSAGE_TYPE_MESSAGE};
 use agentnet_core::identity::Identity;
 use agentnet_core::FrameOutcome;
 use agentnet_transport::{ContentTopic, FrameSource, InboundFrame};
@@ -139,9 +140,10 @@ async fn replay_now_and_after_dedupe_pruning() {
 #[tokio::test]
 async fn tampered_foreign_forged_and_forwarded_frames_create_nothing() {
     let w = World::new();
-    // buckets = 1: everybody shares one topic and trial-decrypts everything
-    let mk = |n: &str| w.agent_buckets(n, cfg(), 1);
-    let (a, b, c) = (mk("a"), mk("b"), mk("c"));
+    // everybody shares one topic and trial-decrypts everything
+    let a = w.agent("a", cfg());
+    let b = w.agent_sharing_topic("b", cfg(), &a);
+    let c = w.agent_sharing_topic("c", cfg(), &a);
     for x in [&a, &b, &c] {
         x.node.step_receive().await.unwrap();
     }
@@ -150,7 +152,7 @@ async fn tampered_foreign_forged_and_forwarded_frames_create_nothing() {
     exchange(&b, &c).await;
     let f = Forge { w: &w };
     let a_id = Identity::load(&a.id_path).unwrap();
-    let mallory = Identity::generate(1, w.now_ms()).unwrap();
+    let mallory = Identity::generate(w.now_ms()).unwrap();
 
     // frame for another agent in the same bucket: NotForUs, counted, nothing stored
     a.send(&c, "for c only").await;
@@ -171,40 +173,49 @@ async fn tampered_foreign_forged_and_forwarded_frames_create_nothing() {
     }
     b.node.step_receive().await.unwrap();
     assert_eq!((b.n("inbox"), b.n("events"), b.n("outbox")), (0, 0, 0));
-    assert!(
-        b.metric("frame.not_for_us")
-            + b.metric("open_error.bad_magic")
-            + b.metric("open_error.unknown_frame_version")
-            + b.metric("open_error.unknown_suite")
-            >= 8
-    );
+    // every flipped frame is rejected by one counter or another (the first
+    // not_for_us is c's frame above)
+    let rejected: u64 = [
+        "frame.not_for_us",
+        "open_error.malformed",
+        "open_error.truncated",
+        "open_error.bad_structure",
+        "open_error.bad_signature",
+        "open_error.not_aead",
+        "open_error.pkesk_not_v6",
+        "open_error.malformed_payload",
+        "open_error.unknown_sender",
+    ]
+    .iter()
+    .map(|k| b.metric(k))
+    .sum();
+    assert!(rejected >= 8, "rejected {rejected}");
 
-    // forged sender: envelope says A, signed by Mallory
+    // forged sender: the payload says A, the message is signed by Mallory (unknown to B)
     let mut env = f.envelope(&a_id, &b, MESSAGE_TYPE_MESSAGE, "forged", 3_600_000);
     env.sender = a_id.address();
-    let bytes = serde_json::to_vec(&env).unwrap();
-    let sig = sign_envelope_bytes(&mallory, &bytes);
     let vb = VerifiedContact::parse_and_verify(&b.record, w.now_ms()).unwrap();
-    f.inject(
-        &b,
-        &seal_presigned(&vb.kem_pk, &sig, &bytes, 150_000).unwrap(),
-    );
+    let forged = t::seal_payload(
+        &mallory,
+        &vb,
+        &t::payload_for(&a_id, &env),
+        w.now_ms(),
+        t::BuildOpts::default(),
+    )
+    .unwrap();
+    f.inject(&b, &forged);
     b.node.step_receive().await.unwrap();
-    assert_eq!(b.metric("open_error.bad_signature"), 1);
+    assert_eq!(b.metric("open_error.unknown_sender"), 1);
     assert_eq!((b.n("inbox"), b.n("events")), (0, 0));
 
-    // wrong-recipient forward: a validly signed envelope addressed to B, re-sealed to C
-    let env_for_b = f.envelope(&a_id, &b, MESSAGE_TYPE_MESSAGE, "meant for b", 3_600_000);
-    let bytes = serde_json::to_vec(&env_for_b).unwrap();
-    let sig = sign_envelope_bytes(&a_id, &bytes);
+    // surreptitious forwarding: a message A signed for B, re-encrypted to C by B
+    let to_b = f.message(&a_id, &b, "meant for b");
+    let b_id = Identity::load(&b.id_path).unwrap();
     let vc = VerifiedContact::parse_and_verify(&c.record, w.now_ms()).unwrap();
-    f.inject(
-        &c,
-        &seal_presigned(&vc.kem_pk, &sig, &bytes, 150_000).unwrap(),
-    );
+    f.inject(&c, &t::forward(&b_id, &to_b, &vc, w.now_ms()).unwrap());
     let before = c.n("inbox");
     c.node.step_receive().await.unwrap();
-    assert_eq!(c.metric("open_error.wrong_recipient"), 1);
+    assert_eq!(c.metric("open_error.wrong_intended_recipient"), 1);
     assert_eq!(c.n("inbox"), before);
     assert_eq!(
         c.node
@@ -542,7 +553,8 @@ async fn ack_rules_wrong_party_unknown_id_untrusted_and_no_ping_pong() {
     assert_eq!(a.state(&r.message_id).await, DeliveryState::Sent);
     assert_eq!(a.metric("ack.ignored_wrong_party"), 1);
     assert_eq!(a.metric("ack.ignored_unknown_id"), 1);
-    assert_eq!(a.metric("ack.ignored_untrusted"), 1);
+    // a receipt from a stranger carries no certificate: it cannot be authenticated at all
+    assert_eq!(a.metric("open_error.unknown_sender"), 1);
     assert_eq!(a.n("inbox"), 0, "acks never enter the inbox");
     assert_eq!(a.n("events"), 0);
 

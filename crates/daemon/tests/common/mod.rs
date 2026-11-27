@@ -37,7 +37,9 @@ impl World {
             .duration_since(std::time::UNIX_EPOCH)
             .map(|d| i64::try_from(d.as_nanos()).unwrap_or(0))
             .unwrap_or(0);
-        let clock = MockClock::new(now_ns);
+        // A little ahead of the wall clock: certificates created by `init` after this point
+        // (up to seconds later under load) must not lie in the future of the mock clock.
+        let clock = MockClock::new(now_ns + 60_000_000_000);
         Self {
             net: MockNetwork::with_clock(clock.clone()),
             clock,
@@ -48,14 +50,7 @@ impl World {
     /// Initialise a data dir (exercises `init`) and return its path, address and contact record.
     pub fn init(&self, name: &str) -> (PathBuf, String, String) {
         let path = self.tmp.path().join(name);
-        let rep = init_data_dir(
-            &path,
-            "http://127.0.0.1:8645",
-            &[PEER.to_owned()],
-            16,
-            false,
-        )
-        .unwrap();
+        let rep = init_data_dir(&path, "http://127.0.0.1:8645", &[PEER.to_owned()], false).unwrap();
         (path, rep.identity.agent_id, rep.identity.contact_record)
     }
 

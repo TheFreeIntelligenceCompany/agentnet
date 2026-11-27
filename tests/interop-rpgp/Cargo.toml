@@ -1,0 +1,24 @@
+[package]
+name = "agentnet-interop-rpgp"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.89"
+license = "MIT"
+publish = false
+description = "Independent interoperability check: rPGP (pure Rust, no LGPL, no OpenSSL) against AgentNet's OpenPGP frames. Test-only; never linked into the agentnet binary."
+
+# Standalone: not a member of the main workspace (also listed in its `exclude`), own Cargo.lock.
+# The shipped dependency graph (and cargo-deny on it) is unaffected by anything here.
+[workspace]
+
+[dependencies]
+agentnet-core = { path = "../../crates/core", features = ["test-support"] }
+# The independent implementation under test. Exact pins; MIT OR Apache-2.0, pure Rust.
+pgp = { version = "=0.21.1", default-features = false }
+# rpgpie is the OpenPGP-semantics layer over rPGP (binding signatures, expiry, revocation); "experimental" per its README.
+rpgpie = { version = "=0.12.1", default-features = false }
+rand = "=0.8.8"
+serde_json = "=1.0.145"
+base64 = "=0.22.1"
+hex = "=0.4.3"
+anyhow = "1"

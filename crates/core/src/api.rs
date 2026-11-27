@@ -71,21 +71,18 @@ impl ApiError {
 /// Public identity of this agent.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct IdentityInfo {
-    /// The agent address (`an1…`). This is the agent ID everywhere in the API.
+    /// The agent address (`an2…`, the v6 fingerprint of the OpenPGP primary key). This is the agent ID everywhere in the API.
     pub agent_id: String,
-    /// The signed public contact record as a JSON document string; give this to
-    /// peers so they can `add_contact`.
+    /// The agent's public OpenPGP certificate (base64url of the binary
+    /// certificate); give this to peers so they can `add_contact`.
     pub contact_record: String,
     /// Content topic this agent's inbox listens on.
     pub inbox_topic: String,
     pub created_at: i64,
-    /// Expiry of the current agreement key, if one is set.
+    /// Expiry of the current encryption subkey, if it has one.
     pub kem_expires_at: Option<i64>,
-    /// Epoch of the current agreement key (starts at 1; +1 per rotation).
-    #[serde(default)]
-    pub key_epoch: u64,
-    /// The identity has been revoked (signed tombstone): it only delivers the
-    /// tombstone and sends nothing else.
+    /// The identity has been revoked (primary-key revocation): it only
+    /// delivers the revocation notice and sends nothing else.
     #[serde(default)]
     pub revoked: bool,
 }
@@ -234,7 +231,9 @@ pub struct MessageStatus {
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AddContactRequest {
-    /// The peer's signed contact record (JSON document string).
+    /// The peer's public OpenPGP certificate (base64url of the binary
+    /// certificate, or ASCII armor). For an existing contact it is MERGED into
+    /// the stored certificate (never replaced).
     pub contact_record: String,
     /// If set, the record must be for exactly this address (obtained out of
     /// band); a mismatch is rejected.
@@ -255,13 +254,10 @@ pub struct ContactInfo {
     pub inbox_topic: String,
     pub added_at: i64,
     pub kem_expires_at: Option<i64>,
-    /// True when an existing contact was replaced by a newer record.
+    /// True when a merge changed the stored certificate.
     pub updated: bool,
-    /// Key epoch of the stored contact record.
-    #[serde(default)]
-    pub key_epoch: u64,
-    /// A verified identity-revocation tombstone exists for this address; the
-    /// contact is blocked and cannot be re-trusted or replaced.
+    /// The certificate's primary key is revoked; the contact is blocked and
+    /// cannot be re-trusted.
     #[serde(default)]
     pub revoked: bool,
 }

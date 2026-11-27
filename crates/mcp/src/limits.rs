@@ -12,7 +12,7 @@
 /// smaller of this cap and the daemon's configured `delivery.max_body_bytes`
 /// (the engine answers `too_large` above its own limit).
 pub const MAX_BODY_BYTES: usize = 65_536;
-/// Address length bounds (`an1` + base32 payload; exact validation is the engine's).
+/// Address length bounds (`an2` + base32 payload; exact validation is the engine's).
 pub const MIN_ADDRESS_LEN: usize = 4;
 pub const MAX_ADDRESS_LEN: usize = 128;
 /// Maximum length of message, conversation, correlation, trigger and idempotency ids.
@@ -57,7 +57,7 @@ pub const TOPIC_PATTERN: &str = "^[a-z0-9-]{1,32}$";
 /// JSON Schema `pattern` for capability names.
 pub const CAPABILITY_NAME_PATTERN: &str = "^[a-z0-9._-]{1,64}$";
 /// JSON Schema `pattern` for agent addresses (loose; the engine validates the checksum).
-pub const ADDRESS_PATTERN: &str = "^an1[a-z2-7]{1,125}$";
+pub const ADDRESS_PATTERN: &str = "^an2[a-z2-7]{1,125}$";
 
 /// True if `s` is a valid `target_session`: 1 to [`MAX_SESSION_LEN`] ASCII
 /// characters from `!` through `~` (no spaces), exactly the engine's rule.
@@ -77,7 +77,7 @@ pub fn is_valid_id(s: &str) -> bool {
 pub fn is_valid_address(s: &str) -> bool {
     s.len() >= MIN_ADDRESS_LEN
         && s.len() <= MAX_ADDRESS_LEN
-        && s.strip_prefix("an1")
+        && s.strip_prefix("an2")
             .is_some_and(|rest| rest.bytes().all(|b| matches!(b, b'a'..=b'z' | b'2'..=b'7')))
 }
 

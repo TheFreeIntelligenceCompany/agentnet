@@ -40,8 +40,8 @@ against a real daemon on 2026-11-26):
 
 ```json
 {"jsonrpc":"2.0","id":1,"result":{"resultType":"complete",
- "content":[{"type":"text","text":"{\"agent_id\":\"an1swo22...\",...}"}],
- "structuredContent":{"agent_id":"an1swo22teox3i4gcmc4od6xftmnvhzhzcvb4mdqq6bzakfyxzmxurhaxw3ga",
+ "content":[{"type":"text","text":"{\"agent_id\":\"an2swo22...\",...}"}],
+ "structuredContent":{"agent_id":"an2swo22teox3i4gcmc4od6xftmnvhzhzcvb4mdqq6bzakfyxzmxurhaxw3ga",
                       "contact_record":"{\"record\":\"eyJ2Ijox...\",\"sig\":\"8WMS7X...\"}",
                       "created_at":1795706642062,"inbox_topic":"/agentnet/1/inbox-02/proto","kem_expires_at":null},
  "isError":false}}
@@ -131,7 +131,7 @@ Limits (`crates/mcp/src/limits.rs`; the engine may be stricter and answers `too_
 | Item | Limit |
 |---|---|
 | `body` | 1 to 65536 bytes (UTF-8); the effective limit is the **smaller** of this cap and the daemon's `delivery.max_body_bytes` (default 65536), above which the engine answers `too_large` |
-| address (`recipient`, `sender`, `expected_address`) | `an1` + lowercase base32 `[a-z2-7]`, total 4 to 128 chars (loose syntax; the engine checks the checksum) |
+| address (`recipient`, `sender`, `expected_address`) | `an2` + lowercase base32 `[a-z2-7]`, total 4 to 128 chars (loose syntax; the engine checks the checksum) |
 | ids (`conversation_id`, `correlation_id`, `idempotency_key`, `message_id`, `trigger_id`) | `[A-Za-z0-9._~-]{1,128}` |
 | cursors | 1 to 512 visible ASCII chars (opaque) |
 | `limit` | 1 to 200 (engine default 50) |
@@ -151,14 +151,14 @@ in inbox records, but cannot be used in tool arguments or in `agentnet://convers
 
 | Tool | Input | Output (`structuredContent`) | Annotations | Notes |
 |---|---|---|---|---|
-| `get_identity` | none | `agent_id`, `contact_record`, `inbox_topic`, `created_at`, `kem_expires_at?` | readOnly, closed-world | never returns private keys |
+| `get_identity` | none | `agent_id`, `contact_record` (the public OpenPGP certificate, base64url), `inbox_topic`, `created_at`, `kem_expires_at?` (expiry of the current encryption subkey) | readOnly, closed-world | never returns private keys |
 | `send_message` | `recipient`, `body`, `conversation_id?`, `correlation_id?`, `ttl_seconds?`, `idempotency_key?` | `message_id`, `status` (`queued`/`sent`/...), `conversation_id`, `expires_at`, `deduplicated` | additive, not idempotent, open-world | description states `queued`/`sent` is NOT receipt and that retries are bounded by the message TTL and the host's accepted-publish attempt limit, so a message can remain `sent` after retries stop (check `get_message_status`); `message_type` is not exposed (always `message`) |
 | `read_inbox` | `cursor?`, `limit?`, `unread_only?`, `conversation_id?`, `include_quarantined?` | `records[]`, `next_cursor?`, `has_more` | readOnly, closed-world | description and field docs mark bodies UNTRUSTED |
 | `get_message` | `message_id`, `sender?` | one inbox record (`cursor`, `message_id`, `sender`, `sender_trust`, `message_type`, `conversation_id?`, `correlation_id?`, timestamps, `body`, `acknowledged`, `quarantined`) | readOnly, closed-world | fetches the message a `message.received` event names. Same visibility as `read_inbox` without `include_quarantined`: quarantined and replay-guard-held messages are `not_found`. A sender-chosen id used by two senders is `conflict` until `sender` is given; a non-matching `sender` is `not_found`. Does not acknowledge. Description and field docs mark the content UNTRUSTED |
 | `acknowledge_message` | `message_id` | `message_id`, `newly_acknowledged` | idempotent | local state only; description says it sends nothing |
 | `get_message_status` | `message_id` | state, attempts, timestamps, `last_error?` | readOnly | only `delivered` means recipient receipt |
-| `list_contacts` | `limit?` (1 to 200, default 50), `offset?` | `contacts[{address, alias?, trust, inbox_topic, added_at, kem_expires_at?, revoked}]`, `total`, `has_more`, `next_offset?` | readOnly, closed-world | saved contacts in the order they were added; public contact data only, never key material or the contact record |
-| `add_contact` | `contact_record`, `expected_address?`, `alias?`, `trust?` (`trusted`/`untrusted`/`blocked`) | `address`, `alias?`, `trust`, `inbox_topic`, `added_at`, `kem_expires_at?`, `updated` | destructive (may replace), idempotent | description: only for contacts the user verified |
+| `list_contacts` | `limit?` (1 to 200, default 50), `offset?` | `contacts[{address, alias?, trust, inbox_topic, added_at, kem_expires_at?, revoked}]`, `total`, `has_more`, `next_offset?` | readOnly, closed-world | saved contacts in the order they were added; public contact data only, never key material or the certificate; `revoked` means the primary key is revoked |
+| `add_contact` | `contact_record`, `expected_address?`, `alias?`, `trust?` (`trusted`/`untrusted`/`blocked`) | `address`, `alias?`, `trust`, `inbox_topic`, `added_at`, `kem_expires_at?`, `updated` | destructive-annotated, idempotent; an existing contact's certificate is MERGED, never replaced | description: only for contacts the user verified; pass `expected_address` obtained out of band |
 | `network_status` | `verbose?` | `mode`, `ready`, `connected_peers`, `isolation_violation?`, `isolation_audited` (false in plain public mode: nothing is audited, so a missing violation is not an isolation claim), `queue{...}`, poll/sync times, `detail`, `peers?` | readOnly | peers only if `verbose` |
 | `create_trigger` | `sender?`, `message_type?`, `conversation_id?`, `correlation_id?`, `target_session`, `once?`, `expires_in_seconds?`, `since_cursor?` | trigger record | additive | `policy_denied` when disabled by host policy |
 | `list_triggers` | `include_inactive?` | `triggers[]` | readOnly | |

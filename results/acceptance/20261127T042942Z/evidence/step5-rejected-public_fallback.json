@@ -1,0 +1,1 @@
+{"case":"public_fallback","setting":"[network] public_fallback = true","exit_code":4,"stderr":"error: invalid configuration: network.public_fallback = true is never allowed: there is no public fallback"}

@@ -1,0 +1,8 @@
+$ /Users/dennison/develop/FIC-elipsis/target/release/agentnet --json --data-dir /tmp/an-acc.hGa5xk/a contact add @/tmp/an-acc.hGa5xk/b.tampered --expect an2rdkb7gbx3v2foe6ynj4l27hzy4uuhwgffnqunjkmn62epskcpaokqjdlca --alias tampered
+{"error":{"code":"invalid_argument","message":"invalid contact certificate: the certificate has no valid self-signature under the policy"}}
+[stderr] error: invalid contact certificate: the certificate has no valid self-signature under the policy
+[exit 4]
+$ /Users/dennison/develop/FIC-elipsis/target/release/agentnet --json --data-dir /tmp/an-acc.hGa5xk/a contact add @/tmp/an-acc.hGa5xk/b.record --expect an2dtf5n2jhsthvu3r3jjs3hfydpqz2jszfc6fomc4l5udvstdltptruenkl4 --alias wrong
+{"error":{"code":"invalid_argument","message":"contact certificate is not for the expected address"}}
+[stderr] error: contact certificate is not for the expected address
+[exit 4]

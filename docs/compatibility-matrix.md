@@ -5,6 +5,25 @@ Status: written by a contributor after the Phase A spikes; verified only as far 
 
 Cell vocabulary: **OK** = run and the cited log shows success; **FAILED** = run and failed; **PARTIAL** = some of it ran; **UNTESTED** = not run.
 
+## 0. Current tree (OpenPGP, ADR 0004; local branch `adr-0004-openpgp`, commit `9a9af9d`, NOT published)
+
+Message protection is RFC 9580 OpenPGP via `sequoia-openpgp` 2.5.0 with the OpenSSL 3 backend; the build needs OpenSSL 3 development files, `pkg-config` and clang/libclang. The public repository is still at the pre-cutover commit. **Every cell in section 1 and the other sections below that cites an older commit, GitHub Actions run or test count describes the retired ADR 0002 (HPKE + Ed25519) tree**; the rows here are the current status.
+
+| Platform | Result on the OpenPGP tree | Evidence |
+|---|---|---|
+| macOS arm64 (rustc 1.92, Homebrew OpenSSL 3) | **OK**: fmt, clippy, 436 tests passed, 0 failed, 7 relay-gated ignored | `results/final/host-checks-adr0004.txt` |
+| Linux arm64 container (rustc 1.89.0, OpenSSL 3.0.22) | **OK**: locked build, 436 passed, 0 failed | `results/final/linux-arm64-adr0004.txt` |
+| Linux x86_64, native cloud VM (rustc 1.89.0, OpenSSL 3.5.9) | **OK**: fmt, locked build, clippy, 436 passed, 0 failed; rPGP interop crate 4 passed. An emulated attempt **FAILED** (gcc crashed under qemu) and is superseded | `results/final/linux-x86_64-adr0004.txt`, `results/final/linux-x86_64-adr0004-attempt1-gcc-segv.txt` |
+| Relay-gated tests, local relay (node amd64 under qemu on arm64) | **OK**: 7 passed | `results/final/relay-gated-adr0004.txt`, `results/final/relay-discovery-adr0004.txt` |
+| Private-relay acceptance script (one host) | 52 PASS, 0 FAIL, 1 UNTESTED | `results/acceptance/20261127T042942Z/` |
+| cargo-deny 0.22.1 | advisories, bans, licenses, sources ok, with exceptions scoped to `sequoia-openpgp` 2.5.0 and `buffered-reader` 1.4.1 (LGPL-2.0-or-later) and `openssl-sys` via its two wrappers | `results/adr0004/cargo-deny.txt` |
+| MSRV 1.89 build | **OK** | `results/adr0004/msrv-1.89-build.txt` |
+| rPGP 0.21.1 interop (outside workspace and shipped binary) | local run OK | `results/adr0004/interop-rpgp.txt` |
+| GitHub Actions CI | **UNTESTED** (branch unpublished) | - |
+| Real-host runs (SSH tunnel, tailnet, public IP, public wss, Headscale policy), network simulations, reconnect/watchdog trials, burst benchmarks | **UNTESTED** on the OpenPGP tree; the earlier results are for the ADR 0002 scheme | - |
+
+The implementation is not audited, not production-secure and not forward-secret (a later compromise of a recipient encryption subkey exposes stored ciphertext); an independent human cryptographic review is still required before sensitive production use.
+
 ## 1. Platform x component
 
 | Component | macOS arm64 (host, rustc 1.92.0) | Linux arm64 (`rust:1.92-bookworm` container) | Linux x86_64 |
@@ -79,7 +98,7 @@ HTTP session headers (none for 2026-07-28; `Mcp-Session-Id` for legacy). Capabil
 | Highest MSRV among locked dependencies | **1.89.0**: `rusqlite 0.42.0` and `uuid 1.29.3` (also 1.88: `libsqlite3-sys 0.40.0`, `rmcp 3.11.0`, `proptest 1.12.0`, `sha2 0.11.2`, `darling 0.24.1`, `icu_* 2.4.0`) | `cargo metadata` of `Cargo.lock`; `results/audit/crates-io-versions.txt` |
 | Result of building the locked workspace with rustc 1.88 | **FAILED**, `cargo check --workspace --locked` in `rust:1.88-bookworm` (rustc 1.88.0): "error: rustc 1.88.0 is not supported by the following packages: rusqlite@0.42.0 requires rustc 1.89.0; uuid@1.29.3 requires rustc 1.89.0", exit 101 (no compilation happened) | `results/audit/msrv-1.88-check.log` |
 | `rmcp` 3.11.0 | 1.88 | crates.io API, `docs/spike/notes-mcp.md` s2 |
-| `hpke` 0.15.1 | 1.87 | crates.io API |
+| `hpke` 0.15.1 (**retired scheme**: ADR 0002, removed from AgentNet by ADR 0004; only `hpke` 0.12.0 remains transitively via `age`) | 1.87 | crates.io API |
 | `ed25519-dalek` 3.0.0 / `age` 0.12.1 / `tokio` 1.54.1 / `clap` 4.6.10 | 1.85 / 1.74 / 1.85 / 1.85 | crates.io API |
 | `vodozemac` 0.11.2 (documented upgrade path, compiled only) | 1.89 | notes-libchat s2 |
 | `openmls` 0.9.2 / 0.10.0-rc.1 (not used) | 1.91 / 1.94 | notes-libchat s2 |

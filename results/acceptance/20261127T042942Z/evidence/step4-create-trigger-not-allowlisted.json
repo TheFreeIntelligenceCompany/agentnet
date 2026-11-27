@@ -1,0 +1,19 @@
+{
+  "elapsed_ms": 6,
+  "is_error": true,
+  "protocol": {
+    "negotiated_protocol_version": "2026-07-28",
+    "server_info": {
+      "name": "agentnet",
+      "version": "0.1.0"
+    }
+  },
+  "result": {
+    "error": {
+      "code": "policy_denied",
+      "message": "target_session is not allowlisted by host policy",
+      "retryable": false
+    }
+  },
+  "tool": "create_trigger"
+}

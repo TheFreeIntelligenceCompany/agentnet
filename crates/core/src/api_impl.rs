@@ -77,7 +77,6 @@ impl Node {
             inbox_topic: self.topic.to_string(),
             created_at: self.identity.created_at(),
             kem_expires_at: self.identity.kem_expires_at(),
-            key_epoch: self.identity.key_epoch(),
             revoked: self.local_revocation.is_some(),
         }
     }
@@ -91,7 +90,6 @@ impl Node {
             added_at: row.added_at,
             kem_expires_at: row.contact.kem_expires_at,
             updated,
-            key_epoch: row.contact.key_epoch,
             revoked: row.revoked,
         }
     }
@@ -269,12 +267,10 @@ impl Node {
                     )?;
                     self.insert_event(tx, "message.received", message_id, None, None, now)?;
                     let orig = Envelope {
-                        v: 1,
+                        v: crate::crypto::envelope::ENVELOPE_VERSION,
                         message_id: message_id.to_owned(),
                         sender: addr,
                         recipient: self.own,
-                        suite: crate::crypto::envelope::SUITE_ID,
-                        recipient_key_epoch: 0,
                         message_type: ty,
                         conversation_id: conv.clone(),
                         correlation_id: corr,
@@ -468,17 +464,21 @@ impl AgentApi for Node {
             .ok_or_else(|| ApiError::not_found("no such outbound message"))
     }
 
-    /// A newer record for a known address replaces the stored one; an older one
-    /// is refused. If `trust` is absent, a new contact is `trusted` and an
-    /// existing contact keeps its current trust.
+    /// First contact pins the certificate's fingerprint (pass
+    /// `expected_address`, obtained out of band, to bind it). For a known
+    /// address the certificate is MERGED into the stored one: new encryption
+    /// subkeys, expiry updates and revocations are accepted, nothing is ever
+    /// replaced or dropped, and a different primary key is a different address.
+    /// If `trust` is absent, a new contact is `trusted` and an existing contact
+    /// keeps its current trust.
     async fn add_contact(&self, req: AddContactRequest) -> ApiResult<ContactInfo> {
         let now = self.now();
         let vc = VerifiedContact::parse_and_verify(&req.contact_record, now)
-            .map_err(|e| ApiError::invalid(format!("invalid contact record: {e}")))?;
+            .map_err(|e| ApiError::invalid(format!("invalid contact certificate: {e}")))?;
         if let Some(exp) = &req.expected_address {
             if *exp != vc.address.to_string() {
                 return Err(ApiError::invalid(
-                    "contact record is not for the expected address",
+                    "contact certificate is not for the expected address",
                 ));
             }
         }
@@ -502,57 +502,69 @@ impl AgentApi for Node {
         let addr = vc.address;
         let mut resealed = 0usize;
         let res = self.store.tx(|tx| {
+            let revoked_in_doc = vc.revocation(now);
+            if let Some((revoked_at, reason)) = revoked_in_doc {
+                // A revoked certificate is applied as a revocation (merged into an
+                // existing contact); it never creates a new contact.
+                let rev = crate::crypto::VerifiedRevocation::parse_and_verify(vc.document(), now)
+                    .map_err(|_| ApiError::invalid("invalid revoked certificate"))?;
+                let _ = (revoked_at, reason);
+                let known = self.load_contact(tx, &addr)?.is_some();
+                self.apply_revocation(tx, &rev, "imported", now)?;
+                if !known {
+                    return Err(ApiError::new(
+                        ErrorCode::Conflict,
+                        "this certificate's primary key is revoked; it cannot be added as a contact (the revocation was recorded)",
+                    )
+                    .into());
+                }
+                let row = self
+                    .load_contact(tx, &addr)?
+                    .ok_or(StoreError::Corrupt("contact vanished"))?;
+                return Ok(Self::contact_info(&row, true));
+            }
             if Self::is_revoked(tx, &addr)? {
                 return Err(ApiError::new(
                     ErrorCode::Conflict,
-                    "this address has a verified identity revocation (tombstone); it cannot be added again",
+                    "this address has a verified identity revocation; it cannot be added again",
                 )
                 .into());
             }
             let old = self.load_contact(tx, &addr)?;
-            let (updated, trust, alias, added_at) = match &old {
+            let (contact, updated, trust, alias, added_at) = match &old {
                 Some(o) => {
-                    // Rotation order is the monotonic key_epoch, not created_at.
-                    if vc.key_epoch < o.contact.key_epoch {
-                        return Err(ApiError::new(
-                            ErrorCode::Conflict,
-                            format!(
-                                "stale contact record: key_epoch {} is older than the stored key_epoch {}; the stored record is kept",
-                                vc.key_epoch, o.contact.key_epoch
-                            ),
-                        )
-                        .into());
-                    }
-                    if vc.key_epoch == o.contact.key_epoch && !vc.same_record(&o.contact) {
-                        return Err(ApiError::new(
-                            ErrorCode::Conflict,
-                            format!(
-                                "conflicting contact record: key_epoch {} is already stored with different content; the stored record is kept",
-                                vc.key_epoch
-                            ),
-                        )
-                        .into());
-                    }
+                    let merged = o
+                        .contact
+                        .merge(&vc, now)
+                        .map_err(|e| ApiError::invalid(format!("cannot merge certificate: {e}")))?;
+                    let changed = !merged.same_record(&o.contact);
                     (
-                        vc.key_epoch > o.contact.key_epoch,
+                        merged,
+                        changed,
                         req.trust.unwrap_or(o.trust),
                         req.alias.clone().or_else(|| o.alias.clone()),
                         o.added_at,
                     )
                 }
-                None => (false, req.trust.unwrap_or(Trust::Trusted), req.alias.clone(), now),
+                None => (
+                    vc.clone(),
+                    false,
+                    req.trust.unwrap_or(Trust::Trusted),
+                    req.alias.clone(),
+                    now,
+                ),
             };
             tx.execute(
                 "INSERT INTO contacts (address, document, alias, trust, added_at, updated_at)
                  VALUES (?1, ?2, ?3, ?4, ?5, ?5)
                  ON CONFLICT(address) DO UPDATE SET document = excluded.document,
                    alias = excluded.alias, trust = excluded.trust, updated_at = excluded.updated_at",
-                params![addr.to_string(), vc.document(), alias, trust_to_db(trust), added_at],
+                params![addr.to_string(), contact.document(), alias, trust_to_db(trust), added_at],
             )?;
             if trust == Trust::Blocked {
                 Self::purge_adverts(tx, &addr)?;
             }
-            let row = crate::node::ContactRow { contact: vc.clone(), trust, alias, added_at, revoked: false };
+            let row = crate::node::ContactRow { contact, trust, alias, added_at, revoked: false };
             if updated {
                 // Pending messages survive the recipient's key rotation.
                 resealed = self.reseal_outbox(tx, &row, now)?;

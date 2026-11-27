@@ -20,6 +20,7 @@ pub mod error;
 pub mod guard;
 mod ingest;
 pub mod metrics;
+pub mod migrate;
 pub mod node;
 mod send;
 pub mod store;
