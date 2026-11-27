@@ -12,7 +12,7 @@
 set -uo pipefail
 VARIANT=${VARIANT:-base}; N=${N:-1}; BLOCK_S=${BLOCK_S:-70}; MAXWAIT=${MAXWAIT:-600}; REDIAL_S=${REDIAL_S:-10}; OUTDIR=${OUTDIR:?}
 DURING_AT=${DURING_AT:-30}
-NB=http://127.0.0.1:18652; RUNDIR="$(cd "$(dirname "$0")" && pwd)/.run"
+NB=http://127.0.0.1:28652; RUNDIR="$(cd "$(dirname "$0")" && pwd)/.run"
 RID=$(grep '^R_PEER_ID=' "$RUNDIR/env" | cut -d= -f2); ADDR="/ip4/10.66.0.1/tcp/60000/p2p/$RID"
 now_ms() { python3 -c 'import time;print(int(time.time()*1000))'; }
 connected() { curl -s -m 3 "$NB/admin/v1/peers" | jq -e --arg id "$RID" '[.[]|select(.connected=="Connected" and (.multiaddr|contains($id)))]|length>0' >/dev/null 2>&1; }

@@ -1,0 +1,8 @@
+### an-nat-a-net published ports
+8645/tcp -> 127.0.0.1:28661
+### an-nat-b-net published ports
+8645/tcp -> 127.0.0.1:28662
+### an-nat-r published ports
+8645/tcp -> 127.0.0.1:28660
+### an-nat-gw-a published ports
+### an-nat-gw-b published ports

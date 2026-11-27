@@ -19,7 +19,7 @@ the list of what a real run needs: `docs/network-simulations.md`.
  machine = sidecar container (owns wg0 + iptables) + Logos Delivery node sharing its namespace (network_mode: service:<sidecar>)
    R: node announces --nat=extip:10.66.0.1, listens tcp/60000.  A, B: --staticnode=/ip4/10.66.0.1/tcp/60000/p2p/<R id>
  R firewall: INPUT DROP; tcp/60000 accepted only on wg0 from 10.66.0.2 and 10.66.0.3; tcp/60000 on the underlay dropped explicitly
- host: agentnet serve (A) -> 127.0.0.1:18651 (A's node REST), agentnet serve (B) -> 127.0.0.1:18652, R's REST on 127.0.0.1:18650 (diagnostics)
+ host: agentnet serve (A) -> 127.0.0.1:28651 (A's node REST), agentnet serve (B) -> 127.0.0.1:28652, R's REST on 127.0.0.1:28650 (diagnostics)
 ```
 
 REST ports are published to the docker host's 127.0.0.1 only so that the daemons on the host can reach them. In a real deployment each

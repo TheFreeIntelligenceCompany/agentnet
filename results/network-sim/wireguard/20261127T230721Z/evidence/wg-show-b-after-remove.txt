@@ -1,0 +1,11 @@
+interface: wg0
+  public key: pBkBp4wifWs5zlSziarMLruhOHqpfcd64vR6/6jEinY=
+  private key: (hidden)
+  listening port: 60981
+
+peer: mqHrRZci73H9Y/JIcXvlGMgOaMxLvdmwKs+ggvy3Jno=
+  endpoint: 172.29.70.10:51820
+  allowed ips: 10.66.0.1/32
+  latest handshake: 1 minute, 57 seconds ago
+  transfer: 238.07 KiB received, 143.28 KiB sent
+  persistent keepalive: every 25 seconds

@@ -1,0 +1,60 @@
+### t+0 s gw-a conntrack entries to R:60000
+conntrack v1.4.8 (conntrack-tools): 1 flow entries have been shown.
+tcp      6 119 ESTABLISHED src=192.168.101.10 dst=172.30.80.10 sport=38358 dport=60000 src=172.30.80.10 dst=172.30.80.21 sport=60000 dport=38358 [ASSURED] mark=0 use=1
+### t+30 s gw-a conntrack entries to R:60000
+tcp      6 119 ESTABLISHED src=192.168.101.10 dst=172.30.80.10 sport=38358 dport=60000 src=172.30.80.10 dst=172.30.80.21 sport=60000 dport=38358 [ASSURED] mark=0 use=1
+conntrack v1.4.8 (conntrack-tools): 1 flow entries have been shown.
+### t+60 s gw-a conntrack entries to R:60000
+conntrack v1.4.8 (conntrack-tools): 1 flow entries have been shown.
+tcp      6 118 ESTABLISHED src=192.168.101.10 dst=172.30.80.10 sport=38358 dport=60000 src=172.30.80.10 dst=172.30.80.21 sport=60000 dport=38358 [ASSURED] mark=0 use=1
+### t+90 s gw-a conntrack entries to R:60000
+tcp      6 118 ESTABLISHED src=192.168.101.10 dst=172.30.80.10 sport=38358 dport=60000 src=172.30.80.10 dst=172.30.80.21 sport=60000 dport=38358 [ASSURED] mark=0 use=1
+conntrack v1.4.8 (conntrack-tools): 1 flow entries have been shown.
+### t+120 s gw-a conntrack entries to R:60000
+conntrack v1.4.8 (conntrack-tools): 1 flow entries have been shown.
+tcp      6 118 ESTABLISHED src=192.168.101.10 dst=172.30.80.10 sport=38358 dport=60000 src=172.30.80.10 dst=172.30.80.21 sport=60000 dport=38358 [ASSURED] mark=0 use=1
+### t+151 s gw-a conntrack entries to R:60000
+tcp      6 118 ESTABLISHED src=192.168.101.10 dst=172.30.80.10 sport=38358 dport=60000 src=172.30.80.10 dst=172.30.80.21 sport=60000 dport=38358 [ASSURED] mark=0 use=1
+conntrack v1.4.8 (conntrack-tools): 1 flow entries have been shown.
+### t+181 s gw-a conntrack entries to R:60000
+tcp      6 117 ESTABLISHED src=192.168.101.10 dst=172.30.80.10 sport=38358 dport=60000 src=172.30.80.10 dst=172.30.80.21 sport=60000 dport=38358 [ASSURED] mark=0 use=1
+conntrack v1.4.8 (conntrack-tools): 1 flow entries have been shown.
+### t+211 s gw-a conntrack entries to R:60000
+tcp      6 117 ESTABLISHED src=192.168.101.10 dst=172.30.80.10 sport=38358 dport=60000 src=172.30.80.10 dst=172.30.80.21 sport=60000 dport=38358 [ASSURED] mark=0 use=1
+conntrack v1.4.8 (conntrack-tools): 1 flow entries have been shown.
+### t+241 s gw-a conntrack entries to R:60000
+tcp      6 117 ESTABLISHED src=192.168.101.10 dst=172.30.80.10 sport=38358 dport=60000 src=172.30.80.10 dst=172.30.80.21 sport=60000 dport=38358 [ASSURED] mark=0 use=1
+conntrack v1.4.8 (conntrack-tools): 1 flow entries have been shown.
+### t+271 s gw-a conntrack entries to R:60000
+tcp      6 117 ESTABLISHED src=192.168.101.10 dst=172.30.80.10 sport=38358 dport=60000 src=172.30.80.10 dst=172.30.80.21 sport=60000 dport=38358 [ASSURED] mark=0 use=1
+conntrack v1.4.8 (conntrack-tools): 1 flow entries have been shown.
+### t+302 s gw-a conntrack entries to R:60000
+tcp      6 117 ESTABLISHED src=192.168.101.10 dst=172.30.80.10 sport=38358 dport=60000 src=172.30.80.10 dst=172.30.80.21 sport=60000 dport=38358 [ASSURED] mark=0 use=1
+conntrack v1.4.8 (conntrack-tools): 1 flow entries have been shown.
+### t+332 s gw-a conntrack entries to R:60000
+conntrack v1.4.8 (conntrack-tools): 1 flow entries have been shown.
+tcp      6 117 ESTABLISHED src=192.168.101.10 dst=172.30.80.10 sport=38358 dport=60000 src=172.30.80.10 dst=172.30.80.21 sport=60000 dport=38358 [ASSURED] mark=0 use=1
+### t+362 s gw-a conntrack entries to R:60000
+conntrack v1.4.8 (conntrack-tools): 1 flow entries have been shown.
+tcp      6 116 ESTABLISHED src=192.168.101.10 dst=172.30.80.10 sport=38358 dport=60000 src=172.30.80.10 dst=172.30.80.21 sport=60000 dport=38358 [ASSURED] mark=0 use=1
+### t+392 s gw-a conntrack entries to R:60000
+conntrack v1.4.8 (conntrack-tools): 1 flow entries have been shown.
+tcp      6 119 ESTABLISHED src=192.168.101.10 dst=172.30.80.10 sport=38358 dport=60000 src=172.30.80.10 dst=172.30.80.21 sport=60000 dport=38358 [ASSURED] mark=0 use=1
+### t+423 s gw-a conntrack entries to R:60000
+tcp      6 119 ESTABLISHED src=192.168.101.10 dst=172.30.80.10 sport=38358 dport=60000 src=172.30.80.10 dst=172.30.80.21 sport=60000 dport=38358 [ASSURED] mark=0 use=1
+conntrack v1.4.8 (conntrack-tools): 1 flow entries have been shown.
+### t+453 s gw-a conntrack entries to R:60000
+tcp      6 119 ESTABLISHED src=192.168.101.10 dst=172.30.80.10 sport=38358 dport=60000 src=172.30.80.10 dst=172.30.80.21 sport=60000 dport=38358 [ASSURED] mark=0 use=1
+conntrack v1.4.8 (conntrack-tools): 1 flow entries have been shown.
+### t+483 s gw-a conntrack entries to R:60000
+conntrack v1.4.8 (conntrack-tools): 1 flow entries have been shown.
+tcp      6 119 ESTABLISHED src=192.168.101.10 dst=172.30.80.10 sport=38358 dport=60000 src=172.30.80.10 dst=172.30.80.21 sport=60000 dport=38358 [ASSURED] mark=0 use=1
+### t+513 s gw-a conntrack entries to R:60000
+tcp      6 119 ESTABLISHED src=192.168.101.10 dst=172.30.80.10 sport=38358 dport=60000 src=172.30.80.10 dst=172.30.80.21 sport=60000 dport=38358 [ASSURED] mark=0 use=1
+conntrack v1.4.8 (conntrack-tools): 1 flow entries have been shown.
+### t+544 s gw-a conntrack entries to R:60000
+tcp      6 118 ESTABLISHED src=192.168.101.10 dst=172.30.80.10 sport=38358 dport=60000 src=172.30.80.10 dst=172.30.80.21 sport=60000 dport=38358 [ASSURED] mark=0 use=1
+conntrack v1.4.8 (conntrack-tools): 1 flow entries have been shown.
+### t+574 s gw-a conntrack entries to R:60000
+tcp      6 118 ESTABLISHED src=192.168.101.10 dst=172.30.80.10 sport=38358 dport=60000 src=172.30.80.10 dst=172.30.80.21 sport=60000 dport=38358 [ASSURED] mark=0 use=1
+conntrack v1.4.8 (conntrack-tools): 1 flow entries have been shown.

@@ -34,7 +34,7 @@ export DNS_NS=127.0.0.1
 unset AGENTNET_HOME RUST_LOG || true
 . "$SIMDIR/../netsim-lib.sh"
 
-R=http://127.0.0.1:18650; NA=http://127.0.0.1:18651; NB=http://127.0.0.1:18652; NI=http://127.0.0.1:18653
+R=http://127.0.0.1:28650; NA=http://127.0.0.1:28651; NB=http://127.0.0.1:28652; NI=http://127.0.0.1:28653
 BR=an-wg-br0
 UL=172.29.70.0/24; OVL=10.66.0.0/24
 IP_R=172.29.70.10; IP_A=172.29.70.21; IP_B=172.29.70.22; IP_I=172.29.70.66; IP_GW=172.29.70.1
@@ -139,8 +139,12 @@ step1() {
   pa="$(jq -c --arg id "$RID" '[.[]|select(.connected=="Connected")]|map(.multiaddr)' "$RES/evidence/peers-a-initial.json")"
   pb="$(jq -c --arg id "$RID" '[.[]|select(.connected=="Connected")]|map(.multiaddr)' "$RES/evidence/peers-b-initial.json")"
   if [ "$pa" = "[\"/ip4/10.66.0.1/tcp/60000/p2p/$RID\"]" ] && [ "$pb" = "[\"/ip4/10.66.0.1/tcp/60000/p2p/$RID\"]" ] && [ "$(jq 'length' "$RES/evidence/peers-a-initial.json")" = 1 ] && [ "$(jq 'length' "$RES/evidence/peers-b-initial.json")" = 1 ]; then
-    pass "1.nodes_connected" "A's node lists exactly one peer, R, as /ip4/10.66.0.1/tcp/60000 (connected after ${ta} ms from node-a start-wait); B's node likewise (${tb} ms). R's node lists: $(jq -c '[.[]|{multiaddr,connected}]' "$RES/evidence/peers-r-initial.json")" "curl http://127.0.0.1:18651/admin/v1/peers ; :18652 ; :18650"
+    pass "1.nodes_connected" "A's node lists exactly one peer, R, as /ip4/10.66.0.1/tcp/60000 (connected after ${ta} ms from node-a start-wait); B's node likewise (${tb} ms). R's node lists: $(jq -c '[.[]|{multiaddr,connected}]' "$RES/evidence/peers-r-initial.json")" "curl http://127.0.0.1:28651/admin/v1/peers ; :28652 ; :28650"
   else fail "1.nodes_connected" "A: $pa  B: $pb (see evidence/peers-*-initial.json)" "curl .../admin/v1/peers"; fi
+  # 1.r_peers_overlay_only: a foreign REST POST to R's published port once made R dial an unrelated relay (results/network-sim/wireguard/20261127T194713Z); R must list only overlay peers
+  if jq -e 'all(.[]; (.multiaddr|startswith("/ip4/10.66.0.")))' "$RES/evidence/peers-r-initial.json" >/dev/null; then
+    pass "1.r_peers_overlay_only" "every peer R's node lists has an overlay (10.66.0.0/24) address" "curl http://127.0.0.1:28650/admin/v1/peers"
+  else fail "1.r_peers_overlay_only" "R lists a non-overlay peer: $(jq -c '[.[]|select(.multiaddr|startswith("/ip4/10.66.0.")|not)|.multiaddr]' "$RES/evidence/peers-r-initial.json") (someone else used R's REST port? evidence/peers-r-initial.json)" "curl .../admin/v1/peers"; fi
   # 1.firewall evidence
   for m in r a b; do { echo "### an-wg-$m iptables -S"; wx $m iptables -S; echo; echo "### iptables -vnxL INPUT"; wx $m iptables -vnxL INPUT; } > "$RES/evidence/firewall-$m-initial.txt" 2>&1; done
   if grep -q -- '-A INPUT -i eth0 -p tcp -m tcp --dport 60000 -m comment --comment wgsim-underlay-libp2p-drop -j DROP' "$RES/evidence/firewall-r-initial.txt" \

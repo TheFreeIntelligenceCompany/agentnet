@@ -48,7 +48,7 @@ services:
       - --peer-persistence=false
       - --local-storage-path=/data
       - --log-level=INFO
-    ports: ["127.0.0.1:18660:8645"]             # operator diagnostics on the docker host only
+    ports: ["127.0.0.1:28660:8645"]             # operator diagnostics on the docker host only
     volumes: ["rdata:/data"]
     networks: {public: {ipv4_address: 172.30.80.10}}
 
@@ -87,7 +87,7 @@ services:
     # the LAN host: its default route is the NAT gateway, not the docker bridge. REST published for the agent on the host.
     command: ["sh", "-c", "ip route replace default via 192.168.101.2 && touch /tmp/ready && exec sleep infinity"]
     healthcheck: {test: ["CMD-SHELL", "test -f /tmp/ready"], interval: 2s, timeout: 2s, retries: 60}
-    ports: ["127.0.0.1:18661:8645"]
+    ports: ["127.0.0.1:28661:8645"]
     networks: {lan-a: {ipv4_address: 192.168.101.10}}
     depends_on: {gw-a: {condition: service_healthy}}
 
@@ -141,7 +141,7 @@ services:
     # the LAN host: its default route is the NAT gateway, not the docker bridge. REST published for the agent on the host.
     command: ["sh", "-c", "ip route replace default via 192.168.102.2 && touch /tmp/ready && exec sleep infinity"]
     healthcheck: {test: ["CMD-SHELL", "test -f /tmp/ready"], interval: 2s, timeout: 2s, retries: 60}
-    ports: ["127.0.0.1:18662:8645"]
+    ports: ["127.0.0.1:28662:8645"]
     networks: {lan-b: {ipv4_address: 192.168.102.10}}
     depends_on: {gw-b: {condition: service_healthy}}
 

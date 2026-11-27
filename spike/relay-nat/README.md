@@ -15,7 +15,7 @@ cite it as a cross-machine result. Analysis and results: `docs/network-simulatio
  LAN-A 192.168.101.0/24 (an-nat-lana): gw-a .2 (default route of the clients)   client A node .10
  LAN-B 192.168.102.0/24 (an-nat-lanb): gw-b .2                                  client B node .10
  R: --nat=extip:172.30.80.10.   clients: --nat=none (announce nothing), --staticnode=/ip4/172.30.80.10/tcp/60000/p2p/<R id>
- host: agentnet serve (A) -> 127.0.0.1:18661, (B) -> 127.0.0.1:18662, R's REST 127.0.0.1:18660 (diagnostics)
+ host: agentnet serve (A) -> 127.0.0.1:28661, (B) -> 127.0.0.1:28662, R's REST 127.0.0.1:28660 (diagnostics)
 ```
 
 Each client is a sidecar container (default route replaced to point at its gateway, REST published to the docker host's 127.0.0.1) with the node

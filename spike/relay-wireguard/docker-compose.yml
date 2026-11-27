@@ -23,7 +23,7 @@ services:
     # Relay side: give up on a half-open tcp connection after ~25 s of unanswered retransmits instead of ~15 min (kernel default 15).
     # A client whose path died silently leaves such a socket on the relay (results/reconnect/*/SUMMARY.md). R_TCP_RETRIES2=15 reproduces the default.
     sysctls: {net.ipv4.ip_forward: "0", net.ipv4.tcp_retries2: "${R_TCP_RETRIES2:-6}"}
-    ports: ["127.0.0.1:18650:8645"]          # operator diagnostics only (R's REST); the firewall admits it only from the docker host gateway
+    ports: ["127.0.0.1:28650:8645"]          # operator diagnostics only (R's REST); the firewall admits it only from the docker host gateway
     networks: {underlay: {ipv4_address: 172.29.70.10}}
 
   # Profile "watchdog" (docker-compose --profile watchdog up -d stale-watchdog): destroys IDLE stale sockets on the relay. The node sets no
@@ -43,14 +43,14 @@ services:
     <<: *wg
     container_name: an-wg-a
     command: ["sh", "/scripts/wg-entry.sh", "a"]
-    ports: ["127.0.0.1:18651:8645"]          # A's node REST for the agent on the host (a real agent runs next to its own node)
+    ports: ["127.0.0.1:28651:8645"]          # A's node REST for the agent on the host (a real agent runs next to its own node)
     networks: {underlay: {ipv4_address: 172.29.70.21}}
 
   wg-b:
     <<: *wg
     container_name: an-wg-b
     command: ["sh", "/scripts/wg-entry.sh", "b"]
-    ports: ["127.0.0.1:18652:8645"]
+    ports: ["127.0.0.1:28652:8645"]
     networks: {underlay: {ipv4_address: 172.29.70.22}}
 
   node-r:
@@ -187,7 +187,7 @@ services:
     image: an-net-tools:local
     container_name: an-wg-intruder
     command: ["sleep", "infinity"]
-    ports: ["127.0.0.1:18653:8645"]
+    ports: ["127.0.0.1:28653:8645"]
     networks: {underlay: {ipv4_address: 172.29.70.66}}
 
   intruder-node:

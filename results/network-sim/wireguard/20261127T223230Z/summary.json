@@ -1,0 +1,308 @@
+{
+  "run_timestamp": "20261127T223230Z",
+  "environment": {
+    "stale_watchdog_sidecar": "1",
+    "relay_tcp_retries2": "6",
+    "host": "Darwin 25.6.0 arm64",
+    "colima_vm_kernel": "6.8.0-117-generic",
+    "agentnet": "agentnet 0.1.0",
+    "wireguard": "kernel module (not userspace)",
+    "node_image": "wakuorg/nwaku@sha256:cb4d14a2... v0.39.2 linux/amd64 under qemu",
+    "topology": "underlay 172.29.70.0/24, overlay 10.66.0.0/24, machines R/A/B (+ intruder), agents on the host via 127.0.0.1 REST ports"
+  },
+  "steps": [
+    {
+      "step": "1",
+      "status": "PASS",
+      "checks": [
+        {
+          "id": "1.kernel",
+          "status": "PASS",
+          "detail": "wg0 on r, a, b is a KERNEL WireGuard link (ip -d link: kind wireguard; module in the colima VM: 6.8.0-117-generic, wireguard             110592  0;nf_conntrack          204800  5 xt_conntrack,nf_nat,xt_nat,nf_conntrack_netlink,xt_MASQUERADE;nf_tables             352256  127 nft_compat,nft_chain_nat;). No userspace fallback was used or implemented.",
+          "command": "docker exec an-wg-<m> ip -d link show wg0; colima ssh -- lsmod",
+          "at": "2026-11-27T22:34:06Z"
+        },
+        {
+          "id": "1.handshakes",
+          "status": "PASS",
+          "detail": "every WireGuard peer on r (a, b), a (r) and b (r) has a non-zero latest handshake (evidence/wg-show-initial.txt)",
+          "command": "docker exec an-wg-<m> wg show wg0 latest-handshakes",
+          "at": "2026-11-27T22:34:12Z"
+        },
+        {
+          "id": "1.nodes_connected",
+          "status": "PASS",
+          "detail": "A's node lists exactly one peer, R, as /ip4/10.66.0.1/tcp/60000 (connected after 588 ms from node-a start-wait); B's node likewise (246 ms). R's node lists: [{\"multiaddr\":\"/ip4/10.66.0.3/tcp/54484/p2p/16Uiu2HAmGYm6uFC8uEvTEyr8z9powjTK5QGaWoG4j7p3FKQFUWfT\",\"connected\":\"Connected\"},{\"multiaddr\":\"/ip4/10.66.0.2/tcp/58726/p2p/16Uiu2HAkx7SoNP9fxshcKVDzDYHUJvPAgWpbuU9cDb5GeMkwapJh\",\"connected\":\"Connected\"}]",
+          "command": "curl http://127.0.0.1:28651/admin/v1/peers ; :28652 ; :28650",
+          "at": "2026-11-27T22:34:13Z"
+        },
+        {
+          "id": "1.r_peers_overlay_only",
+          "status": "PASS",
+          "detail": "every peer R's node lists has an overlay (10.66.0.0/24) address",
+          "command": "curl http://127.0.0.1:28650/admin/v1/peers",
+          "at": "2026-11-27T22:34:14Z"
+        },
+        {
+          "id": "1.firewall",
+          "status": "PASS",
+          "detail": "R: INPUT policy DROP; tcp/60000 accepted only on wg0 from 10.66.0.2 and 10.66.0.3; tcp/60000 on eth0 (underlay) dropped by an explicit rule placed before the established-accept (evidence/firewall-r-initial.txt)",
+          "command": "docker exec an-wg-r iptables -S",
+          "at": "2026-11-27T22:34:22Z"
+        }
+      ]
+    },
+    {
+      "step": "2",
+      "status": "PASS",
+      "checks": [
+        {
+          "id": "2.serve",
+          "status": "PASS",
+          "detail": "two release-mode 'agentnet serve' (A -> http://127.0.0.1:28651, B -> http://127.0.0.1:28652), private mode, static peer = R's OVERLAY multiaddr /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmNXeK89spfK1NqtZDD14k4yCezwqKChPGPXn72sCZStgG, cluster 66; A=an2npto22f4f2g5bmcpyy3vpmpnooegwiujunvyt4bqkmzv5tkhzx42wwqg3y B=an2dw6qvti3cqkpj2xvxb5ieivm2dk2o4zdwueixvzold2jcujd7cxhjtvwl4; ready after A 794 ms / B 1222 ms",
+          "command": "agentnet --data-dir $A init --node-url http://127.0.0.1:28651 --peer /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmNXeK89spfK1NqtZDD14k4yCezwqKChPGPXn72sCZStgG; agentnet --data-dir $B init --node-url http://127.0.0.1:28652 --peer /ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmNXeK89spfK1NqtZDD14k4yCezwqKChPGPXn72sCZStgG; agentnet serve (x2)",
+          "at": "2026-11-27T22:34:27Z"
+        },
+        {
+          "id": "2.contacts",
+          "status": "PASS",
+          "detail": "contact records exchanged with 'contact add @record --expect <address>' both ways",
+          "command": "agentnet contact add @b.record --expect <B>; agentnet contact add @a.record --expect <A>",
+          "at": "2026-11-27T22:34:27Z"
+        },
+        {
+          "id": "2.netstatus.a",
+          "status": "PASS",
+          "detail": "doctor exit 0; network status: private, ready, no isolation violation, exactly one peer = R (16Uiu2HAmNXeK89spfK1NqtZDD14k4yCezwqKChPGPXn72sCZStgG)",
+          "command": "agentnet doctor; agentnet --json network status --verbose",
+          "at": "2026-11-27T22:34:28Z"
+        },
+        {
+          "id": "2.netstatus.b",
+          "status": "PASS",
+          "detail": "doctor exit 0; network status: private, ready, no isolation violation, exactly one peer = R (16Uiu2HAmNXeK89spfK1NqtZDD14k4yCezwqKChPGPXn72sCZStgG)",
+          "command": "agentnet doctor; agentnet --json network status --verbose",
+          "at": "2026-11-27T22:34:29Z"
+        },
+        {
+          "id": "2.cli_send",
+          "status": "PASS",
+          "detail": "A -> B via 'agentnet send': delivered (authenticated receipt) after 978 ms (FIRST message on a fresh topology: includes the relay-mesh warm-up of up to ~60 s, not a typical latency)",
+          "command": "agentnet --json send <B> w-first-cli; agentnet --json status <id>",
+          "at": "2026-11-27T22:34:31Z"
+        },
+        {
+          "id": "2.inbox_auth",
+          "status": "PASS",
+          "detail": "B's inbox holds the message, sender authenticated as A (an2npto22f4f2g5bmcpyy3vpmpnooegwiujunvyt4bqkmzv5tkhzx42wwqg3y), body intact",
+          "command": "agentnet --json inbox --conversation w-first",
+          "at": "2026-11-27T22:34:31Z"
+        },
+        {
+          "id": "2.reply",
+          "status": "PASS",
+          "detail": "B -> A reply delivered (receipt after 753 ms) and present in A's inbox",
+          "command": "agentnet send <A> w-reply-cli (from B)",
+          "at": "2026-11-27T22:34:32Z"
+        },
+        {
+          "id": "2.mcp",
+          "status": "PASS",
+          "detail": "A -> B via MCP send_message (rmcp over stdio, negotiated 2026-07-28): B's subscriptions/listen notified after 364 ms, B read_inbox at +574 ms, A status delivered at +571 ms",
+          "command": "agentnet-acceptance step2 --bin agentnet --a $A --b $B --b-addr <B>",
+          "at": "2026-11-27T22:34:34Z"
+        },
+        {
+          "id": "2.bench.a_to_b",
+          "status": "PASS",
+          "detail": "a -> b: delivered 20/20 (authenticated receipts), send->receipt latency p50/p95/p99 = 1424/2030/2213 ms (min 695, max 2213), paced 400 ms per send, both directions concurrently; qemu nodes, poll interval 250 ms, includes WireGuard + relay hop",
+          "command": "agentnet-acceptance bench --n 20 --pace-ms 400 --tag w",
+          "at": "2026-11-27T22:34:53Z"
+        },
+        {
+          "id": "2.bench.b_to_a",
+          "status": "PASS",
+          "detail": "b -> a: delivered 20/20 (authenticated receipts), send->receipt latency p50/p95/p99 = 1485/2402/2418 ms (min 516, max 2418), paced 400 ms per send, both directions concurrently; qemu nodes, poll interval 250 ms, includes WireGuard + relay hop",
+          "command": "agentnet-acceptance bench --n 20 --pace-ms 400 --tag w",
+          "at": "2026-11-27T22:34:53Z"
+        },
+        {
+          "id": "2.duplicates",
+          "status": "PASS",
+          "detail": "receiver inbox rows A->B 20 (unique 20), B->A 20 (unique 20); duplicate message.received events: 0",
+          "command": "agentnet-acceptance dump --data-dir $B / $A",
+          "at": "2026-11-27T22:34:53Z"
+        }
+      ]
+    },
+    {
+      "step": "3",
+      "status": "PASS",
+      "checks": [
+        {
+          "id": "3.underlay_only_wg",
+          "status": "PASS",
+          "detail": "capture 'main' (from before the first handshake through bring-up, contacts, CLI+MCP messages and 2x20 paced messages): 6359 packets total; WireGuard UDP/51820 between underlay addresses: 1749; UDP other than 51820: 0; TCP between the machines (excluding the docker host's REST connections): 0; tcp/60000 (excluding the docker host and the intruder): 0; IP packets with an endpoint outside 172.29.70.0/24: 0; packets carrying an overlay 10.66.0.0/24 address: 0; non-multicast IPv6: 0; packets containing the ASCII strings 'multistream' / 'agentnet': 0 / 0; (REST between the host and the nodes via the docker gateway, cleartext by design, loopback in a real deployment: 4568)",
+          "command": "tcpdump -i an-wg-br0 -nn -s 0 -w main-an-wg-br0.pcap (docker run --net host in the colima VM); read back with the filters in evidence/u-main-summary.json",
+          "at": "2026-11-27T22:36:43Z"
+        },
+        {
+          "id": "3.no_cleartext",
+          "status": "PASS",
+          "detail": "no packet on the underlay carries the ASCII strings 'multistream' (libp2p protocol negotiation, cleartext inside TCP) or 'agentnet' (content topic /agentnet/1/...); positive control for the string search is check 4.control_cleartext, where the same strings DO appear when the firewall is opened",
+          "command": "tcpdump -nn -A -r main-an-wg-br0.pcap | grep -a -c multistream",
+          "at": "2026-11-27T22:36:43Z"
+        },
+        {
+          "id": "3.paths_unguarded",
+          "status": "PASS",
+          "detail": "from A's namespace (a keyed machine): R's UNDERLAY address 172.29.70.10:60000 fails (exit 1, timed out: the SYNs reached R and were dropped, 5 on the wire); B's overlay address 10.66.0.3:60000 fails (exit 1; A's only WireGuard peer is R) BUT 3 SYN packets for the overlay address were sent out of eth0 in cleartext via the default route (evidence/paths-unguarded-overlay-addr-packets.txt): WireGuard AllowedIPs does not stop a host from sending overlay-prefix traffic elsewhere. AgentNet never does (its only destination is R's configured address); a hardened client needs the OUTPUT guard of 3.paths_guarded. R's overlay address succeeds ( Connection to 10.66.0.1 60000 port [tcp/*] succeeded! ).",
+          "command": "docker exec an-wg-a nc -zv -w 5 172.29.70.10 60000 ; nc -zv 10.66.0.3 60000 ; nc -zv 10.66.0.1 60000 (tcpdump on an-wg-br0)",
+          "at": "2026-11-27T22:37:18Z"
+        },
+        {
+          "id": "3.paths_guarded",
+          "status": "PASS",
+          "detail": "with 'iptables -I OUTPUT -d 10.66.0.0/24 ! -o wg0 -j REJECT' on every machine the same probes give: underlay R:60000 fails (exit 1), B's overlay address fails immediately (exit 1:  nc: connect to 10.66.0.3 port 60000 (tcp) failed: Connection refused ) with 0 packets for overlay addresses on the underlay, R's overlay address succeeds",
+          "command": "iptables -I OUTPUT -d 10.66.0.0/24 ! -o wg0 -j REJECT ; nc -zv ...",
+          "at": "2026-11-27T22:38:12Z"
+        }
+      ]
+    },
+    {
+      "step": "4",
+      "status": "PASS",
+      "checks": [
+        {
+          "id": "4.nc_blocked",
+          "status": "PASS",
+          "detail": "intruder (underlay 172.29.70.66, no WireGuard key): nc to R 172.29.70.10:60000 -> exit 1 ( nc: connect to 172.29.70.10 port 60000 (tcp) timed out: Operation in progress ); to A 172.29.70.21:60000 -> exit 1; to R's REST port 8645 -> exit 1 (only the docker host may); R's underlay-drop rule counter went 10 -> 15 packets, so the SYNs arrived and were dropped, not lost. UDP 51820 'connect' (connectionless, so exit 0 proves nothing) is open by design: unauthenticated WireGuard packets get no reply.",
+          "command": "docker exec an-wg-intruder nc -zv -w 5 172.29.70.10 60000 ; docker exec an-wg-r iptables -vnxL INPUT",
+          "at": "2026-11-27T22:39:21Z"
+        },
+        {
+          "id": "4.intruder_not_peer",
+          "status": "PASS",
+          "detail": "intruder node (--staticnode = R's UNDERLAY multiaddr, cluster 66, shard 0, two explicit dials): its peer list [{\"multiaddr\":\"/ip4/172.29.70.10/tcp/60000/p2p/16Uiu2HAmNXeK89spfK1NqtZDD14k4yCezwqKChPGPXn72sCZStgG\",\"connected\":\"CannotConnect\"}], none Connected. R's connected peers unchanged: before [16Uiu2HAkx7SoNP9fxshcKVDzDYHUJvPAgWpbuU9cDb5GeMkwapJh,16Uiu2HAmGYm6uFC8uEvTEyr8z9powjTK5QGaWoG4j7p3FKQFUWfT] = during [16Uiu2HAkx7SoNP9fxshcKVDzDYHUJvPAgWpbuU9cDb5GeMkwapJh,16Uiu2HAmGYm6uFC8uEvTEyr8z9powjTK5QGaWoG4j7p3FKQFUWfT] (R sees only A and B)",
+          "command": "curl http://127.0.0.1:28653/admin/v1/peers ; POST http://127.0.0.1:28653/admin/v1/peers [R underlay multiaddr] ; curl http://127.0.0.1:28650/admin/v1/peers",
+          "at": "2026-11-27T22:41:28Z"
+        },
+        {
+          "id": "4.intruder_no_frames",
+          "status": "PASS",
+          "detail": "while A sent 5 messages to B (all delivered with receipts) the intruder, subscribed to B's and A's inbox content topics, polled 0 frames on B's topic and 0 on A's topic (empty arrays: evidence/intruder-poll-*-blocked.json)",
+          "command": "POST http://127.0.0.1:28653/relay/v1/auto/subscriptions [topic] ; GET http://127.0.0.1:28653/relay/v1/auto/messages/<topic>",
+          "at": "2026-11-27T22:41:28Z"
+        },
+        {
+          "id": "4.control_connects",
+          "status": "PASS",
+          "detail": "CONTROL (drop rule removed, accept rule inserted): the same intruder became a Connected peer of R after 9534 ms; R's peer list now contains [{\"multiaddr\":\"/ip4/172.29.70.66/tcp/38782/p2p/16Uiu2HAmHGxftPfS85G2o2UX5cwyunBcu5XmaEQE5PN7dhjgNMKV\",\"connected\":\"Connected\"}]. So the test CAN fail: the firewall rule is what kept it out.",
+          "command": "iptables -D INPUT -i eth0 -p tcp --dport 60000 -m comment --comment wgsim-underlay-libp2p-drop -j DROP ; iptables -I INPUT 2 -i eth0 -p tcp --dport 60000 -j ACCEPT ; POST http://127.0.0.1:28653/admin/v1/peers",
+          "at": "2026-11-27T22:43:09Z"
+        },
+        {
+          "id": "4.control_sees_frames",
+          "status": "PASS",
+          "detail": "CONTROL: with the firewall open the intruder received 2 live frame(s) on B's inbox topic and 1 on A's topic via relay (first within 7161 ms of the rule change, after 1 sends), and its Store query against R returned 20 stored frame(s) for B's topic. Cluster/shard separation is NOT access control.",
+          "command": "GET http://127.0.0.1:28653/relay/v1/auto/messages/<B topic> ; GET http://127.0.0.1:28653/store/v3/messages?peerAddr=<R>&contentTopics=<B topic>",
+          "at": "2026-11-27T22:43:19Z"
+        },
+        {
+          "id": "4.control_ciphertext_only",
+          "status": "PASS",
+          "detail": "the 23 frame(s) the intruder obtained contain no plaintext marker or address (payload sizes [2197,2197,2197,2197,2197,2197,2197,2197,2197,2197,2197,2197,2197,2197,2197,2197,2197,2197,2197,2197,2197,2197,2197]): ciphertext only. That is the application-layer E2E encryption working, and exactly why cluster/shard separation is not access control: the intruder still learns topics, timing, sizes and sees the traffic of everyone on the shard.",
+          "command": "evidence/intruder-frames-analysis.json",
+          "at": "2026-11-27T22:43:20Z"
+        },
+        {
+          "id": "4.control_cleartext",
+          "status": "PASS",
+          "detail": "CONTROL capture: 199 tcp/60000 packets between the intruder and R on the underlay, 4 contain the cleartext libp2p 'multistream' negotiation (and 0 the ASCII 'agentnet'): the string search of check 3.no_cleartext can detect cleartext when it exists",
+          "command": "tcpdump -nn -A -r s4b-an-wg-br0.pcap | grep -a -c multistream",
+          "at": "2026-11-27T22:44:17Z"
+        },
+        {
+          "id": "4.restored",
+          "status": "PASS",
+          "detail": "drop rule restored (evidence/firewall-r-restored.txt); a fresh nc from the intruder to R:60000 fails again (exit 1); A's and B's nodes still Connected to R; an A->B message sent after the restore was delivered (5470 ms). Note: removing the accept rule alone does not evict an established flow; the drop rule is placed before the established-accept so it cuts it, and the intruder node was stopped as well.",
+          "command": "iptables -D (control accept) ; iptables -I INPUT 2 (drop) ; nc -zv",
+          "at": "2026-11-27T22:49:35Z"
+        }
+      ]
+    },
+    {
+      "step": "5",
+      "status": "PASS",
+      "checks": [
+        {
+          "id": "5.undelivered",
+          "status": "PASS",
+          "detail": "after R dropped B's WireGuard peer, A's message to B stayed 'sent' for the whole observation (160 s) and B's inbox has 0 rows for it (A's own path to R is intact, so the frame is accepted by R but cannot reach B)",
+          "command": "docker exec an-wg-r wg set wg0 peer <B pub> remove ; agentnet send ; agentnet status",
+          "at": "2026-11-27T22:54:08Z"
+        },
+        {
+          "id": "5.b_node_loses_r",
+          "status": "PASS",
+          "detail": "B's node stopped listing R as Connected 80220 ms after the peer removal (note: removal drops packets silently, so the node learns it only by its own timeouts)",
+          "command": "curl http://127.0.0.1:28652/admin/v1/peers",
+          "at": "2026-11-27T22:54:08Z"
+        },
+        {
+          "id": "5.b_daemon_not_ready",
+          "status": "PASS",
+          "detail": "B's daemon reported network.ready=false 87126 ms after the removal",
+          "command": "agentnet --json network status (B)",
+          "at": "2026-11-27T22:54:09Z"
+        },
+        {
+          "id": "5.recovery",
+          "status": "PASS",
+          "detail": "after re-adding B's peer on R: WireGuard handshake after 218946 ms, B's node lists R after 220058 ms, B's daemon ready after 221105 ms, A's queued message delivered (authenticated receipt) after 230363 ms",
+          "command": "docker exec an-wg-r wg set wg0 peer <B pub> allowed-ips 10.66.0.3/32",
+          "at": "2026-11-27T23:02:29Z"
+        },
+        {
+          "id": "5.no_fallback",
+          "status": "PASS",
+          "detail": "captures during the removal window and the re-add window: only WireGuard UDP on the underlay; no tcp/60000, no cleartext, nothing outside the underlay subnet. Removal window: 6081 packets total; WireGuard UDP/51820 between underlay addresses: 1078; UDP other than 51820: 0; TCP between the machines (excluding the docker host's REST connections): 0; tcp/60000 (excluding the docker host and the intruder): 0; IP packets with an endpoint outside 172.29.70.0/24: 0; packets carrying an overlay 10.66.0.0/24 address: 0; non-multicast IPv6: 0; packets containing the ASCII strings 'multistream' / 'agentnet': 0 / 0; (REST between the host and the nodes via the docker gateway, cleartext by design, loopback in a real deployment: 4981). Re-add window: 9606 packets total; WireGuard UDP/51820 between underlay addresses: 1991; UDP other than 51820: 0; TCP between the machines (excluding the docker host's REST connections): 0; tcp/60000 (excluding the docker host and the intruder): 0; IP packets with an endpoint outside 172.29.70.0/24: 0; packets carrying an overlay 10.66.0.0/24 address: 0; non-multicast IPv6: 0; packets containing the ASCII strings 'multistream' / 'agentnet': 0 / 0; (REST between the host and the nodes via the docker gateway, cleartext by design, loopback in a real deployment: 7581)",
+          "command": "tcpdump read-back filters (evidence/u-s5-summary.json, u-s5b-summary.json)",
+          "at": "2026-11-27T23:04:55Z"
+        }
+      ]
+    },
+    {
+      "step": "6",
+      "status": "PASS",
+      "checks": [
+        {
+          "id": "6.queued",
+          "status": "PASS",
+          "detail": "R's node stopped (tunnel and R's wg0 still up): A's message is 'queued' after 60 s, A's network status ready=false (node reachable; 0 connected allowed peer(s)), B received 0",
+          "command": "docker stop an-wg-r-node ; agentnet send ; agentnet network status",
+          "at": "2026-11-27T23:06:00Z"
+        },
+        {
+          "id": "6.recovery",
+          "status": "PASS",
+          "detail": "R's node restarted (REST healthy 62716 ms after the stop command): A ready after 8520 ms, the queued message delivered (authenticated receipt) 45915 ms after R's /health (sender retries / history sync; E12: live relay may lag)",
+          "command": "docker start an-wg-r-node",
+          "at": "2026-11-27T23:06:52Z"
+        },
+        {
+          "id": "6.no_fallback",
+          "status": "PASS",
+          "detail": "capture of the whole outage and recovery: 12654 packets total; WireGuard UDP/51820 between underlay addresses: 763; UDP other than 51820: 0; TCP between the machines (excluding the docker host's REST connections): 0; tcp/60000 (excluding the docker host and the intruder): 0; IP packets with an endpoint outside 172.29.70.0/24: 0; packets carrying an overlay 10.66.0.0/24 address: 0; non-multicast IPv6: 0; packets containing the ASCII strings 'multistream' / 'agentnet': 0 / 0; (REST between the host and the nodes via the docker gateway, cleartext by design, loopback in a real deployment: 11863)",
+          "command": "tcpdump read-back filters (evidence/u-s6-summary.json)",
+          "at": "2026-11-27T23:06:58Z"
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "PASS": 36,
+    "FAIL": 0,
+    "UNTESTED": 0
+  }
+}

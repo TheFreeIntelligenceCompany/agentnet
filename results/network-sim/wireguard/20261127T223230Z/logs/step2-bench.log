@@ -1,0 +1,88 @@
+$ /Users/<user>/develop/FIC-elipsis/target/release/agentnet-acceptance bench --a /tmp/an-net.aqusKz/a --b /tmp/an-net.aqusKz/b --a-addr an2npto22f4f2g5bmcpyy3vpmpnooegwiujunvyt4bqkmzv5tkhzx42wwqg3y --b-addr an2dw6qvti3cqkpj2xvxb5ieivm2dk2o4zdwueixvzold2jcujd7cxhjtvwl4 --n 20 --timeout 600 --pace-ms 400 --tag w --out /Users/<user>/develop/FIC-elipsis/results/network-sim/wireguard/20261127T223230Z/evidence/bench.json
+{
+  "a_to_b": {
+    "delivered": 20,
+    "latency_ms_send_to_delivered": {
+      "definition": "delivered_at - created_at from the sender's own outbox row (same host clock)",
+      "max": 2213,
+      "min": 695,
+      "p50": 1424,
+      "p95": 2030,
+      "p99": 2213,
+      "samples": 20
+    },
+    "not_delivered_at_timeout": 0,
+    "raw_latencies_ms": [
+      695,
+      847,
+      1005,
+      1123,
+      1132,
+      1173,
+      1247,
+      1281,
+      1423,
+      1424,
+      1474,
+      1569,
+      1580,
+      1636,
+      1641,
+      1755,
+      1860,
+      1952,
+      2030,
+      2213
+    ],
+    "send_failures": 0,
+    "send_phase_ms": 8241,
+    "sent": 20,
+    "tag": "w-a2b",
+    "terminal_other": {},
+    "total_ms": 8753
+  },
+  "b_to_a": {
+    "delivered": 20,
+    "latency_ms_send_to_delivered": {
+      "definition": "delivered_at - created_at from the sender's own outbox row (same host clock)",
+      "max": 2418,
+      "min": 516,
+      "p50": 1485,
+      "p95": 2402,
+      "p99": 2418,
+      "samples": 20
+    },
+    "not_delivered_at_timeout": 0,
+    "raw_latencies_ms": [
+      516,
+      898,
+      927,
+      1018,
+      1047,
+      1096,
+      1196,
+      1306,
+      1323,
+      1485,
+      1506,
+      1585,
+      1738,
+      1875,
+      1884,
+      1891,
+      2040,
+      2067,
+      2402,
+      2418
+    ],
+    "send_failures": 0,
+    "send_phase_ms": 8168,
+    "sent": 20,
+    "tag": "w-b2a",
+    "terminal_other": {},
+    "total_ms": 9193
+  },
+  "direction_mode": "both directions concurrently, 400 ms pacing",
+  "n_per_direction": 20
+}
+[exit 0]

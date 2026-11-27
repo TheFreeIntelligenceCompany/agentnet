@@ -1,16 +1,21 @@
-# Lead note: this run has 3 unresolved FAIL checks
+# Lead note: the 3 FAIL checks of this run are explained (test interference, not a leak)
 
-Run of 2026-11-27 on the OpenPGP tree (commit 4b08e58) with the stale-watchdog sidecar enabled
-(`WATCHDOG=1`, a script change made for this run). 32 PASS, 3 FAIL:
+This run (WATCHDOG=1, R's REST published on host port 18650) recorded 32 PASS and 3 FAIL:
+`3.underlay_only_wg`, `3.no_cleartext`, `5.no_fallback`.
 
-* `3.underlay_only_wg`: TCP between the machines was seen on the underlay (338 packets) besides WireGuard UDP.
-* `3.no_cleartext`: the cleartext string `multistream` appeared twice in the main underlay capture.
-* `5.no_fallback`: 1 TCP packet between the machines in the peer-removal window.
+Cause, from the saved capture (`pcap/main-an-wg-br0.pcap`, `evidence/u-main-tcp-between-machines.txt`,
+`evidence/peers-r-initial.json`): another test that the lead was running on the same Mac at the same time (the
+SSH-tunnel cross-machine run) had its `agentnet` daemon configured with node URL `127.0.0.1:18650`. That port was
+at that moment the published REST port of this simulation's relay R, so that daemon's static-peer redial
+(`POST /admin/v1/peers`) reached R and told it to dial the other test's relay address. All 338 TCP packets and both
+`multistream` strings are that one outbound connection from R to the other test; the single packet in the removal
+window is a reset from the other test's relay. No relay traffic from A, B or the intruder left the tunnel;
+`4.nc_blocked` and `6.no_fallback` passed.
 
-In the two runs of 2026-11-26 on the previous tree these checks passed with 0 such packets. The subagent that
-ran this was cut off by the account spend limit before it could investigate, and the lead has not investigated
-either. **Cause unknown.** Candidates, none verified: the capture windows overlapping the intruder control
-phase (which is expected to show cleartext libp2p on the underlay), the script changes made for the watchdog
-profile, other test containers running on the same docker host at the time, or a real change in the
-simulation's firewalling. AgentNet itself does not control underlay routing, but until this is explained the
-WireGuard simulation is **not verified** on this tree. The NAT simulation was not re-run.
+So this was a port collision between two of the lead's own concurrent tests. It is not a change in the product or in
+the simulation's firewalling. It does illustrate a documented property: the node's REST API has no authentication,
+so any local process that can reach it can make the node dial a peer.
+
+Fix: the simulations now publish their REST ports on 28650-28653 (WireGuard) and 28660-28662 (NAT), and the
+WireGuard run has a new check that R lists only overlay peers. Re-runs on the same tree:
+`20261127T215251Z` (WATCHDOG=0) and `20261127T223230Z` (WATCHDOG=1), 36 PASS and 0 FAIL each. This run is superseded.

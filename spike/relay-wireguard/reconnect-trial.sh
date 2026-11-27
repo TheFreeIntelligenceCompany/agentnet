@@ -10,7 +10,7 @@
 # Output: $OUTDIR/<variant>-<n>/{timeline.tsv,redials.tsv,node.log,summary.json}
 set -uo pipefail
 VARIANT=${VARIANT:-none}; N=${N:-1}; OUT=${OUT:-60}; MAXWAIT=${MAXWAIT:-300}; REDIAL_S=${REDIAL_S:-10}; OUTDIR=${OUTDIR:?}
-NB=http://127.0.0.1:18652; RUNDIR="$(cd "$(dirname "$0")" && pwd)/.run"
+NB=http://127.0.0.1:28652; RUNDIR="$(cd "$(dirname "$0")" && pwd)/.run"
 RID=$(grep '^R_PEER_ID=' "$RUNDIR/env" | cut -d= -f2); BPUB=$(cat "$RUNDIR/b.pub")
 ADDR="/ip4/10.66.0.1/tcp/60000/p2p/$RID"
 now_ms() { python3 -c 'import time;print(int(time.time()*1000))'; }

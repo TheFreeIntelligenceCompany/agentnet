@@ -184,3 +184,11 @@ tcpdump read-back filters (evidence/u-s6-summary.json)
 
 - `summary.json` (machine readable), `checks.jsonl`, `run.log`
 - `logs/` per-step command logs, `evidence/` JSON/text evidence, `daemon-logs/` redacted daemon stderr, `pcap/` captures and the filter outputs derived from them
+
+## Run context (added by the operator after the run)
+
+- Commit: scripts at 481eb15 plus uncommitted script edits listed in the lead's report; agentnet release binaries built from 481eb15 (run 20261127T194713Z: from 4b08e58). Message protection: RFC 9580 OpenPGP (addresses an2..., contact records are certificates, contacts added with --expect so they are trusted).
+- Scope: SINGLE-HOST SIMULATION on one colima VM (linux/arm64, nodes amd64 under qemu). NOT Tailscale, NOT real NAT/NAT traversal from a consumer router, NOT separate physical hosts. Latencies inherit qemu emulation.
+- Load caveat: the Mac was shared with other contributors' containers (an-x-*, an-do-*) and heavily loaded (load average 313 at the start of the first run 20261127T194713Z, about 40 later). Timings, especially in this run, are not clean measurements.
+- Result: 32 PASS, 3 FAIL, all three caused by an unrelated process (not this simulation) POSTing to R's published REST port 127.0.0.1:18650, which made R dial 192.168.5.2:61660 and 172.28.66.10:60000 (another contributor's relay). Evidence: pcap/main-an-wg-br0.pcap (POST /admin/v1/peers at 19:49:13Z from 172.29.70.1) and evidence/u-main-tcp-between-machines.txt. Variant: WATCHDOG=1. Superseded by 20261127T215251Z and 20261127T223230Z.
+- Keys: DISPOSABLE, generated into the gitignored .run/ and deleted at exit. The macOS username and home paths were replaced by <user>.

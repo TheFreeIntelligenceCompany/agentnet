@@ -1,0 +1,51 @@
+### an-wg-r: wg show wg0 (private key hidden by wg)
+interface: wg0
+  public key: ipN3V4wcqgo0ip0Z7YRTj6liDAXf3ZHTFRVK5llJiAU=
+  private key: (hidden)
+  listening port: 51820
+
+peer: qzqmZzZJ4K0TWRNJNCkHmPAsARlT9A3I7qSHGmIkdzA=
+  endpoint: 172.29.70.22:40932
+  allowed ips: 10.66.0.3/32
+  latest handshake: 10 seconds ago
+  transfer: 6.10 KiB received, 6.00 KiB sent
+
+peer: ZCxYSdLWTYt8VJ1kAhFi3xx5ijOM3Fq7pa9AabC2qz4=
+  endpoint: 172.29.70.21:50413
+  allowed ips: 10.66.0.2/32
+  latest handshake: 10 seconds ago
+  transfer: 6.21 KiB received, 6.32 KiB sent
+
+### latest-handshakes (epoch s)
+ZCxYSdLWTYt8VJ1kAhFi3xx5ijOM3Fq7pa9AabC2qz4=	1795821056
+qzqmZzZJ4K0TWRNJNCkHmPAsARlT9A3I7qSHGmIkdzA=	1795821056
+### an-wg-a: wg show wg0 (private key hidden by wg)
+interface: wg0
+  public key: ZCxYSdLWTYt8VJ1kAhFi3xx5ijOM3Fq7pa9AabC2qz4=
+  private key: (hidden)
+  listening port: 50413
+
+peer: ipN3V4wcqgo0ip0Z7YRTj6liDAXf3ZHTFRVK5llJiAU=
+  endpoint: 172.29.70.10:51820
+  allowed ips: 10.66.0.1/32
+  latest handshake: 11 seconds ago
+  transfer: 6.32 KiB received, 6.21 KiB sent
+  persistent keepalive: every 25 seconds
+
+### latest-handshakes (epoch s)
+ipN3V4wcqgo0ip0Z7YRTj6liDAXf3ZHTFRVK5llJiAU=	1795821056
+### an-wg-b: wg show wg0 (private key hidden by wg)
+interface: wg0
+  public key: qzqmZzZJ4K0TWRNJNCkHmPAsARlT9A3I7qSHGmIkdzA=
+  private key: (hidden)
+  listening port: 40932
+
+peer: ipN3V4wcqgo0ip0Z7YRTj6liDAXf3ZHTFRVK5llJiAU=
+  endpoint: 172.29.70.10:51820
+  allowed ips: 10.66.0.1/32
+  latest handshake: 11 seconds ago
+  transfer: 6.00 KiB received, 6.10 KiB sent
+  persistent keepalive: every 25 seconds
+
+### latest-handshakes (epoch s)
+ipN3V4wcqgo0ip0Z7YRTj6liDAXf3ZHTFRVK5llJiAU=	1795821056

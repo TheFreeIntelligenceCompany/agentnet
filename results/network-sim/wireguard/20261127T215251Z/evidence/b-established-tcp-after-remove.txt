@@ -1,0 +1,5 @@
+$ docker exec an-wg-b ss -tn state established
+Recv-Q Send-Q Local Address:Port Peer Address:Port 
+111    0       172.29.70.22:8645  172.29.70.1:34720
+0      0       172.29.70.22:8645  172.29.70.1:34668
+[exit 0]
