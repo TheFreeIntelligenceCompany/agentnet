@@ -1,4 +1,4 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.68s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.60s
      Running unittests src/main.rs (target/debug/deps/agentnet_acceptance-4a930d6b8766df72)
 
 running 0 tests
@@ -29,7 +29,7 @@ test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 running 1 test
 test two_agentnet_serve_processes_exchange_messages_over_the_private_relay ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.97s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.98s
 
      Running unittests src/lib.rs (target/debug/deps/agentnet_core-6977f6af65678f01)
 
@@ -53,7 +53,7 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 42 filtered out; fin
 
 running 0 tests
 
-test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 25 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 26 filtered out; finished in 0.00s
 
      Running tests/engine_discovery.rs (target/debug/deps/engine_discovery-d354437e4086c291)
 
@@ -131,7 +131,7 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 16 filtered out; fin
 
 running 0 tests
 
-test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.00s
 
      Running unittests src/lib.rs (target/debug/deps/agentnet_mcp-c889cfbc4d3bedcd)
 
@@ -167,18 +167,18 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 17 filtered out; fin
 
 running 0 tests
 
-test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 85 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 91 filtered out; finished in 0.00s
 
      Running tests/logos_rest_relay.rs (target/debug/deps/logos_rest_relay-3be48f08846c5ffb)
 
 running 5 tests
 test a_to_b_and_b_to_a_with_identical_ids_in_live_and_history ... ok
-test isolation_audit_passes_with_right_allowlist_and_fails_closed_with_wrong_one ... ok
-test history_paginates_across_pages_and_dedupes_against_live ... ok
 test max_payload_len_is_accepted_and_delivered_and_one_more_is_rejected_locally ... ok
+test isolation_audit_passes_with_right_allowlist_and_fails_closed_with_wrong_one ... ok
 test adapter_redial_restores_a_disconnected_client ... ok
+test history_paginates_across_pages_and_dedupes_against_live ... ok
 
-test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 10.97s
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 11.22s
 
    Doc-tests agentnet_core
 
