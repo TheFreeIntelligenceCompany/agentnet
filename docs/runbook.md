@@ -59,6 +59,8 @@ agentnet relay print-config --ip <relay ip> --peer-id <relay peer id> --client-i
    agentnet --data-dir <dir> contact list
    ```
 
+   Without `--expect` the contact is added **untrusted** with a warning (its messages follow the unknown-sender policy) and `--trust trusted` is refused; after verifying the address out of band run `contact trust <address> trusted` or add the record again with `--expect`.
+
 8. Verify:
 
    ```sh
@@ -261,6 +263,7 @@ revocation list, and it reaches only contacts that are reachable within the TTL 
   `--revoke-previous` hard-revokes every earlier encryption subkey and destroys its secret at once: messages already sealed to them are lost unless their senders re-seal after merging the new
   certificate. `rotate-kem --expires-in-days N` sets the new subkey's lifetime (default 365; a subkey that expires without rotation makes you unreachable for new senders). At the next `serve` the new certificate goes to every Trusted contact as a `contact.update` (they merge it). A contact that was offline or whose retries ran out must be
   given the record out of band (`agentnet identity show --json`, then their `contact add`).
+  **The certificate grows with every revoking rotation and rotation can be refused.** Revoked subkeys stay in the certificate (with their revocation) until they expire; the cap is 8192 bytes, about 21 `--revoke-previous` rotations per subkey validity period (default 365 days). A rotation that would exceed it fails with a message to wait for old subkeys to expire, rotate without `--revoke-previous` less often, or create a new identity, and changes nothing. `--revoke-previous` also destroys the secrets of earlier subkeys that were only retired. A certificate above about 5 KiB can no longer be advertised (discovery). Every message embeds the sender certificate, so frames are larger (up to 16.6 KiB for a small body).
 * **Encryption subkey expiry (routine, nothing rotates it automatically).** The subkey lives 365 days by default. `agentnet identity show` prints
   `Encryption subkey expires: <time>`; `agentnet doctor` has an `encryption subkey` line that is `[ok  ]` more than 30 days before expiry, `[warn]` within 30 days and
   `[FAIL]` once it has expired (new senders then cannot encrypt to you); the fix hint is the command
@@ -288,7 +291,7 @@ revocation list, and it reaches only contacts that are reachable within the TTL 
 agentnet --data-dir <dir> identity migrate
 ```
 
-It creates a fresh OpenPGP identity (an `an1` address cannot become an `an2` address), moves the old identity to `identity.json.legacy-v1` (it holds secrets: delete it when no longer needed), keeps the inbox history and the dedupe state, lists every pending old-format outbound message and marks it failed ("re-send after adding the recipient's new certificate"), keeps old contacts as unverified legacy entries that cannot be sent to, and prints the new address and certificate. Each contact must then be re-added with `agentnet contact add @<their new certificate> --expect <their new address>` and must add yours. Nothing is converted silently.
+It creates a fresh OpenPGP identity (an `an1` address cannot become an `an2` address), moves the old identity to `identity.json.legacy-v1` (it **still holds the old secret keys**: the command prints a warning naming the file; delete it with `rm` or a secure-erase tool once you have checked that the new identity works and you no longer need the old keys, and delete backup copies too), keeps the inbox history and the dedupe state, lists every pending old-format outbound message and marks it failed ("re-send after adding the recipient's new certificate"), keeps old contacts as unverified legacy entries (they are not contacts and cannot be sent to), and prints the new address and certificate. Each contact must then be re-added with `agentnet contact add @<their new certificate> --expect <their new address>` (verify the address out of band; nothing links the new certificate to the legacy entry, and without `--expect` the contact is added untrusted) and must add yours. Nothing is converted silently.
 
 ### 6.8 Lost data directory, moving an identity, concurrent identity
 

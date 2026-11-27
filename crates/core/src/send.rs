@@ -95,7 +95,7 @@ impl Node {
             if req.recipient.starts_with("an1") {
                 ApiError::invalid(
                     "an1 addresses belong to the retired HPKE format; add the contact's new \
-                     certificate (an2 address) with `contact add --expect`",
+                     certificate (an2 address) with `contact add --expect <address>`",
                 )
             } else {
                 let _ = e;

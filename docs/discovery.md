@@ -178,9 +178,11 @@ earlier than the advert it replaces.
   one row per `(topic, address)` with the signed document, the embedded contact record,
   display name, capabilities (JSON), searchable capability names, `seq`, `issued_at`,
   `expires_at`, the contact record's `kem_expires_at` and `received_at`.
-* **Cap**: at most `max_records` rows in total. When full, the soonest-expiring row is
-  evicted to make room, **unless** the newcomer would expire even sooner, in which case
-  the newcomer is dropped (`advert.dropped_full`). A replacement from an address that
+* **Cap**: at most `max_records` rows in total. When full, the soonest-expiring **live**
+  row is evicted to make room, **unless** the newcomer would expire even sooner, in which
+  case the newcomer is dropped (`advert.dropped_full`). A withdrawal tombstone is never
+  evicted before its own expiry (the withdrawn advert's expiry), so a replay of the
+  withdrawn advert stays ignored; with only tombstones stored the newcomer is dropped. A replacement from an address that
   already has a row needs no room. Adverts from a `Blocked` contact or an address with a
   verified revocation tombstone are dropped before any eviction can happen
   (`advert.dropped_blocked`).
@@ -269,6 +271,13 @@ advertise an address whose inbox topic must stay unlinked from an identity.
 
 ## 9. Known limitations and doubts
 
+* **Relay or cluster replay (not prevented).** The signed record binds the topic *name*, not
+  the relay or cluster: a genuine advert can be re-published by a participant onto another
+  deployment that enables the same topic name until it expires.
+* **Large certificates cannot advertise.** The record embeds the whole certificate and is
+  limited to 8192 bytes, so an identity whose certificate has grown above about 5 KiB (many
+  revoking key rotations) gets `too_large` from `advertise_agent`. The limit was not raised:
+  adverts are public plaintext on every node of the relay.
 * **Topic replay (prevented).** The topic is part of the signed record, so a relay-level
   observer cannot make an agent appear on, or withdraw it from, a topic it did not sign
   for. A replay on the same topic is handled by the sequence rule. The observer can still

@@ -395,7 +395,7 @@ async fn run(cli: Cli) -> CliResult<i32> {
                         if st.legacy_contacts.is_empty() {
                             s.push_str("No contacts.\n");
                         } else {
-                            s.push_str(&format!("{} old contact(s) are kept as unverified legacy entries and cannot be sent to until you add each contact's NEW certificate with `contact add --expect <new address>`:\n", st.legacy_contacts.len()));
+                            s.push_str(&format!("{} old contact(s) are kept as unverified legacy entries (they are not contacts and cannot be sent to) until you add each contact's NEW certificate; verify the new address out of band and use `contact add --expect <new address>` (without --expect it is added untrusted):\n", st.legacy_contacts.len()));
                             for c in &st.legacy_contacts {
                                 s.push_str(&format!(
                                     "  {}{}\n",

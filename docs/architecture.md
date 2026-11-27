@@ -64,7 +64,7 @@ and never on `rmcp`, `reqwest` or any harness.
   the primary key. The checksum catches typos; it is not a security mechanism. A fingerprint
   pins a certificate but cannot verify anything by itself.
 * Contact record (public, shareable): the public certificate (base64url of the binary
-  certificate, at most 4096 bytes). First contact pins the fingerprint (`--expect`); later
+  certificate, at most 8192 bytes). First contact pins the fingerprint (`--expect`; without it the contact is added untrusted); later
   updates are MERGES (same primary key only; revocations accumulate; junk, third-party
   certifications and unbound subkeys are dropped). Alias and trust are local application data.
 * Persistence: `<data_dir>/identity.json`, mode 0600, directory mode 0700.
@@ -102,7 +102,7 @@ Specified normatively in `docs/protocol.md`. Summary:
   recipient (after a certificate-level validity check), SEIPD v2 (AES-256, OCB) containing a
   one-pass signed Literal Data packet, a v6 signature with the Intended Recipient Fingerprint,
   and a Padding packet padding the inner packets to a power of two (min 1 KiB; unpadded if the
-  padded size would not fit the node limit).
+  padded size would not fit the node limit). Acks are padded to the size of the smallest ordinary message.
 * Open (`docs/protocol.md` section 5): trial decryption with the live and retained subkeys, the
   fixed receiver policy (v6, SEIPD v2 AEAD, no compression/SKESK/PKESK v3, exactly one
   signature, signer == pinned certificate, Intended Recipient required), then payload schema,
