@@ -1,0 +1,55 @@
+=== message Alice->Bob, anonymous recipient, intended-recipient set (made by X)
+--- X packet dump, no key:
+PKESK v6 recipient=<none: anonymous/hidden> pk_algo=X25519
+SEIPD V2(SEIP2 { common: Common { dummy: PhantomData<()> }, sym_algo: AES256, aead: OCB, chunk_size: 4096, salt: [68, 251, 157, 41, 235, 188, 193, 129, 191, 29, 146, 118, 21, 240, 5, 75, 200, 209, 107, 147, 87, 120, 7, 59, 83, 152, 113, 34, 95, 219, 89, 4], container: Container { packets: [] } })
+  (no key: contents opaque)
+--- Y packet dump, no key:
+PublicKeyEncryptedSessionKey(V6 { packet_header: New { header: NewPacketHeader { padding: 1, version: 1, tag: PublicKeyEncryptedSessionKey }, length: Fixed(76) }, fingerprint: None, pk_algo: X25519, values: X25519 { ephemeral: 2d062a0632d0f9077091a51ab350b6e91fc536314691568bc3b73b166a99fd74, session_key: 10761c33d240face6097b4f08ffde1b9188ae8608399226e5cc31562a28dd1f6eaddb5f76ce7409a, sym_alg: None } })
+SymEncryptedProtectedData(SymEncryptedProtectedData { packet_header: New { header: NewPacketHeader { padding: 1, version: 1, tag: SymEncryptedProtectedData }, length: Fixed(719) }, config: V2 { sym_alg: AES256, aead: Ocb, chunk_size: C4KiB, salt: 44fb9d29ebbcc181bf1d927615f0054bc8d16b935778073b539871225fdb5904 }, data: 40d8da009b93da40f4b42926a4c9be8e73ca1b0c416cb835e678e5a7622a2f36da63a446ba122c110cd8f710203429aebc6552b07008d45c696fe2f0e255b2f597669caf1308549ad52753cca7f682e55c8ec1fe4a848f6984f
+--- X packet dump WITH Bob's key (what only Bob can see):
+PKESK v6 recipient=<none: anonymous/hidden> pk_algo=X25519
+SEIPD V2(SEIP2 { common: Common { dummy: PhantomData<()> }, sym_algo: AES256, aead: OCB, chunk_size: 4096, salt: [68, 251, 157, 41, 235, 188, 193, 129, 191, 29, 146, 118, 21, 240, 5, 75, 200, 209, 107, 147, 87, 120, 7, 59, 83, 152, 113, 34, 95, 219, 89, 4], container: Container { packets: [] } })
+  (decrypted with recipient key; inner packets follow)
+  OnePassSig
+  Literal format=Binary filename=None
+  Signature v6 type=Binary pk_algo=Ed25519 hash=SHA512
+      hashed   SignatureCreationTime(1795746552) critical=true
+      hashed   IssuerFingerprint(Fingerprint::V6(04AAFDD7A6BABAF65CC48ACAB018FA279B7A311840CB0FB2C9E46F21F282FDBC)) critical=false
+      hashed   IntendedRecipient(Fingerprint::V6(3B63DDB33CE798030E6AAFA2DB435BE37F09E66056E034D848679E03F619621E)) critical=false
+
+=== message made by Y (rPGP), anonymous recipient
+--- X packet dump, no key:
+PKESK v6 recipient=<none: anonymous/hidden> pk_algo=X25519
+SEIPD V2(SEIP2 { common: Common { dummy: PhantomData<()> }, sym_algo: AES256, aead: OCB, chunk_size: 4096, salt: [71, 216, 16, 244, 3, 248, 155, 104, 7, 111, 164, 240, 241, 123, 211, 125, 242, 109, 225, 246, 239, 162, 118, 217, 66, 181, 10, 17, 217, 226, 99, 237], container: Container { packets: [] } })
+  (no key: contents opaque)
+--- Y packet dump, no key:
+PublicKeyEncryptedSessionKey(V6 { packet_header: New { header: NewPacketHeader { padding: 1, version: 1, tag: PublicKeyEncryptedSessionKey }, length: Fixed(76) }, fingerprint: None, pk_algo: X25519, values: X25519 { ephemeral: 33787b349ed3b1a1a9fcd9af2ab856966ef8d8204afddc0f65844bd68e972371, session_key: c1f4b070d4da8576075e7a7d1577b9b62dcf008f3d612c09c91cfb1b55c385c3982df60b6887ba53, sym_alg: None } })
+SymEncryptedProtectedData(SymEncryptedProtectedData { packet_header: New { header: NewPacketHeader { padding: 1, version: 1, tag: SymEncryptedProtectedData }, length: Fixed(687) }, config: V2 { sym_alg: AES256, aead: Ocb, chunk_size: C4KiB, salt: 47d810f403f89b68076fa4f0f17bd37df26de1f6efa276d942b50a11d9e263ed }, data: 3358ae5233d09d4dee2a2298877be350c0b96ce62ba88daff196a6a84e4fa9d8a2b744132848ffbad868266a7ad0c34ea532ca5d9426e52509c1ae12d1bd6a77c0d6ed750a0bd8b8d8b56609fe2904c9b187fba7ccfe06007f7
+--- X packet dump WITH Bob's key:
+PKESK v6 recipient=<none: anonymous/hidden> pk_algo=X25519
+SEIPD V2(SEIP2 { common: Common { dummy: PhantomData<()> }, sym_algo: AES256, aead: OCB, chunk_size: 4096, salt: [71, 216, 16, 244, 3, 248, 155, 104, 7, 111, 164, 240, 241, 123, 211, 125, 242, 109, 225, 246, 239, 162, 118, 217, 66, 181, 10, 17, 217, 226, 99, 237], container: Container { packets: [] } })
+  (decrypted with recipient key; inner packets follow)
+  OnePassSig
+  Literal format=Binary filename=None
+  Signature v6 type=Binary pk_algo=Ed25519 hash=SHA256
+      hashed   SignatureCreationTime(1795746554) critical=true
+      hashed   IssuerFingerprint(Fingerprint::V6(04AAFDD7A6BABAF65CC48ACAB018FA279B7A311840CB0FB2C9E46F21F282FDBC)) critical=false
+      hashed   IntendedRecipient(Fingerprint::V6(3B63DDB33CE798030E6AAFA2DB435BE37F09E66056E034D848679E03F619621E)) critical=true
+
+=== CONTROL: same message with a NAMED recipient (shows what anonymity hides)
+PKESK v6 recipient=B6E6FF30BEE02EF7A6F95F0CE9787D00E6813778C93C4B0777C183C50135D943 pk_algo=X25519
+SEIPD V2(SEIP2 { common: Common { dummy: PhantomData<()> }, sym_algo: AES256, aead: OCB, chunk_size: 4096, salt: [88, 110, 26, 167, 217, 114, 155, 255, 3, 94, 108, 66, 118, 70, 222, 152, 168, 156, 83, 83, 169, 21, 41, 82, 224, 206, 243, 233, 177, 34, 110, 8], container: Container { packets: [] } })
+  (no key: contents opaque)
+--- subkey fingerprint of Bob (for comparison):
+primary v6 fp=3b63ddb33ce798030e6aafa2db435be37f09e66056e034d848679e03f619621e created=SystemTime { tv_sec: 1795746491, tv_nsec: 0 }
+  cert valid: alive=true revocation=NotAsFarAsWeKnow
+  subkey b6e6ff30bee02ef7a6f95f0ce9787d00e6813778c93c4b0777c183c50135d943 algo=X25519 flags=Some(Et) alive=true revoked=NotAsFarAsWeKnow
+  raw subkeys in cert (bound or not): 1
+
+=== hex of the first 96 bytes of the anonymous message
+00000000: c14c 0600 192d 062a 0632 d0f9 0770 91a5  .L...-.*.2...p..
+00000010: 1ab3 50b6 e91f c536 3146 9156 8bc3 b73b  ..P....61F.V...;
+00000020: 166a 99fd 7428 1076 1c33 d240 face 6097  .j..t(.v.3.@..`.
+00000030: b4f0 8ffd e1b9 188a e860 8399 226e 5cc3  .........`.."n\.
+00000040: 1562 a28d d1f6 eadd b5f7 6ce7 409a d2c2  .b........l.@...
+00000050: 0f02 0902 0644 fb9d 29eb bcc1 81bf 1d92  .....D..).......

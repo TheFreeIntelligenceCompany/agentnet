@@ -1,0 +1,348 @@
+# G3 matrix, run 2026-11-27T02:26:07Z, host Darwin arm64, debug build
+sequoia-openpgp 2.5.0 (backend feature: crypto-openssl)
+pgp 0.21.1 + rpgpie 0.12.1 (pure Rust)
+## positive round trips
+### P_Xcerts_S_to_S.seal  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq seal --from $WORK/alice.sec.asc --to $WORK/bob.pub.asc --body 100 --out $WORK/P_Xcerts_S_to_S.pgp
+sealed 800 bytes (payload 381 bytes)
+
+### P_Xcerts_S_to_S.open  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/P_Xcerts_S_to_S.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 decrypted_with_subkey=04110c4bc7c1454234c89f0564b180690e4ef04ab73d0902d8ba969d4158da57 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=003d843c-30f4-4649-b287-8d47431a3f85 type=message body_len=100
+
+### P_Xcerts_S_to_R.seal  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq seal --from $WORK/alice.sec.asc --to $WORK/bob.pub.asc --body 100 --out $WORK/P_Xcerts_S_to_R.pgp
+sealed 800 bytes (payload 381 bytes)
+
+### P_Xcerts_S_to_R.open  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/P_Xcerts_S_to_R.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=73dc9029-4583-40df-b364-6284c5ef746e type=message body_len=100
+
+### P_Xcerts_R_to_S.seal  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp seal --from $WORK/alice.sec.asc --to $WORK/bob.pub.asc --body 100 --out $WORK/P_Xcerts_R_to_S.pgp
+sealed 768 bytes (payload 381 bytes)
+
+### P_Xcerts_R_to_S.open  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/P_Xcerts_R_to_S.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 decrypted_with_subkey=04110c4bc7c1454234c89f0564b180690e4ef04ab73d0902d8ba969d4158da57 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=175a8def-ce51-4b24-9789-e31dba81d5ac type=message body_len=100
+
+### P_Xcerts_R_to_R.seal  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp seal --from $WORK/alice.sec.asc --to $WORK/bob.pub.asc --body 100 --out $WORK/P_Xcerts_R_to_R.pgp
+sealed 768 bytes (payload 381 bytes)
+
+### P_Xcerts_R_to_R.open  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/P_Xcerts_R_to_R.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=90f1d25e-6f7d-4c80-8afd-0331f0c72be9 type=message body_len=100
+
+### P_Ycerts_S_to_S.seal  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq seal --from $WORK/yal.sec.asc --to $WORK/ybo.pub.asc --body 100 --out $WORK/P_Ycerts_S_to_S.pgp
+sealed 800 bytes (payload 381 bytes)
+
+### P_Ycerts_S_to_S.open  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/ybo.sec.asc --sender $WORK/yal.pub.asc --in $WORK/P_Ycerts_S_to_S.pgp
+OK signer=c9b2fe797563eae3755b5ab83e7f81176c0cadd213946de12856db060d067e9f decrypted_with_subkey=3bb32ec218709f140974254660a04d6fa609923a8728202e41dd1d72ed5f06a5 intended_recipients=["b6c2a44d5ddaeaf07691cf232219f13c375affb7b2ba711f664b6097d0ff9793"] message_id=7da86e0f-76a7-40e5-b9ab-4dd369116dd0 type=message body_len=100
+
+### P_Ycerts_S_to_R.seal  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq seal --from $WORK/yal.sec.asc --to $WORK/ybo.pub.asc --body 100 --out $WORK/P_Ycerts_S_to_R.pgp
+sealed 800 bytes (payload 381 bytes)
+
+### P_Ycerts_S_to_R.open  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp open --me $WORK/ybo.sec.asc --sender $WORK/yal.pub.asc --in $WORK/P_Ycerts_S_to_R.pgp
+OK signer=c9b2fe797563eae3755b5ab83e7f81176c0cadd213946de12856db060d067e9f intended_recipients=["b6c2a44d5ddaeaf07691cf232219f13c375affb7b2ba711f664b6097d0ff9793"] message_id=0722011d-640d-4ed4-9d4f-26b8f34744ae type=message body_len=100
+
+### P_Ycerts_R_to_S.seal  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp seal --from $WORK/yal.sec.asc --to $WORK/ybo.pub.asc --body 100 --out $WORK/P_Ycerts_R_to_S.pgp
+sealed 768 bytes (payload 381 bytes)
+
+### P_Ycerts_R_to_S.open  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/ybo.sec.asc --sender $WORK/yal.pub.asc --in $WORK/P_Ycerts_R_to_S.pgp
+OK signer=c9b2fe797563eae3755b5ab83e7f81176c0cadd213946de12856db060d067e9f decrypted_with_subkey=3bb32ec218709f140974254660a04d6fa609923a8728202e41dd1d72ed5f06a5 intended_recipients=["b6c2a44d5ddaeaf07691cf232219f13c375affb7b2ba711f664b6097d0ff9793"] message_id=9a403bfb-7513-4a13-bf4e-db8ffa450fcf type=message body_len=100
+
+### P_Ycerts_R_to_R.seal  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp seal --from $WORK/yal.sec.asc --to $WORK/ybo.pub.asc --body 100 --out $WORK/P_Ycerts_R_to_R.pgp
+sealed 768 bytes (payload 381 bytes)
+
+### P_Ycerts_R_to_R.open  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp open --me $WORK/ybo.sec.asc --sender $WORK/yal.pub.asc --in $WORK/P_Ycerts_R_to_R.pgp
+OK signer=c9b2fe797563eae3755b5ab83e7f81176c0cadd213946de12856db060d067e9f intended_recipients=["b6c2a44d5ddaeaf07691cf232219f13c375affb7b2ba711f664b6097d0ff9793"] message_id=fa381754-a60d-4afc-8f3d-49324da8bf2f type=message body_len=100
+
+## negative tests
+### N1_wrong_recipient_carol_cannot_open_[S]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/carol.sec.asc --sender $WORK/alice.pub.asc --in $WORK/a2b.pgp
+Error: no secret key decrypts this message
+
+### N2_forwarded_to_carol_intended_recipient_check_[S]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/carol.sec.asc --sender $WORK/alice.pub.asc --in $WORK/fwd.pgp
+Error: signature verification failed: Bad signature: Bad signature: Not an intended recipient
+
+### N2b_CONTROL_forward_without_intended_recipient_attack_succeeds_[S]  expect=ok actual=fail => FAIL
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/carol.sec.asc --sender $WORK/alice.pub.asc --in $WORK/fwd_nointended.pgp --allow-no-intended
+Error: payload.recipient 33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456 != my fingerprint 87ee9d27fa8ec90176591fc124a4ef86a5cf8b931a8b78d5f5a051b08d98ca4c
+
+### N2c_forward_without_intended_rejected_by_strict_receiver_[S]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/carol.sec.asc --sender $WORK/alice.pub.asc --in $WORK/fwd_nointended.pgp
+Error: signature has no intended-recipient subpacket naming me
+
+### N4a_signature_by_other_key_rejected_[S]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/m2b.pgp
+Error: signature verification failed: Missing key: 91A17D370C4624709861144787963EC0A226590DEAF684D4D137D57A91D29E56
+
+### N4b_signed_by_mallory_claiming_alice_rejected_[S]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/m_claims_alice.pgp
+Error: signature verification failed: Missing key: 91A17D370C4624709861144787963EC0A226590DEAF684D4D137D57A91D29E56
+
+### N4c_signed_by_mallory_claiming_alice_opened_as_mallory_rejected_by_payload_check_[S]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/bob.sec.asc --sender $WORK/mallory.pub.asc --in $WORK/m_claims_alice.pgp
+Error: payload.sender 322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 != verified signer 91a17d370c4624709861144787963ec0a226590deaf684d4d137d57a91d29e56
+
+### N4d_unsigned_message_rejected_[S]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/bob.sec.asc --sender $WORK/mallory.pub.asc --in $WORK/unsigned.pgp
+Error: message is not encrypted-and-signed
+
+### N5_revoked_signing_cert_rejected_[S]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/bob.sec.asc --sender $WORK/alice_cert_revoked.pub.asc --in $WORK/a2b.pgp
+Error: signature verification failed: Subkey of 322AD392464A254F21BC804C75BE4C11FDF914665A339BA0D77205B7C8211D30 is bad: Invalid key: "certificate is revoked"
+
+### N1_wrong_recipient_carol_cannot_open_[R]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp open --me $WORK/carol.sec.asc --sender $WORK/alice.pub.asc --in $WORK/a2b.pgp
+Error: unpack: Message("Couldn't decrypt message")
+
+### N2_forwarded_to_carol_intended_recipient_check_[R]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp open --me $WORK/carol.sec.asc --sender $WORK/alice.pub.asc --in $WORK/fwd.pgp
+Error: signature has no intended-recipient subpacket naming me
+
+### N2b_CONTROL_forward_without_intended_recipient_attack_succeeds_[R]  expect=ok actual=fail => FAIL
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp open --me $WORK/carol.sec.asc --sender $WORK/alice.pub.asc --in $WORK/fwd_nointended.pgp --allow-no-intended
+Error: payload.recipient 33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456 != my fingerprint 87ee9d27fa8ec90176591fc124a4ef86a5cf8b931a8b78d5f5a051b08d98ca4c
+
+### N2c_forward_without_intended_rejected_by_strict_receiver_[R]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp open --me $WORK/carol.sec.asc --sender $WORK/alice.pub.asc --in $WORK/fwd_nointended.pgp
+Error: signature has no intended-recipient subpacket naming me
+
+### N4a_signature_by_other_key_rejected_[R]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/m2b.pgp
+Error: expected exactly one valid signature from the claimed sender, got 0
+
+### N4b_signed_by_mallory_claiming_alice_rejected_[R]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/m_claims_alice.pgp
+Error: expected exactly one valid signature from the claimed sender, got 0
+
+### N4c_signed_by_mallory_claiming_alice_opened_as_mallory_rejected_by_payload_check_[R]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp open --me $WORK/bob.sec.asc --sender $WORK/mallory.pub.asc --in $WORK/m_claims_alice.pgp
+Error: payload.sender 322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 != verified signer 91a17d370c4624709861144787963ec0a226590deaf684d4d137d57a91d29e56
+
+### N4d_unsigned_message_rejected_[R]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp open --me $WORK/bob.sec.asc --sender $WORK/mallory.pub.asc --in $WORK/unsigned.pgp
+Error: expected exactly one valid signature from the claimed sender, got 0
+
+### N5_revoked_signing_cert_rejected_[R]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp open --me $WORK/bob.sec.asc --sender $WORK/alice_cert_revoked.pub.asc --in $WORK/a2b.pgp
+Error: expected exactly one valid signature from the claimed sender, got 0
+
+### N6_seal_to_revoked_subkey_refused_[S]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq seal --from $WORK/alice.sec.asc --to $WORK/bob_subkey_revoked.pub.asc --body 10 --out $WORK/x.pgp
+Error: recipient has no valid encryption subkey (revoked, expired, unbound or missing)
+
+### N6b_seal_to_revoked_cert_refused_[S]  expect=fail actual=ok => FAIL
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq seal --from $WORK/alice.sec.asc --to $WORK/bob_cert_revoked.pub.asc --body 10 --out $WORK/x.pgp
+sealed 710 bytes (payload 291 bytes)
+
+### N7_seal_to_expired_subkey_refused_[S]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq seal --from $WORK/alice.sec.asc --to $WORK/bob_expired.pub.asc --body 10 --out $WORK/x.pgp
+Error: recipient has no valid encryption subkey (revoked, expired, unbound or missing)
+
+### N8_seal_to_stripped_binding_refused_[S]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq seal --from $WORK/alice.sec.asc --to $WORK/bob_stripped.pub.asc --body 10 --out $WORK/x.pgp
+Error: recipient has no valid encryption subkey (revoked, expired, unbound or missing)
+
+### N9_seal_to_grafted_foreign_subkey_refused_[S]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq seal --from $WORK/alice.sec.asc --to $WORK/bob_grafted.pub.asc --body 10 --out $WORK/x.pgp
+Error: recipient has no valid encryption subkey (revoked, expired, unbound or missing)
+
+### N10_CONTROL_seal_to_valid_cert_ok_[S]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq seal --from $WORK/alice.sec.asc --to $WORK/bob.pub.asc --body 10 --out $WORK/x.pgp
+sealed 710 bytes (payload 291 bytes)
+
+### N6_seal_to_revoked_subkey_refused_[R]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp seal --from $WORK/alice.sec.asc --to $WORK/bob_subkey_revoked.pub.asc --body 10 --out $WORK/x.pgp
+Error: recipient has no valid encryption subkey (revoked, expired, unbound or missing)
+
+### N6b_seal_to_revoked_cert_refused_[R]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp seal --from $WORK/alice.sec.asc --to $WORK/bob_cert_revoked.pub.asc --body 10 --out $WORK/x.pgp
+Error: recipient has no valid encryption subkey (revoked, expired, unbound or missing)
+
+### N7_seal_to_expired_subkey_refused_[R]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp seal --from $WORK/alice.sec.asc --to $WORK/bob_expired.pub.asc --body 10 --out $WORK/x.pgp
+Error: recipient has no valid encryption subkey (revoked, expired, unbound or missing)
+
+### N8_seal_to_stripped_binding_refused_[R]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp seal --from $WORK/alice.sec.asc --to $WORK/bob_stripped.pub.asc --body 10 --out $WORK/x.pgp
+Error: recipient has no valid encryption subkey (revoked, expired, unbound or missing)
+
+### N9_seal_to_grafted_foreign_subkey_refused_[R]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp seal --from $WORK/alice.sec.asc --to $WORK/bob_grafted.pub.asc --body 10 --out $WORK/x.pgp
+Error: recipient has no valid encryption subkey (revoked, expired, unbound or missing)
+
+### N10_CONTROL_seal_to_valid_cert_ok_[R]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp seal --from $WORK/alice.sec.asc --to $WORK/bob.pub.asc --body 10 --out $WORK/x.pgp
+sealed 678 bytes (payload 291 bytes)
+
+## tamper scans (every byte offset flipped once; every truncation length)
+## padding (Sequoia produces; both consume)
+### PAD_none_0_open_[S]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/pad_none_0.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 decrypted_with_subkey=04110c4bc7c1454234c89f0564b180690e4ef04ab73d0902d8ba969d4158da57 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=8c09e6c5-6ac4-4ebe-8733-9d3d4a251005 type=message body_len=0
+
+### PAD_none_0_open_[R]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/pad_none_0.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=8c09e6c5-6ac4-4ebe-8733-9d3d4a251005 type=message body_len=0
+
+### PAD_none_100_open_[S]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/pad_none_100.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 decrypted_with_subkey=04110c4bc7c1454234c89f0564b180690e4ef04ab73d0902d8ba969d4158da57 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=ab28d663-fd8b-44cf-96bb-116f13245084 type=message body_len=100
+
+### PAD_none_100_open_[R]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/pad_none_100.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=ab28d663-fd8b-44cf-96bb-116f13245084 type=message body_len=100
+
+### PAD_none_1024_open_[S]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/pad_none_1024.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 decrypted_with_subkey=04110c4bc7c1454234c89f0564b180690e4ef04ab73d0902d8ba969d4158da57 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=f97c641a-9d9d-426c-9b00-70bf58529717 type=message body_len=1024
+
+### PAD_none_1024_open_[R]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/pad_none_1024.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=f97c641a-9d9d-426c-9b00-70bf58529717 type=message body_len=1024
+
+### PAD_none_16384_open_[S]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/pad_none_16384.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 decrypted_with_subkey=04110c4bc7c1454234c89f0564b180690e4ef04ab73d0902d8ba969d4158da57 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=9eb598c8-1136-4b42-b966-edc67a4d3612 type=message body_len=16384
+
+### PAD_none_16384_open_[R]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/pad_none_16384.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=9eb598c8-1136-4b42-b966-edc67a4d3612 type=message body_len=16384
+
+### PAD_none_65536_open_[S]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/pad_none_65536.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 decrypted_with_subkey=04110c4bc7c1454234c89f0564b180690e4ef04ab73d0902d8ba969d4158da57 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=55e22199-b127-4866-9d8b-92012dadc7bd type=message body_len=65536
+
+### PAD_none_65536_open_[R]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/pad_none_65536.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=55e22199-b127-4866-9d8b-92012dadc7bd type=message body_len=65536
+
+### PAD_pow2_0_open_[S]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/pad_pow2_0.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 decrypted_with_subkey=04110c4bc7c1454234c89f0564b180690e4ef04ab73d0902d8ba969d4158da57 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=5b3a9668-60f3-4741-81b9-1ea4260da482 type=message body_len=0
+
+### PAD_pow2_0_open_[R]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/pad_pow2_0.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=5b3a9668-60f3-4741-81b9-1ea4260da482 type=message body_len=0
+
+### PAD_pow2_100_open_[S]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/pad_pow2_100.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 decrypted_with_subkey=04110c4bc7c1454234c89f0564b180690e4ef04ab73d0902d8ba969d4158da57 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=0f0da8db-d900-4853-a7e9-ac86d711f864 type=message body_len=100
+
+### PAD_pow2_100_open_[R]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/pad_pow2_100.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=0f0da8db-d900-4853-a7e9-ac86d711f864 type=message body_len=100
+
+### PAD_pow2_1024_open_[S]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/pad_pow2_1024.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 decrypted_with_subkey=04110c4bc7c1454234c89f0564b180690e4ef04ab73d0902d8ba969d4158da57 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=34a54d94-2f60-4ee8-b9bd-c43d515cfee8 type=message body_len=1024
+
+### PAD_pow2_1024_open_[R]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/pad_pow2_1024.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=34a54d94-2f60-4ee8-b9bd-c43d515cfee8 type=message body_len=1024
+
+### PAD_pow2_16384_open_[S]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/pad_pow2_16384.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 decrypted_with_subkey=04110c4bc7c1454234c89f0564b180690e4ef04ab73d0902d8ba969d4158da57 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=6c3d2eda-3333-4d35-bda8-c6dd84d683f2 type=message body_len=16384
+
+### PAD_pow2_16384_open_[R]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/pad_pow2_16384.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=6c3d2eda-3333-4d35-bda8-c6dd84d683f2 type=message body_len=16384
+
+### PAD_pow2_65536_open_[S]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/pad_pow2_65536.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 decrypted_with_subkey=04110c4bc7c1454234c89f0564b180690e4ef04ab73d0902d8ba969d4158da57 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=f0f0965a-6a76-4e5c-a62b-c1baae192464 type=message body_len=65536
+
+### PAD_pow2_65536_open_[R]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp open --me $WORK/bob.sec.asc --sender $WORK/alice.pub.asc --in $WORK/pad_pow2_65536.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=f0f0965a-6a76-4e5c-a62b-c1baae192464 type=message body_len=65536
+
+### PAD_rpgp_cannot_send_padding  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp seal --from $WORK/alice.sec.asc --to $WORK/bob.pub.asc --body 10 --pad pow2 --out $WORK/x.pgp
+Error: rPGP 0.21.1 MessageBuilder has no API to emit a Padding packet (NOT SUPPORTED for sending)
+
+## key rotation and revocation expressed as certificate updates
+### ROT1_old_message_still_opens_with_rotated_secret_[S]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/bob_v2.sec.asc --sender $WORK/alice.pub.asc --in $WORK/before_rotation.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 decrypted_with_subkey=04110c4bc7c1454234c89f0564b180690e4ef04ab73d0902d8ba969d4158da57 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=2e96af03-e24a-4454-a4c3-29bd6d13314a type=message body_len=50
+
+### ROT1_old_message_still_opens_with_rotated_secret_[R]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp open --me $WORK/bob_v2.sec.asc --sender $WORK/alice.pub.asc --in $WORK/before_rotation.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=2e96af03-e24a-4454-a4c3-29bd6d13314a type=message body_len=50
+
+### ROT2_sealing_with_stale_contact_still_targets_old_subkey_[S]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq seal --from $WORK/alice.sec.asc --to $WORK/bob_v1.pub.asc --body 50 --out $WORK/stale_S.pgp
+sealed 750 bytes (payload 331 bytes)
+
+### ROT3_sealing_after_contact_update_merge_[S]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq seal --from $WORK/alice.sec.asc --to $WORK/bob_merged.pub.asc --body 50 --out $WORK/new_S.pgp
+sealed 750 bytes (payload 331 bytes)
+
+### ROT2_sealing_with_stale_contact_still_targets_old_subkey_[R]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp seal --from $WORK/alice.sec.asc --to $WORK/bob_v1.pub.asc --body 50 --out $WORK/stale_R.pgp
+sealed 718 bytes (payload 331 bytes)
+
+### ROT3_sealing_after_contact_update_merge_[R]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp seal --from $WORK/alice.sec.asc --to $WORK/bob_merged.pub.asc --body 50 --out $WORK/new_R.pgp
+sealed 718 bytes (payload 331 bytes)
+
+### ROT4_new_message_opens_with_rotated_secret_[S]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/bob_v2.sec.asc --sender $WORK/alice.pub.asc --in $WORK/new_S.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 decrypted_with_subkey=46a712cc185bff6494259c9c151f04d70cb03dc325d0aa65ba0b87e4015a3e6a intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=2f1f2788-5503-4e86-9221-8a633cca24e5 type=message body_len=50
+
+### ROT4_new_message_opens_with_rotated_secret_[R]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp open --me $WORK/bob_v2.sec.asc --sender $WORK/alice.pub.asc --in $WORK/new_R.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=ddfe280d-1d21-4f59-8f9b-723e86db1cec type=message body_len=50
+
+### ROT5_new_message_does_NOT_open_with_old_secret_only_[S]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/bob_v1.sec.asc --sender $WORK/alice.pub.asc --in $WORK/new_S.pgp
+Error: no secret key decrypts this message
+
+### ROT5_new_message_does_NOT_open_with_old_secret_only_[R]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp open --me $WORK/bob_v1.sec.asc --sender $WORK/alice.pub.asc --in $WORK/new_R.pgp
+Error: unpack: Message("Couldn't decrypt message")
+
+### REV1_seal_refused_after_subkey_revocation_merged_[S]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq seal --from $WORK/alice.sec.asc --to $WORK/bob_merged_rev.pub.asc --body 10 --out $WORK/x.pgp
+Error: recipient has no valid encryption subkey (revoked, expired, unbound or missing)
+
+### REV2_seal_refused_after_cert_revocation_merged_[S]  expect=fail actual=ok => FAIL
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq seal --from $WORK/alice.sec.asc --to $WORK/bob_merged_certrev.pub.asc --body 10 --out $WORK/x.pgp
+sealed 710 bytes (payload 291 bytes)
+
+### REV1_seal_refused_after_subkey_revocation_merged_[R]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp seal --from $WORK/alice.sec.asc --to $WORK/bob_merged_rev.pub.asc --body 10 --out $WORK/x.pgp
+Error: recipient has no valid encryption subkey (revoked, expired, unbound or missing)
+
+### REV2_seal_refused_after_cert_revocation_merged_[R]  expect=fail actual=fail => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp seal --from $WORK/alice.sec.asc --to $WORK/bob_merged_certrev.pub.asc --body 10 --out $WORK/x.pgp
+Error: recipient has no valid encryption subkey (revoked, expired, unbound or missing)
+
+## stateless restart and migration: new process, new directory, only the key file
+### RESTART_open_in_fresh_dir_[S]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/fresh_host/identity.asc --sender $WORK/fresh_host/contact.asc --in $WORK/before_rotation.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 decrypted_with_subkey=04110c4bc7c1454234c89f0564b180690e4ef04ab73d0902d8ba969d4158da57 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=2e96af03-e24a-4454-a4c3-29bd6d13314a type=message body_len=50
+
+### RESTART_open_in_fresh_dir_[R]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/rpgp open --me $WORK/fresh_host/identity.asc --sender $WORK/fresh_host/contact.asc --in $WORK/before_rotation.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=2e96af03-e24a-4454-a4c3-29bd6d13314a type=message body_len=50
+
+### REPLAY_same_message_opens_again_(replay guard stays application level)_[S]  expect=ok actual=ok => PASS
+$ /Users/dennison/develop/FIC-elipsis/spike/openpgp-eval/target/debug/seq open --me $WORK/fresh_host/identity.asc --sender $WORK/fresh_host/contact.asc --in $WORK/before_rotation.pgp
+OK signer=322ad392464a254f21bc804c75be4c11fdf914665a339ba0d77205b7c8211d30 decrypted_with_subkey=04110c4bc7c1454234c89f0564b180690e4ef04ab73d0902d8ba969d4158da57 intended_recipients=["33780f3fb0331b3d74f49e6eb17acbb917428d4a0522cdca97197707566a1456"] message_id=2e96af03-e24a-4454-a4c3-29bd6d13314a type=message body_len=50
+
+## sizes and timings (debug build)
+## metadata: what an observer of the ciphertext sees
+PASS=80 FAIL=4

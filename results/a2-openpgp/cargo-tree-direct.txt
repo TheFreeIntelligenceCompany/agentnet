@@ -1,0 +1,9 @@
+openpgp-eval v0.0.1 (/Users/dennison/develop/FIC-elipsis/spike/openpgp-eval)
+├── anyhow v1.0.105
+├── hex v0.4.3
+├── pgp v0.21.1
+├── rand v0.8.8
+├── rpgpie v0.12.1
+├── sequoia-openpgp v2.5.0
+├── serde v1.0.228
+└── serde_json v1.0.145

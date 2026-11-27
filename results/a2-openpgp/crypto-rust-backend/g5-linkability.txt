@@ -1,0 +1,6 @@
+messages: 20 Alice->Bob, 20 Alice->Carol, same sender, 100-byte bodies, pow2 padding
+lengths Bob: [1173] Carol: [1173]
+byte offsets constant across all 20 to Bob  : 13 [0, 1, 2, 3, 4, 37, 78, 79, 80, 81, 82, 83, 84]
+byte offsets constant across all 20 to Carol: 13 [0, 1, 2, 3, 4, 37, 78, 79, 80, 81, 82, 83, 84]
+offsets constant AND equal between Bob-group and Carol-group: 13
+offsets constant within Bob-group but different from Carol-group (would identify recipient): []

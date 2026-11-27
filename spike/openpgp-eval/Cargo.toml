@@ -1,0 +1,26 @@
+[package]
+name = "openpgp-eval"
+version = "0.0.1"
+edition = "2021"
+publish = false
+description = "Spike A2 (OpenPGP): RFC 9580 interop evaluation for AgentNet message protection. Disposable. No network use."
+
+# Standalone crate: keep it out of any parent workspace.
+[workspace]
+
+[features]
+# Exactly one Sequoia crypto backend is selected at build time (see README).
+default = ["seq-nettle"]
+seq-nettle = ["sequoia-openpgp/crypto-nettle"]
+seq-openssl = ["sequoia-openpgp/crypto-openssl"]
+seq-rust = ["sequoia-openpgp/crypto-rust", "sequoia-openpgp/allow-experimental-crypto", "sequoia-openpgp/allow-variable-time-crypto"]
+
+[dependencies]
+sequoia-openpgp = { version = "=2.5.0", default-features = false, features = [] }
+pgp = { version = "=0.21.1", default-features = false }
+rpgpie = { version = "=0.12.1", default-features = false }
+rand = "=0.8.8"
+serde = { version = "=1.0.228", features = ["derive"] }
+serde_json = "=1.0.145"
+anyhow = "1"
+hex = "0.4"

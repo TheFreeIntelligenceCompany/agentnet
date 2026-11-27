@@ -1,0 +1,29 @@
+# certificate sizes (bytes): X-made, Y-made
+/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/work2/bob.sec.asc: binary_public=419 binary_with_secret=485
+/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/work2/bob.pub.asc: binary_public=419 binary_with_secret=419
+/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/work2/bob_v2.pub.asc: binary_public=789 binary_with_secret=789
+/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/work2/bob.pub.asc: binary_public=419
+/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/work2/ybo.pub.asc: binary_public=401
+/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/work2/bob_v2.pub.asc: binary_public=789
+# armored text sizes
+     732 /private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/work2/bob.pub.asc
+     824 /private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/work2/bob.sec.asc
+     618 /private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/work2/ybo.pub.asc
+    2174 total
+
+# per-message (binary) sizes and mean seal/open time, 20 iterations
+impl=sequoia body=0 pad=none json_payload_bytes=281 message_bytes=700 overhead_vs_payload=419 seal_ms=0.296 open_ms=0.283 iters=20
+impl=sequoia body=0 pad=pow2 json_payload_bytes=281 message_bytes=1173 overhead_vs_payload=892 seal_ms=0.269 open_ms=0.263 iters=20
+impl=sequoia body=100 pad=none json_payload_bytes=381 message_bytes=800 overhead_vs_payload=419 seal_ms=0.253 open_ms=0.246 iters=20
+impl=sequoia body=100 pad=pow2 json_payload_bytes=381 message_bytes=1173 overhead_vs_payload=792 seal_ms=0.270 open_ms=0.259 iters=20
+impl=sequoia body=1024 pad=none json_payload_bytes=1305 message_bytes=1724 overhead_vs_payload=419 seal_ms=0.251 open_ms=0.283 iters=20
+impl=sequoia body=1024 pad=pow2 json_payload_bytes=1305 message_bytes=2197 overhead_vs_payload=892 seal_ms=0.269 open_ms=0.283 iters=20
+impl=sequoia body=16384 pad=none json_payload_bytes=16665 message_bytes=17154 overhead_vs_payload=489 seal_ms=0.293 open_ms=0.704 iters=20
+impl=sequoia body=16384 pad=pow2 json_payload_bytes=16665 message_bytes=33032 overhead_vs_payload=16367 seal_ms=0.430 open_ms=0.708 iters=20
+impl=sequoia body=65536 pad=none json_payload_bytes=65817 message_bytes=66498 overhead_vs_payload=681 seal_ms=0.388 open_ms=1.988 iters=20
+impl=sequoia body=65536 pad=pow2 json_payload_bytes=65817 message_bytes=131720 overhead_vs_payload=65903 seal_ms=0.934 open_ms=2.087 iters=20
+impl=rpgp body=0 pad=none json_payload_bytes=281 message_bytes=668 overhead_vs_payload=387 seal_ms=2.020 open_ms=2.622 iters=20
+impl=rpgp body=100 pad=none json_payload_bytes=381 message_bytes=768 overhead_vs_payload=387 seal_ms=1.787 open_ms=2.396 iters=20
+impl=rpgp body=1024 pad=none json_payload_bytes=1305 message_bytes=1692 overhead_vs_payload=387 seal_ms=2.140 open_ms=2.837 iters=20
+impl=rpgp body=16384 pad=none json_payload_bytes=16665 message_bytes=17122 overhead_vs_payload=457 seal_ms=9.452 open_ms=10.591 iters=20
+impl=rpgp body=65536 pad=none json_payload_bytes=65817 message_bytes=66466 overhead_vs_payload=649 seal_ms=33.385 open_ms=33.502 iters=20

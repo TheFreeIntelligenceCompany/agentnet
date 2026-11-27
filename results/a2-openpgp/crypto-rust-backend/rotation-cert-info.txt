@@ -1,0 +1,11 @@
+-- rotated cert as seen by X
+primary v6 fp=1d19d51a6552f4a448dbc18f786b47f01f080b17f660946235d79cf3dfd2b202 created=SystemTime { tv_sec: 1795746536, tv_nsec: 0 }
+  cert valid: alive=true revocation=NotAsFarAsWeKnow
+  subkey 8714125b0708fa5473c60d3a454bd74eb49dc0d928a5e952bd00b258a10a838c algo=X25519 flags=Some(Et) alive=true revoked=NotAsFarAsWeKnow
+  subkey c58dc9882416ec6e5765da47b3843441158dba83af32b2e67d205ee1c0546afe algo=X25519 flags=Some(Et) alive=false revoked=NotAsFarAsWeKnow
+  raw subkeys in cert (bound or not): 2
+-- rotated cert as seen by Y
+primary fp=1d19d51a6552f4a448dbc18f786b47f01f080b17f660946235d79cf3dfd2b202
+  primary_valid_at(now)=Ok(true) revoked_at(now)=false
+  valid subkey 8714125b0708fa5473c60d3a454bd74eb49dc0d928a5e952bd00b258a10a838c
+  valid encryption-capable keys: 1

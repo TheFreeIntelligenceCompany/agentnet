@@ -1,0 +1,12 @@
+# Sequoia 2.5.0 (crypto-openssl backend build)
+A.3 cert fingerprint cb186c4f0609a697e4d52dfa6c722b0c1f1e27c18a56708f6525ec27bad9acc9 expected cb186c4f0609a697e4d52dfa6c722b0c1f1e27c18a56708f6525ec27bad9acc9 => MATCH
+A.3 cert valid under StandardPolicy: true
+A.4 secret key fingerprint cb186c4f0609a697e4d52dfa6c722b0c1f1e27c18a56708f6525ec27bad9acc9 => MATCH
+A.8.5 decrypted: "Hello, world!" => MATCH
+A.7 inline-signed: 1 valid signature(s), content "What we need from the grocery store:" => VERIFIED
+
+# rPGP 0.21.1 + rpgpie 0.12.1
+A.3 cert fingerprint cb186c4f0609a697e4d52dfa6c722b0c1f1e27c18a56708f6525ec27bad9acc9 expected cb186c4f0609a697e4d52dfa6c722b0c1f1e27c18a56708f6525ec27bad9acc9 => MATCH
+A.4 secret key fingerprint cb186c4f0609a697e4d52dfa6c722b0c1f1e27c18a56708f6525ec27bad9acc9 => MATCH
+A.8.5 decrypted: "Hello, world!" => MATCH
+A.7 inline-signed: 1 valid signature(s), content "What we need from the grocery store:" => VERIFIED

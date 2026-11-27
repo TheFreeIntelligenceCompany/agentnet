@@ -1,0 +1,9 @@
+   Compiling zlib-rs v0.6.9
+   Compiling sequoia-openpgp v2.5.0
+   Compiling buffered-reader v1.4.1
+   Compiling flate2 v1.1.11
+   Compiling pgp v0.21.1
+   Compiling rpgpie v0.12.1
+   Compiling openpgp-eval v0.0.1 (/Users/dennison/develop/FIC-elipsis/spike/openpgp-eval)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 20.02s
+cargo build --no-default-features --features seq-openssl  32.45s user 3.12s system 176% cpu 20.102 total

@@ -1,0 +1,16 @@
+== feature seq-nettle: 190 unique crates in the normal dependency graph
+  crates whose licence expression is not satisfiable from the deny.toml allow list (approximation):
+    buffered-reader v1.4.1  [LGPL-2.0-or-later]
+    nettle v7.5.0  [LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only]
+    nettle-sys v2.3.2  [LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only]
+    sequoia-openpgp v2.5.0  [LGPL-2.0-or-later]
+
+== feature seq-openssl: 192 unique crates in the normal dependency graph
+  crates whose licence expression is not satisfiable from the deny.toml allow list (approximation):
+    buffered-reader v1.4.1  [LGPL-2.0-or-later]
+    sequoia-openpgp v2.5.0  [LGPL-2.0-or-later]
+
+== feature seq-rust: 211 unique crates in the normal dependency graph
+  crates whose licence expression is not satisfiable from the deny.toml allow list (approximation):
+    buffered-reader v1.4.1  [LGPL-2.0-or-later]
+    sequoia-openpgp v2.5.0  [LGPL-2.0-or-later]

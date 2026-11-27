@@ -1,0 +1,72 @@
+# fingerprints (v6, 32 bytes = 64 hex)
+alice 04aafdd7a6babaf65cc48acab018fa279b7a311840cb0fb2c9e46f21f282fdbc
+bob 3b63ddb33ce798030e6aafa2db435be37f09e66056e034d848679e03f619621e
+carol be32dcccbf14cbd415a310aa6d634e7900a3fc269f9fdf217cdb38cc5addb718
+mallory 046dac41ab55b2d4f21a5b6cc9c78a5703487bcf0dc69c19a68141d2ad42a242
+yal 46fb44c4465313e796de1946053723f2895bbc5896bdc19ad64137140898a834
+ybo 2ee30a37309fdc9da4f5431c6fa9a622353ce631293647ca5f95b737de1eb54b
+# cert state as seen by X (sequoia)
+-- bob.pub.asc
+primary v6 fp=3b63ddb33ce798030e6aafa2db435be37f09e66056e034d848679e03f619621e created=SystemTime { tv_sec: 1795746491, tv_nsec: 0 }
+  cert valid: alive=true revocation=NotAsFarAsWeKnow
+  subkey b6e6ff30bee02ef7a6f95f0ce9787d00e6813778c93c4b0777c183c50135d943 algo=X25519 flags=Some(Et) alive=true revoked=NotAsFarAsWeKnow
+  raw subkeys in cert (bound or not): 1
+-- bob_expired.pub.asc
+primary v6 fp=833b3da9f1fa358cf7176c8441451b1cc1940d57fa400deb6292de5974142041 created=SystemTime { tv_sec: 1794882551, tv_nsec: 0 }
+  cert valid: alive=true revocation=NotAsFarAsWeKnow
+  subkey fb0c0992118cdb96920ebe5544d8817369b8e31ceac43fc01cd60b93678ec3a5 algo=X25519 flags=Some(Et) alive=false revoked=NotAsFarAsWeKnow
+  raw subkeys in cert (bound or not): 1
+-- bob_subkey_revoked.pub.asc
+primary v6 fp=3b63ddb33ce798030e6aafa2db435be37f09e66056e034d848679e03f619621e created=SystemTime { tv_sec: 1795746491, tv_nsec: 0 }
+  cert valid: alive=true revocation=NotAsFarAsWeKnow
+  subkey b6e6ff30bee02ef7a6f95f0ce9787d00e6813778c93c4b0777c183c50135d943 algo=X25519 flags=Some(Et) alive=true revoked=Revoked([V6(Signature6 { version: 6, typ: SubkeyRevocation, pk_algo: Ed25519, hash_algo: SHA512, hashed_area: [Subpacket { critical: true, value: SignatureCreationTime(1795746551), authenticated: true }, Subpacket { value: ReasonForRevocation { code: KeyCompromised, reason: [115, 112, 105, 107, 101, 58, 32, 115, 117, 98, 107, 101, 121, 32, 99, 111, 109, 112, 114, 111, 109, 105, 115, 101, 100] }, authenticated: true }, Subpacket { value: IssuerFingerprint(Fingerprint::V6(3B63DDB33CE798030E6AAFA2DB435BE37F09E66056E034D848679E03F619621E)), authenticated: true }], unhashed_area: [], additional_issuers: OnceLock([]), digest_prefix: "E5D3", salt: "C65B63D5DBE3EED3B731A366D149A7E4909FA29E02472BA36D3D6CE4B647936B", computed_digest: Some("E5D3F350D5918ACB457F89599A234AB808716347893DBEE9F5976444324909D00D214EFB9555C472652EB4817707857933E7C5BCD2F3E56CBFA055CF9D89C654"), level: 0, mpis: Ed25519 { s: "6AF840FF7D4C8B3C7E2882E2B818FA66DE0F11D02DAD5986104E7FFB99EBE7F0392DE8E75361D4EE36DEE263905DC40371F9EC9891EB921BF60501AEF0BCAC01" } })])
+  raw subkeys in cert (bound or not): 1
+-- bob_cert_revoked.pub.asc
+primary v6 fp=3b63ddb33ce798030e6aafa2db435be37f09e66056e034d848679e03f619621e created=SystemTime { tv_sec: 1795746491, tv_nsec: 0 }
+  cert valid: alive=true revocation=Revoked([V6(Signature6 { version: 6, typ: KeyRevocation, pk_algo: Ed25519, hash_algo: SHA512, hashed_area: [Subpacket { critical: true, value: SignatureCreationTime(1795746551), authenticated: true }, Subpacket { value: ReasonForRevocation { code: KeyCompromised, reason: [115, 112, 105, 107, 101, 58, 32, 107, 101, 121, 32, 99, 111, 109, 112, 114, 111, 109, 105, 115, 101, 100] }, authenticated: true }, Subpacket { value: IssuerFingerprint(Fingerprint::V6(3B63DDB33CE798030E6AAFA2DB435BE37F09E66056E034D848679E03F619621E)), authenticated: true }], unhashed_area: [], additional_issuers: OnceLock([]), digest_prefix: "CF67", salt: "6A4937992515909EBAD8A3EA1EB87D085EA9C334333D9D4FA2884AB348586DDC", computed_digest: Some("CF671E62ACFCC001A877E228F66043CA022636601E5B80C69169F5D6BB3C88CB2EF8DD6D814E3239BC09472D679D2829065AF3D9712CC31E76BD9089ADB52D83"), level: 0, mpis: Ed25519 { s: "9D5C9C0ACA02A7395EA5B9F0C85419A6CA18237A51BE24049177ACDE3250E5BCAD74BAB2F068C1D1C9D8E2E4FBCD3D0031AA3F293DD40B5E7773E8A223C42005" } })])
+  subkey b6e6ff30bee02ef7a6f95f0ce9787d00e6813778c93c4b0777c183c50135d943 algo=X25519 flags=Some(Et) alive=true revoked=NotAsFarAsWeKnow
+  raw subkeys in cert (bound or not): 1
+-- bob_stripped.pub.asc
+primary v6 fp=3b63ddb33ce798030e6aafa2db435be37f09e66056e034d848679e03f619621e created=SystemTime { tv_sec: 1795746491, tv_nsec: 0 }
+  cert valid: alive=true revocation=NotAsFarAsWeKnow
+  raw subkeys in cert (bound or not): 1
+-- bob_grafted.pub.asc
+primary v6 fp=3b63ddb33ce798030e6aafa2db435be37f09e66056e034d848679e03f619621e created=SystemTime { tv_sec: 1795746491, tv_nsec: 0 }
+  cert valid: alive=true revocation=NotAsFarAsWeKnow
+  raw subkeys in cert (bound or not): 1
+-- ybo.pub.asc
+primary v6 fp=2ee30a37309fdc9da4f5431c6fa9a622353ce631293647ca5f95b737de1eb54b created=SystemTime { tv_sec: 1795746551, tv_nsec: 0 }
+  cert valid: alive=true revocation=NotAsFarAsWeKnow
+  subkey 70694d5d1afaa22e1d102664ac0ecd9a3bdb4c07f1b0a7ae699278bf76b67ed6 algo=X25519 flags=Some(EtEr) alive=true revoked=NotAsFarAsWeKnow
+  raw subkeys in cert (bound or not): 1
+# cert state as seen by Y (rpgpie)
+-- bob.pub.asc
+primary fp=3b63ddb33ce798030e6aafa2db435be37f09e66056e034d848679e03f619621e
+  primary_valid_at(now)=Ok(true) revoked_at(now)=false
+  valid subkey b6e6ff30bee02ef7a6f95f0ce9787d00e6813778c93c4b0777c183c50135d943
+  valid encryption-capable keys: 1
+-- bob_expired.pub.asc
+primary fp=833b3da9f1fa358cf7176c8441451b1cc1940d57fa400deb6292de5974142041
+  primary_valid_at(now)=Ok(true) revoked_at(now)=false
+  valid encryption-capable keys: 0
+-- bob_subkey_revoked.pub.asc
+primary fp=3b63ddb33ce798030e6aafa2db435be37f09e66056e034d848679e03f619621e
+  primary_valid_at(now)=Ok(true) revoked_at(now)=false
+  valid encryption-capable keys: 0
+-- bob_cert_revoked.pub.asc
+primary fp=3b63ddb33ce798030e6aafa2db435be37f09e66056e034d848679e03f619621e
+  primary_valid_at(now)=Ok(false) revoked_at(now)=true
+  valid encryption-capable keys: 0
+-- bob_stripped.pub.asc
+primary fp=3b63ddb33ce798030e6aafa2db435be37f09e66056e034d848679e03f619621e
+  primary_valid_at(now)=Ok(true) revoked_at(now)=false
+  valid encryption-capable keys: 0
+-- bob_grafted.pub.asc
+primary fp=3b63ddb33ce798030e6aafa2db435be37f09e66056e034d848679e03f619621e
+  primary_valid_at(now)=Ok(true) revoked_at(now)=false
+  valid encryption-capable keys: 0
+-- ybo.pub.asc
+primary fp=2ee30a37309fdc9da4f5431c6fa9a622353ce631293647ca5f95b737de1eb54b
+  primary_valid_at(now)=Ok(true) revoked_at(now)=false
+  valid subkey 70694d5d1afaa22e1d102664ac0ecd9a3bdb4c07f1b0a7ae699278bf76b67ed6
+  valid encryption-capable keys: 1

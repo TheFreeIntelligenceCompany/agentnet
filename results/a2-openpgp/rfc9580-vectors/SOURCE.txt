@@ -1,0 +1,4 @@
+a3.pub.asc: RFC 9580 text lines 7670-7681 (section "A.3.")
+a4.sec.asc: RFC 9580 text lines 7868-7881 (section "A.4.")
+a7.msg.asc: RFC 9580 text lines 8082-8091 (section "A.7.")
+a85.msg.asc: RFC 9580 text lines 8283-8290 (section "A.8.5.")

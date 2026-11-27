@@ -1,0 +1,10 @@
+## message scan_x (     800 bytes)
+impl=sequoia flips=800 rejected=800 accepted=0 accepted_offsets=[]
+impl=sequoia truncations=800 rejected=800 accepted=0 accepted_lengths=[]
+impl=rpgp flips=800 rejected=800 accepted=0 accepted_offsets=[]
+impl=rpgp truncations=800 rejected=800 accepted=0 accepted_lengths=[]
+## message scan_y (     768 bytes)
+impl=sequoia flips=768 rejected=768 accepted=0 accepted_offsets=[]
+impl=sequoia truncations=768 rejected=768 accepted=0 accepted_lengths=[]
+impl=rpgp flips=768 rejected=768 accepted=0 accepted_offsets=[]
+impl=rpgp truncations=768 rejected=768 accepted=0 accepted_lengths=[]

@@ -1,0 +1,35 @@
+# gpg (GnuPG) 2.5.24; homedir is a throw-away directory
+$ gpg --homedir H --batch --import bob.pub.asc (a v6 certificate made by Sequoia)
+gpg: keybox '/private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/gnupghome/pubring.kbx' created
+gpg: key 3B63DDB33CE79803: no user ID
+gpg: Total number processed: 1
+exit=2
+$ gpg --list-packets on the Alice->Bob message
+gpg: encrypted with ietf25 key, ID 0000000000000000
+gpg: can't connect to the gpg-agent: File name too long
+gpg: public key decryption failed: No secret key
+gpg: decryption failed: No secret key
+# off=0 ctb=c1 tag=1 hlen=2 plen=76 new-ctb
+:pubkey enc packet: version 6, algo 25, keyid 0000000000000000
+	length octet: 40
+	data: [256 bits]
+	data: [320 bits]
+# off=78 ctb=d2 tag=18 hlen=3 plen=719 new-ctb
+:encrypted data packet:
+	version: 2
+	 cipher: 9
+	   aead: 2
+	  cbyte: 6
+	 length: 719
+exit=0
+$ gpg --homedir H --batch --import bob.sec.asc
+gpg: key 3B63DDB33CE79803: no user ID
+gpg: Total number processed: 1
+gpg:       secret keys read: 1
+exit=2
+$ gpg --batch --decrypt a2b.pgp
+gpg: encrypted with ietf25 key, ID 0000000000000000
+gpg: can't connect to the gpg-agent: File name too long
+gpg: public key decryption failed: No secret key
+gpg: decryption failed: No secret key
+exit=0

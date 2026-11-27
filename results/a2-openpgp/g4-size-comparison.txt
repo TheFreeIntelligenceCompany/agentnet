@@ -1,0 +1,6 @@
+  body  AgentNet now  OpenPGP none  OpenPGP pow2  rPGP none   (bytes on the wire; limit 153600)
+     0           564           700          1173        668
+   100           564           800          1173        768
+  1024          2100          1724          2197       1692
+ 16384         32820         17154         33032      17122
+ 65536        131124         66498        131720      66466

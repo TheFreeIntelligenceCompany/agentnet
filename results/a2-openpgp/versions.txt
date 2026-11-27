@@ -1,0 +1,12 @@
+date 2026-11-27T02:32:30Z
+host Darwin Dennisons-M1-Pro---podcast-2.local 25.6.0 Darwin Kernel Version 25.6.0: Fri Jul 31 19:18:49 PDT 2026; root:xnu-12377.161.14~5/RELEASE_ARM64_T6000 arm64
+rustc 1.92.0 (ded5c06cf 2025-12-08)
+cargo 1.92.0 (344c4567c 2025-10-21)
+sequoia-openpgp 2.5.0 (crates.io, published 2026-11-25T14:42:28Z) crate sha256 30c165a7f766466e96b56d9d7dbd94a73261a666943384f36bd95d8b4abda554
+pgp 0.21.1 (crates.io, published 2026-11-11T15:48:34Z) crate sha256 c7275cbf21850789239e1be05d9a887e6bba6aa8085a81be09ca021c8379baef
+rpgpie 0.12.1 (crates.io, published 2026-10-26) MIT OR Apache-2.0
+RFC 9580 text fetched from https://www.rfc-editor.org/rfc/rfc9580.txt 36540e57b63d24c0b17be0748b704bdeed3d643ce99a4fb1abb6469c1eb1ff18  /private/tmp/claude-501/-Users-dennison-develop-FIC-elipsis/c4ddce9a-8e98-4449-9cd9-e1fc59613e1d/scratchpad/dl/rfc9580.txt
+rPGP audit PDF sha256 ff2e67579a845ab9e95c747f1f00c9148d6178eafe202cf9e4813c50778f9ad6 (https://github.com/rpgp/docs/blob/main/audits/NGI%20Core%20rPGP%20penetration%20test%20report%202024%201.0.pdf)
+gpg (GnuPG) 2.5.24
+libgcrypt 1.12.4
+brew nettle nettle 4.0 openssl openssl@3 3.6.4 3.6.0
