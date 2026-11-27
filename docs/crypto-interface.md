@@ -1,113 +1,74 @@
 # The cryptographic interface
 
-Owner condition 12 (ADR 0002): the cryptographic implementation sits behind a
-narrow, well-defined interface so that replacing or extending the scheme requires
-no change to the Waku transport, the MCP server or the harness integration.
+Owner condition 12 (ADR 0002, kept by ADR 0004): the cryptographic implementation sits
+behind a narrow, well-defined interface so that replacing it requires no change to the
+Waku transport, the MCP server or the harness integration. ADR 0004 replaced the scheme
+behind it by a profile of **RFC 9580 OpenPGP** (`sequoia-openpgp` 2.5.0, OpenSSL 3 backend);
+the interface is reshaped where it leaked HPKE concepts (no suites, no key epochs).
 
-This document describes that boundary as implemented, what a replacement scheme
-must provide, and what adopting a stateful forward-secret scheme would
-**additionally** require. **None of the forward-secret machinery in section 4 is
-implemented.** The current scheme (suite 1, HPKE Base + Ed25519) is **not
-audited, not production-secure and not forward-secret**; an independent
-cryptographic review is required before any production use involving sensitive
-information.
+The current scheme is **not audited, not production-secure and not forward-secret** (no
+forward secrecy against later compromise of a recipient encryption subkey); an independent
+cryptographic review is required before any production use involving sensitive information.
+**None of the forward-secret machinery in section 4 is implemented.**
 
 ## 1. The boundary
 
-Everything that touches `hpke`, `ed25519-dalek` or `age` lives in
-`crates/core/src/crypto/`. The rest of `agentnet-core` (the engine: `ingest`,
-`send`, `system`, `node`, `api_impl`, `store`, `guard`), `agentnet-transport`,
-`agentnet-mcp`, `agentnet-daemon` and `agentnet-cli` reference only the types
-below. This is enforced by `crates/core/tests/architecture.rs`:
+Everything that touches `sequoia-openpgp`, `openssl` (through it) or `age` lives in
+`crates/core/src/crypto/`. The rest of `agentnet-core` (`ingest`, `send`, `system`, `node`,
+`api_impl`, `store`, `guard`, `migrate`), `agentnet-transport`, `agentnet-mcp`, `agentnet-daemon`
+and `agentnet-cli` reference only the types below. Enforced by `crates/core/tests/architecture.rs`:
 
-* no source file outside `crates/core/src/crypto/` (and the published-vector
-  test `crates/core/tests/vectors.rs`) mentions `hpke::`, `ed25519_dalek::` or
-  `age::`;
-* the manifests of `transport`, `mcp`, `daemon` and `cli` do not list those
-  crates (the transport does not even depend on `agentnet-core`);
-* `ingest.rs`, `send.rs`, `system.rs`, `node.rs` and `api_impl.rs` do not call the
-  free `envelope::seal`/`open` wrappers or name `HpkeBaseEd25519`; they go through
-  the trait.
+* no source file outside `crates/core/src/crypto/` (and the published-vector test
+  `crates/core/tests/vectors.rs`) mentions `sequoia_openpgp::`, `openssl::`, `openssl_sys::` or `age::`;
+* the manifests of `transport`, `mcp`, `daemon` and `cli` do not list those crates;
+* the engine files do not call the free `protection::seal`/`open` wrappers or name
+  `OpenPgpProtection`; they go through the trait.
 
-Public surface of `agentnet_core::crypto` (the older paths `agentnet_core::{address,
-identity, contact, envelope}` re-export from it):
+Public surface of `agentnet_core::crypto`:
 
 | Item | Role |
 |---|---|
-| `Address` | the agent address (the Ed25519 public key plus checksum), inbox topic derivation |
-| `Identity` | key management: `generate`, `load`, `save`, `export_encrypted`, `import_encrypted`, `rotate_kem` / `rotate_kem_with(.., revoke_previous)`, `create_revocation`, `contact_record` |
-| `SignedContactRecord`, `VerifiedContact` | the signed public record (address, KEM key, `key_epoch`, `revoked_kem_epochs_below`, `suites`, buckets, times) and its verifier |
-| `SignedRevocation`, `VerifiedRevocation` | the signed identity tombstone and its verifier |
-| `Envelope` (+ `OpenLimits`, `OpenedEnvelope`) | the logical message, including the signed `suite` and `recipient_key_epoch` |
-| `trait MessageProtection` | `suite_id()`, `supported_suites()`, `advertised_suites()`, `seal(sender, recipient, envelope, now_ms, max_frame_len) -> Result<Vec<u8>, SealError>`, `open(recipient, frame, now_ms, limits) -> Result<OpenedEnvelope, OpenError>`, `max_body_len(max_frame_len, envelope_without_body)` |
-| `HpkeBaseEd25519` | suite id 1: HPKE Base (DHKEM(X25519,HKDF-SHA256) / HKDF-SHA256 / ChaCha20-Poly1305) + Ed25519 `verify_strict` |
-| `SuiteRegistry` | implements `MessageProtection` over several suites: `open` dispatches on the frame's (version, suite) header and refuses suites it does not advertise; `seal` picks the highest suite that both the registry and the recipient's *signed* record list, and returns `NoCommonSuite` instead of falling back |
-| `default_protection()` | a registry with suite 1 only |
+| `Address` | `an2` + base32(v6 fingerprint, checksum); inbox topic from the fingerprint |
+| `Identity` | one v6 certificate with its secrets: `generate`, `load`, `save`, `export_encrypted`, `import_encrypted`, `rotate_kem` / `rotate_kem_with(.., revoke_previous)`, `prune_retired`, `create_revocation`, `contact_record` |
+| `ContactRecord`, `VerifiedContact` | the public certificate and its parser: sanitize, validity, `merge` (merge only, never replace), `revocation`, `is_kem_expired` |
+| `SignedRevocation`, `VerifiedRevocation` | a primary-key revocation, distributed as the revoked certificate |
+| `Envelope` (+ `OpenLimits`, `OpenedEnvelope`, `SenderAuth`) | the application payload and the open result (`Pinned` or `EmbeddedCertificate`) |
+| `trait MessageProtection` | `seal(sender, recipient, envelope, now_ms, max_frame_len)`, `open(recipient, frame, now_ms, limits, senders: &dyn SenderDirectory)`, `max_body_len(..)` |
+| `SenderDirectory` | looks up the pinned certificate of a sender (the engine's contact store); `NoSenders` is the empty one |
+| `OpenPgpProtection` | the implementation (policy of `docs/protocol.md` section 5) |
+| `SignedAdvert`, `VerifiedAdvert` | discovery adverts: OpenPGP signed (not encrypted) messages |
 
-`Node::open` uses `default_protection()`; `Node::open_with(.., NodeOptions {
-protection: Some(arc), .. })` injects another `Arc<dyn MessageProtection>` (or a
-`SuiteRegistry`). `Node::open_with` also sets the suites listed in the contact
-record the node publishes from `protection.advertised_suites()`. The engine never
-looks inside a frame: it hands the bytes to `open` and the bytes from `seal` to
-the transport.
+`Node::open` uses `default_protection()`; `Node::open_with(.., NodeOptions { protection: Some(arc), .. })`
+injects another `Arc<dyn MessageProtection>`. The engine never looks inside a frame.
 
-## 2. What a replacement or additional scheme must provide
+## 2. What a replacement scheme must provide
 
-An implementation of `MessageProtection` (one suite, or a registry of several)
-MUST:
+An implementation of `MessageProtection` MUST:
 
-1. **Authenticate the sender** to the recipient: an envelope returned by `open` was
-   created by the holder of the key behind `envelope.sender` (the address is the
-   identity; the engine trusts `OpenedEnvelope.sender`).
-2. **Bind the recipient**, the suite id and the recipient key epoch (`recipient_key_epoch`)
-   into authenticated data, and protect every `Envelope` field (see the field audit
-   in `docs/protocol.md` section 4). `seal` sets `envelope.suite` and
-   `envelope.recipient_key_epoch`; `open` verifies both against what actually opened
-   the frame.
-3. **Never downgrade silently**: use a suite only if the recipient's signed
-   `VerifiedContact.suites` lists it; refuse suites it does not itself advertise.
-4. **Use a fresh context per message** for a stateless scheme (fresh ephemeral key
-   per `seal`); no cached or reused AEAD contexts or nonces.
-5. **Be a pure function of its inputs for replay purposes**: `open` performs no
-   duplicate detection (the engine persists `(sender, message_id)`), may be called
-   repeatedly with the same frame, and returns `OpenError::NotForUs` when no local
-   key opens the frame (other agents' frames share the bucket). Errors carry no
-   plaintext, keys or attacker-controlled strings.
-6. **Honour `max_frame_len`** (the transport's limit) and report `TooLarge` with a
-   body-size hint; implement `max_body_len` consistently.
-7. **Frame header**: start frames with `"AN" || frame_version || suite_id` so the
-   registry can dispatch. A new frame layout gets a new frame version.
-8. **Key material** stays inside `Identity` (and, for a new scheme, new fields of
-   the contact record and identity file); the contact record is the only public
-   key-binding artefact and stays self-signed by the address key.
-9. **Tests**: published vectors for every primitive, a frozen known-answer test of
-   the formats, tamper/truncation/forgery/wrong-recipient tests (see
-   `crates/core/tests/crypto.rs`, `vectors.rs`) and an entry in the architecture
-   test's allow-list for any new cryptographic crate (all of them live under
-   `crates/core/src/crypto/`).
-
-To add a stateless suite: implement the trait under `crypto/`, add its id to the
-contact record's `suites`, register it in the `SuiteRegistry` the daemon builds.
-Nothing in `ingest`, `send`, `transport`, `mcp` or the daemon's socket/webhook
-code changes. A test in `crates/core/tests/crypto.rs` (`mod hardening`) registers a
-second, test-only suite in a registry to show the routing, negotiation and
-rejection paths; it is not cryptography and no second real suite exists.
+1. **Authenticate the sender**: an envelope returned by `open` was created by the holder of the key
+   behind `envelope.sender`; for an unknown sender the proof is self-certification only, and the
+   result says so (`SenderAuth`).
+2. **Bind the recipient** and protect every `Envelope` field; refuse recipients that are revoked,
+   expired or without a usable encryption key, **checking the certificate, not only the keys**.
+3. **Never downgrade silently**: accept only the policy it documents, with a distinct error per violation.
+4. **Use fresh key material per message** (stateless scheme).
+5. **Be a pure function of its inputs for replay purposes**: no duplicate detection (the engine persists
+   `(sender, message_id)`), `NotForUs` when no local key opens the frame, no plaintext, keys or
+   attacker-controlled strings in errors.
+6. **Honour `max_frame_len`** and report `TooLarge` with a body-size hint.
+7. **Tests**: published vectors, tamper/truncation/forgery/wrong-recipient tests, the policy rejections,
+   and an architecture-test entry for any new cryptographic crate.
 
 ## 3. What this interface does not abstract (honest limits)
 
-* `Identity` is one concrete type holding an Ed25519 key and X25519 KEM keys; a
-  scheme needing a different key shape (an MLS credential, a vodozemac account)
-  needs `Identity` and the contact record extended inside `crypto/`, plus a new
-  identity-file version. The engine reads only `address()`, `key_epoch()`,
-  `contact_record()`, `inbox_topic()` and `created_at()`.
-* The `suites` list and `key_epoch` are fields of the contact record format
-  (`crypto/contact.rs`), which the engine also reads (`VerifiedContact`).
-* `MessageProtection::seal` is synchronous and takes `&self`, with no handle to a
-  database transaction. A scheme with per-peer mutable state needs the changes in
-  section 4; today there is no way to pass the transaction in.
-* The engine stores one sealed `frame` per outbox row and re-seals rows when a
-  recipient's record changes (section 8.2 of `docs/protocol.md`); a stateful scheme
-  cannot re-seal (section 4).
+* `Identity` and `VerifiedContact` are OpenPGP certificates; a scheme with another key shape (an MLS
+  credential, a vodozemac account) needs them extended inside `crypto/` plus a new identity-file version.
+* `MessageProtection::seal` is synchronous with no handle to a database transaction; a scheme with
+  per-peer mutable state needs section 4.
+* The engine stores one sealed `frame` per outbox row and re-seals rows when a recipient's certificate
+  changes (section 9.4 of `docs/protocol.md`); a stateful scheme cannot re-seal.
+* `crypto::pgp` is the only module that talks to Sequoia; swapping the library for another OpenPGP
+  implementation (the wire format is the standard) is a change inside `crypto/pgp.rs`.
 
 ## 4. Adopting a stateful forward-secret scheme (vodozemac / MLS): additional requirements
 
@@ -155,8 +116,7 @@ The libchat/MLS candidate is covered in `docs/spike/notes-libchat-and-crypto.md`
 6. **Out-of-order and loss handling**: skipped-message-key limits, lost-state
    recovery (a lost pickle is a broken conversation, not a restart), bucket-sharing
    trial decryption over many sessions, and pickle format/version migration.
-7. **A second `hpke` in the lock file**: vodozemac pulls `hpke 0.14.1` next to the
-   pinned `=0.15.1` (notes section 3); the pinning/deny policy and the architecture
+7. **Another set of crypto crates in the lock file** (vodozemac pulls its own `hpke`); the pinning/deny policy and the architecture
    test would need to cover it.
 8. **Tests and review**: port T1-T9 of the spike as engine tests, add
    crash-injection at every persistence point, a two-instance guard test and a
@@ -165,5 +125,6 @@ The libchat/MLS candidate is covered in `docs/spike/notes-libchat-and-crypto.md`
    state, at the price of no forward secrecy (ADR 0002, owner acceptance).
 
 Until those are done the project must not claim forward secrecy, and the
-`suite_id` space (1 = HPKE Base + Ed25519) and `suites` list are the only
-preparation: they let a new suite coexist with suite 1 without a flag day.
+only preparation is the `MessageProtection` seam. ADR 0004 removed the suite registry and
+the frame-header suite id: a second scheme would need a new dispatch (an OpenPGP message
+starts with a packet tag byte, so a new frame magic can coexist).

@@ -36,7 +36,7 @@ JSON: one JSON object per line, UTF-8, no embedded newlines.
    wrong token, oversize or malformed hello, timeout) the server writes one error line and closes the
    connection:
    `{"id":null,"error":{"code":"policy_denied","message":"authentication failed"}}`
-3. Success: `{"hello":{"ok":true,"protocol":1,"agent_id":"an1..."}}`.
+3. Success: `{"hello":{"ok":true,"protocol":1,"agent_id":"an2..."}}`.
 
 Limits: request lines are at most **1 MiB** (longer: an error line `too_large`, then close); at most **64**
 concurrent connections (the 65th gets `unavailable` and is closed); at most 32 requests in flight per
@@ -46,9 +46,9 @@ connection. A connection whose reader stalls for 30 s on a write is closed.
 
 ```
 -> {"id":1,"method":"get_identity"}
-<- {"id":1,"result":{"agent_id":"an1...","contact_record":"{...}","inbox_topic":"/agentnet/1/inbox-07/proto","created_at":1795644042997,"kem_expires_at":null}}
+<- {"id":1,"result":{"agent_id":"an2...","contact_record":"{...}","inbox_topic":"/agentnet/1/inbox-07/proto","created_at":1795644042997,"kem_expires_at":null}}
 
--> {"id":2,"method":"send_message","params":{"recipient":"an1...","body":"hello","idempotency_key":"k1"}}
+-> {"id":2,"method":"send_message","params":{"recipient":"an2...","body":"hello","idempotency_key":"k1"}}
 <- {"id":2,"result":{"message_id":"...","status":"queued","conversation_id":"...","expires_at":1795730742499,"deduplicated":false}}
 
 -> {"id":3,"method":"get_message_status","params":{"message_id":"nope"}}
@@ -100,7 +100,7 @@ Methods, with the parameters being exactly the fields of the Rust types in `agen
 ```
 -> {"id":10,"method":"events.subscribe","params":{"since_cursor":"ZXZlbnQ6NA"}}
 <- {"id":10,"result":{"subscribed":true}}
-<- {"event":{"event_id":"2f0c...","cursor":"ZXZlbnQ6NQ","event_type":"trigger.matched","agent_id":"an1...","message_id":"b998...","trigger_id":"7d1e...","target_session":"s1","timestamp":1795644344166}}
+<- {"event":{"event_id":"2f0c...","cursor":"ZXZlbnQ6NQ","event_type":"trigger.matched","agent_id":"an2...","message_id":"b998...","trigger_id":"7d1e...","target_session":"s1","timestamp":1795644344166}}
 <- {"event":{...}}
 -> {"id":11,"method":"events.ack","params":{"cursor":"ZXZlbnQ6NQ"}}
 <- {"id":11,"result":null}
@@ -164,7 +164,7 @@ X-AgentNet-Event-Id: 2f0c...
 X-AgentNet-Timestamp: 1795644344
 X-AgentNet-Signature: v1=<hex HMAC-SHA256(secret, timestamp + "." + body)>
 
-{"event_id":"2f0c...","cursor":"...","event_type":"trigger.matched","agent_id":"an1...","message_id":"...","trigger_id":"...","target_session":"s1","timestamp":1795644344166}
+{"event_id":"2f0c...","cursor":"...","event_type":"trigger.matched","agent_id":"an2...","message_id":"...","trigger_id":"...","target_session":"s1","timestamp":1795644344166}
 ```
 
 The body is exactly the JSON of an event record: no plaintext. The timestamp is fresh for every attempt.
@@ -209,20 +209,20 @@ of the daemon); see `docs/examples/mcp-client-stdio.json`.
 1. `agentnet init ...`, set `policy.auto_trigger = true` and `triggers.allowed_sessions = ["my-session"]`,
    `agentnet serve`.
 2. Create a trigger for the agent you wait for (before sending, or with `since_cursor`):
-   `agentnet trigger create --target-session my-session --sender an1...`.
+   `agentnet trigger create --target-session my-session --sender an2...`.
 3. Consume events with `EventStream` (or the webhook), persist `cursor` and `event_id`s, and for each
    `message.received` or `trigger.matched` event follow **receive event -> `get_message` -> handle ->
    `acknowledge_message` -> `events.ack`**:
 
    ```
    -> {"id":7,"method":"get_message","params":{"message_id":"<event.message_id>"}}
-   <- {"id":7,"result":{"message_id":"...","sender":"an1...","body":"...","acknowledged":false,...}}
+   <- {"id":7,"result":{"message_id":"...","sender":"an2...","body":"...","acknowledged":false,...}}
    ```
 
    The event cursor is not an inbox cursor, so there is no need to page `read_inbox` to find the message.
    `get_message` applies the `read_inbox` visibility rules: a quarantined or replay-guard-held message is
    `not_found` (never returned as normal content). Message ids are chosen by senders; if two senders used
-   the same id the call is `conflict` and `"sender":"an1..."` selects one (the CLI equivalent is
+   the same id the call is `conflict` and `"sender":"an2..."` selects one (the CLI equivalent is
    `agentnet inbox --message-id <ID> [--sender <ADDRESS>]`). The body is untrusted data: read or
    summarize it, never execute it. `acknowledge_message` is local bookkeeping (idempotent, sends nothing);
    `events.ack` acknowledges the event stream. Fetching a message does not acknowledge it.

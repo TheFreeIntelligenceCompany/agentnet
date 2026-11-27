@@ -3,6 +3,43 @@
 Status: facts from `cargo metadata`, `cargo tree` and `cargo deny` at the committed tree (`git archive HEAD`, commit `0eb3d35`, `Cargo.lock` of 439 packages) on 2026-11-25. Nothing here is a security review of the dependencies; it is an inventory plus the
 output of the automated checks. Raw files: `results/audit/cargo-deny.log`, `cargo-tree-*.txt`, `crates-io-versions.txt`. Note: the working tree later gained a sixth workspace member (`tests/acceptance`, written by another contributor); this document describes the committed five-crate workspace.
 
+## 0. Update for ADR 0004 (OpenPGP cutover): the dependency set changed
+
+Facts below are from `cargo metadata --filter-platform aarch64-apple-darwin --offline` and a diff of `Cargo.lock` between
+commit `968e100` (HPKE) and this tree (macOS arm64 host, 2026-11-26). `cargo deny` was NOT run for this change
+(not installed here); `deny.toml` and `.github/workflows` were deliberately not edited (the dependency-policy contributor owns them).
+Sections 1 to 6 below describe the earlier tree and are stale where they mention `hpke`, `ed25519-dalek` or "No OpenSSL".
+
+* **Direct change in `crates/core/Cargo.toml`:** removed `hpke =0.15.1` and `ed25519-dalek =3.0.0`; added
+  `sequoia-openpgp =2.5.0` with `default-features = false, features = ["crypto-openssl"]` (no Nettle, not the
+  experimental pure-Rust backend, no compression). The lock file still contains `hpke 0.12.0` as a transitive
+  dependency of `age 0.12.1`/`age-core` (post-quantum and plugin recipients); AgentNet code does not use it.
+* **Native prerequisite:** OpenSSL 3 headers and libraries (`OPENSSL_DIR`, for example `$(brew --prefix openssl@3)` on macOS;
+  `libssl-dev` on Debian/Ubuntu), a C toolchain, and `libclang` (the build scripts of `bindgen`/`clang-sys` are in the
+  graph). The release binary links `libssl`/`libcrypto` dynamically unless built with the `openssl-src` vendoring (UNTESTED).
+* **Licence of the library:** `sequoia-openpgp 2.5.0` and `buffered-reader 1.4.1` are **LGPL-2.0-or-later** (as declared); the owner accepted the packaging obligations.
+* 51 packages added, 17 removed (`aead 0.6`, `chacha20poly1305 0.11`, `cipher 0.5`, `cmov`, `ctutils`, `curve25519-dalek 5`, `ed25519 3`,
+  `ed25519-dalek 3`, `fiat-crypto 0.3`, `hkdf 0.13`, `hmac 0.13`, `hpke 0.15.1`, `inout 0.2`, `poly1305 0.9`, `signature 3`,
+  `universal-hash 0.6`, `x25519-dalek 3`).
+
+**For the dependency-policy contributor** (nothing here was changed in `deny.toml`):
+
+1. Crates whose declared licence is **not in the current allow list**: `sequoia-openpgp 2.5.0` (LGPL-2.0-or-later),
+   `buffered-reader 1.4.1` (LGPL-2.0-or-later), `ossl 1.5.5` is Apache-2.0 (allowed). `jiff 1.0.3`, `jiff-core 1.0.2`,
+   `jiff-static 1.0.3`, `portable-atomic 1.15.0`, `portable-atomic-util 0.2.8` have **no `license` field in `cargo metadata`**
+   (upstream states Unlicense OR MIT / Apache-2.0 OR MIT: UNVERIFIED, read the crate files before allowing). All other added crates
+   are MIT, Apache-2.0, BSD-3-Clause (`bindgen`), ISC (`libloading`), Zlib (`foldhash`), BSL-1.0 (`xxhash-rust`) or a dual of those, all in the allow list.
+2. Crates that pull in **`openssl-sys`** (banned by `deny.toml` today): `openssl-sys 0.9.118` itself (MIT) is reached through
+   **`ossl 1.5.5`** (the OpenSSL wrapper used by Sequoia 2.5.0) and `sequoia-openpgp` itself. `libsqlite3-sys` lists it only as an
+   optional (`sqlcipher`) dependency, which is not enabled. `openssl` (the crate) is not in the graph.
+3. Build-time only (not in the shipped code): `bindgen`, `clang-sys`, `libloading`, `cexpr`, `shlex`, `prettyplease`, `lalrpop`, `lalrpop-util`,
+   `ena`, `petgraph`, `fixedbitset`, `ascii-canvas`, `term`, `string_cache`, `phf_shared`, `new_debug_unreachable`, `precomputed-hash`, `siphasher`,
+   `annotate-snippets`, `unicode-width`, `unicode-xid`, `nom 7.1.3`, `minimal-lexical`, `itertools 0.13/0.15`, `either`, `glob`, `hashbrown 0.15.5`, `foldhash`.
+4. Runtime additions: `sequoia-openpgp`, `buffered-reader`, `ossl`, `openssl-sys`, `argon2 0.5.3`, `blake2 0.10.6`, `base64ct`, `password-hash`,
+   `sha3 0.12`, `keccak`, `sha1collisiondetection 0.3.4`, `memsec 0.7.0`, `xxhash-rust`, `ctor`, `link-section`, `linktime-proc-macro`, `sponge-cursor`.
+5. `RUSTSEC-2026-0387` ignore in `deny.toml` mentions `hpke =0.15.1`; that sentence is stale (only `age`'s `hpke 0.12.0` remains).
+6. Advisory monitoring: `sequoia-openpgp 2.5.0` (released 2026-11-25) and OpenSSL both shipped security fixes in November 2026 (`docs/spike/notes-openpgp.md` 2.5); the pin must be reviewed on every advisory.
+
 ## 1. Counts
 
 | Measure | Value | How obtained |
@@ -29,11 +66,10 @@ Resolved version, licence as declared in the crate's metadata (SPDX-like strings
 | `base64` | 0.22.1 | MIT OR Apache-2.0 | 1.48.0 | core (normal), transport (dev/normal) |
 | `clap` | 4.6.10 | MIT OR Apache-2.0 | 1.85 | cli (normal) |
 | `data-encoding` | 2.11.1 | MIT | 1.48 | core (normal) |
-| `ed25519-dalek` | 3.0.0 | BSD-3-Clause | 1.85 | core (normal) |
 | `fs4` | 0.13.1 | MIT OR Apache-2.0 | 1.75.0 | daemon (normal) |
 | `getrandom` | 0.4.3 | MIT OR Apache-2.0 | 1.85 | core (normal), daemon (normal) |
 | `hmac` | 0.12.1 | MIT OR Apache-2.0 | - | daemon (normal) |
-| `hpke` | 0.15.1 | MIT/Apache-2.0 | 1.87 | core (normal) |
+| `sequoia-openpgp` | 2.5.0 | LGPL-2.0-or-later | 1.85 | core (normal) |
 | `jsonschema` | 0.63.1 | MIT | 1.85.0 | mcp (dev) |
 | `proptest` | 1.12.0 | MIT OR Apache-2.0 | 1.88 | core (dev) |
 | `reqwest` | 0.12.28 | MIT OR Apache-2.0 | 1.64.0 | cli (normal), daemon (normal), transport (dev/normal) |

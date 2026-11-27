@@ -30,7 +30,7 @@ The daemon surfaces their error messages and does not duplicate their rules.
 |---|---|---|
 | `.` | 0700 | The daemon refuses to start if group/others have any access |
 | `identity.json` | 0600 | Secret keys; loading refuses looser permissions |
-| `revocation.json` | 0600 | Signed identity-revocation tombstone; exists only after `agentnet identity revoke`. A revoked identity sends nothing except this notice |
+| `revocation.json` | 0600 | Revoked public certificate (the identity revocation); exists only after `agentnet identity revoke`. A revoked identity sends nothing except this notice |
 | `agentnet.generation` | 0600 | Sidecar of the store generation (JSON `{"v":1,"generation":N,"guard":null}`), rewritten and fsynced after every committed receive. A database *older* than this file means the store was rolled back and starts the replay guard; a missing sidecar next to an existing database does too. Copy it together with `agentnet.db` to migrate with dedupe history. `identity import` creates it with an `imported` marker (guard on the first start) unless `--no-replay-guard` is given. Nothing to configure: `agentnet doctor` reports it and `agentnet doctor --accept-rollback` (daemon stopped) accepts a rollback |
 | `agentnet.toml` | 0600 | This file |
 | `agentnet.db` (+ `-wal`, `-shm`) | 0600 | Engine store (SQLite, WAL) |

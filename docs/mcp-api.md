@@ -40,8 +40,8 @@ against a real daemon on 2026-11-26):
 
 ```json
 {"jsonrpc":"2.0","id":1,"result":{"resultType":"complete",
- "content":[{"type":"text","text":"{\"agent_id\":\"an1swo22...\",...}"}],
- "structuredContent":{"agent_id":"an1swo22teox3i4gcmc4od6xftmnvhzhzcvb4mdqq6bzakfyxzmxurhaxw3ga",
+ "content":[{"type":"text","text":"{\"agent_id\":\"an2swo22...\",...}"}],
+ "structuredContent":{"agent_id":"an2swo22teox3i4gcmc4od6xftmnvhzhzcvb4mdqq6bzakfyxzmxurhaxw3ga",
                       "contact_record":"{\"record\":\"eyJ2Ijox...\",\"sig\":\"8WMS7X...\"}",
                       "created_at":1795706642062,"inbox_topic":"/agentnet/1/inbox-02/proto","kem_expires_at":null},
  "isError":false}}
@@ -131,7 +131,7 @@ Limits (`crates/mcp/src/limits.rs`; the engine may be stricter and answers `too_
 | Item | Limit |
 |---|---|
 | `body` | 1 to 65536 bytes (UTF-8); the effective limit is the **smaller** of this cap and the daemon's `delivery.max_body_bytes` (default 65536), above which the engine answers `too_large` |
-| address (`recipient`, `sender`, `expected_address`) | `an1` + lowercase base32 `[a-z2-7]`, total 4 to 128 chars (loose syntax; the engine checks the checksum) |
+| address (`recipient`, `sender`, `expected_address`) | `an2` + lowercase base32 `[a-z2-7]`, total 4 to 128 chars (loose syntax; the engine checks the checksum) |
 | ids (`conversation_id`, `correlation_id`, `idempotency_key`, `message_id`, `trigger_id`) | `[A-Za-z0-9._~-]{1,128}` |
 | cursors | 1 to 512 visible ASCII chars (opaque) |
 | `limit` | 1 to 200 (engine default 50) |

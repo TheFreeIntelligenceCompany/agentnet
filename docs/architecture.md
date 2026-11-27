@@ -10,7 +10,7 @@ document and the code disagree after implementation, the code plus
 | Area | Decision | Evidence |
 |---|---|---|
 | Transport | Adapter to a separately running Logos Delivery node over its local REST API (relay publish + poll, Store v3 for recovery). Native FFI embedding is a future option behind the same trait. | `docs/spike/notes-daemon-rest.md`, `docs/spike/notes-ffi-bindings.md`, ADR 0001 |
-| E2E encryption | HPKE (RFC 9180) base mode, DHKEM(X25519, HKDF-SHA256) / HKDF-SHA256 / ChaCha20-Poly1305, with an inner Ed25519 signature bound to the recipient. libchat rejected. | `docs/spike/notes-libchat-and-crypto.md`, `docs/spike/notes-e2e-crypto.md`, ADR 0002 |
+| E2E encryption | **RFC 9580 OpenPGP** (ADR 0004, superseding ADR 0002): v6 Ed25519 certificate, X25519 encryption subkey, anonymous PKESK v6 + SEIPD v2 (AES-256/OCB), signed with an Intended Recipient Fingerprint, Padding packet; `sequoia-openpgp` 2.5.0 with the OpenSSL 3 backend. libchat rejected. | `docs/adr/0004-openpgp-message-protection.md`, `docs/spike/notes-openpgp.md`, `results/a2-openpgp/` |
 | MCP | `rmcp = "=3.11.0"`, protocol 2026-07-28 (`server/discover`, `subscriptions/listen`) with SDK-provided legacy negotiation down to 2024-11-05. | `docs/spike/notes-mcp.md` |
 | Storage | SQLite (`rusqlite`, bundled), WAL, every state transition in a transaction. | this document |
 
@@ -56,39 +56,35 @@ and never on `rmcp`, `reqwest` or any harness.
 
 ## 4. Identity and addresses
 
-* Signing key: Ed25519. Agreement key: independent X25519 key used as an HPKE
-  recipient key. The two are never derived from one another.
-* Address: `an1` + lowercase RFC 4648 base32 (no padding) of
-  `signing_pk (32 bytes) || checksum (4 bytes)`, where
-  `checksum = SHA-256("agentnet/v1/address-checksum" || signing_pk)[0..4]`.
-  The checksum catches typos; it is not a security mechanism. The address *is*
-  the signing public key, so an address authenticates a contact record without
-  any directory.
-* Contact record (public, shareable): a JSON document
-  `{"record": "<base64url of record bytes>", "sig": "<base64url of 64-byte signature>"}`
-  where the record bytes are JSON
-  `{"v":1,"address":…,"signing_pk":…,"kem_pk":…,"key_epoch":1,"revoked_kem_epochs_below":1,"suites":[1],"inbox_buckets":16,"created_at":<unix ms>,"kem_expires_at":<unix ms or null>}`
-  and `sig = Ed25519(signing_sk, "agentnet/v1/contact-record\0" || record_bytes)`.
-  Verification: address decodes and checksums, equals the record's
-  `address`/`signing_pk`, signature verifies. The signature is what binds the
-  agreement key to the signing key.
+* One v6 OpenPGP certificate: Ed25519 primary key (certify + sign, no expiry) and an
+  independent X25519 encryption subkey with an expiry (default 365 days). Keys are generated
+  fresh; an old `an1` Ed25519 key is never reused.
+* Address: `an2` + lowercase RFC 4648 base32 (no padding) of
+  `fingerprint (32 bytes) || checksum (4 bytes)`; the fingerprint is the v6 fingerprint of
+  the primary key. The checksum catches typos; it is not a security mechanism. A fingerprint
+  pins a certificate but cannot verify anything by itself.
+* Contact record (public, shareable): the public certificate (base64url of the binary
+  certificate, at most 4096 bytes). First contact pins the fingerprint (`--expect`); later
+  updates are MERGES (same primary key only; revocations accumulate; junk, third-party
+  certifications and unbound subkeys are dropped). Alias and trust are local application data.
 * Persistence: `<data_dir>/identity.json`, mode 0600, directory mode 0700.
-  Secrets are zeroized in memory on drop.
+  Secret keys live in the OpenPGP library's protected memory.
 * Export / import: `agentnet identity export` writes an `age`
   passphrase-encrypted file (scrypt recipient); `import` restores it into an
   empty data dir. Migration = export, import, start. Running the same identity
   in two places at once is not supported (each would ack and dedupe
   independently); the lock only protects one data directory.
 * Rotation and revocation (details and limits: `docs/protocol.md` section 9):
-  `agentnet identity rotate-kem` generates a new agreement key and increments
-  `key_epoch`; by default the previous key keeps decrypting until
-  `retention_hours` have passed, with `--revoke-previous` every earlier agreement
-  key is destroyed at once. At the next start the daemon sends the new signed
-  record to every Trusted contact (`contact.update`) and the contacts re-seal
-  their pending messages. `agentnet identity revoke` writes a signed tombstone
-  and the daemon then only delivers it (`identity.revoked`). There is no
-  directory and no global revocation list: revocation reaches only peers that
-  receive the notice.
+  `agentnet identity rotate-kem` adds a new encryption subkey (with an expiry) and retires the
+  previous one with a standard subkey revocation; by default the retired secret keeps
+  decrypting until `retention_hours` have passed, with `--revoke-previous` every earlier
+  subkey is revoked as compromised and destroyed at once. At the next start the daemon sends
+  the new public certificate to every Trusted contact (`contact.update`; they merge it) and
+  the contacts re-seal their pending messages. `agentnet identity revoke` writes a standard
+  key revocation (the revoked certificate) and the daemon then only delivers it
+  (`identity.revoked`). There is no directory and no global revocation list: revocation reaches
+  only peers that receive the notice. `agentnet identity migrate` converts a data directory of
+  the retired HPKE format explicitly.
 * The cryptography sits behind `agentnet_core::crypto` and the
   `MessageProtection` trait (`docs/crypto-interface.md`); the engine, transport,
   MCP server and daemon do not touch the cryptographic crates.
@@ -97,28 +93,28 @@ and never on `rmcp`, `reqwest` or any harness.
 
 Specified normatively in `docs/protocol.md`. Summary:
 
-* Envelope (JSON, the exact bytes are signed and are never re-serialized):
-  `v, message_id (UUIDv4), sender, recipient, type, conversation_id?,
-  correlation_id?, created_at, expires_at, body`.
+* Payload (strict JSON in the Literal Data packet): `agentnet (2), message_id (UUIDv4),
+  type, sender, recipient, created_at, expires_at, conversation_id?, correlation_id?, body,
+  sender_cert?`.
 * Types: `message`, `ack.received`, `task.request`, `task.result`. Unknown types
-  are stored as data with their type string; unknown `v` is rejected.
-* Seal: `sig = Ed25519(sender_sk, "agentnet/v1/envelope\0" || envelope)`;
-  `plaintext = u32_be(len) || sig || envelope || zero padding` to a power-of-two
-  bucket (min 512 B, capped so the encoded Waku message stays under the node
-  limit); HPKE single-shot seal with `info = "agentnet/v1/hpke\0" || recipient_kem_pk`
-  and `aad = frame header`; frame = `"AN" || version || suite || enc || ciphertext`.
-* Open: strict header parse, HPKE open, length check, signature check under the
-  sender address, `recipient == self`, time window (`created_at` not more than
-  `clock_skew` in the future, `expires_at` not passed, TTL not above the maximum),
-  then dedupe on `(sender, message_id)`.
+  are stored as data with their type string; an unknown payload version is rejected.
+* Seal: one OpenPGP message: PKESK v6 (anonymous) to every live encryption subkey of the
+  recipient (after a certificate-level validity check), SEIPD v2 (AES-256, OCB) containing a
+  one-pass signed Literal Data packet, a v6 signature with the Intended Recipient Fingerprint,
+  and a Padding packet padding the inner packets to a power of two (min 1 KiB; unpadded if the
+  padded size would not fit the node limit).
+* Open (`docs/protocol.md` section 5): trial decryption with the live and retained subkeys, the
+  fixed receiver policy (v6, SEIPD v2 AEAD, no compression/SKESK/PKESK v3, exactly one
+  signature, signer == pinned certificate, Intended Recipient required), then payload schema,
+  recipient, time window, then dedupe on `(sender, message_id)`. An unknown sender is
+  authenticated by the certificate in the payload (self-certification only).
 * Sender identity, type and all correlation data are inside the ciphertext.
   Visible to relays: content topic (inbox bucket), time, padded size, the
   publishing node's peer ID/IP.
 * Inbox topic: `/agentnet/1/inbox-<hh>/proto`, bucket =
-  `u16_be(SHA-256("agentnet/v1/inbox-topic" || signing_pk)[0..2]) % inbox_buckets`.
+  `u16_be(fingerprint[0..2]) % 16` (a protocol constant; the fingerprint is already a hash).
   All agents of a bucket share a topic and trial-decrypt (k-anonymity within the
-  deployment; bandwidth grows with bucket population). `inbox_buckets` is part of
-  the signed contact record so senders cannot guess wrong.
+  deployment; bandwidth grows with bucket population).
 
 ### Delivery semantics
 

@@ -50,7 +50,7 @@ Work proceeds in two phases:
 
 ```
 crates/transport   Transport trait, MockTransport, LogosRestTransport (sidecar node over REST)
-crates/core        crypto/ (the only place hpke, ed25519-dalek and age are used),
+crates/core        crypto/ (the only place sequoia-openpgp (OpenSSL 3 backend) and age are used),
                    SQLite store, delivery engine (Node), triggers, events, AgentApi
 crates/mcp         rmcp server over Arc<dyn AgentApi>
 crates/daemon      config, data-dir lock, control/event socket, webhook, examples/
@@ -61,10 +61,11 @@ docs/              spike report, ADRs, protocol, threat model, setup and API doc
 results/           raw evidence; every claim in docs points here
 ```
 
-## Cryptography rules (owner's conditions, ADR 0002)
+## Cryptography rules (owner's conditions, ADR 0002 restated by ADR 0004)
 
-- The owner accepted HPKE base mode + Ed25519 for the MVP with 13 conditions;
-  `docs/crypto-requirements.md` tracks each one. Keep that table true.
+- The owner replaced the hand-rolled HPKE + Ed25519 scheme by RFC 9580 OpenPGP
+  (`sequoia-openpgp` 2.5.0, OpenSSL 3 backend, ADR 0004); AgentNet defines no cryptographic
+  construction. The 13 conditions are restated in `docs/crypto-requirements.md`. Keep that table true.
 - Never describe the implementation as audited, production-secure or
   forward-secret. It is none of these.
 - All cryptography stays behind `agentnet_core::crypto` and the
