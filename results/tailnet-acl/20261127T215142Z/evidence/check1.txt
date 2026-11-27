@@ -1,0 +1,58 @@
+# 2026-11-27T21:56:31Z box1: sudo iptables -S | grep -v -E "^-N|^-P" ; echo ---raw; sudo iptables -t raw -S; echo ---nat; sudo iptables -t nat -S; echo ---DOCKER-USER; sudo iptables -S DOCKER-USER; sudo ss -ltnp | grep -E ":60000|:22 "
+-A INPUT -j ts-input
+-A FORWARD -j ts-forward
+-A FORWARD -j DOCKER-USER
+-A FORWARD -j DOCKER-FORWARD
+-A DOCKER -d 172.28.66.22/32 ! -i br-07c6e209ec9f -o br-07c6e209ec9f -p tcp -m tcp --dport 8645 -j ACCEPT
+-A DOCKER -d 172.28.66.10/32 ! -i br-07c6e209ec9f -o br-07c6e209ec9f -p tcp -m tcp --dport 60000 -j ACCEPT
+-A DOCKER -d 172.28.66.10/32 ! -i br-07c6e209ec9f -o br-07c6e209ec9f -p tcp -m tcp --dport 8645 -j ACCEPT
+-A DOCKER ! -i docker0 -o docker0 -j DROP
+-A DOCKER ! -i br-07c6e209ec9f -o br-07c6e209ec9f -j DROP
+-A DOCKER-BRIDGE -o docker0 -j DOCKER
+-A DOCKER-BRIDGE -o br-07c6e209ec9f -j DOCKER
+-A DOCKER-CT -o docker0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A DOCKER-CT -o br-07c6e209ec9f -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A DOCKER-FORWARD -j DOCKER-CT
+-A DOCKER-FORWARD -j DOCKER-INTERNAL
+-A DOCKER-FORWARD -j DOCKER-BRIDGE
+-A DOCKER-FORWARD -i docker0 -j ACCEPT
+-A DOCKER-FORWARD -i br-07c6e209ec9f -j ACCEPT
+-A ts-forward -i tailscale0 -j MARK --set-xmark 0x40000/0xff0000
+-A ts-forward -m mark --mark 0x40000/0xff0000 -j ACCEPT
+-A ts-forward -s 100.64.0.0/10 -o tailscale0 -j DROP
+-A ts-forward -o tailscale0 -j ACCEPT
+-A ts-input -s <TS_IP_R>/32 -i lo -j ACCEPT
+-A ts-input -i tailscale0 -j ACCEPT
+-A ts-input -p udp -m udp --dport 41641 -j ACCEPT
+-A ts-input -s <PUBLIC_IP4>/23 ! -i tailscale0 -j RETURN
+-A ts-input -s 100.64.0.0/10 ! -i tailscale0 -j DROP
+---raw
+-P PREROUTING ACCEPT
+-P OUTPUT ACCEPT
+-A PREROUTING -d 172.28.66.10/32 ! -i br-07c6e209ec9f -j DROP
+-A PREROUTING -d 127.0.0.1/32 ! -i lo -p tcp -m tcp --dport 18640 -j DROP
+-A PREROUTING -d 172.28.66.22/32 ! -i br-07c6e209ec9f -j DROP
+-A PREROUTING -d 127.0.0.1/32 ! -i lo -p tcp -m tcp --dport 18642 -j DROP
+---nat
+-P PREROUTING ACCEPT
+-P INPUT ACCEPT
+-P OUTPUT ACCEPT
+-P POSTROUTING ACCEPT
+-N DOCKER
+-N ts-postrouting
+-A PREROUTING -m addrtype --dst-type LOCAL -j DOCKER
+-A OUTPUT ! -d 127.0.0.0/8 -m addrtype --dst-type LOCAL -j DOCKER
+-A POSTROUTING -s 172.28.66.0/24 ! -o br-07c6e209ec9f -j MASQUERADE
+-A POSTROUTING -j ts-postrouting
+-A POSTROUTING -s 172.17.0.0/16 ! -o docker0 -j MASQUERADE
+-A DOCKER -d 127.0.0.1/32 ! -i br-07c6e209ec9f -p tcp -m tcp --dport 18640 -j DNAT --to-destination 172.28.66.10:8645
+-A DOCKER -d <TS_IP_R>/32 ! -i br-07c6e209ec9f -p tcp -m tcp --dport 60000 -j DNAT --to-destination 172.28.66.10:60000
+-A DOCKER -d 127.0.0.1/32 ! -i br-07c6e209ec9f -p tcp -m tcp --dport 18642 -j DNAT --to-destination 172.28.66.22:8645
+-A ts-postrouting -m mark --mark 0x40000/0xff0000 -j MASQUERADE
+---DOCKER-USER
+-N DOCKER-USER
+LISTEN 0      128                           0.0.0.0:22         0.0.0.0:*    users:(("sshd",pid=1567,fd=6))         
+LISTEN 0      4096                       <TS_IP_R>:60000      0.0.0.0:*    users:(("docker-proxy",pid=11346,fd=8))
+LISTEN 0      128                              [::]:22            [::]:*    users:(("sshd",pid=1567,fd=7))         
+[rc=0]
+

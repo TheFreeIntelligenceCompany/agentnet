@@ -1,0 +1,16 @@
+{
+  // Throwaway Headscale policy for the AgentNet tailnet-ACL test.
+  // Only tag:agentnet-client may reach tag:agentnet-relay on tcp/60000. Nothing else is allowed.
+  "tagOwners": {
+    "tag:agentnet-relay":  ["agentnet@"],
+    "tag:agentnet-client": ["agentnet@"],
+    "tag:agentnet-guest":  ["agentnet@"]
+  },
+  "acls": [
+    {
+      "action": "accept",
+      "src": ["tag:agentnet-client"],
+      "dst": ["tag:agentnet-relay:60000"]
+    }
+  ]
+}

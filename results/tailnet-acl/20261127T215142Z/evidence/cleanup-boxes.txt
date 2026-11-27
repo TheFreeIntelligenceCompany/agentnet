@@ -1,0 +1,10 @@
+{"name":"agentnet-acl-1","createdAt":"2026-11-27T21:51:59.486511Z","spec":{"vcpus":4,"memMiB":8192,"persistentDiskGiB":20,"rootDiskGiB":16}}
+{"name":"agentnet-acl-2","createdAt":"2026-11-27T21:52:01.87956Z","spec":{"vcpus":2,"memMiB":4096,"persistentDiskGiB":20,"rootDiskGiB":16}}
+{"name":"agentnet-acl-3","createdAt":"2026-11-27T21:52:04.743942Z","spec":{"vcpus":2,"memMiB":4096,"persistentDiskGiB":20,"rootDiskGiB":16}}
+Deleting agentnet-acl-1: queued
+  succeeded
+Deleting agentnet-acl-2: queued
+  succeeded
+Deleting agentnet-acl-3: queued
+  succeeded
+2026-11-27T22:06:37Z

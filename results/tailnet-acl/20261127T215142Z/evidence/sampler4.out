@@ -1,0 +1,86 @@
+22:00:16.544 peer=CannotConnect frames_total=0 new_conn_rc=1 route=[172.16.0.1 dev eth0]
+22:00:20.677 peer=CannotConnect frames_total=0
+22:00:22.698 peer=CannotConnect frames_total=0
+22:00:24.726 peer=CannotConnect frames_total=0
+22:00:26.822 peer=CannotConnect frames_total=0
+22:00:28.845 peer=CannotConnect frames_total=0 new_conn_rc=1 route=[172.16.0.1 dev eth0]
+22:00:32.890 peer=CannotConnect frames_total=0
+22:00:34.918 peer=CannotConnect frames_total=0
+22:00:36.952 peer=CannotConnect frames_total=0
+22:00:38.980 peer=Connected frames_total=0
+22:00:41.006 peer=Connected frames_total=0 new_conn_rc=0 route=[tailscale0 table 52]
+22:00:43.038 peer=Connected frames_total=2 frame_payload_bytes= B:[2072] A1:[2089]
+22:00:45.071 peer=Connected frames_total=2
+22:00:47.098 peer=Connected frames_total=2
+22:00:49.123 peer=Connected frames_total=2
+22:00:51.146 peer=Connected frames_total=4 frame_payload_bytes= B:[2091] A1:[2092] new_conn_rc=0 route=[tailscale0 table 52]
+22:00:53.181 peer=Connected frames_total=4
+22:00:55.203 peer=Connected frames_total=4
+22:00:57.231 peer=Connected frames_total=4
+22:00:59.255 peer=Connected frames_total=6 frame_payload_bytes= B:[3986] A1:[2071]
+22:01:01.287 peer=Connected frames_total=6 new_conn_rc=0 route=[tailscale0 table 52]
+22:01:03.315 peer=Connected frames_total=6
+22:01:05.340 peer=Connected frames_total=6
+22:01:07.365 peer=Connected frames_total=8 frame_payload_bytes= B:[2094] A1:[2075]
+22:01:09.393 peer=Connected frames_total=8
+22:01:11.423 peer=Connected frames_total=8 new_conn_rc=0 route=[tailscale0 table 52]
+22:01:13.448 peer=Connected frames_total=8
+22:01:15.476 peer=Connected frames_total=10 frame_payload_bytes= B:[2064] A1:[2082]
+22:01:17.510 peer=Connected frames_total=10
+22:01:19.535 peer=Connected frames_total=10
+22:01:21.562 peer=Connected frames_total=11 frame_payload_bytes= B:[4006] new_conn_rc=0 route=[tailscale0 table 52]
+22:01:23.593 peer=Connected frames_total=12 frame_payload_bytes= A1:[2084]
+22:01:25.624 peer=Connected frames_total=12
+22:01:27.647 peer=Connected frames_total=12
+22:01:29.670 peer=Connected frames_total=12
+22:01:31.696 peer=Connected frames_total=12 new_conn_rc=1 route=[172.16.0.1 dev eth0]
+22:01:35.726 peer=Connected frames_total=12
+22:01:37.753 peer=Connected frames_total=12
+22:01:39.775 peer=Connected frames_total=12
+22:01:41.800 peer=Connected frames_total=12
+22:01:43.825 peer=Connected frames_total=12 new_conn_rc=1 route=[172.16.0.1 dev eth0]
+22:01:47.854 peer=Connected frames_total=12
+22:01:49.878 peer=Connected frames_total=12
+22:01:51.902 peer=Connected frames_total=12
+22:01:53.925 peer=Connected frames_total=12
+22:01:55.944 peer=Connected frames_total=12 new_conn_rc=1 route=[172.16.0.1 dev eth0]
+22:01:59.970 peer=Connected frames_total=12
+22:02:01.993 peer=Connected frames_total=12
+22:02:04.015 peer=Connected frames_total=12
+22:02:06.039 peer=Connected frames_total=12
+22:02:08.061 peer=Connected frames_total=12 new_conn_rc=1 route=[172.16.0.1 dev eth0]
+22:02:12.090 peer=Connected frames_total=12
+22:02:14.113 peer=Connected frames_total=12
+22:02:16.137 peer=Connected frames_total=12
+22:02:18.159 peer=Connected frames_total=12
+22:02:20.186 peer=CanConnect frames_total=12 new_conn_rc=1 route=[172.16.0.1 dev eth0]
+22:02:24.214 peer=CanConnect frames_total=12
+22:02:26.235 peer=CanConnect frames_total=12
+22:02:28.258 peer=CannotConnect frames_total=12
+22:02:30.282 peer=CannotConnect frames_total=12
+22:02:32.304 peer=CannotConnect frames_total=12 new_conn_rc=1 route=[172.16.0.1 dev eth0]
+22:02:36.331 peer=CannotConnect frames_total=12
+22:02:38.352 peer=CannotConnect frames_total=12
+22:02:40.376 peer=CannotConnect frames_total=12
+22:02:42.401 peer=CannotConnect frames_total=12
+22:02:44.429 peer=CannotConnect frames_total=12 new_conn_rc=1 route=[172.16.0.1 dev eth0]
+22:02:48.458 peer=CannotConnect frames_total=12
+22:02:50.480 peer=CannotConnect frames_total=12
+22:02:52.503 peer=CannotConnect frames_total=12
+22:02:54.526 peer=CannotConnect frames_total=12
+22:02:56.549 peer=CannotConnect frames_total=12 new_conn_rc=1 route=[172.16.0.1 dev eth0]
+22:03:00.577 peer=CannotConnect frames_total=12
+22:03:02.601 peer=CannotConnect frames_total=12
+22:03:04.628 peer=CannotConnect frames_total=12
+22:03:06.656 peer=CannotConnect frames_total=12
+22:03:08.684 peer=CannotConnect frames_total=12 new_conn_rc=1 route=[172.16.0.1 dev eth0]
+22:03:12.712 peer=CannotConnect frames_total=12
+22:03:14.737 peer=CannotConnect frames_total=12
+22:03:16.766 peer=CannotConnect frames_total=12
+22:03:18.790 peer=CannotConnect frames_total=12
+22:03:20.814 peer=CannotConnect frames_total=12 new_conn_rc=1 route=[172.16.0.1 dev eth0]
+22:03:24.841 peer=CannotConnect frames_total=12
+22:03:26.862 peer=CannotConnect frames_total=12
+22:03:28.885 peer=CannotConnect frames_total=12
+22:03:30.910 peer=CannotConnect frames_total=12
+22:03:32.932 peer=CannotConnect frames_total=12 new_conn_rc=1 route=[172.16.0.1 dev eth0]

@@ -1,0 +1,111 @@
+# 2026-11-27T21:55:17Z box2: for i in 1 2 3; do curl -s 127.0.0.1:18650/admin/v1/peers | jq -c "[.[]|{multiaddr,connected}]"; sleep 3; done
+[{"multiaddr":"/ip4/<TS_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV","connected":"Connected"}]
+[{"multiaddr":"/ip4/<TS_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV","connected":"Connected"}]
+[{"multiaddr":"/ip4/<TS_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV","connected":"Connected"}]
+[rc=0]
+
+# 2026-11-27T21:55:26Z box2: ~/agentnet --data-dir ~/a1 doctor --ready; echo exit=$?
+[ok  ] data dir permissions: directory 0700, files 0600
+[ok  ] config: /data/home/a1/agentnet.toml valid (private mode, 1 peer(s))
+[ok  ] identity: address an2zygi42wpl26azs5jpph7obnbrjbew37bvyntqn2sg2pbyaphrtnlsml7b4
+[ok  ] encryption subkey: expires in 364 day(s)
+[ok  ] replay guard: inactive (store generation 0)
+[warn] single instance: the same identity running in two data directories cannot be detected or prevented (the data-dir lock only covers one directory); both would receive, persist and acknowledge every message independently and may both fire triggers
+       -> run each identity in exactly one place; to move it, stop the old daemon first and copy agentnet.db + agentnet.generation or use `identity export/import`
+[ok  ] daemon socket: daemon answers on agentnet.sock
+[ok  ] node reachable: http://127.0.0.1:18650 answered 200
+[ok  ] clock: within 1 s of the node's clock
+[ok  ] isolation: no isolation violation reported
+[ok  ] peers == allowlist: 1 connected, all in the allowlist
+[ok  ] history sync: last successful relay Store sync 1 s ago (interval 15 s)
+[ok  ] transport ready: node reachable; 1 connected allowed peer(s)
+[ok  ] local inbox database: inbox query works (this tests the local database, not the relay Store)
+0 failing, 1 warning(s)
+exit=0
+ready: daemon, node, isolation and transport checks are ok
+[rc=0]
+
+# 2026-11-27T21:55:27Z box1: ~/agentnet --data-dir ~/b doctor --ready; echo exit=$?
+[ok  ] data dir permissions: directory 0700, files 0600
+[ok  ] config: /data/home/b/agentnet.toml valid (private mode, 1 peer(s))
+[ok  ] identity: address an2a7zk5pguujwj52ln743fgkni3s2hkb5lzxi5pravqzxhssozqsp5answlq
+[ok  ] encryption subkey: expires in 364 day(s)
+[ok  ] replay guard: inactive (store generation 0)
+[warn] single instance: the same identity running in two data directories cannot be detected or prevented (the data-dir lock only covers one directory); both would receive, persist and acknowledge every message independently and may both fire triggers
+       -> run each identity in exactly one place; to move it, stop the old daemon first and copy agentnet.db + agentnet.generation or use `identity export/import`
+[ok  ] daemon socket: daemon answers on agentnet.sock
+[ok  ] node reachable: http://127.0.0.1:18642 answered 200
+[ok  ] clock: within 0 s of the node's clock
+[ok  ] isolation: no isolation violation reported
+[ok  ] peers == allowlist: 1 connected, all in the allowlist
+[ok  ] history sync: last successful relay Store sync 7 s ago (interval 15 s)
+[ok  ] transport ready: node reachable; 1 connected allowed peer(s)
+[ok  ] local inbox database: inbox query works (this tests the local database, not the relay Store)
+0 failing, 1 warning(s)
+exit=0
+ready: daemon, node, isolation and transport checks are ok
+[rc=0]
+
+# 2026-11-27T21:55:28Z box2: ~/agentnet --data-dir ~/a1 contact add xioGawn8KhsAAAAgqTjvB6K_HjpfZ_sd7YIm3YLzNsT9vvj9LotBOG3e2gjCpgYfGwoAAAA3BYJrCfwqAwsJBwMVCggCmwMCHgkiIQYH8q681KJsnult_zZTKajctHUHq83R18QVhm55SdmEnwAAAAAsLyCOIX1Tg3DK2u1NtYeFh_i9nlTZiY3Y5Sa77nbldT9bnA9uTVY4FM2YMlUbxQ2LQoQmbiifJuka6LrwOlSi1cVvCh2P35s7ncZD1SnyVB4uTHLpgX8VeXhU-62c4DTchgHOKgZrCfwqGQAAACDprKGTv70ecSNcpeYj0s4VQQbiX2stGc-Pi-Ln0QD8LcKhBhgbCgAAADIFgmsJ_CoFiQHhM4ACmwQiIQYH8q681KJsnult_zZTKajctHUHq83R18QVhm55SdmEnwAAAACIrCDn-wmwVXwTwvHcocNVIyGAJ6sCJEmwx-duQMzoTOmAZesa95w4HIY5GEWGce9riONlboVOpqQ-AW8OGf-J8LqvQGtpyh-W_3jhHEgES7T0pwRlPuwAfpNq5PbBrQh0iQw --expect an2zygi42wpl26azs5jpph7obnbrjbew37bvyntqn2sg2pbyaphrtnlsml7b4; echo exit=$?; ~/agentnet --data-dir ~/a1 contact add xioGawn8KhsAAAAgqTjvB6K_HjpfZ_sd7YIm3YLzNsT9vvj9LotBOG3e2gjCpgYfGwoAAAA3BYJrCfwqAwsJBwMVCggCmwMCHgkiIQYH8q681KJsnult_zZTKajctHUHq83R18QVhm55SdmEnwAAAAAsLyCOIX1Tg3DK2u1NtYeFh_i9nlTZiY3Y5Sa77nbldT9bnA9uTVY4FM2YMlUbxQ2LQoQmbiifJuka6LrwOlSi1cVvCh2P35s7ncZD1SnyVB4uTHLpgX8VeXhU-62c4DTchgHOKgZrCfwqGQAAACDprKGTv70ecSNcpeYj0s4VQQbiX2stGc-Pi-Ln0QD8LcKhBhgbCgAAADIFgmsJ_CoFiQHhM4ACmwQiIQYH8q681KJsnult_zZTKajctHUHq83R18QVhm55SdmEnwAAAACIrCDn-wmwVXwTwvHcocNVIyGAJ6sCJEmwx-duQMzoTOmAZesa95w4HIY5GEWGce9riONlboVOpqQ-AW8OGf-J8LqvQGtpyh-W_3jhHEgES7T0pwRlPuwAfpNq5PbBrQh0iQw --expect an2a7zk5pguujwj52ln743fgkni3s2hkb5lzxi5pravqzxhssozqsp5answlq --alias B; echo exit=$?; ~/agentnet --data-dir ~/a1 contact add xioGawn8NRsAAAAg8VArO7vPI5DJ4IgfZS4-wqnKzLDQZT_F2ah---ba_YzCpgYfGwoAAAA3BYJrCfw1AwsJBwMVCggCmwMCHgkiIQZDQcBtCKdgT5lQOJtdspcdJJEEqxOCEj5lsLDcbRefagAAAADnoyCWHL46dcYORBrvd3rkxi7OxDbm_0vWVU6zl0qaI1Xjr4BotkTJU8Rs6Rk1TwSa0S8Ty9ALshrzDw1jBNQ0G2uOz4oUqxWgFF5Syyais4LeYMzSaTdkWbdZPmXFnhzhTwjOKgZrCfw1GQAAACCG8lcjlGQwyf3JGclGYfBErd0Z85it5275yhh1Tk9LBMKhBhgbCgAAADIFgmsJ_DUFiQHhM4ACmwQiIQZDQcBtCKdgT5lQOJtdspcdJJEEqxOCEj5lsLDcbRefagAAAAD2SSAvE1GG5EVenZ_SRC3_e7mvo-yNYez97ZZ7nu-qhRsOruOrbKwCISbHIXU3TMP7Sn7eA6pz9IFP_AvxEKUHHEnkRpmqh4a3pXHHg221c7AaEawRnBX2vpfXuSMwdO2Y4gA --alias A2untrusted; echo exit=$?; ~/agentnet --data-dir ~/a1 contact list; ~/agentnet --data-dir ~/a1 contact remove an2ina4a3iiu5qe7gkqhcnv3muxdusjcbflcobbeptfwcyny3ixt5vniyjyym; ~/agentnet --data-dir ~/a1 contact list
+exit=4
+an2a7zk5pguujwj52ln743fgkni3s2hkb5lzxi5pravqzxhssozqsp5answlq trusted alias=B
+exit=0
+an2ina4a3iiu5qe7gkqhcnv3muxdusjcbflcobbeptfwcyny3ixt5vniyjyym untrusted alias=A2untrusted
+warning: added as untrusted: the certificate was not bound to an address verified out of band. Verify that an2ina4a3iiu5qe7gkqhcnv3muxdusjcbflcobbeptfwcyny3ixt5vniyjyym is the address you were given over a separate channel, then raise the trust level (`agentnet contact trust an2ina4a3iiu5qe7gkqhcnv3muxdusjcbflcobbeptfwcyny3ixt5vniyjyym trusted`) or add the certificate again with `--expect an2ina4a3iiu5qe7gkqhcnv3muxdusjcbflcobbeptfwcyny3ixt5vniyjyym` / expected_address
+exit=0
+an2a7zk5pguujwj52ln743fgkni3s2hkb5lzxi5pravqzxhssozqsp5answlq trusted alias=B
+an2ina4a3iiu5qe7gkqhcnv3muxdusjcbflcobbeptfwcyny3ixt5vniyjyym untrusted alias=A2untrusted
+removed an2ina4a3iiu5qe7gkqhcnv3muxdusjcbflcobbeptfwcyny3ixt5vniyjyym
+an2a7zk5pguujwj52ln743fgkni3s2hkb5lzxi5pravqzxhssozqsp5answlq trusted alias=B
+error: contact certificate is not for the expected address
+[rc=0]
+
+# 2026-11-27T21:55:28Z box1: ~/agentnet --data-dir ~/b contact add xioGawn8LxsAAAAglsOCF8-AFRB8vw2FCAGM5GH49Cq10MkuIl-5jHcYjbvCpgYfGwoAAAA3BYJrCfwvAwsJBwMVCggCmwMCHgkiIQbODI5qz168DMupe8_3BaGKQktv4a4bODdSNp4cAeeM2gAAAABwaCArCOnsm2_H-KTWp0rJ5RqFk5zO7xB9sq9GesCwnX4DWG4yZtO84Zdad2F7CS20QaeFRPXUrLzby72AuC-PEEuF4WiuaLgNmaaBIDFrBs9xbfdGXgtYwROngQKSPEOnSgzOKgZrCfwvGQAAACBdmxJZCRSE9abHihoPerHQkzlqNgQ_zf8bEYZoKUzmZsKhBhgbCgAAADIFgmsJ_C8FiQHhM4ACmwQiIQbODI5qz168DMupe8_3BaGKQktv4a4bODdSNp4cAeeM2gAAAACM2yDtFEIGiaIFKbPPpu8MU1Is_v7pQf3zgnOMraD-NqouNr7bvLjrEKxHjTHiOBd9rZ-xteOlPrgsvMSbeP0CqTyLqT0kNCxrM9nJDgWrHCm5mIE2i0p95AWU6SfdCII-mgM --expect an2zygi42wpl26azs5jpph7obnbrjbew37bvyntqn2sg2pbyaphrtnlsml7b4 --alias A1; echo exit=$?
+an2zygi42wpl26azs5jpph7obnbrjbew37bvyntqn2sg2pbyaphrtnlsml7b4 trusted alias=A1
+exit=0
+[rc=0]
+
+# 2026-11-27T21:55:40Z box2: ~/agentnet --json --data-dir ~/a1 send an2a7zk5pguujwj52ln743fgkni3s2hkb5lzxi5pravqzxhssozqsp5answlq 'first A1 to B' | tee /tmp/m1.json; sleep 3; ~/agentnet --json --data-dir ~/a1 status $(jq -r .message_id /tmp/m1.json) | jq -c '{state,attempts,rtt_ms:(.delivered_at-.created_at)}'
+{"message_id":"ab84167d-a111-4fb0-b184-cd37cec492ff","status":"queued","conversation_id":"3a20a1a8-4e67-4de3-9284-8e41d433a755","expires_at":1795902941306,"deduplicated":false}
+{"state":"delivered","attempts":1,"rtt_ms":260}
+[rc=0]
+
+# 2026-11-27T21:55:44Z box1: ~/agentnet --json --data-dir ~/b send an2zygi42wpl26azs5jpph7obnbrjbew37bvyntqn2sg2pbyaphrtnlsml7b4 'first B to A1' | tee /tmp/m2.json; sleep 3; ~/agentnet --json --data-dir ~/b status $(jq -r .message_id /tmp/m2.json) | jq -c '{state,attempts,rtt_ms:(.delivered_at-.created_at)}'
+{"message_id":"8b25111c-9099-436c-b5dd-eb0d71a1dce0","status":"queued","conversation_id":"d3adcdcf-0832-4033-8d03-e226907e24f0","expires_at":1795902944854,"deduplicated":false}
+{"state":"delivered","attempts":1,"rtt_ms":293}
+[rc=0]
+
+# 2026-11-27T21:56:01Z box1: ~/agentnet --json --data-dir ~/b inbox --limit 200 2>&1 | jq -c '{records:(.records|length), unique:([.records[].message_id]|unique|length)}'
+{"records":21,"unique":21}
+[rc=0]
+
+# 2026-11-27T21:56:02Z box1: docker stop an-nb >/dev/null; date -u +%T.%3N
+21:56:03.374
+[rc=0]
+
+# 2026-11-27T21:56:03Z box2: for i in 1 2 3 4 5; do ~/agentnet --json --data-dir ~/a1 send an2a7zk5pguujwj52ln743fgkni3s2hkb5lzxi5pravqzxhssozqsp5answlq "offline $i" | jq -r .message_id; done > /tmp/off.ids; date -u +%T.%3N; sleep 6; for id in $(cat /tmp/off.ids); do ~/agentnet --json --data-dir ~/a1 status $id | jq -c '{state,attempts}'; done
+21:56:03.973
+{"state":"sent","attempts":3}
+{"state":"sent","attempts":3}
+{"state":"sent","attempts":3}
+{"state":"sent","attempts":3}
+{"state":"sent","attempts":3}
+[rc=0]
+
+# 2026-11-27T21:56:10Z box1: docker start an-nb >/dev/null; date -u +%T.%3N
+21:56:10.760
+[rc=0]
+
+# 2026-11-27T21:56:10Z box2: for i in $(seq 1 20); do n=0; for id in $(cat /tmp/off.ids); do s=$(~/agentnet --json --data-dir ~/a1 status $id | jq -r .state); [ $s = delivered ] && n=$((n+1)); done; echo "$(date -u +%T.%3N) delivered=$n/5"; [ $n = 5 ] && break; sleep 1; done; for id in $(cat /tmp/off.ids); do ~/agentnet --json --data-dir ~/a1 status $id | jq -c '{state,attempts,sent_at,delivered_at}'; done
+21:56:11.455 delivered=5/5
+{"state":"delivered","attempts":3,"sent_at":1795816563941,"delivered_at":1795816571066}
+{"state":"delivered","attempts":3,"sent_at":1795816563949,"delivered_at":1795816571068}
+{"state":"delivered","attempts":3,"sent_at":1795816563954,"delivered_at":1795816571070}
+{"state":"delivered","attempts":3,"sent_at":1795816563959,"delivered_at":1795816571073}
+{"state":"delivered","attempts":3,"sent_at":1795816563965,"delivered_at":1795816571075}
+[rc=0]
+
+# 2026-11-27T21:56:11Z box1: ~/agentnet --json --data-dir ~/b inbox --limit 200 | jq -c '[.records[]|select(.body|startswith("offline"))|{body,received_at}]'
+[{"body":"offline 1","received_at":1795816570905},{"body":"offline 2","received_at":1795816570907},{"body":"offline 3","received_at":1795816570909},{"body":"offline 4","received_at":1795816570910},{"body":"offline 5","received_at":1795816570912}]
+[rc=0]
+

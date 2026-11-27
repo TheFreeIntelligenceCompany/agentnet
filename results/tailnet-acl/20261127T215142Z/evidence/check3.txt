@@ -1,0 +1,45 @@
+# 2026-11-27T21:56:32Z box3: tailscale status; ip route get <TS_IP_R>; tailscale ping -c 2 <TS_IP_R> 2>&1; time nc -z -v -w 8 <TS_IP_R> 60000; echo nc_rc=$?; tailscale status --json | jq -c "{peers:(.Peer|length), Self:.Self.Tags}"; curl -s 127.0.0.1:18660/admin/v1/peers | jq -c "[.[]|{multiaddr,connected}]"; ~/agentnet --data-dir ~/a2 doctor --ready 2>&1 | tail -n 4; echo exit=${PIPESTATUS[0]}
+<TS_IP_C2>  acl-c2  tagged-devices  linux  -  
+<TS_IP_R> via 172.16.0.1 dev eth0 src 172.16.0.2 uid 1000 
+    cache 
+no matching peer
+nc_rc=1
+{"peers":0,"Self":["tag:agentnet-guest"]}
+[{"multiaddr":"/ip4/<TS_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV","connected":"CannotConnect"}]
+[ok  ] local inbox database: inbox query works (this tests the local database, not the relay Store)
+0 failing, 4 warning(s)
+NOT READY: messaging is not operational:
+  - transport ready: warning: node reachable; 0 connected allowed peer(s) -> messages queue locally until the node is ready
+exit=7
+nc: connect to <TS_IP_R> port 60000 (tcp) timed out: Operation now in progress
+
+real	0m8.008s
+user	0m0.002s
+sys	0m0.000s
+[rc=0]
+
+# 2026-11-27T21:56:41Z box3: for T in /agentnet/1/inbox-02/proto /agentnet/1/inbox-0c/proto; do curl -s -X POST -H 'content-type: application/json' -d "[\"$T\"]" 127.0.0.1:18660/relay/v1/auto/subscriptions; echo; done
+OK
+OK
+[rc=0]
+
+# 2026-11-27T21:56:41Z box2: for i in 1 2 3; do ~/agentnet --json --data-dir ~/a1 send an2a7zk5pguujwj52ln743fgkni3s2hkb5lzxi5pravqzxhssozqsp5answlq "while-guest-denied $i" | jq -r .message_id; sleep 2; done
+d6a7d300-ddf5-4eb7-925b-7f0677cc502e
+cf8abd5a-af51-4962-87a2-4044e47d16be
+e57ce10f-4729-4ff0-a768-3a1526c1c572
+[rc=0]
+
+# 2026-11-27T21:56:48Z box3: for T in %2Fagentnet%2F1%2Finbox-02%2Fproto %2Fagentnet%2F1%2Finbox-0c%2Fproto; do curl -s 127.0.0.1:18660/relay/v1/auto/messages/$T; echo; done; curl -s 127.0.0.1:18660/admin/v1/peers | jq -c '[.[]|.connected]'; docker logs an-a2 2>&1 | grep -o 'totalConnections=[0-9]*' | sort | uniq -c; curl -s 127.0.0.1:18660/debug/v1/info | jq -r '.listenAddresses[0]' | grep -o '16Uiu2HA[A-Za-z0-9]*' > /tmp/a2peer
+[]
+[]
+["CannotConnect"]
+      1 totalConnections=0
+[rc=0]
+
+# 2026-11-27T21:56:49Z box1: curl -s 127.0.0.1:18640/admin/v1/peers | jq -c '[.[]|{multiaddr,connected}]'; echo mentions-of-A2-ip-and-peerid-in-R-log:; docker logs an-r1 2>&1 | grep -c -E '100\.64\.0\.3'; docker logs an-r1 2>&1 | grep -c -F 16Uiu2HAm4z5fZBXXa2M9oiuwbHFZFaPAyxCm9XUnisNnuup5TcNS
+[{"multiaddr":"/ip4/172.28.66.1/tcp/43524/p2p/16Uiu2HAm2WdwyiWAyd9zukG2ZPjkrXaSKf9ZDzxpJc8cQdyK8cC7","connected":"Connected"},{"multiaddr":"/ip4/172.28.66.1/tcp/47702/p2p/16Uiu2HAmGGTNKYN2QDGjGj2HK1fXFUZ4js6P5K1VmMvEofo4MfAZ","connected":"Connected"}]
+mentions-of-A2-ip-and-peerid-in-R-log:
+0
+0
+[rc=1]
+

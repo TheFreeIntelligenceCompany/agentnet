@@ -1,0 +1,25 @@
+# 2026-11-27T21:58:59Z box2: for p in 22 80 443 8080 9090 8645 18640 18642 9999; do timeout 6 nc -z -w 3 <TS_IP_R> $p && echo "OPEN $p" || echo "closed/filtered $p"; done; cat /tmp/scan.out
+closed/filtered 22
+closed/filtered 80
+closed/filtered 443
+closed/filtered 8080
+closed/filtered 9090
+closed/filtered 8645
+closed/filtered 18640
+closed/filtered 18642
+closed/filtered 9999
+scan start 21:57:28 target=<TS_IP_R>
+      1 open 58436
+      5 open 60000
+scan done 21:58:58
+[rc=0]
+
+# 2026-11-27T21:59:27Z box1: sudo ss -ltn | awk "NR==1||/:22 |:60000|:5[0-9][0-9][0-9][0-9] /"
+State  Recv-Q Send-Q                  Local Address:Port  Peer Address:Port
+LISTEN 0      4096            <TS_IP_R>%tailscale0:58436      0.0.0.0:*   
+LISTEN 0      128                           0.0.0.0:22         0.0.0.0:*   
+LISTEN 0      4096                       <TS_IP_R>:60000      0.0.0.0:*   
+LISTEN 0      128                              [::]:22            [::]:*   
+LISTEN 0      4096   [<TS_IP6_R>]%tailscale0:59780         [::]:*   
+[rc=0]
+

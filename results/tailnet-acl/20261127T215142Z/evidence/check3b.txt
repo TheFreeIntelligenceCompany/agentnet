@@ -1,0 +1,35 @@
+# 2026-11-27T21:57:05Z box1: bash /tmp/policy-apply.sh /tmp/policy-3b-visibility-variant.hujson
+Policy is valid
+applied 2026-11-27T21:57:05.634Z sha256=8eda8ac277c4b7f2
+2026-11-27T21:57:05Z INF Received SIGHUP, reloading ACL policy signal=hangup
+2026-11-27T21:57:05Z INF Policy reload completed with changes policy.changed=true route.changes=0 total.changes=1
+[rc=0]
+
+# 2026-11-27T21:57:10Z box3: tailscale status; ip route get <TS_IP_R>; tailscale ping -c 3 <TS_IP_R> 2>&1; for p in 9999 60000 22; do echo "port $p:"; timeout 10 nc -z -v -w 5 <TS_IP_R> $p; echo "rc=$?"; done
+<TS_IP_C2>  acl-c2  tagged-devices  linux  -  
+<TS_IP_R>  acl-r   tagged-devices  linux  -  
+<TS_IP_R> dev tailscale0 table 52 src <TS_IP_C2> uid 1000 
+    cache 
+pong from acl-r (<TS_IP_R>) via DERP(sea) in 19ms
+pong from acl-r (<TS_IP_R>) via DERP(sea) in 19ms
+pong from acl-r (<TS_IP_R>) via DERP(sea) in 19ms
+direct connection not established
+port 9999:
+rc=1
+port 60000:
+rc=1
+port 22:
+rc=1
+nc: connect to <TS_IP_R> port 9999 (tcp) failed: Connection refused
+nc: connect to <TS_IP_R> port 60000 (tcp) timed out: Operation now in progress
+nc: connect to <TS_IP_R> port 22 (tcp) timed out: Operation now in progress
+[rc=0]
+
+# 2026-11-27T21:57:24Z box1: bash /tmp/policy-apply.sh /tmp/policy-main.hujson
+Policy is valid
+applied 2026-11-27T21:57:25.684Z sha256=2ff924b4dd277604
+2026-11-27T21:57:05Z INF Policy reload completed with changes policy.changed=true route.changes=0 total.changes=1
+2026-11-27T21:57:25Z INF Received SIGHUP, reloading ACL policy signal=hangup
+2026-11-27T21:57:26Z INF Policy reload completed with changes policy.changed=true route.changes=0 total.changes=1
+[rc=0]
+

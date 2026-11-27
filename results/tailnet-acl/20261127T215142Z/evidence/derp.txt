@@ -1,0 +1,30 @@
+# 2026-11-27T22:04:07Z box2: sudo iptables -I OUTPUT 1 -o lo -j ACCEPT; sudo iptables -I OUTPUT 2 -p udp --dport 53 -j ACCEPT; sudo iptables -I OUTPUT 3 -p udp -j DROP; sudo iptables -I INPUT 1 -i lo -j ACCEPT; sudo iptables -I INPUT 2 -p udp --sport 53 -j ACCEPT; sudo iptables -I INPUT 3 -p udp -j DROP; sudo ip6tables -I OUTPUT 1 -o lo -j ACCEPT; sudo ip6tables -I OUTPUT 2 -p udp --dport 53 -j ACCEPT; sudo ip6tables -I OUTPUT 3 -p udp -j DROP; sudo ip6tables -I INPUT 1 -i lo -j ACCEPT; sudo ip6tables -I INPUT 2 -p udp --sport 53 -j ACCEPT; sudo ip6tables -I INPUT 3 -p udp -j DROP; sudo iptables -S OUTPUT; sleep 45; tailscale ping -c 4 --timeout 10s <TS_IP_R>; tailscale status --json | jq -c "{peers:[.Peer[]|{CurAddr,Relay,Active}]}"
+-P OUTPUT ACCEPT
+-A OUTPUT -o lo -j ACCEPT
+-A OUTPUT -p udp -m udp --dport 53 -j ACCEPT
+-A OUTPUT -p udp -j DROP
+pong from acl-r (<TS_IP_R>) via DERP(sea) in 18ms
+pong from acl-r (<TS_IP_R>) via DERP(sea) in 18ms
+pong from acl-r (<TS_IP_R>) via DERP(sea) in 18ms
+pong from acl-r (<TS_IP_R>) via DERP(sea) in 18ms
+{"peers":[{"CurAddr":"","Relay":"sea","Active":true}]}
+direct connection not established
+[rc=0]
+
+# 2026-11-27T22:05:11Z box2: tailscale status --json | jq -c "{peers:[.Peer[]|{CurAddr,Relay}]}"; docker restart an-a1 >/dev/null; date -u +%T.%3N; for i in $(seq 1 60); do c=$(curl -s -m 2 127.0.0.1:18650/admin/v1/peers | jq -r ".[0].connected"); [ "$c" = Connected ] && break; sleep 1; done; echo "$(date -u +%T.%3N) node peer: $c"; tailscale status --json | jq -c "{peers:[.Peer[]|{CurAddr,Relay}]}"
+{"peers":[{"CurAddr":"","Relay":"sea"}]}
+22:05:12.959
+22:05:14.093 node peer: Connected
+{"peers":[{"CurAddr":"","Relay":"sea"}]}
+jq: parse error: Invalid numeric literal at line 1, column 7
+[rc=0]
+
+# 2026-11-27T22:05:32Z box2: ~/agentnet --json --data-dir ~/a1 send an2a7zk5pguujwj52ln743fgkni3s2hkb5lzxi5pravqzxhssozqsp5answlq 'after restart over DERP' | tee /tmp/m3.json >/dev/null; sleep 3; ~/agentnet --json --data-dir ~/a1 status $(jq -r .message_id /tmp/m3.json) | jq -c '{state,attempts,rtt:(.delivered_at-.created_at)}'
+{"state":"delivered","attempts":1,"rtt":1000}
+[rc=0]
+
+# 2026-11-27T22:05:36Z box2: for t in iptables ip6tables; do sudo $t -D OUTPUT -o lo -j ACCEPT; sudo $t -D OUTPUT -p udp --dport 53 -j ACCEPT; sudo $t -D OUTPUT -p udp -j DROP; sudo $t -D INPUT -i lo -j ACCEPT; sudo $t -D INPUT -p udp --sport 53 -j ACCEPT; sudo $t -D INPUT -p udp -j DROP; done; sudo iptables -S OUTPUT; sleep 25; tailscale ping -c 5 <TS_IP_R>
+-P OUTPUT ACCEPT
+pong from acl-r (<TS_IP_R>) via <PUBLIC_IP4>:11219 in 1ms
+[rc=0]
+

@@ -1,0 +1,38 @@
+# 2026-11-27T22:00:37Z box1: bash /tmp/policy-apply.sh /tmp/policy-4-grant.hujson; date -u +%T.%3N
+Policy is valid
+applied 2026-11-27T22:00:38.311Z sha256=e9460b5b9a777ed3
+2026-11-27T21:57:26Z INF Policy reload completed with changes policy.changed=true route.changes=0 total.changes=1
+2026-11-27T22:00:38Z INF Received SIGHUP, reloading ACL policy signal=hangup
+2026-11-27T22:00:38Z INF Policy reload completed with changes policy.changed=true route.changes=0 total.changes=1
+22:00:40.333
+[rc=0]
+
+# 2026-11-27T22:01:10Z box3: curl -s 127.0.0.1:18660/admin/v1/peers | jq -c "[.[]|.connected]"; ~/agentnet --data-dir ~/a2 doctor --ready >/dev/null 2>&1; echo doctor_exit=$?; PA=$(python3 -c "import urllib.parse;print(urllib.parse.quote(\"$(cat ~/relay-peer.txt)\",safe=\"\"))"); for T in inbox-02 inbox-0c; do CT=$(python3 -c "import urllib.parse;print(urllib.parse.quote(\"/agentnet/1/$T/proto\",safe=\"\"))"); curl -s -m 20 "127.0.0.1:18660/store/v3/messages?peerAddr=$PA&pubsubTopic=%2Fwaku%2F2%2Frs%2F66%2F0&contentTopics=$CT&includeData=true&pageSize=100" | jq -c "{topic:\"$T\",status:.statusCode,n:(.messages|length),payload_bytes:([.messages[]|(.message.payload|@base64d|length)]|group_by(.)|map({size:.[0],count:length}))}"; done
+["Connected"]
+doctor_exit=0
+{"topic":"inbox-02","status":200,"n":72,"payload_bytes":[{"size":2046,"count":1},{"size":2051,"count":1},{"size":2054,"count":1},{"size":2058,"count":2},{"size":2060,"count":1},{"size":2064,"count":1},{"size":2065,"count":1},{"size":2066,"count":2},{"size":2067,"count":1},{"size":2068,"count":5},{"size":2069,"count":3},{"size":2070,"count":4},{"size":2071,"count":6},{"size":2072,"count":2},{"size":2074,"count":2},{"size":2075,"count":2},{"size":2076,"count":3},{"size":2077,"count":4},{"size":2078,"count":1},{"size":2079,"count":1},{"size":2080,"count":2},{"size":2081,"count":3},{"size":2084,"count":2},{"size":2085,"count":5},{"size":2086,"count":1},{"size":2087,"count":1},{"size":2088,"count":4},{"size":2089,"count":2},{"size":2091,"count":1},{"size":2092,"count":1},{"size":2093,"count":1},{"size":2094,"count":1},{"size":2096,"count":1},{"size":2097,"count":1},{"size":3986,"count":1},{"size":4008,"count":1}]}
+{"topic":"inbox-0c","status":200,"n":62,"payload_bytes":[{"size":2049,"count":1},{"size":2057,"count":1},{"size":2058,"count":1},{"size":2061,"count":2},{"size":2062,"count":2},{"size":2063,"count":1},{"size":2065,"count":4},{"size":2066,"count":2},{"size":2068,"count":1},{"size":2069,"count":2},{"size":2070,"count":2},{"size":2071,"count":3},{"size":2072,"count":3},{"size":2073,"count":1},{"size":2074,"count":1},{"size":2075,"count":4},{"size":2076,"count":1},{"size":2077,"count":2},{"size":2078,"count":3},{"size":2079,"count":3},{"size":2081,"count":3},{"size":2082,"count":2},{"size":2083,"count":1},{"size":2085,"count":5},{"size":2088,"count":1},{"size":2089,"count":4},{"size":2090,"count":2},{"size":2092,"count":1},{"size":2095,"count":1},{"size":2096,"count":1},{"size":2097,"count":1}]}
+[rc=0]
+
+# 2026-11-27T22:01:24Z box1: bash /tmp/policy-apply.sh /tmp/policy-main.hujson; date -u +%T.%3N
+Policy is valid
+applied 2026-11-27T22:01:25.315Z sha256=2ff924b4dd277604
+2026-11-27T22:00:38Z INF Policy reload completed with changes policy.changed=true route.changes=0 total.changes=1
+2026-11-27T22:01:25Z INF Received SIGHUP, reloading ACL policy signal=hangup
+2026-11-27T22:01:25Z INF Policy reload completed with changes policy.changed=true route.changes=0 total.changes=1
+22:01:27.328
+[rc=0]
+
+# 2026-11-27T22:02:49Z box1: curl -s 127.0.0.1:18640/admin/v1/peers | jq -c "[.[]|{multiaddr,connected}]"; date -u +%T
+[{"multiaddr":"/ip4/172.28.66.1/tcp/53102/p2p/16Uiu2HAm4z5fZBXXa2M9oiuwbHFZFaPAyxCm9XUnisNnuup5TcNS","connected":"CannotConnect"},{"multiaddr":"/ip4/172.28.66.1/tcp/43524/p2p/16Uiu2HAm2WdwyiWAyd9zukG2ZPjkrXaSKf9ZDzxpJc8cQdyK8cC7","connected":"Connected"},{"multiaddr":"/ip4/172.28.66.1/tcp/47702/p2p/16Uiu2HAmGGTNKYN2QDGjGj2HK1fXFUZ4js6P5K1VmMvEofo4MfAZ","connected":"Connected"}]
+22:02:50
+[rc=0]
+
+# 2026-11-27T22:03:44Z box2: for id in $(awk "{print \$NF}" /tmp/ticker4.out); do ~/agentnet --json --data-dir ~/a1 status $id | jq -r .state; done | sort | uniq -c
+     24 delivered
+[rc=0]
+
+# 2026-11-27T22:03:44Z box3: ~/agentnet --data-dir ~/a2 doctor --ready >/dev/null 2>&1; echo doctor_exit_after_revert=$?
+doctor_exit_after_revert=7
+[rc=0]
+

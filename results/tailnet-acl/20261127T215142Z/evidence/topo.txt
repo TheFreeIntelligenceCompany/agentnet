@@ -1,0 +1,107 @@
+# 2026-11-27T21:53:02Z box1: cd ~/hs; ./headscale -c config.yaml nodes list -o json | jq -c ".[]|{id,name,ips:.ip_addresses,tags:.tags,online}"; ./headscale version; tailscale version | head -n 1; tailscale status
+{"id":1,"name":"acl-r","ips":["<TS_IP_R>","<TS_IP6_R>"],"tags":["tag:agentnet-relay"],"online":true}
+{"id":2,"name":"acl-c1","ips":["<TS_IP_C1>","<TS_IP6_C1>"],"tags":["tag:agentnet-client"],"online":true}
+{"id":3,"name":"acl-c2","ips":["<TS_IP_C2>","<TS_IP6_C2>"],"tags":["tag:agentnet-guest"],"online":true}
+headscale version v0.29.7
+commit: c9cf210b8bc84d13177e18b91f555788a44b47b6
+build time: 2026-10-30T09:33:17Z
+built with: go1.27.3 linux/amd64
+
+1.104.7
+<TS_IP_R>  acl-r   tagged-devices  linux  -  
+<TS_IP_C1>  acl-c1  tagged-devices  linux  -  
+[rc=0]
+
+# 2026-11-27T22:06:12Z box1: cd ~/hs; grep -v "^[[:space:]]*#" config.yaml | grep -v "^[[:space:]]*$"; docker inspect an-r1 --format "{{json .HostConfig.Sysctls}}"; docker image ls --digests --format "{{.Repository}}@{{.Digest}}"; sha256sum ~/agentnet; ~/agentnet --version; git -C ~/an rev-parse HEAD; docker --version; uname -srm
+server_url: https://<HS_HOST>
+listen_addr: 127.0.0.1:8080
+metrics_listen_addr: 127.0.0.1:9090
+grpc_listen_addr: 127.0.0.1:50443
+grpc_allow_insecure: false
+trusted_proxies: []
+noise:
+  private_key_path: /data/home/hs/data/noise_private.key
+prefixes:
+  v4: 100.64.0.0/10
+  v6: fd7a:115c:a1e0::/48
+  allocation: sequential
+derp:
+  server:
+    enabled: false
+    region_id: 999
+    region_code: "headscale"
+    region_name: "Headscale Embedded DERP"
+    verify_clients: true
+    stun_listen_addr: "0.0.0.0:3478"
+    private_key_path: /data/home/hs/data/derp_server_private.key
+    automatically_add_embedded_derp_region: true
+  urls:
+    - https://controlplane.tailscale.com/derpmap/default
+  paths: []
+  auto_update_enabled: true
+  update_frequency: 3h
+disable_check_updates: false
+node:
+  expiry: 0
+  ephemeral:
+    inactivity_timeout: 30m
+  routes:
+    ha:
+      probe_interval: 10s
+      probe_timeout: 5s
+database:
+  type: sqlite
+  debug: false
+  gorm:
+    prepare_stmt: true
+    parameterized_queries: true
+    skip_err_record_not_found: true
+    slow_threshold: 1000
+  sqlite:
+    path: /data/home/hs/data/db.sqlite
+    write_ahead_log: true
+    wal_autocheckpoint: 1000
+acme_url: https://acme-v02.api.letsencrypt.org/directory
+acme_email: ""
+tls_letsencrypt_hostname: ""
+tls_letsencrypt_cache_dir: /data/home/hs/data/cache
+tls_letsencrypt_challenge_type: HTTP-01
+tls_letsencrypt_listen: ":http"
+tls_cert_path: ""
+tls_key_path: ""
+log:
+  level: info
+  format: text
+policy:
+  mode: file
+  path: /data/home/hs/policy.hujson
+dns:
+  magic_dns: false
+  base_domain: example.com
+  override_local_dns: false
+  nameservers:
+    global:
+      - 1.1.1.1
+      - 1.0.0.1
+      - 2606:4700:4700::1111
+      - 2606:4700:4700::1001
+    split: {}
+  search_domains: []
+  extra_records: []
+unix_socket: /data/home/hs/data/headscale.sock
+unix_socket_permission: "0770"
+logtail:
+  enabled: false
+taildrop:
+  enabled: true
+auto_update:
+  enabled: false
+{"net.ipv4.tcp_retries2":"6"}
+wakuorg/nwaku@sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73
+df629e5194bf632bfcdf168f6367fda8b00d5962ce170398754132333723c5a2  /data/home/agentnet
+agentnet 0.1.0
+481eb152f3b3e1ea7ef9e22c05af20bf2ec13ff9
+Docker version 29.8.2, build 7fc2dff
+Linux 6.18.60-instabox x86_64
+[rc=0]
+
