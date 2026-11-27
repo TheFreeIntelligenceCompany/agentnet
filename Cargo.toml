@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members = ["crates/transport", "crates/core", "crates/mcp", "crates/daemon", "crates/cli", "tests/acceptance"]
-exclude = ["spike", "upstream"]
+exclude = ["spike", "upstream", "tests/interop-rpgp"]
 
 [workspace.package]
 version = "0.1.0"
