@@ -1,411 +1,246 @@
-# AgentNet wire protocol, version 1
+# AgentNet wire protocol, version 2 (RFC 9580 OpenPGP profile)
 
-Status: normative for the MVP, **not yet frozen**. There are no released peers,
-so the version numbers below (`v: 1`, frame version 1, suite id 1) were kept
-while the format changed during the cryptographic hardening that followed the
-owner's conditions on ADR 0002 (new contact-record fields `key_epoch`,
-`revoked_kem_epochs_below`, `suites`; new signed envelope fields `suite` and
-`recipient_key_epoch`; reserved message types `contact.update` and
-`identity.revoked`). Until a first release the wire format may still change
-without a version bump. Nothing here has been independently reviewed: this is
-**not an audited, not a production-secure and not a forward-secret protocol**
-(section 7); an independent cryptographic review is required before any
-production use involving sensitive information. Implemented by `crates/core`
-behind the `crypto` module (`crypto::{address, contact, envelope, identity,
-revocation}` and the `MessageProtection` trait; see `docs/crypto-interface.md`).
-Design rationale is in
-`docs/architecture.md` sections 4 and 5; why HPKE is used rather than a
-messaging library is in `docs/spike/notes-libchat-and-crypto.md`. RFC 9180
-(HPKE) section numbers below were checked against the RFC text.
+Status: normative for the MVP, **not yet frozen**. ADR 0004 (accepted by the
+repository owner) replaced the hand-rolled scheme of ADR 0002 (HPKE base mode,
+AgentNet's own envelope signature, key epochs, signed contact records) by a
+**profile of RFC 9580 OpenPGP**; ADR 0002's wire format no longer exists in the
+tree (hard cutover, `agentnet identity migrate`). There are no released peers,
+so the format may still change without a version bump. Nothing here has been
+independently reviewed: this is **not an audited, not a production-secure and
+not a forward-secret protocol** (section 7); an independent cryptographic review
+is required before any production use involving sensitive information.
+
+AgentNet defines **no cryptographic construction**: key agreement, encryption,
+signatures, key binding, expiry, revocation, the hidden recipient and padding are
+RFC 9580 constructions implemented by `sequoia-openpgp` 2.5.0 (OpenSSL 3
+backend). What AgentNet adds is policy and glue (which packets to accept, how
+certificates are merged, payload schema, replay and trust), enumerated in
+`docs/crypto-requirements.md`. Implemented by `crates/core` behind the `crypto`
+module (`crypto::{address, contact, envelope, identity, revocation, advert, pgp,
+protection}` and the `MessageProtection` trait; see `docs/crypto-interface.md`).
+Evidence for the choice: `docs/adr/0004-openpgp-message-protection.md`,
+`docs/spike/notes-openpgp.md`, `results/a2-openpgp/`.
 
 Conventions: "MUST", "MUST NOT" and "SHOULD" are used as in RFC 2119. All
-integers in binary structures are big-endian. All timestamps are Unix time in
-milliseconds (UTC), signed 64-bit. "Reject" means: stop processing, return an
-error that carries no plaintext, and do not act on the input.
+timestamps in application payloads are Unix time in milliseconds (UTC), signed
+64-bit. "Reject" means: stop processing, return an error that carries no
+plaintext, and do not act on the input. RFC 9580 section numbers are from the
+RFC text fetched from rfc-editor.org (`results/a2-openpgp/versions.txt`).
 
 ## 1. Primitives
 
-| Purpose | Primitive | Library (exact pins in `Cargo.lock`) |
+| Purpose | Mechanism | RFC 9580 |
 |---|---|---|
-| Signatures | Ed25519, verified with the *strict* rules (`verify_strict`: rejects small-order keys and non-canonical signatures) | `ed25519-dalek` =3.0.0 |
-| Hash | SHA-256 | `sha2` =0.10.9 |
-| Encryption | HPKE (RFC 9180) Base mode, DHKEM(X25519, HKDF-SHA256) = 0x0020, HKDF-SHA256 = 0x0001, ChaCha20-Poly1305 = 0x0003 (RFC 9180 section 7.1, 7.2, 7.3) | `hpke` =0.15.1 |
-| Passphrase export | age (scrypt recipient), ASCII armor | `age` =0.12.1 |
+| Identity and contact record | v6 certificate: Ed25519 primary key (certify + sign, no expiry), X25519 encryption subkey with an expiry, subkey binding signatures | 5.5, 5.2.1, 5.2.3.13, 9.1 |
+| Address | `an2` + base32(fingerprint ‖ 4-byte checksum); the fingerprint is the SHA2-256 v6 fingerprint of the primary key | 5.5.4.3 |
+| Encryption | PKESK v6 to an **anonymous** recipient (no fingerprint), X25519; SEIPD v2 with AES-256 and OCB (4 KiB chunks, per-message salt) | 5.1, 5.13.2, 9.6 |
+| Sender authentication | One-pass signed Literal Data, v6 Ed25519 data signature inside the encryption | 10.3, 5.2 |
+| Recipient binding | Intended Recipient Fingerprint subpacket naming the recipient's PRIMARY key; mandatory on receive | 5.2.3.36 |
+| Padding | standard Padding packet as the last packet of the SEIPD v2 payload | 5.14 |
+| Rotation | new encryption subkey; the old one retired by a standard subkey revocation ("key retired") | 5.2.3.31 |
+| Revocation | standard subkey or primary-key revocation signatures, distributed as the merged certificate | 5.2.1 |
+| Identity file export | `age` passphrase (scrypt) file around the secret certificate (an existing tool; no AgentNet construction) | n/a |
+| Address checksum, ids | SHA-256 typo checksum, UUIDv4 message ids, JSON | RFC 6234, 4648 |
 
-Every direct dependency on the cryptographic path (`hpke`, `ed25519-dalek`,
-`sha2`, `age`, `getrandom`, `zeroize`, `data-encoding`, `base64`, `uuid`) is
-pinned with an exact `=x.y.z` requirement; the transitive cryptographic crates
-(`curve25519-dalek`, `x25519-dalek`, `chacha20poly1305`, `hkdf`, ...) are pinned
-by the committed `Cargo.lock` (CI builds with `--locked`). The suite is checked
-against published vectors (RFC 9180 Appendix A.2.1, RFC 8032 section 7.1,
-RFC 6234, RFC 4648; `crates/core/tests/vectors.rs`).
-
-There is no hand-written cryptography. The Ed25519 signing key and the X25519
-KEM key are generated independently; neither is derived from the other.
-
-All domain-separation strings are ASCII and are used byte-exactly:
-
-| String | Used for |
-|---|---|
-| `agentnet/v1/address-checksum` | address checksum hash input prefix |
-| `agentnet/v1/inbox-topic` | inbox bucket hash input prefix |
-| `agentnet/v1/contact-record\0` | contact record signature input prefix |
-| `agentnet/v1/envelope\0` | envelope signature input prefix |
-| `agentnet/v1/identity-revocation\0` | identity-revocation tombstone signature input prefix |
-| `agentnet/v1/capability-advert\0` | capability advertisement signature input prefix (optional discovery, `docs/discovery.md`) |
-| `agentnet/v1/hpke\0` | HPKE `info` prefix |
-
-(`\0` is a single NUL byte.)
+Policy object: `StandardPolicy` plus the explicit receiver rules of section 5.
+There are no other algorithms: no compression (compiled out), no SKESK, no
+PKESK v3, no SEIPD v1, no RSA or ECDSA keys in AgentNet's use.
 
 ## 2. Addresses
 
-An address is the agent's Ed25519 public key `pk` (32 bytes) plus a typo
-checksum.
+`an2` + lowercase RFC 4648 base32 (no padding) of `fingerprint(32) ‖ checksum(4)`,
+61 characters; `checksum = SHA-256("agentnet/v2/address-checksum" ‖ fingerprint)[0..4]`
+(a typo guard, not a security mechanism). Parsing is strict (case, length, alphabet,
+trailing bits, checksum). `an1` addresses (retired format) fail with a message that
+names `agentnet identity migrate`. A fingerprint hashes the primary key packet
+(including its creation time), so it pins a certificate; it cannot verify
+anything by itself. Obtain the address over a channel separate from the
+certificate; `contact add --expect <address>` binds them.
 
-```
-checksum = SHA-256("agentnet/v1/address-checksum" || pk)[0..4]
-address  = "an1" || lowercase(base32_rfc4648_nopad(pk || checksum))
-```
+## 3. Contact record: the certificate
 
-The base32 part is 58 characters, so an address is exactly 61 characters.
-Example (seed `[7; 32]`):
-`an15jfgyy7ctrjavpxvkb5rglwf7gkuo5vox27hxescd3vgsfcg2iwicroqze`.
+A contact record is the peer's **public OpenPGP certificate**, document form
+base64url (no padding) of the binary certificate, at most 4096 bytes after
+sanitizing (ASCII armor is accepted on input; secret key material is refused
+with `ContactError::ContainsSecretKey`). Alias and trust level are local
+application data.
 
-Parsing is strict and MUST reject: a wrong prefix; a length other than 61;
-any character outside `a-z2-7` (so uppercase and padding are rejected);
-non-zero trailing base32 bits; a checksum mismatch; a `pk` that is not a
-canonical encoding of a curve point; and a `pk` that is a weak (small-order)
-key, i.e. one `verify_strict` would refuse. The checksum catches typos; it is
-not a security mechanism. The address *is* the signing key, so an address
-authenticates a contact record without any directory.
+Acceptance (`crypto::contact`, `crypto::pgp`):
 
-Addresses order and hash by their 32 key bytes.
+1. Parse; refuse secret keys; require a v6 Ed25519 primary key.
+2. **Sanitize**: keep only the primary key, the subkeys, and the primary's own
+   direct-key and key-revocation signatures and the subkeys' own binding and
+   revocation signatures. User IDs, user attributes, **third-party
+   certifications**, designated-revoker revocations, unknown packets, markers
+   and unhashed junk are dropped before anything is stored.
+3. Require a valid self-signature under the policy; drop subkeys without a
+   valid binding signature; drop the oldest retired subkeys if the result would
+   exceed 4096 bytes.
+4. For a new contact: the primary must be alive and not revoked and at least one
+   encryption subkey must be live (bound, not expired, not revoked, v6 X25519).
 
-## 3. Contact record
-
-A contact record is the public, shareable binding of an address to its HPKE
-KEM public key. It is the only thing that binds the KEM key to the signing
-key.
-
-Record bytes are UTF-8 JSON with exactly these fields, in this order, no
-whitespace:
-
-```json
-{"v":1,"address":"an1…","signing_pk":"<b64url>","kem_pk":"<b64url>","key_epoch":1,"revoked_kem_epochs_below":1,"suites":[1],"inbox_buckets":16,"created_at":1700000000000,"kem_expires_at":null}
-```
-
-* `b64url` is RFC 4648 section 5 base64url without padding; decoders MUST reject padding and non-canonical trailing bits.
-* `signing_pk`: 32 bytes. `kem_pk`: 32-byte X25519 public key.
-* `key_epoch`: integer >= 1, starts at 1, incremented by every KEM rotation. This (not `created_at`) orders records of one address (section 9).
-* `revoked_kem_epochs_below`: integer in 1..=`key_epoch`. KEM key epochs strictly below it are revoked by the owner (1 = nothing revoked). A rotation with revocation sets it to the new `key_epoch`.
-* `suites`: the cipher suite ids the owner accepts, a non-empty strictly ascending list of 1..=255, at most 16 entries (today `[1]`). A sender seals only to a suite in this signed list (section 5, "No silent downgrade").
-* `inbox_buckets`: integer in 1..=256 (default 16).
-* `created_at`: when this record (this KEM key) was created, for information only; ordering uses `key_epoch`.
-* `kem_expires_at`: Unix ms or `null`. Senders MUST NOT seal to a key at or after this time.
-
-Signature: `sig = Ed25519(signing_sk, "agentnet/v1/contact-record\0" || record_bytes)`.
-
-Document (what is exchanged): `{"record":"<b64url(record_bytes)>","sig":"<b64url(sig, 64 bytes)>"}`.
-
-Verification (`parse_and_verify(doc, now_ms)`), in this order. Any failure rejects:
-
-1. Document length <= 4096 bytes.
-2. Document is JSON with exactly the fields `record` and `sig` (unknown fields and duplicate keys rejected); both decode as base64url; `sig` is 64 bytes.
-3. Record is JSON; its `v` is read first: `v != 1` is `UnknownVersion` (so a future version produces that error and not a field error). A v1 record has exactly the fields above: unknown, duplicate and missing fields are rejected (`kem_expires_at` must be present, possibly `null`).
-4. `address` parses (section 2) and equals the address derived from `signing_pk`.
-5. The signature verifies with `verify_strict` under the address's key over the domain-prefixed record bytes.
-6. `kem_pk` is 32 bytes, is not the all-zero value, and is not a low-order point (see below).
-7. `key_epoch >= 1` and `1 <= revoked_kem_epochs_below <= key_epoch` (`InvalidKeyEpoch`); `suites` non-empty, strictly ascending, no zero, at most 16 (`InvalidSuites`).
-8. `inbox_buckets` in 1..=256; `created_at` and `kem_expires_at` non-negative; `created_at` not more than 24 h after `now_ms`.
-9. `kem_expires_at`, if present, is greater than `now_ms`; otherwise `KemKeyExpired`. (Re-loading a persisted contact may use the variant that skips this check; sealing then re-checks it.)
-
-KEM key validation. In `hpke` 0.15.1, `PublicKey::from_bytes` for X25519 only
-checks the length, so validation is explicit: the all-zero key is rejected
-directly, and then a trial HPKE seal of an empty message to the key is
-performed; HPKE aborts if the Diffie-Hellman output is all-zero, which is what
-every low-order input point produces (RFC 9180 section 7.1.4, which requires
-this check for X25519 and refers to RFC 7748). A key that fails is rejected.
-
-The verified contact exposes the original signed document so that it can be
-persisted and re-verified later.
+**Updates are merges, never replacements** (`VerifiedContact::merge`): the
+incoming certificate must have the same primary key (otherwise
+`ContactError::PrimaryMismatch`; a different primary is a different address); the
+signatures are unioned (so revocations accumulate and are never dropped, and an
+older certificate cannot roll a newer one back); the result is sanitized again,
+so a stripped or forged subkey binding adds nothing. The first contact still
+rests on the out-of-band address (`--expect`); a stale certificate presented at
+first contact is a trust-bootstrap problem, as before.
 
 ### Inbox topic
 
-```
-bucket = u16_be(SHA-256("agentnet/v1/inbox-topic" || signing_pk)[0..2]) mod inbox_buckets
-topic  = "/agentnet/1/inbox-" || lowercase_hex2(bucket) || "/proto"
-```
+`/agentnet/1/inbox-<hh>/proto` with `hh` = two lowercase hex digits of
+`u16_be(fingerprint[0..2]) mod 16`. The number of buckets (16) is a protocol
+constant: it is no longer a per-agent field. The fingerprint is already a hash
+output, so no extra hash or domain string is used. All agents with the same
+bucket share a topic and trial-decrypt every frame on it; the topic is a public
+function of the address.
 
-`inbox_buckets <= 256` guarantees two hex digits. All agents with the same
-bucket share a topic and trial-decrypt every frame on it. `inbox_buckets` is
-inside the signed record so senders cannot pick the wrong topic. Example:
-the address above with 16 buckets is `/agentnet/1/inbox-06/proto`, with 256
-buckets `/agentnet/1/inbox-c6/proto`.
+## 4. Payload (the signed, encrypted application content)
 
-Rotation, revocation and their limits are specified in section 9.
-
-## 4. Envelope
-
-The envelope is the logical message. It is serialized as JSON; the exact
-serialized bytes are what is signed, and the receiver verifies and parses the
-exact received bytes (nothing is re-serialized).
-
-| Field | Type | Rule |
-|---|---|---|
-| `v` | integer | MUST be 1 |
-| `message_id` | string | lowercase hyphenated UUIDv4 (version 4, RFC 4122 variant) |
-| `sender` | string | address (section 2) |
-| `recipient` | string | address (section 2) |
-| `suite` | integer | the suite id the envelope was sealed under; MUST equal the frame header's suite byte |
-| `recipient_key_epoch` | integer | the `key_epoch` of the recipient KEM key the frame was sealed to; MUST equal the epoch of the key that actually decrypted it |
-| `type` | string | 1..=64 characters of `[a-z0-9._-]` |
-| `conversation_id` | string, optional | 1..=128 printable ASCII characters 0x21..0x7e (no spaces); omitted when absent |
-| `correlation_id` | string, optional | same rule |
-| `created_at` | integer | Unix ms |
-| `expires_at` | integer | Unix ms |
-| `body` | string | any valid JSON string (UTF-8; includes empty, emoji, RTL text, `\u0000`) |
-
-Senders serialize with fields in the order above and omit absent optional
-fields. Receivers accept an absent or `null` optional field as "none". An
-envelope is rejected if it has unknown fields, duplicate keys, missing
-required fields, wrong types, trailing non-whitespace bytes, or invalid
-UTF-8 (serde_json's derive-generated parser rejects duplicate and unknown
-fields; this is covered by tests). Envelope `v` is read first with a minimal
-parser: `v != 1` yields `UnknownEnvelopeVersion(v)` regardless of other
-content.
-
-### Message types
-
-Unknown but syntactically valid `type` strings are accepted and stored as
-data with their type string; they never receive special handling.
-
-* `message`: ordinary message. Receipt is acknowledged with `ack.received`.
-* `ack.received`: authenticated receipt acknowledgement. It is an ordinary sealed envelope from the recipient of the original message back to its sender, with `correlation_id` = the original `message_id` (and normally the original `conversation_id`). It means "the recipient's engine durably persisted the message with that id", sent only after persistence (`docs/architecture.md` section 5). Acks are never acknowledged. It is *not* evidence the message was read or acted on, and a transport accepting a publish is not receipt.
-* `task.request`, `task.result`: request and response correlated by `correlation_id`. Their bodies are untrusted data like every other body; a receiver never executes them as code or instructions.
-* `contact.update` (reserved, engine only): body is the sender's new signed contact-record document (section 9.3).
-* `identity.revoked` (reserved, engine only): body is the sender's, or a contact's, signed identity-revocation tombstone (section 9.5).
-
-`ack.received`, `contact.update` and `identity.revoked` cannot be sent through `send_message`; the engine creates them.
-
-### Dedupe
-
-Duplicate and replay detection is **not** part of `seal`/`open`. `open` is a
-pure function; the same valid frame opens every time it is presented until it
-expires. The engine MUST persist `(sender, message_id)` of every accepted
-envelope and drop repeats (a repeat of an already-persisted message re-queues
-the ack but creates no new message).
-
-### Signing
+Strict JSON (UTF-8, unknown and duplicate fields rejected) in the Literal Data
+packet (`crypto::protection::Wire`):
 
 ```
-env_bytes = JSON(envelope)
-sig       = Ed25519(sender_sk, "agentnet/v1/envelope\0" || env_bytes)
-inner     = sig(64) || env_bytes
+{"agentnet":2,"message_id":"<uuid v4>","type":"message","sender":"an2…","recipient":"an2…",
+ "created_at":<ms>,"expires_at":<ms>,"conversation_id":"…"?,"correlation_id":"…"?,
+ "body":"…","sender_cert":"<base64url certificate>"?}
 ```
 
-The signature is inside the ciphertext. The receiver verifies with
-`verify_strict` under the key of `envelope.sender`, and checks
-`envelope.recipient` equals its own address. Because the recipient is inside
-the signed bytes, a recipient cannot re-seal a message it received to a third
-party and have it accepted there (surreptitious forwarding): the third party
-sees `WrongRecipient`.
-
-### Field protection audit: field -> protected by
-
-Checked by the authors against `crypto/hpke_suite.rs` (this is not an independent audit): the signature is over the exact
-serialized envelope (every envelope field), and the 4-byte frame header is
-HPKE `aad`.
-
-| Field / data | Protected by |
-|---|---|
-| frame magic, frame version, suite byte (header) | HPKE `aad`: any change makes the AEAD tag fail; the suite is additionally signed (`envelope.suite`) and compared with the header |
-| `enc` (HPKE encapsulated key) | HPKE key schedule: a changed `enc` yields a different key, so the AEAD fails |
-| ciphertext, length prefix, padding | AEAD tag (ChaCha20-Poly1305); after decryption the prefix is range-checked and padding must be all zero |
-| recipient KEM key | HPKE `info` = `"agentnet/v1/hpke\0" \|\| recipient_kem_pk` |
-| `v` (envelope version) | signature (and read first by a minimal parser) |
-| `message_id` | signature |
-| `sender` | signature (the verifying key is the one named by this field; `verify_strict`) |
-| `recipient` | signature; compared with the receiver's own address (`WrongRecipient`) |
-| `suite` | signature; compared with the frame header suite (`SuiteMismatch`) |
-| `recipient_key_epoch` | signature; compared with the epoch of the KEM key that decrypted (`KeyEpochMismatch`) |
-| `type`, `conversation_id`, `correlation_id` | signature |
-| `created_at`, `expires_at` | signature; time checks at open |
-| `body` | signature |
-| contact record: `address`, `signing_pk`, `kem_pk`, `key_epoch`, `revoked_kem_epochs_below`, `suites`, `inbox_buckets`, `created_at`, `kem_expires_at` | signature by the address key (`agentnet/v1/contact-record\0`) |
-| tombstone: `v`, `address`, `revoked_at`, `reason` | signature by the address key (`agentnet/v1/identity-revocation\0`) |
-
-Not protected by any key and therefore untrusted: the content topic a frame
-arrives on (a sender derives it from the signed `inbox_buckets`, but a relay or
-attacker can republish a frame anywhere, which at worst makes it undeliverable),
-the transport's timestamp, transport id and publisher identity. The engine never
-relies on them for a security decision.
-
-### Padding
-
-```
-plaintext = u32_be(len(inner)) || inner || 0x00 * pad
-```
-
-`len(plaintext)` is the smallest value in {512, 1024, 2048, ... (powers of
-two)} that is at least `4 + len(inner)`, **except** when the resulting frame
-would exceed `max_frame_len` (the transport's limit): then `len(plaintext)` is
-`max_frame_len - 52`, the largest that fits. If `4 + len(inner) + 52 >
-max_frame_len` the message does not fit and sealing fails with `TooLarge`
-(reporting the body length and a hint of the maximum body length, counted as
-JSON-encoded bytes, so quotes, backslashes and control characters count
-more than once). At open, the length prefix must satisfy `64 < n <=` the
-remaining plaintext length and every byte after `inner` must be `0x00`.
-
-Fixed overhead: a frame is `52` bytes larger than its plaintext (header 4 +
-enc 32 + AEAD tag 16); the plaintext holds `68` bytes (length 4 + signature
-64) plus the envelope JSON. A minimal envelope (empty body, `message` type)
-is about 289 bytes of JSON, so the smallest bucket (512) leaves about 155
-bytes of body, and a smallest frame is 564 bytes.
+* `agentnet` is the payload version (2). Types: `message`, `task.request`,
+  `task.result`, `ack.received`, and the reserved `contact.update` (body: the
+  sender's current public certificate; applied as a MERGE) and `identity.revoked`
+  (body: the sender's revoked public certificate). The remaining field rules are
+  those of ADR 0002: UUIDv4 ids, type `[a-z0-9._-]{1,64}`, optional ids of
+  1..=128 printable ASCII characters, body at most `max_body_bytes` (65,536).
+* TTL is not moved into signature subpackets: it stays here (lead decision 4).
+* `sender` and `recipient` are the fingerprints (addresses) and are
+  **cross-checked** against the verified signer and against the signature's
+  Intended Recipient Fingerprint.
+* `sender_cert` (absent in receipts) is how an **unknown sender** is
+  authenticated (section 5, item 8): it is ignored whenever the sender is a
+  pinned contact.
+* Dedupe key `(sender, message_id)`; there is no replay protection in OpenPGP:
+  the engine's dedupe, replay guard and rollback guard (sections 8 and 10) are
+  unchanged and security-critical.
+* No notation data is used and the identity certificate is used for nothing but
+  AgentNet. **Domain separation is weaker than in ADR 0002**: an OpenPGP data
+  signature has no application context string, so the defence is the strict
+  payload schema (`agentnet`, `type`, both fingerprints) and the rule above,
+  not a signature prefix (`docs/threat-model.md`).
 
 ### Time checks (at open)
 
-With `now`, `skew` (default 120 000 ms) and `max_ttl` (default 7 days), in this order:
+`created_at` at most `clock_skew_s` (120 s) ahead of the local clock (else
+`FromFuture`, deferred and not marked seen); `expires_at > created_at`;
+`expires_at - created_at <= max_ttl_s`; `expires_at > now` (else `Expired`).
+Boundaries are exact and tested. OpenPGP signature and key times are evaluated
+at `now + clock_skew`.
 
-1. `created_at <= now + skew`, else `FromFuture`.
-2. `expires_at > now`, else `Expired`.
-3. `expires_at > created_at`, else `ExpiresBeforeCreated`.
-4. `expires_at - created_at <= max_ttl`, else `TtlTooLong`.
+## 5. Message (frame) and receiver policy
 
-Arithmetic saturates; there is no overflow path.
-
-## 5. Frame
-
-```
-offset  len  field
-0       2    magic            "AN" (0x41 0x4e)
-2       1    frame version    0x01
-3       1    suite id         0x01 = DHKEM(X25519,HKDF-SHA256) / HKDF-SHA256 / ChaCha20-Poly1305
-4       32   enc              HPKE encapsulated key
-36      n    ciphertext       AEAD ciphertext of `plaintext` followed by the 16-byte tag
-```
-
-HPKE parameters (RFC 9180 section 5.1.1 for Setup in Base mode and section 6.1
-for the single-shot API): mode Base, `pkR` = the recipient's KEM public key
-from the verified contact record,
+A frame is **one OpenPGP message** (binary, no AgentNet header):
 
 ```
-info = "agentnet/v1/hpke\0" || recipient_kem_pk (32 bytes)
-aad  = header = 0x41 0x4e 0x01 0x01          (the first 4 bytes of the frame)
+PKESK v6 (anonymous, X25519)       one per live encryption subkey of the recipient
+SEIPD v2 (AES-256, OCB) {
+    One-Pass Signature v6
+    Literal Data           = payload (section 4)
+    Signature v6 (Ed25519) with Intended Recipient Fingerprint = recipient primary key
+    Padding                = inner packet sequence padded to a power of two (>= 1024 B)
+}
 ```
 
-`info` binds the ciphertext to the specific recipient key and to this
-protocol; `aad` authenticates the magic, version and suite, so they cannot be
-altered or downgraded without the AEAD failing. (RFC 9180 section 8.1
-recommends single-shot-only APIs use `info` for application data and not
-`aad`. The `hpke` crate exposes both and uses them correctly; we use `aad`
-for the header because it is per-message data.)
+**Sealing** (`MessageProtection::seal`): the sender first validates the
+recipient certificate **at certificate level** (primary key valid, not
+revoked, not expired: Sequoia's key-level filters such as `.revoked(false)` do
+not see a revoked primary key, a hazard found by the spike and covered by
+`sealing_to_a_certificate_with_a_revoked_primary_is_refused` and the engine
+regression test), then encrypts to every live encryption subkey. Errors:
+`RecipientRevoked`, `RecipientExpired`, `RecipientKemExpired` (no usable subkey).
+If the power-of-two size would exceed the transport limit the unpadded frame is
+used; if that still does not fit, `TooLarge` with a body-size hint.
 
-Open order (each failure rejects without further work):
+**Opening** (`MessageProtection::open`, all in `crypto`, fail closed, one error
+variant and one `open_error.*` counter each):
 
-1. `len(frame) <= max_frame_len`, else `FrameTooLarge`. Fewer than 4 bytes: `Truncated`.
-2. Magic (`BadMagic`), frame version (`UnknownFrameVersion(v)`), suite: not registered `UnknownSuite(s)`; registered but not in this agent's own advertised `suites` list `SuiteNotAdvertised(s)`; fewer than 36 + 16 + 69 bytes: `Truncated`.
-3. HPKE open with the current KEM key, then with every retired key whose `retire_at` is still in the future and whose epoch is not below `revoked_kem_epochs_below`. If none opens it: `NotForUs`. This is the normal outcome for other agents' frames sharing the bucket; it costs one decapsulation per candidate key and MUST NOT be logged above debug level. The epoch of the key that opened the frame is remembered.
-4. Length prefix and zero-padding check (section 4).
-5. Parse the envelope (version first, then strict).
-6. Verify the signature under `envelope.sender`, then `recipient == self` (`WrongRecipient`), then `envelope.suite == header suite` (`SuiteMismatch`) and `envelope.recipient_key_epoch == epoch of the decrypting key` (`KeyEpochMismatch`), then field validation, then the time checks.
-7. (Engine, outside `open`) dedupe on `(sender, message_id)`.
+1. size: empty (`Truncated`), longer than `max_payload_len` (`FrameTooLarge`);
+2. not an OpenPGP message / damaged (`Malformed`);
+3. trial decryption: the recipient is anonymous, so every PKESK is tried with
+   each of the agent's live and retained encryption subkeys; no match is
+   `NotForUs` (normal for a shared bucket, counted as `frame.not_for_us`, not
+   logged); at most 8 PKESKs per frame;
+4. no SKESK (`SkeskPresent`), every PKESK v6 (`PkeskNotV6`), SEIPD v2 with AEAD
+   (`NotAead`), AES cipher (`UnsupportedCipher`), no compression (`Compressed`);
+5. structure exactly `encryption { signature group }` (`BadStructure`, also for
+   unsigned messages), exactly one signature (`WrongSignatureCount`), a v6
+   Ed25519 binary signature made by a primary key (`UnsupportedSignature`);
+6. the signature verifies against the **pinned certificate** of the signer
+   (`BadSignature`); a signer whose certificate is revoked or expired is
+   `SenderRevoked` / `SenderExpired` (the engine treats the former like a
+   blocked sender);
+7. the signature MUST carry an Intended Recipient Fingerprint equal to the
+   receiver's own primary fingerprint: absent is `MissingIntendedRecipient`,
+   another one `WrongIntendedRecipient` (surreptitious-forwarding defence; both
+   libraries accept signatures without it, so this is ours);
+8. **unknown sender decision**: verification needs the sender's certificate. If
+   the signer is not a pinned contact, the payload's `sender_cert` is used: it
+   must parse, its fingerprint must equal the payload `sender` and the
+   signature's issuer, and the signature must verify against it (second pass).
+   The message is then authenticated as "made by the holder of this address"
+   and nothing more: trust stays `unknown` and the unknown-sender policy
+   (`quarantine`/`reject`/`accept`) applies, as before. Without a usable
+   certificate (receipts carry none) it is `UnknownSender` and is dropped.
+   The embedded certificate is never stored or merged. A pinned certificate
+   always wins over an embedded one;
+9. payload: strict schema (`MalformedPayload`), version (`UnknownEnvelopeVersion`),
+   `sender` equals the verified signer (`SignerMismatch`), `recipient` equals this
+   agent (`WrongRecipient`), field rules (`InvalidField`), time rules.
 
-Every `seal` performs one HPKE single-shot encapsulation, which generates a
-**fresh ephemeral X25519 key and a fresh HPKE context per message**; nothing is
-cached or reused, and the sequence number is never advanced beyond 0. Tested:
-two seals of the same envelope to the same recipient differ in `enc` and in
-ciphertext, and 64 seals never repeat an `enc`
-(`crates/core/tests/crypto.rs`, module `hardening`).
+Then the engine's checks: trust, quarantine policy, dedupe, replay guard.
 
-A frame that is "for us" but fails after step 3 is authentic-ciphertext
-garbage: only the sender (or someone holding the recipient's public KEM key,
-which is public) can produce it, so it is rejected without being stored.
+### Size and padding
 
-### Versioning
-
-Unknown frame version, suite, envelope version or contact record version are
-rejected with a distinct error and are never partially processed. A new
-cipher suite or format gets a new frame version or suite id.
-
-#### No silent downgrade
-
-There is no in-band negotiation; the suite choice comes from signed data:
-
-* The recipient's signed contact record lists its `suites`. The sender chooses
-  the highest suite that it supports and the record lists
-  (`SuiteRegistry::seal`); if there is none, sealing fails with `NoCommonSuite`
-  and the engine reports an error to the caller. It never falls back to a suite
-  the record does not list, and a record cannot be edited without breaking its
-  signature.
-* The frame header (magic, frame version, suite) is HPKE `aad`, so altering any
-  of those bytes makes the AEAD fail (tested bit by bit,
-  `frame_version_and_suite_bytes_are_authenticated_as_aad`).
-* The suite and the recipient key epoch are also inside the signed envelope and
-  are checked against the frame header and the decrypting key (steps 6 above):
-  an attacker that holds an old recipient key cannot re-wrap a message into a
-  different suite or epoch unnoticed.
-* The receiver rejects frames whose suite is not in its *own* currently
-  advertised list (`SuiteNotAdvertised`), so a suite that was removed from the
-  record is not accepted any more (tested with a second, test-only suite
-  registered in a `SuiteRegistry`; no second real suite exists yet).
-
-RFC 9180 section 9.7.2 notes that HPKE itself gives no downgrade prevention;
-the measures above are the application-level answer. They are only as strong as
-the integrity of the contact record the sender holds (section 9).
-
-### Size limits
-
-| Item | Limit |
-|---|---|
-| Contact document | 4096 bytes |
-| Address | 61 characters |
-| `type` | 64 characters |
-| `conversation_id`, `correlation_id` | 128 characters |
-| Frame | `max_frame_len`, supplied by the caller from the transport (library default 150 KiB) |
-| Identity file / export | 256 KiB |
-| TTL | `max_ttl` (default 7 days) |
+Fixed overhead: about 420 B (PKESK, SEIPD framing, signature packets) plus
+the embedded sender certificate (about 600 B base64) plus 16 B per 4 KiB AEAD
+chunk. Measured on this implementation (macOS arm64, debug build,
+`crates/core/tests/crypto.rs::measured_frame_sizes_for_the_body_limit`,
+`results/adr0004/frame-sizes.txt`): body 0 B: 2,197 B; 1,024 B: 4,245 B;
+65,536 B: 131,720 B; worst case JSON expansion (65,536 quote characters, padded
+size would not fit so the unpadded frame is used): 132,881 B. The Logos limit is
+153,600 B, so the 64 KiB body limit is unchanged. Within a bucket all frames have
+the same length; the smallest bucket is 1,024 B of inner packets.
 
 ## 6. Identity file and export
 
-`identity.json` (mode 0600; the library creates it with that mode, writes a
-temp file in the same directory, fsyncs, then renames; it refuses to replace
-an existing file unless asked) is JSON
-`{"v":1,"address","signing_sk","kem_sk","kem_created_at","inbox_buckets","created_at","kem_expires_at","previous_kems":[{"kem_sk","created_at","retire_at","epoch"}],"kem_epoch","min_valid_epoch"}`
-with base64url secrets. `kem_epoch`, `min_valid_epoch` and each previous key's `epoch` are optional when reading (files written before epochs existed: retired keys are numbered 1..n, the current key n+1, `min_valid_epoch` 1). A rotation with revocation writes an empty `previous_kems`. A revoked identity additionally has `revocation.json` (the tombstone) next to it. On unix, load refuses a file readable by group or
-others. Load validates everything (keys parse, the stored address equals the
-address derived from the signing key). An export is the same JSON encrypted
-with age's scrypt passphrase recipient and ASCII-armored; a wrong passphrase
-and corruption are not distinguished.
+`identity.json` (mode 0600, written atomically, never overwritten without
+`--overwrite`-class operations): `{"v":2,"address","created_at","kem_expires_at",
+"certificate": base64url(transferable secret key), "retained_subkeys":
+[{"fingerprint","retire_at"}]}`. Version 1 (HPKE) files are refused with a message
+naming `agentnet identity migrate`. The export is an ASCII-armored `age` file
+(scrypt passphrase) of the same JSON. Secret key material lives in Sequoia's
+protected memory and is never printed (`Debug` shows the address only; tested).
 
-## 7. Security properties
+## 7. Security properties and limits
 
-Provided, assuming the implementation and the endpoint hosts are not
-compromised:
-
-* **Confidentiality** of the envelope (including sender identity, type, ids and body) against anyone who does not hold a KEM private key that the sender sealed to: HPKE Base mode with ChaCha20-Poly1305 (RFC 9180 section 9.1, message secrecy against chosen-ciphertext attackers).
-* **Sender authentication**: an envelope that opens successfully was signed by the holder of the Ed25519 key behind `envelope.sender`. HPKE Base mode itself authenticates nobody (anyone can encrypt to a public KEM key); authentication is the inner signature, which `verify_strict` checks.
-* **Recipient binding**: the signature covers `recipient`, and HPKE `info` covers the recipient's KEM key, so a message cannot be redirected to another recipient.
-* **Integrity**: any bit change anywhere in a frame is rejected (header by AEAD aad, the rest by the AEAD tag); tested exhaustively on a 564-byte frame.
-* **Key binding**: a peer's KEM key is trusted only through a contact record signed by the address key.
-* **Length hiding** within power-of-two buckets (RFC 9180 section 9.7.6 notes HPKE alone does not hide length).
-* **Replay rejection**: *not* done here. HPKE provides none (RFC 9180 section 9.7.3); the time window bounds it and the engine's persisted `(sender, message_id)` set removes it, with the limits listed in section 10.
-
-Not provided:
-
-* **Forward secrecy** with respect to recipient compromise: anyone who obtains a recipient KEM private key (current or retained previous keys) can decrypt every past frame sealed to it that they have recorded (RFC 9180 section 9.7.4). Rotation limits future exposure only, and previous keys are retained for `retention` hours on purpose. Forward secrecy with respect to sender compromise holds for the ciphertext (ephemeral sender key).
-* **Post-compromise security**: there is no ratchet. After a KEM key compromise, only rotation helps, and only for future messages.
-* **Deniability**: every message carries a non-repudiable Ed25519 signature by the sender, verifiable by the recipient and, if the recipient reveals the plaintext, by anyone. This is deliberate (it provides sender authentication) and is the opposite of deniable authentication.
-* **Metadata privacy** beyond bucket k-anonymity: relays see the content topic (the inbox bucket, hence "this recipient is one of the agents sharing bucket N"), timing, the padded frame size (power-of-two buckets, so sizes leak roughly log2 of the length), and the publishing node's network identity. The sender and recipient addresses are inside the ciphertext. Anyone watching a bucket sees every frame addressed to it, and bandwidth and trial-decryption cost grow with the bucket population. Bucket assignment is a public function of the address, so a third party who knows an address knows its bucket. The recipient's KEM key and address are not hidden from anyone who has the contact record.
-* **Key-compromise impersonation**: RFC 9180 section 9.1.1 notes that HPKE messages can be forged "from" a sender by anyone who knows the recipient's private key unless the application adds a signature (it suggests one over `(enc, ct)`). Here the sender's Ed25519 signature covers the envelope bytes (not `enc`/`ct`), so holding a recipient's KEM key does not let an attacker create a *new* envelope that verifies as coming from the sender. It does let them re-seal an envelope the sender really signed (same bytes, same recipient field) to that recipient; the time window and the engine's dedupe bound that. Compromise of the recipient's KEM key still reveals content, and compromise of a sender's signing key allows impersonating that sender to everyone.
-* **Protection against a compromised host**: secrets are stored unencrypted in `identity.json` (protected only by file mode 0600) and live in process memory; zeroization on drop is best-effort (copies made by the allocator, the OS, serde buffers or the HPKE library's temporaries are not tracked). Malware or a root user on the host can read them. The passphrase export protects the exported file only.
-* **Revocation**: only what section 9 describes: KEM-key revocation propagated to contacts that are reachable (or that import the signed record), and a signed identity tombstone that reaches only the contacts that receive it. There is no directory, no global revocation list and no way to force a peer to learn of a revocation; a revoked-but-not-yet-informed peer keeps trusting the old keys. A thief of the signing key can impersonate the owner until peers learn of the tombstone and can issue the tombstone itself (denial of service).
-* **Availability and ordering**: no ordering, no delivery guarantee; at-least-once delivery attempts by the engine.
-* **Clock security**: time checks rely on the local clock, with a configurable skew. A host with a wrong clock may accept expired messages or reject valid ones.
-* **Random number generation**: HPKE seal uses the operating system RNG (`getrandom`); if it is subverted or broken, confidentiality of Base mode can be lost completely (RFC 9180 section 9.7.5).
-* **Post-quantum security**: X25519 and Ed25519 offer none.
-
-Remote message content is untrusted data. Nothing in this protocol authorizes
-a sender to cause code execution on the recipient.
+* Confidentiality of the payload to the holders of the recipient's encryption
+  subkeys; sender authentication inside the encryption (sign-then-encrypt);
+  recipient binding by the Intended Recipient Fingerprint; hidden recipient
+  (an anonymous v6 PKESK shows no key id or fingerprint); standard padding;
+  key binding, expiry and revocation by the standard signatures.
+* **No forward secrecy against later compromise of a recipient encryption
+  subkey.** Rotation limits future exposure only; retired subkeys that are still
+  held stay exposed until `retire_at` and pruning. No post-compromise security.
+  No deniability (signatures are transferable).
+* Not audited at the pinned versions (neither Sequoia nor this glue); an
+  independent review is required (`docs/crypto-requirements.md`, condition 11).
+* Metadata: relays see the content topic (inbox bucket), timing, the padded
+  length class, the publisher's network identity, and that the payload is an
+  OpenPGP v6 SEIPD v2 / AES-256 / OCB message. They do not see sender, recipient
+  fingerprint, key ids or payload. Anyone on a bucket sees every frame addressed
+  to it and trial-decrypts them.
+* Replay, rollback and concurrent-identity limits are those of section 10.
 
 ## 8. Delivery, retries and receipts
 
@@ -425,8 +260,8 @@ jitter) in `crates/core/tests/engine_*.rs`.
 | `expired` | `expires_at` passed without an ack. |
 
 `send_message` validates (identity not revoked; known, non-blocked, non-revoked
-recipient whose KEM key is not expired and whose signed record shares a suite
-with us; type in `message`, `task.request`, `task.result`; body <=
+recipient whose certificate has a live encryption subkey (checked at
+certificate level: a revoked primary refuses even if a subkey looks usable); type in `message`, `task.request`, `task.result`; body <=
 `max_body_bytes` and fits one frame; TTL defaulted and capped at `max_ttl_s`;
 fewer than `max_outbox_pending` non-ack rows in `queued`/`sent`), seals the
 frame **once**, and inserts the row in one transaction. Retries re-publish the
@@ -471,12 +306,12 @@ works through the relay echo (the engine synthesizes our own contact record).
   correction; the code path exists and is tested that way.
 
 A revoked local identity publishes only rows of type `identity.revoked`.
-When a recipient's contact record is replaced by a newer epoch (an imported
-record or a `contact.update`), every `queued` or `sent` row for that recipient
+When a merge changes a recipient's certificate (an imported certificate
+or a `contact.update`), every `queued` or `sent` row for that recipient
 whose TTL has not passed is **re-sealed** in the same transaction (same
 envelope fields and `message_id`, fresh signature and ciphertext for the new
 key, `next_attempt_at = now`), so pending messages survive the recipient's key
-rotation. A tombstone for the recipient fails all its pending rows
+rotation. A revocation of the recipient fails all its pending rows
 (`recipient identity revoked`).
 
 ### 8.3 What an ack proves
@@ -501,9 +336,9 @@ sender under `unknown_senders = "accept"` is stored but **never acked**
 ### 8.4 Inbound processing and dedupe
 
 Order for each frame (live or history): skip if `transport_id` is in
-`transport_seen`; `open` through the `MessageProtection` registry (limits from
+`transport_seen`; `open` through the `MessageProtection` trait (with the contact store as sender directory) (limits from
 config; `NotForUs` is silent and counted); trust lookup (`Blocked` dropped, which
-includes an address with a verified tombstone, also when it is not a contact; an
+includes an address with a verified revocation, also when it is not a contact; an
 ack from a non-Trusted sender is ignored, never quarantined); reserved system
 types (`identity.revoked` from any non-blocked sender, `contact.update` from a
 Trusted sender only; section 9) are handled in their own transaction and never
@@ -604,131 +439,65 @@ refused (`NodeError::IdentityMismatch`). The engine trusts its local clock for
 TTL, retry and pruning decisions; a wrong clock accepts or rejects messages
 accordingly.
 
-## 9. Key epochs, rotation and revocation
+## 9. Rotation, revocation and certificate updates
 
-No new cryptography is involved: only the existing Ed25519 signature with new
-domain-separation strings, and ordinary sealed envelopes. Implemented in
-`crates/core/src/crypto/{identity,contact,revocation}.rs` and
-`crates/core/src/system.rs`; tested in `crates/core/tests/engine_hardening.rs`
-and the `hardening` module of `crates/core/tests/crypto.rs`.
+There are no key epochs and no signed contact records any more; the standard
+certificate machinery does the work and the application merges.
 
-### 9.1 Epochs
+### 9.1 Rotation
 
-`key_epoch` starts at 1 and each KEM rotation adds 1. For an address already in
-the contact store:
+`agentnet identity rotate-kem [--expires-in-days N] [--keep-hours H]`
+(daemon stopped) adds a new X25519 encryption subkey (binding signature with an
+expiry, default 365 days) and **retires** the previous live subkey with a standard
+subkey revocation, reason "key retired" (soft: it is not used for new messages
+from the revocation time on). The old secret subkey is kept for decryption until
+`retire_at` (`keep_hours`, default `storage.retention_hours`) and destroyed by
+`prune_retired`. The address does not change. The identity file records the
+retired subkeys in `retained_subkeys`.
 
-| New record | Result |
-|---|---|
-| `key_epoch` lower than stored | rejected: `Conflict` "stale contact record"; the stored record is never replaced by an older one |
-| equal, same signed content | accepted, no change (idempotent) |
-| equal, different content | rejected: `Conflict` "conflicting contact record" |
-| higher | replaces the stored record (trust and alias are kept) and re-seals pending outbox rows (section 8.2) |
+### 9.2 Compromise of an encryption subkey
 
-`created_at` is informational. This replaces the earlier "older `created_at`
-cannot replace a newer record" rule.
-
-### 9.2 KEM rotation and KEM revocation
-
-`agentnet identity rotate-kem` (daemon stopped, it takes the data-dir lock)
-generates a new X25519 key, increments `key_epoch` and, by default, keeps the old
-secret key for decryption until `retire_at` (overlap). With `--revoke-previous`
-(`Identity::rotate_kem_with(.., revoke_previous = true)`) **every earlier KEM
-secret key is destroyed immediately** (dropped and zeroized, not written to the
-identity file) and the new record carries `revoked_kem_epochs_below = key_epoch`.
-Consequences, stated plainly:
-
-* Frames already sealed to a revoked epoch can never be opened again, including
-  undelivered ones in transit or in a peer's outbox. They are lost unless the
-  sender re-seals them after learning the new record (section 9.3, 9.4).
-* A receiver that sees a record with `revoked_kem_epochs_below = N` keeps only
-  records with `key_epoch >= N` (it discards older ones by the rule in 9.1) and
-  never seals to an epoch below `N`.
-* Revocation protects the future only: whoever already holds an old KEM secret
-  key can still read what was sealed to it earlier. Destroying the key on the
-  owner's side does not remove copies an attacker made.
+`--revoke-previous` hard-revokes ("key compromised") every earlier encryption
+subkey and destroys its secret key at once. Messages already sealed to it are
+lost unless their senders merge the new certificate and re-seal (9.4). There is
+no forward secrecy: a subkey that was not destroyed in time exposes every
+message sealed to it.
 
 ### 9.3 Propagation without a directory: `contact.update`
 
-At the next daemon start after a rotation (the engine compares
-`identity.key_epoch` with the `announced_key_epoch` it stored) it queues a hidden
-`contact.update` to every Trusted contact, sealed with the normal scheme, with
-the new signed contact-record document as body. The sender is acked like any
-message. A receiver applies it only if **all** hold: the sender is a Trusted,
-non-revoked contact; the body verifies as a contact record; its address equals
-the authenticated envelope sender (a Trusted contact cannot push someone else's
-record); and its `key_epoch` is strictly higher than the stored one (a replayed
-older update cannot roll a contact back; equal epochs with different content are
-ignored as conflicting). Otherwise it is ignored and counted
-(`contact_update.ignored_{invalid,wrong_address,stale,same,conflict,untrusted,no_contact,revoked}`).
-A `contact.update` from an Unknown or Untrusted sender is stored like any other
-message under the quarantine policy and is **not applied**. It is not stored in
-the user inbox of a Trusted receiver, creates no event, and cannot be sent via
-`send_message`.
-
-A contact that was offline when the update was sent, or whose retries ran out
-(section 8.2), never learns the new record this way and must be given the record
-out of band (`agentnet contact add`); until then their messages are sealed to the
-old epoch and, after `--revoke-previous`, are lost.
+At the next `serve`, if the certificate changed since the last announcement
+(`announced_cert_id` in `kv`), the engine sends a hidden `contact.update` whose
+body is the current public certificate to every Trusted contact. A receiver
+applies it only from a Trusted contact, for the sender's own address, as a
+**merge** (section 3): `contact_update.applied` when the stored certificate
+changed, `ignored_same` when it did not, `ignored_wrong_address`,
+`ignored_untrusted`, `ignored_invalid` otherwise. It can also be given out of
+band (`contact add` merges it).
 
 ### 9.4 Re-seal on contact update
 
-See section 8.2. The envelope (same `message_id`, `created_at`, `expires_at`,
-body) is signed again with the new `recipient_key_epoch` and sealed to the new
-key; the row's `frame` is replaced in the same transaction that replaces the
-contact.
+When a merge changes a contact's certificate (an imported certificate or a
+`contact.update`), every undelivered outbox row to it (`queued`, or `sent` and
+not an ack) is re-sealed to the merged certificate in the same transaction, with
+the same `message_id`, and is due again immediately. Rows that cannot be sealed
+(for example the recipient is now revoked) count as `reseal.failed`.
 
-The send loop selects a batch of due rows and publishes them one after another
-while a publish may take seconds. Immediately before each publish it therefore
-re-reads the row (state, topic, frame) and skips it if a tombstone made it
-unpublishable; the frame it publishes is always
-the current one. The result of a publish is recorded only if the stored frame
-is still the one that was published, so a re-seal that raced with a publish
-leaves the row due for an immediate re-publish. A publish that is already in
-flight when the tombstone or key update is applied cannot be recalled (tests
-`revocation_during_a_pending_publish_stops_later_frames_of_the_batch`,
-`key_update_during_a_pending_publish_publishes_the_resealed_frame`).
+### 9.5 Identity (primary key) revocation
 
-### 9.5 Identity (signing key) revocation
-
-`agentnet identity revoke --reason <text>` (daemon stopped) creates the
-tombstone and writes it to `revocation.json`:
-
-```
-record = {"v":1,"address":"an1…","revoked_at":<unix ms>,"reason":"<1..256 bytes, no control chars>"}
-sig    = Ed25519(signing_sk, "agentnet/v1/identity-revocation\0" || record_bytes)
-document = {"record":"<b64url(record_bytes)>","sig":"<b64url(sig)>"}      (at most 2048 bytes)
-```
-
-The tombstone is self-authenticating: the signature must verify under the very
-address it names, so any party may carry it.
-
-* **Local effect**: the identity is marked revoked. The daemon refuses
-  `send_message` (`PolicyDenied`), queues no acks and publishes nothing except
-  `identity.revoked` rows; `get_identity.revoked` and
-  `network_status.identity_revoked` report it. Pending outbox rows are not
-  sent. Revocation is irreversible for the address.
-* **Delivery**: at the next start the engine sends `identity.revoked` (body = the
-  tombstone) to every Trusted contact; `agentnet identity show-revocation`
-  prints it for distribution out of band, and `agentnet contact revoke <@file>`
-  imports one.
-* **Receipt**: an `identity.revoked` envelope from any non-blocked sender is
-  applied if the tombstone verifies and names the envelope sender **or** an
-  existing contact (so a Trusted contact can forward someone else's tombstone,
-  and a stranger can deliver only its own). A tombstone naming the receiving
-  identity itself is never applied to it. An imported tombstone (out of band)
-  needs no contact.
-* **Effect on the revoked address**: stored in the `revocations` table; the
-  contact is reported `Blocked` (inbound dropped as `drop.blocked`), sends to it
-  fail with `PolicyDenied`, pending sends fail, it cannot be re-trusted
-  (`set_contact_trust` -> `Conflict`) and `add_contact` for the address is
-  refused (`Conflict`).
-
-Honest limits: revocation reaches only contacts that are reachable within the
-TTL and retry limits, or that obtain the document out of band; there is no
-global revocation list and no way to find out who has not heard. Until a peer
-learns of it, a thief of the signing key can impersonate the owner. A thief can
-also issue a tombstone for the address, which is a denial of service (the owner
-cannot un-revoke); that is accepted as the safer failure.
+`agentnet identity revoke --reason TEXT` creates a standard key-revocation
+signature, writes the **revoked public certificate** to `revocation.json`, and marks
+the local identity revoked: the daemon sends nothing except `identity.revoked`
+(body: that certificate) to every Trusted contact. A receiver accepts
+`identity.revoked` from any non-blocked sender when it names the sender or a
+contact, merges it into the stored certificate (revocations accumulate), records
+it in `revocations` (source `received`, `imported` or merge), blocks the contact,
+fails its pending rows with `recipient identity revoked`, removes its adverts and
+refuses to re-trust or re-add it. `contact revoke @file` imports one out of band,
+also for an address that is not a contact. A message signed by a revoked
+certificate is `SenderRevoked` and counted as `drop.blocked`. Unchanged
+property: a thief of the primary secret key can issue the same revocation (denial
+of service only), and there is no global revocation list; only designated-revoker
+revocations are ignored (sanitized away).
 
 ## 10. Replay protection: what is and is not guaranteed
 
@@ -742,7 +511,7 @@ unless noted):
 | Replay in the same process | `message.duplicate`; no inbox row, event or trigger; a re-ack is queued at most every `reack_min_interval_s` | `engine_security::replay_now_and_after_dedupe_pruning` |
 | Replay after a restart (same store reopened) | rejected as duplicate: `seen` is durable | `replay_after_restart_is_rejected` |
 | Replay after `seen` pruning | rejected by `open` as `Expired` (pruning is delayed to `expires_at + skew`) | `engine_security::replay_now_and_after_dedupe_pruning` |
-| Replay of a frame sealed to a revoked KEM epoch | cannot be opened at all (`NotForUs`) | `replay_across_kem_revocation_and_after_pruning` |
+| Replay of a frame sealed to a revoked encryption subkey | cannot be opened at all (`NotForUs`) | `replay_across_kem_revocation_and_after_pruning` |
 | **Store rolled back** (older SQLite copy restored) | **guard mode**, below | `rollback_enters_the_replay_guard_and_holds_replayed_frames`, `accept_rollback_releases_unexpired_held_messages` |
 | **Sidecar missing next to a non-empty store** | unknown history: guard mode | `missing_sidecar_next_to_a_database_means_unknown_history` |
 | **Identity imported into a new data dir** | no dedupe history; guard mode by default, none with `--no-replay-guard` | `migration_guard_by_default_and_full_state_copy_keeps_history`, CLI `identity_import_starts_in_replay_guard_mode_unless_told_otherwise` |
@@ -793,13 +562,13 @@ between the restored copy and the rollback (the sender believes them delivered;
 they are gone); stop an attacker who can also roll back or delete the sidecar and
 the data-directory markers together with the database; or protect `ack.received`,
 `contact.update` and `identity.revoked` replays (these are idempotent by their own
-rules: an ack for a delivered row is ignored, an old record loses to a newer
-epoch, a tombstone is idempotent). Held messages from non-trusted senders are
+rules: an ack for a delivered row is ignored, an older certificate merges to no
+change, a revocation is idempotent). Held messages from non-trusted senders are
 subject to the quarantine policy instead.
 
 ### 10.2 Concurrent identity
 
-The same identity (signing key and KEM keys) running in two data directories
+The same identity (OpenPGP certificate with its secret keys) running in two data directories
 cannot be prevented cryptographically in a stateless design, and no sound local
 detection exists (an own-address frame that this instance did not produce could
 equally come from a pruned outbox, a restored backup or the other instance).
@@ -817,18 +586,20 @@ touches the wire protocol.
 
 * A second frame kind exists, used **only on host-configured discovery content topics**
   (`/agentnet/1/discovery-<name>/proto`): `b"AD" || 0x01 || document_bytes`. It is
-  PLAINTEXT. The document is `{"record": b64url, "sig": b64url}` over the record described in
-  `docs/discovery.md` section 3, signed by the address key with the domain
-  `agentnet/v1/capability-advert\0`. The record is `v` 2 and carries the discovery topic name it
-  is published on, so the signature binds the topic; a receiver drops an advert (or withdrawal)
-  whose signed topic differs from the topic it arrived on (`advert.invalid.topic_mismatch`) and
-  refuses the earlier topic-less `v` 1. It embeds the advertiser's current signed contact record
-  and is accepted only when that record verifies for the same address.
-* The sealed frame (section 5) starts with `b"AN"`; the two magics differ so that a frame of one
-  kind can never parse as the other. The engine routes by topic: an `AD` frame on an inbox topic
-  and a sealed frame on a discovery topic are dropped and counted, never parsed as the other kind.
+  PLAINTEXT. The document is base64url of ONE OpenPGP **signed (not encrypted) message** made by the
+  agent's primary key (one-pass signed Literal Data + v6 Ed25519 signature, RFC 9580 section 10.3);
+  the literal data is the JSON record of `docs/discovery.md` section 3 (`v` 3). The record carries
+  the discovery topic name it is published on, inside the signed content, so the signature binds
+  the topic; a receiver drops an advert (or withdrawal) whose signed topic differs from the topic
+  it arrived on (`advert.invalid.topic_mismatch`). It embeds the advertiser's current certificate
+  and is accepted only when that certificate belongs to the same address and verifies the
+  signature (read once without trust to find the certificate, then verified against it).
+* A sealed frame (section 5) starts with an OpenPGP packet tag byte (high bit set), an advert frame
+  with `A`; the engine routes by topic: an `AD` frame on an inbox topic and a sealed frame on a
+  discovery topic are dropped and counted, never parsed as the other kind.
 * A higher `seq` from the same address on the same topic replaces a lower one; equal or lower is
   ignored; an empty capability list with a higher `seq` is a withdrawal (kept as a hidden
   tombstone until its expiry so the replaced advert cannot be replayed).
-* No new cryptographic construction: the only addition is the signing domain above (condition 4
-  of `docs/crypto-requirements.md`).
+* No AgentNet-defined signature construction: it is a standard OpenPGP data signature. The
+  context-string domain separation of ADR 0002 (`agentnet/v1/capability-advert\0`) is gone; see the
+  domain-separation note in section 4.

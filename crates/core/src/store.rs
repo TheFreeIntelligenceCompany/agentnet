@@ -19,7 +19,7 @@ use rusqlite::{Connection, OptionalExtension, Transaction, TransactionBehavior};
 use crate::api::ApiError;
 
 /// Current schema version (`PRAGMA user_version`).
-pub const SCHEMA_VERSION: i64 = 3;
+pub const SCHEMA_VERSION: i64 = 4;
 
 /// Failure of a store operation. `Display` never contains row contents.
 #[derive(Debug, thiserror::Error)]
@@ -198,6 +198,20 @@ CREATE INDEX adverts_expiry ON adverts (expires_at);
 CREATE INDEX adverts_address ON adverts (address);
 ";
 
+/// v3 -> v4 (ADR 0004, OpenPGP cutover): contacts of the retired `an1` format
+/// are kept as unverified legacy entries that cannot be sent to. They are
+/// filled by `agentnet identity migrate` (see `crate::migrate`); a fresh
+/// database never has rows here.
+const SCHEMA_V4: &str = "
+CREATE TABLE legacy_contacts (
+  address  TEXT PRIMARY KEY,
+  document TEXT NOT NULL,
+  alias    TEXT,
+  trust    TEXT NOT NULL,
+  added_at INTEGER NOT NULL
+) WITHOUT ROWID;
+";
+
 /// The SQLite store.
 pub struct Store {
     conn: Mutex<Option<Connection>>,
@@ -238,6 +252,12 @@ impl Store {
             let tx = conn.transaction()?;
             tx.execute_batch(SCHEMA_V3)?;
             tx.pragma_update(None, "user_version", 3)?;
+            tx.commit()?;
+        }
+        if v < 4 {
+            let tx = conn.transaction()?;
+            tx.execute_batch(SCHEMA_V4)?;
+            tx.pragma_update(None, "user_version", 4)?;
             tx.commit()?;
         }
         Ok(Self {
@@ -403,7 +423,7 @@ mod tests {
         store
             .tx(|tx| {
                 let v: i64 = tx.query_row("PRAGMA user_version", [], |r| r.get(0))?;
-                assert_eq!(v, 3);
+                assert_eq!(v, SCHEMA_VERSION);
                 assert_eq!(kv_get(tx, "own_address")?.as_deref(), Some("an1z"));
                 let n: i64 = tx.query_row("SELECT COUNT(*) FROM revocations", [], |r| r.get(0))?;
                 assert_eq!(n, 1);

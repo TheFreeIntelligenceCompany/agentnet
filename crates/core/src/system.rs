@@ -19,13 +19,13 @@ use rusqlite::{params, OptionalExtension, Transaction};
 use crate::api::{ApiError, ApiResult, ChangeHint, RevocationInfo, Trust};
 use crate::config::UnknownSenders;
 use crate::crypto::envelope::{
-    Envelope, MESSAGE_TYPE_CONTACT_UPDATE, MESSAGE_TYPE_IDENTITY_REVOKED, SUITE_ID,
+    Envelope, ENVELOPE_VERSION, MESSAGE_TYPE_CONTACT_UPDATE, MESSAGE_TYPE_IDENTITY_REVOKED,
 };
 use crate::crypto::{Address, VerifiedContact, VerifiedRevocation};
 use crate::guard;
 use crate::ingest::FrameOutcome;
 use crate::node::{
-    trust_to_db, ContactRow, Node, NodeError, KV_ANNOUNCED_EPOCH, KV_ANNOUNCED_REVOCATION,
+    trust_to_db, ContactRow, Node, NodeError, KV_ANNOUNCED_CERT, KV_ANNOUNCED_REVOCATION,
 };
 use crate::send::OutboxInsert;
 use crate::store::{kv_get, kv_set, StoreError};
@@ -180,7 +180,7 @@ impl Node {
         env: &Envelope,
         now: i64,
     ) -> Result<(bool, usize, &'static str), StoreError> {
-        let Ok(vc) = VerifiedContact::parse_and_verify(&env.body, now) else {
+        let Ok(vc) = VerifiedContact::parse_and_verify_allow_expired(&env.body, now) else {
             return Ok((false, 0, "invalid"));
         };
         if vc.address != env.sender {
@@ -196,33 +196,30 @@ impl Node {
         if stored.trust != Trust::Trusted {
             return Ok((false, 0, "untrusted"));
         }
-        match vc.key_epoch.cmp(&stored.contact.key_epoch) {
-            std::cmp::Ordering::Less => return Ok((false, 0, "stale")),
-            std::cmp::Ordering::Equal => {
-                return Ok((
-                    false,
-                    0,
-                    if vc.same_record(&stored.contact) {
-                        "same"
-                    } else {
-                        "conflict"
-                    },
-                ))
-            }
-            std::cmp::Ordering::Greater => {}
+        // A contact update is a MERGE of certificates (same primary key only).
+        let Ok(merged) = stored.contact.merge(&vc, now) else {
+            return Ok((false, 0, "invalid"));
+        };
+        if merged.same_record(&stored.contact) {
+            return Ok((false, 0, "same"));
         }
         tx.execute(
             "UPDATE contacts SET document = ?2, updated_at = ?3 WHERE address = ?1",
-            params![env.sender.to_string(), vc.document(), now],
+            params![env.sender.to_string(), merged.document(), now],
         )?;
+        let revoked_now = merged.revocation(now).is_some();
         let row = ContactRow {
-            contact: vc,
+            contact: merged,
             trust: stored.trust,
             alias: stored.alias,
             added_at: stored.added_at,
-            revoked: false,
+            revoked: revoked_now,
         };
-        let resealed = self.reseal_outbox(tx, &row, now)?;
+        let resealed = if revoked_now {
+            0
+        } else {
+            self.reseal_outbox(tx, &row, now)?
+        };
         Ok((true, resealed, ""))
     }
 
@@ -262,6 +259,17 @@ impl Node {
     ) -> Result<(bool, usize), StoreError> {
         // A revoked identity's advertisements are removed and refused from now on.
         Self::purge_adverts(tx, &rev.address)?;
+        // Merge the revoked certificate into the stored contact (revocations accumulate).
+        if let Some(row) = self.load_contact(tx, &rev.address)? {
+            if let Ok(rc) = VerifiedContact::from_cert(rev.cert().clone(), now) {
+                if let Ok(m) = row.contact.merge(&rc, now) {
+                    tx.execute(
+                        "UPDATE contacts SET document = ?2, updated_at = ?3 WHERE address = ?1",
+                        params![rev.address.to_string(), m.document(), now],
+                    )?;
+                }
+            }
+        }
         let n = tx.execute(
             "INSERT OR IGNORE INTO revocations (address, document, revoked_at, received_at, source)
              VALUES (?1, ?2, ?3, ?4, ?5)",
@@ -351,12 +359,10 @@ impl Node {
         let mut n = 0;
         for (message_id, ty, conv, corr, body, created, expires) in rows {
             let env = Envelope {
-                v: 1,
+                v: ENVELOPE_VERSION,
                 message_id: message_id.clone(),
                 sender: self.own,
                 recipient: row.contact.address,
-                suite: SUITE_ID,
-                recipient_key_epoch: 0,
                 message_type: ty,
                 conversation_id: conv,
                 correlation_id: corr,
@@ -461,12 +467,12 @@ impl Node {
     pub(crate) fn announce_changes(&self, now: i64) -> Result<(), NodeError> {
         let queued = self.store.tx(|tx| {
             let mut queued = 0usize;
-            let cur = self.identity.key_epoch();
+            let cur = self.cert_id();
             let announced: Option<u64> =
-                kv_get(tx, KV_ANNOUNCED_EPOCH)?.and_then(|s| s.parse().ok());
+                kv_get(tx, KV_ANNOUNCED_CERT)?.and_then(|s| s.parse().ok());
             match announced {
-                None => kv_set(tx, KV_ANNOUNCED_EPOCH, &cur.to_string())?,
-                Some(a) if cur > a && self.local_revocation.is_none() => {
+                None => kv_set(tx, KV_ANNOUNCED_CERT, &cur.to_string())?,
+                Some(a) if cur != a && self.local_revocation.is_none() => {
                     let doc = self.identity.contact_record().to_document();
                     for row in self.trusted_contacts(tx)? {
                         if self.queue_system_message(
@@ -479,7 +485,7 @@ impl Node {
                             queued += 1;
                         }
                     }
-                    kv_set(tx, KV_ANNOUNCED_EPOCH, &cur.to_string())?;
+                    kv_set(tx, KV_ANNOUNCED_CERT, &cur.to_string())?;
                 }
                 Some(_) => {}
             }
@@ -588,12 +594,10 @@ impl Node {
                 )?;
                 self.insert_event(tx, "message.received", &message_id, None, None, now)?;
                 let orig = Envelope {
-                    v: 1,
+                    v: ENVELOPE_VERSION,
                     message_id: message_id.clone(),
                     sender: addr,
                     recipient: self.own,
-                    suite: SUITE_ID,
-                    recipient_key_epoch: 0,
                     message_type: ty,
                     conversation_id: conv.clone(),
                     correlation_id: corr,

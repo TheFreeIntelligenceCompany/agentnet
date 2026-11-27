@@ -7,9 +7,9 @@ mod common;
 
 use agentnet_core::api::*;
 use agentnet_core::crypto::envelope::{
-    seal, Envelope, MESSAGE_TYPE_CONTACT_UPDATE, MESSAGE_TYPE_IDENTITY_REVOKED,
-    MESSAGE_TYPE_MESSAGE,
+    Envelope, MESSAGE_TYPE_CONTACT_UPDATE, MESSAGE_TYPE_IDENTITY_REVOKED, MESSAGE_TYPE_MESSAGE,
 };
+use agentnet_core::crypto::protection::seal;
 use agentnet_core::crypto::{Identity, VerifiedContact};
 use agentnet_core::guard;
 use agentnet_core::NodeOptions;
@@ -32,7 +32,8 @@ fn rotate(w: &World, a: &Agent, revoke: bool) -> String {
 }
 
 fn topic_of(record: &str) -> ContentTopic {
-    VerifiedContact::parse_and_verify(record, i64::MAX / 2)
+    // the mock clock starts at this time; only the address (topic) is needed
+    VerifiedContact::parse_and_verify_allow_expired(record, 1_700_000_000_000)
         .unwrap()
         .inbox_topic()
 }
@@ -94,8 +95,7 @@ async fn rotation_with_overlap_keeps_old_frames_openable_and_announces_the_new_r
     // the old frame opened through the retention overlap
     assert_eq!(a.state(&m1.message_id).await, DeliveryState::Delivered);
     assert_eq!(b.inbox().await.len(), 1);
-    // the contact.update told A about epoch 2 ...
-    assert_eq!(contact(&a, &b).await.key_epoch, 2);
+    // the contact.update told A about the new subkey (a certificate merge) ...
     assert_eq!(a.metric("contact_update.applied"), 1);
     // ... so new messages are sealed to it
     let m2 = a.send(&b, "after rotation").await;
@@ -160,19 +160,18 @@ async fn rotation_with_revoke_reseals_pending_messages_after_contact_update() {
     // same message ids (re-sealed, not re-created)
     let ids: Vec<String> = b.inbox().await.into_iter().map(|r| r.message_id).collect();
     assert!(ids.contains(&m1.message_id) && ids.contains(&m2.message_id));
-    let c = contact(&a, &b).await;
-    assert_eq!(c.key_epoch, 2);
+    assert_eq!(a.metric("contact_update.applied"), 1);
 }
 
 #[tokio::test]
-async fn stale_and_conflicting_contact_records_are_rejected() {
+async fn contact_records_are_merged_never_replaced() {
     let w = World::new();
     let mut v = started(&w, &["a", "b"]).await;
     let (b, a) = (v.pop().unwrap(), v.pop().unwrap());
     a.add(&b).await;
-    let epoch1 = b.record.clone();
+    let first = b.record.clone();
 
-    // two different rotations of the same identity both claim epoch 2
+    // two different rotations of the same identity (two different new subkeys)
     let mut id_x = load(&b);
     id_x.rotate_kem_with(w.now_ms(), w.now_ms() + TTL, None, false)
         .unwrap();
@@ -193,19 +192,29 @@ async fn stale_and_conflicting_contact_records_are_rejected() {
         }
     };
     let up = add(rec_x.clone()).await.unwrap();
-    assert!(up.updated && up.key_epoch == 2);
+    assert!(up.updated);
     // idempotent re-import of the same record
     let again = add(rec_x.clone()).await.unwrap();
     assert!(!again.updated);
-    // older epoch: stale; same epoch, different bytes: conflicting
-    let e = add(epoch1).await.unwrap_err();
-    assert_eq!(e.code, ErrorCode::Conflict);
-    assert!(e.message.contains("stale"), "{}", e.message);
-    let e = add(rec_y).await.unwrap_err();
-    assert_eq!(e.code, ErrorCode::Conflict);
-    assert!(e.message.contains("conflicting"), "{}", e.message);
-    // the stored record is untouched
-    assert_eq!(contact(&a, &b).await.key_epoch, 2);
+    // the original (older) certificate cannot roll the update back: merging it changes nothing
+    let old = add(first).await.unwrap();
+    assert!(!old.updated);
+    // a different rotation is merged in (a union), not rejected and not substituted
+    let y = add(rec_y).await.unwrap();
+    assert!(y.updated);
+    // a certificate of a different identity is a different contact, never a replacement
+    let c = w.agent("c", cfg());
+    let n = a.node.list_contacts().await.unwrap().len();
+    a.add(&c).await;
+    assert_eq!(a.node.list_contacts().await.unwrap().len(), n + 1);
+    // the stored contact still names B
+    assert!(a
+        .node
+        .list_contacts()
+        .await
+        .unwrap()
+        .iter()
+        .any(|x| x.address == b.addr));
 }
 
 #[tokio::test]
@@ -235,7 +244,6 @@ async fn contact_updates_from_wrong_untrusted_or_replayed_sources_are_not_applie
     );
     a.node.step_receive().await.unwrap();
     assert_eq!(a.metric("contact_update.ignored_wrong_address"), 1);
-    assert_eq!(contact(&a, &b).await.key_epoch, 1);
 
     // (b) B is known but Untrusted: B's own valid update is stored under the
     // quarantine policy, never applied
@@ -246,7 +254,6 @@ async fn contact_updates_from_wrong_untrusted_or_replayed_sources_are_not_applie
         &forge(&w, &b, &a, MESSAGE_TYPE_CONTACT_UPDATE, &rec_b2),
     );
     a.node.step_receive().await.unwrap();
-    assert_eq!(contact(&a, &b).await.key_epoch, 1);
     assert_eq!(a.metric("contact_update.applied"), 0);
     assert_eq!(a.metric("message.quarantined"), 1);
     a.node.set_contact_trust(&b.addr, Trust::Trusted).unwrap();
@@ -266,7 +273,6 @@ async fn contact_updates_from_wrong_untrusted_or_replayed_sources_are_not_applie
     inject(&w, &a, &f);
     a.node.step_receive().await.unwrap();
     assert_eq!(a.metric("contact_update.applied"), 1);
-    assert_eq!(contact(&a, &b).await.key_epoch, 2);
     // ... an exact replay is a duplicate ...
     inject(&w, &a, &f);
     a.node.step_receive().await.unwrap();
@@ -278,8 +284,7 @@ async fn contact_updates_from_wrong_untrusted_or_replayed_sources_are_not_applie
         &forge(&w, &b, &a, MESSAGE_TYPE_CONTACT_UPDATE, &b.record),
     );
     a.node.step_receive().await.unwrap();
-    assert_eq!(a.metric("contact_update.ignored_stale"), 1);
-    assert_eq!(contact(&a, &b).await.key_epoch, 2);
+    assert_eq!(a.metric("contact_update.ignored_same"), 1);
     // garbage body from a Trusted contact is ignored
     inject(
         &w,
@@ -384,25 +389,14 @@ async fn forged_tombstones_are_rejected_and_out_of_band_import_works() {
     exchange(&a, &b).await;
 
     let good = tombstone(&w, &b, "retired");
-    // edited reason, truncated, someone else's signature over B's address
+    // an edited document, a certificate that is not revoked, a revocation of another key relabelled
     let edited = {
-        let v: serde_json::Value = serde_json::from_str(&good).unwrap();
-        let rec = v["record"].as_str().unwrap().to_owned();
-        let sig = v["sig"].as_str().unwrap().to_owned();
-        let mut bytes = rec.into_bytes();
+        let mut bytes = good.clone().into_bytes();
         let n = bytes.len() / 2;
         bytes[n] = if bytes[n] == b'A' { b'B' } else { b'A' };
-        serde_json::json!({"record": String::from_utf8(bytes).unwrap(), "sig": sig}).to_string()
+        String::from_utf8(bytes).unwrap()
     };
-    let by_x = {
-        // X signs a tombstone naming X; relabelling it as B's is a bad signature
-        use base64::engine::general_purpose::URL_SAFE_NO_PAD as B64;
-        use base64::Engine as _;
-        let t: serde_json::Value = serde_json::from_str(&tombstone(&w, &x, "x")).unwrap();
-        let rec = String::from_utf8(B64.decode(t["record"].as_str().unwrap()).unwrap()).unwrap();
-        let rec = rec.replace(&x.addr, &b.addr);
-        serde_json::json!({"record": B64.encode(rec), "sig": t["sig"]}).to_string()
-    };
+    let by_x = x.record.clone(); // a plain, unrevoked certificate is not a revocation
     for bad in [edited.as_str(), "{}", "garbage", by_x.as_str()] {
         let e = a.node.import_revocation(bad).unwrap_err();
         assert_eq!(e.code, ErrorCode::InvalidArgument, "{bad}");

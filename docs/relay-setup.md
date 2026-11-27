@@ -6,6 +6,10 @@ Scope: how to run a user-owned Logos Delivery **service node** (relay + Store, o
 `results/audit/relay-print-config.txt`). **All of it was run on one macOS arm64 host, with containers on a colima VM,
 the amd64 image under qemu.** The flag set was later also run across real hosts (SSH tunnel, tailnet, public IP, public wss edge; see "Your own relay on a public address" and `docs/spike-report.md` section 7). **UNTESTED**: NAT traversal between clients and the shared public Waku/Logos network.
 
+## 0. Build prerequisite (OpenPGP backend)
+
+`agentnet` links OpenSSL 3 through its OpenPGP library (`docs/dependency-audit.md` section 0): building needs the OpenSSL 3 development files and `libclang`, with `OPENSSL_DIR` set where they are not in a default location (macOS Homebrew: `export OPENSSL_DIR=$(brew --prefix openssl@3)`; Debian/Ubuntu: `libssl-dev libclang-dev pkg-config`). Running a prebuilt binary needs the OpenSSL 3 shared libraries (UNTESTED on Linux). The relay and node images are unaffected.
+
 ## 1. Topology
 
 ```

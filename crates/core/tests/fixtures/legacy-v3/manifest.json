@@ -1,0 +1,8 @@
+{
+  "inbound_message_id": "058b8a7b-ac00-45cc-9ee1-2b123c2dd2f3",
+  "outbound_queued_message_id": "292a8f3f-b32c-4721-b532-5c2b190151ee",
+  "outbound_sent_message_id": "adfc2ff2-bad5-4a1f-b5e9-903edae6af17",
+  "owner_address": "an1geasorhzdxnk6eimu2w2e4tg63omdymtwwa25cskrl5njzb5bwyevtuzk4",
+  "peer_address": "an1x2mkfdfb5dbp3vqezyvxeq22rlbiwbbfvh2f6t72putchehoswl6d3mrqe",
+  "peer_contact_record": "{\"record\":\"eyJ2IjoxLCJhZGRyZXNzIjoiYW4xeDJta2ZkZmI1ZGJwM3ZxZXp5dnhlcTIycmxiaXdiYmZ2aDJmNnQ3MnB1dGNoZWhvc3dsNmQzbXJxZSIsInNpZ25pbmdfcGsiOiJ2cGlpaktIb3d2M1dCTTRyY2tOYWlzS0xCQ1dwOUY5UC1uMG1JNUR1bFpjIiwia2VtX3BrIjoiVW5yT1Y5ZWlQSFhuMXRER1pROEh5NHpMQ1JjejRfRGc3LWJtMU9PNVNtSSIsImtleV9lcG9jaCI6MSwicmV2b2tlZF9rZW1fZXBvY2hzX2JlbG93IjoxLCJzdWl0ZXMiOlsxXSwiaW5ib3hfYnVja2V0cyI6MTYsImNyZWF0ZWRfYXQiOjE3MDAwMDAwMDAwMDAsImtlbV9leHBpcmVzX2F0IjpudWxsfQ\",\"sig\":\"diKesbZGaPc5GwGrIecAAWRbwoXV-5lCfPDxguAmDzXHEAAgYgyl4feoCijc20c3YL2Y0hn_Vyziz4izfR_6AA\"}"
+}

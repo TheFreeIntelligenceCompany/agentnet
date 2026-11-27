@@ -22,8 +22,12 @@ fn init_creates_private_files_and_refuses_to_overwrite() {
     let out = agentnet(&dir, &["--json", "init", "--peer", PEER]);
     assert!(out.status.success(), "{}", stderr(&out));
     let v: serde_json::Value = serde_json::from_str(stdout(&out).trim()).unwrap();
-    assert!(v["address"].as_str().unwrap().starts_with("an1"));
-    assert!(v["contact_record"].as_str().unwrap().contains("\"sig\""));
+    assert!(v["address"].as_str().unwrap().starts_with("an2"));
+    agentnet_core::crypto::VerifiedContact::parse_and_verify(
+        v["contact_record"].as_str().unwrap(),
+        agentnet_core::clock::system_now_ms(),
+    )
+    .expect("init prints a valid public certificate");
     assert_eq!(v["peers_configured"], true);
     assert_eq!(mode(&dir), 0o700);
     for f in [
@@ -38,12 +42,10 @@ fn init_creates_private_files_and_refuses_to_overwrite() {
     // secrets are not printed
     let secret = std::fs::read_to_string(dir.join("identity.json")).unwrap();
     let key: serde_json::Value = serde_json::from_str(&secret).unwrap();
-    for k in ["signing_sk", "kem_sk"] {
-        assert!(
-            !stdout(&out).contains(key[k].as_str().unwrap()),
-            "{k} leaked"
-        );
-    }
+    assert!(
+        !stdout(&out).contains(key["certificate"].as_str().unwrap()),
+        "the secret certificate leaked"
+    );
     let token = std::fs::read_to_string(dir.join("control.token")).unwrap();
     assert!(!stdout(&out).contains(token.trim()) && !stderr(&out).contains(token.trim()));
 
@@ -126,7 +128,7 @@ async fn sending_to_an_unknown_recipient_prescribes_the_cli_command() {
     assert_eq!(o.status.code(), Some(5), "{}", stderr(&o));
     assert!(
         stderr(&o).contains(&format!(
-            "error: Recipient is not a known contact. Add their signed record with `agentnet --data-dir {} contact add @<file> --expect <address>`.",
+            "error: Recipient is not a known contact. Add their public certificate with `agentnet --data-dir {} contact add @<file> --expect <address>`.",
             a.display()
         )),
         "{}",
@@ -571,7 +573,7 @@ async fn mcp_without_a_daemon_starts_and_every_tool_says_unavailable() {
         ("network_status", json!({})),
         (
             "send_message",
-            json!({"recipient": "an1xxxxxxxx", "body": "x"}),
+            json!({"recipient": "an2xxxxxxxx", "body": "x"}),
         ),
     ] {
         let r = call(&c, tool, args).await;
@@ -741,35 +743,48 @@ async fn mcp_embedded_runs_the_daemon_in_process_and_holds_the_lock() {
 // ----------------------------------------------- hardening: rotation, revocation, replay guard
 
 #[test]
-fn rotate_kem_with_revoke_previous_destroys_old_keys_and_bumps_the_epoch() {
+fn rotate_kem_with_revoke_previous_destroys_old_keys_and_publishes_a_new_subkey() {
     let t = tempfile::tempdir().unwrap();
     let (a, addr) = init(t.path(), "a");
-    // plain rotation: epoch 2, one retired key kept
+    let before = json_ok(&a, &["identity", "show"])["contact_record"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    // plain rotation: a new subkey, one retired subkey kept for decryption
     let v = json_ok(&a, &["identity", "rotate-kem", "--keep-hours", "1"]);
-    assert_eq!(v["key_epoch"], 2);
-    let id: serde_json::Value =
-        serde_json::from_slice(&std::fs::read(a.join("identity.json")).unwrap()).unwrap();
-    assert_eq!(id["previous_kems"].as_array().unwrap().len(), 1);
-    // revoking rotation: epoch 3, no retired keys left on disk, floor signed in the record
-    let v = json_ok(&a, &["identity", "rotate-kem", "--revoke-previous"]);
     assert_eq!(v["agent_id"], addr.as_str());
-    assert_eq!(v["key_epoch"], 3);
+    assert_ne!(v["contact_record"].as_str().unwrap(), before);
     let id: serde_json::Value =
         serde_json::from_slice(&std::fs::read(a.join("identity.json")).unwrap()).unwrap();
-    assert_eq!(id["previous_kems"].as_array().unwrap().len(), 0);
-    assert_eq!(id["min_valid_epoch"], 3);
+    assert_eq!(id["retained_subkeys"].as_array().unwrap().len(), 1);
+    // revoking rotation: no retired secret subkeys left on disk
+    let v = json_ok(
+        &a,
+        &[
+            "identity",
+            "rotate-kem",
+            "--revoke-previous",
+            "--expires-in-days",
+            "30",
+        ],
+    );
+    assert_eq!(v["agent_id"], addr.as_str());
+    let id: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(a.join("identity.json")).unwrap()).unwrap();
+    assert_eq!(id["retained_subkeys"].as_array().unwrap().len(), 0);
     let rec = agentnet_core::crypto::VerifiedContact::parse_and_verify(
         v["contact_record"].as_str().unwrap(),
-        i64::MAX / 2,
+        agentnet_core::clock::system_now_ms(),
     )
     .unwrap();
-    assert_eq!(rec.key_epoch, 3);
-    assert_eq!(rec.revoked_kem_epochs_below, 3);
-    assert_eq!(rec.suites, vec![1]);
+    assert_eq!(rec.address.to_string(), addr);
+    // the new subkey expires in about 30 days
+    let exp = rec.kem_expires_at.unwrap() - agentnet_core::clock::system_now_ms();
+    assert!(exp > 29 * 86_400_000 && exp <= 30 * 86_400_000, "{exp}");
 }
 
 #[test]
-fn identity_revoke_writes_a_signed_tombstone_and_blocks_further_changes() {
+fn identity_revoke_writes_a_key_revocation_and_blocks_further_changes() {
     let t = tempfile::tempdir().unwrap();
     let (a, addr) = init(t.path(), "a");
     let o = agentnet(&a, &["identity", "show-revocation"]);
@@ -783,8 +798,11 @@ fn identity_revoke_writes_a_signed_tombstone_and_blocks_further_changes() {
     let doc = v["revocation"].as_str().unwrap().to_owned();
     assert_eq!(mode(&a.join("revocation.json")), 0o600);
     // the printed document verifies and names this address
-    let rev =
-        agentnet_core::crypto::VerifiedRevocation::parse_and_verify(&doc, i64::MAX / 2).unwrap();
+    let rev = agentnet_core::crypto::VerifiedRevocation::parse_and_verify(
+        &doc,
+        agentnet_core::clock::system_now_ms(),
+    )
+    .unwrap();
     assert_eq!(rev.address.to_string(), addr);
     assert_eq!(rev.reason, "key stolen");
     // show-revocation prints the same document; identity show reports it

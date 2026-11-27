@@ -194,7 +194,7 @@ async fn webhook_mode_verifies_signatures_and_dedupes() {
         event_id: "11111111-1111-4111-8111-111111111111".into(),
         cursor: "c".into(),
         event_type: EventType::TriggerMatched,
-        agent_id: "an1x".into(),
+        agent_id: "an2x".into(),
         message_id: "m-direct".into(),
         trigger_id: Some("t".into()),
         target_session: Some("s1".into()),
