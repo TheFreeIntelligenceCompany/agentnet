@@ -1,8 +1,8 @@
 # ADR 0004: Message protection with RFC 9580 OpenPGP
 
-Status: **Proposed** (draft written by a subagent from the spike `docs/spike/notes-openpgp.md`; not reviewed or accepted by the lead agent or the
-repository owner). If accepted it **supersedes ADR 0002** (`docs/adr/0002-end-to-end-encryption.md`) for message protection; nothing in
-`crates/` has changed. Owner of the code: lead agent. Authorizing principal: the repository holder.
+Status: **Accepted by the repository owner on 2026-11-26**, with the library choice and conditions recorded in "Owner decision" below.
+It **supersedes ADR 0002** (`docs/adr/0002-end-to-end-encryption.md`) for message protection. Drafted by a subagent from the spike
+(`docs/spike/notes-openpgp.md`); the lead agent owns the code and the open-question decisions below. Authorizing principal: the repository holder.
 
 ## Context
 
@@ -59,6 +59,44 @@ rotation and revocation, no silent downgrade, and an independent cryptographic r
 
 Not decided here and left open (notes section 8): where `inbox_buckets` and the protocol tag live, whether TTL moves into signature subpackets,
 whether to reuse existing Ed25519 identities, the discovery-advert signing, and the `deny.toml` policy for LGPL or OpenSSL.
+
+## Owner decision (2026-11-26)
+
+The owner ruled that the HPKE + Ed25519 scheme of ADR 0002 fails the "no hand-rolled cryptography" requirement at the protocol level, and chose:
+
+* **Sequoia (`sequoia-openpgp` 2.5.0) with the OpenSSL 3 backend is the shipping implementation.** The native dependency and the LGPL packaging
+  obligations are accepted. Dependency-policy exceptions are scoped to the crates Sequoia requires, and `docs/licensing.md` states how release
+  binaries satisfy the licence.
+* **rPGP is kept as the independent interoperability check in CI**, outside the shipped binary.
+* **Anonymous recipients and standard OpenPGP padding are preserved.**
+* Two regression tests run through AgentNet's normal send and receive paths: refuse to encrypt to a certificate whose **primary key is revoked**
+  even when a subkey looks usable; reject a message whose signature **lacks the Intended Recipient Fingerprint**.
+* The locked build is verified on macOS arm64, Linux arm64 and Linux x86_64; the workspace and private-relay acceptance tests are run and recorded.
+* Authorized: implementation and local testing. **Publication, deployment and spending need separate approval.** The independent cryptographic
+  review remains required before production use with sensitive information.
+
+## Lead decisions on the questions the draft left open
+
+1. **One suite, hard cutover.** No peers have been released, so the HPKE suite is removed, not kept alongside: the `hpke` and `ed25519-dalek`
+   dependencies and the suite-1 code leave the tree. This replaces items 3 and 5 of the migration outline below (no dual-suite period).
+2. **Migration is explicit** (`agentnet identity migrate`): it generates a fresh v6 certificate, keeps the inbox history and dedupe state, lists every
+   pending old-format outbox message and marks it failed with a reason that says to re-send, keeps old contacts as *unverified legacy entries*
+   that cannot be sent to until the contact's new certificate is added with `--expect`, and prints the new address. Nothing is converted silently;
+   an old data directory is refused by `serve` with a message naming the command.
+3. **Fresh keys.** An existing Ed25519 identity key is never reused in the certificate.
+4. **Application fields stay in the signed, encrypted payload:** protocol version (`agentnet`: 2), message id, type, sender and recipient
+   fingerprints (cross-checked against the signature and the Intended Recipient Fingerprint), created-at, TTL, conversation id, body. TTL is not
+   moved into signature subpackets. No notation data is used; the identity certificate is used for nothing but AgentNet.
+5. **Inbox topic.** The bucket is taken from the leading byte(s) of the v6 fingerprint (which is already a SHA-256 output); no extra hash or
+   domain string.
+6. **Contact record = the certificate** (binary, base64 for transport; at most 4096 B), with local-only alias and trust level. Updates are merges.
+   Rotation is a new encryption subkey with expiry; revocation is a standard subkey or key revocation signature; a revoked identity is distributed
+   as the merged certificate.
+7. **Discovery adverts** are OpenPGP signed messages made by the identity certificate (signed, not encrypted), with the topic inside the signed
+   content; no AgentNet-defined signature construction remains.
+8. **Identity export** keeps the `age` passphrase file around the secret key material (an existing tool, not a construction of ours).
+9. **Dependency policy:** `deny.toml` gets licence exceptions for exactly the LGPL crates Sequoia requires and lifts the `openssl-sys` ban only for
+   the crates that need it (wrappers); everything else stays as it is.
 
 ## Consequences
 
