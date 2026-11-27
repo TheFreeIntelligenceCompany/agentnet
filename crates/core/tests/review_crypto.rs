@@ -199,3 +199,231 @@ fn l7_evicting_a_retained_subkey_strips_its_secret() {
         OpenError::NotForUs
     );
 }
+
+// ------------------------------------------------------------------- L2
+
+mod l2 {
+    use super::*;
+    use agentnet_core::crypto::testing::{self as t, BuildOpts, Inner};
+    use agentnet_core::crypto::testing::{Aead as AEADAlgorithm, Cipher as SymmetricAlgorithm};
+
+    fn contact(id: &Identity) -> VerifiedContact {
+        contact_at(id, NOW)
+    }
+
+    fn open_from(to: &Identity, frame: &[u8], from: &Identity) -> Result<(), OpenError> {
+        let dir = Pinned(vec![contact(from)]);
+        OpenPgpProtection
+            .open(to, frame, NOW, &lim(), &dir)
+            .map(|_| ())
+    }
+
+    fn setup() -> (Identity, Identity, Vec<u8>) {
+        let (a, b) = (ident(), ident());
+        let frame = OpenPgpProtection
+            .seal(&a, &contact(&b), &env(&a, &b, "hello", NOW), NOW, MAX_FRAME)
+            .unwrap();
+        (a, b, frame)
+    }
+
+    #[test]
+    fn the_canonical_frame_opens() {
+        let (a, b, frame) = setup();
+        open_from(&b, &frame, &a).unwrap();
+        // the same signed packets rewrapped unchanged (AES-256/OCB) open too
+        let same = t::rewrap(
+            &b,
+            &frame,
+            &contact(&b),
+            NOW,
+            Inner::Same,
+            SymmetricAlgorithm::AES256,
+            AEADAlgorithm::OCB,
+        );
+        open_from(&b, &same, &a).unwrap();
+    }
+
+    #[test]
+    fn l2_a_prepended_marker_packet_is_rejected() {
+        let (a, b, frame) = setup();
+        assert_eq!(
+            open_from(&b, &t::prepend_marker(&frame), &a).unwrap_err(),
+            OpenError::BadStructure
+        );
+    }
+
+    #[test]
+    fn l2_an_appended_outer_padding_packet_is_rejected() {
+        let (a, b, frame) = setup();
+        assert_eq!(
+            open_from(&b, &t::append_outer_padding(&frame, 64), &a).unwrap_err(),
+            OpenError::BadStructure
+        );
+    }
+
+    #[test]
+    fn l2_trailing_data_is_rejected() {
+        let (a, b, frame) = setup();
+        assert!(open_from(&b, &t::append_bytes(&frame, &[0u8; 7]), &a).is_err());
+        assert!(open_from(&b, &t::append_bytes(&frame, b"\n"), &a).is_err());
+    }
+
+    #[test]
+    fn l2_an_ascii_armored_frame_is_rejected() {
+        let (a, b, frame) = setup();
+        assert!(open_from(&b, &t::armored(&frame), &a).is_err());
+    }
+
+    #[test]
+    fn l2_extra_foreign_pkesks_are_accepted_up_to_the_maximum_and_refused_beyond() {
+        let (a, b, frame) = setup();
+        // the real PKESK plus 7 foreign ones is exactly the maximum of 8
+        open_from(&b, &t::prepend_foreign_pkesks(&frame, 7), &a).unwrap();
+        // 8 foreign ones plus the real one is 9: refused
+        assert_eq!(
+            open_from(&b, &t::prepend_foreign_pkesks(&frame, 8), &a).unwrap_err(),
+            OpenError::Malformed
+        );
+    }
+
+    #[test]
+    fn l2_other_ciphers_and_aead_modes_are_rejected() {
+        let (a, b, frame) = setup();
+        for (c, m) in [
+            (SymmetricAlgorithm::AES128, AEADAlgorithm::OCB),
+            (SymmetricAlgorithm::AES192, AEADAlgorithm::OCB),
+            // (other AEAD modes cannot be produced: this Sequoia build lacks EAX and GCM)
+        ] {
+            let f = t::rewrap(&b, &frame, &contact(&b), NOW, Inner::Same, c, m);
+            assert_eq!(
+                open_from(&b, &f, &a).unwrap_err(),
+                OpenError::UnsupportedCipher,
+                "{c:?} {m:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn l2_inner_markers_extra_padding_and_misplaced_padding_are_rejected() {
+        let (a, b, frame) = setup();
+        for shape in [
+            Inner::MarkerFirst,
+            Inner::MarkerLast,
+            Inner::TwoPaddings,
+            Inner::PaddingBeforeSignature,
+        ] {
+            let f = t::rewrap(
+                &b,
+                &frame,
+                &contact(&b),
+                NOW,
+                shape,
+                SymmetricAlgorithm::AES256,
+                AEADAlgorithm::OCB,
+            );
+            assert!(open_from(&b, &f, &a).is_err(), "{shape:?}");
+        }
+    }
+
+    #[test]
+    fn l2_two_signatures_are_wrong_signature_count() {
+        let (a, b) = (ident(), ident());
+        let c = ident();
+        let payload = t::payload_for(&a, &env(&a, &b, "x", NOW));
+        let f = t::seal_two_signers(&a, &c, &contact(&b), &payload, NOW);
+        assert_eq!(
+            open_from(&b, &f, &a).unwrap_err(),
+            OpenError::WrongSignatureCount
+        );
+    }
+
+    #[test]
+    fn l2_a_signature_made_by_a_signing_subkey_is_not_accepted() {
+        let b = ident();
+        let x = ident();
+        let payload = t::payload_for(&x, &env(&x, &b, "x", NOW));
+        let (doc, frame) = t::seal_signed_by_signing_subkey(&contact(&b), &payload, NOW);
+        let sub = VerifiedContact::parse_and_verify_allow_expired(&doc, NOW).unwrap();
+        let dir = Pinned(vec![sub]);
+        assert_eq!(
+            OpenPgpProtection
+                .open(&b, &frame, NOW, &lim(), &dir)
+                .unwrap_err(),
+            // the issuer is the subkey, whose fingerprint is not an address in
+            // the directory: the signer stays unknown (an explicit
+            // `UnsupportedSignature` branch backs this up in `check`)
+            OpenError::UnknownSender
+        );
+    }
+
+    #[test]
+    fn l2_a_message_without_padding_still_opens() {
+        let (a, b) = (ident(), ident());
+        let f = t::seal_with(
+            &a,
+            &contact(&b),
+            &env(&a, &b, "x", NOW),
+            NOW,
+            BuildOpts {
+                pad: false,
+                ..BuildOpts::default()
+            },
+        )
+        .unwrap();
+        open_from(&b, &f, &a).unwrap();
+    }
+}
+
+mod l2_adverts {
+    use super::*;
+    use agentnet_core::crypto::advert::testing as at;
+    use agentnet_core::crypto::testing as t;
+    use agentnet_core::crypto::{AdvertContent, AdvertLimits, Capability, VerifiedAdvert};
+
+    const TOPIC: &str = "agentnet-test";
+    const ALIMITS: AdvertLimits = AdvertLimits {
+        max_ttl_ms: 86_400_000,
+        clock_skew_ms: 120_000,
+        max_capabilities: 16,
+    };
+
+    fn good(id: &Identity) -> String {
+        id.create_advert(
+            &AdvertContent {
+                topic: TOPIC,
+                capabilities: &[Capability {
+                    name: "echo".into(),
+                    description: "d".into(),
+                }],
+                display_name: None,
+                issued_at: NOW,
+                expires_at: NOW + 60_000,
+                seq: 1,
+            },
+            &ALIMITS,
+        )
+        .unwrap()
+        .to_document()
+    }
+
+    fn parse(doc: &str) -> bool {
+        VerifiedAdvert::parse_and_verify(doc, TOPIC, NOW, &ALIMITS).is_ok()
+    }
+
+    #[test]
+    fn l2_only_the_canonical_binary_advert_is_accepted() {
+        let id = ident();
+        let doc = good(&id);
+        assert!(parse(&doc));
+        let msg = at::message_bytes(&doc).unwrap();
+        // ASCII armor
+        assert!(!parse(&at::document_from_bytes(&t::armored(&msg))));
+        // prefix-signature form
+        assert!(!parse(&at::document_from_bytes(&t::prefix_signature_form(&msg))));
+        // cleartext signature framework
+        let record = at::content_of(&doc).unwrap();
+        assert!(!parse(&at::document_from_bytes(&t::sign_cleartext(
+            &id, &record, NOW
+        ))));
+    }
+}

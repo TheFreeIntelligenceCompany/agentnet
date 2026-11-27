@@ -10,6 +10,7 @@ use sequoia_openpgp as openpgp;
 use openpgp::cert::prelude::*;
 use openpgp::crypto::{Password, SessionKey};
 use openpgp::packet::prelude::*;
+use openpgp::packet::{Marker, Padding};
 use openpgp::parse::{PacketParser, PacketParserResult, Parse};
 use openpgp::serialize::stream::padding::Padder;
 use openpgp::serialize::stream::{
@@ -25,6 +26,7 @@ use super::contact::VerifiedContact;
 use super::envelope::Envelope;
 use super::identity::Identity;
 pub use super::pgp::BuildOpts;
+pub use openpgp::types::{AEADAlgorithm as Aead, SymmetricAlgorithm as Cipher};
 use super::pgp::{self};
 use super::protection::{payload_bytes, OpenPgpProtection};
 use crate::error::SealError;
@@ -368,4 +370,288 @@ pub fn secret_cert_document(id: &Identity) -> String {
 pub fn public_cert_primary_revoked(id: &Identity, now_ms: i64) -> String {
     let rev = pgp::revoke_primary(id.cert(), now_ms, "test").expect("revoke");
     super::protection::b64(&rev.to_vec().expect("serialize"))
+}
+
+// ------------------------------------------------------------ L2 / M3 builders
+
+/// A frame with a Marker packet prepended (ignored by most OpenPGP parsers).
+pub fn prepend_marker(frame: &[u8]) -> Vec<u8> {
+    let mut out = Packet::Marker(Marker::default()).to_vec().expect("marker");
+    out.extend_from_slice(frame);
+    out
+}
+
+/// A frame with an outer Padding packet appended after the encrypted data.
+pub fn append_outer_padding(frame: &[u8], n: usize) -> Vec<u8> {
+    let mut out = frame.to_vec();
+    out.extend_from_slice(
+        &Packet::from(Padding::new(n).expect("padding"))
+            .to_vec()
+            .expect("serialize"),
+    );
+    out
+}
+
+/// A frame with `extra` bytes of trailing data appended.
+pub fn append_bytes(frame: &[u8], extra: &[u8]) -> Vec<u8> {
+    let mut out = frame.to_vec();
+    out.extend_from_slice(extra);
+    out
+}
+
+/// The ASCII-armored form of a binary frame or message.
+pub fn armored(frame: &[u8]) -> Vec<u8> {
+    let mut w = openpgp::armor::Writer::new(Vec::new(), openpgp::armor::Kind::Message)
+        .expect("armor writer");
+    w.write_all(frame).expect("armor");
+    w.finalize().expect("armor")
+}
+
+/// `n` v6 PKESK packets to a throwaway recipient prepended to `frame`.
+pub fn prepend_foreign_pkesks(frame: &[u8], n: usize) -> Vec<u8> {
+    let throwaway = Identity::generate(1_700_000_000_000).expect("identity");
+    let foreign = VerifiedContact::parse_and_verify(
+        &throwaway.contact_record().to_document(),
+        1_700_000_000_000,
+    )
+    .expect("contact");
+    let sealed = pgp::seal_message(
+        throwaway.signer().expect("signer"),
+        foreign.cert(),
+        b"x",
+        1_700_000_000_000,
+        &BuildOpts::default(),
+    )
+    .expect("seal");
+    let pkesk = match PacketParser::from_bytes(&sealed).expect("parse") {
+        PacketParserResult::Some(pp) => pp.packet.to_vec().expect("serialize"),
+        PacketParserResult::EOF(_) => panic!("empty"),
+    };
+    let mut out = Vec::new();
+    for _ in 0..n {
+        out.extend_from_slice(&pkesk);
+    }
+    out.extend_from_slice(frame);
+    out
+}
+
+/// The shapes of the inner packet sequence [`rewrap`] can build.
+#[derive(Clone, Copy, Debug)]
+pub enum Inner {
+    /// Unchanged: one-pass signature, literal, signature.
+    Same,
+    /// A Marker packet before the one-pass signature.
+    MarkerFirst,
+    /// A Marker packet after the signature.
+    MarkerLast,
+    /// Two Padding packets at the end.
+    TwoPaddings,
+    /// A Padding packet between the literal data and the signature.
+    PaddingBeforeSignature,
+}
+
+/// Decrypt `frame` as `me`, rearrange the SAME signed packets as `shape` says
+/// and encrypt the result to `to` with the given cipher and AEAD mode.
+pub fn rewrap(
+    me: &Identity,
+    frame: &[u8],
+    to: &VerifiedContact,
+    now_ms: i64,
+    shape: Inner,
+    cipher: SymmetricAlgorithm,
+    aead: AEADAlgorithm,
+) -> Vec<u8> {
+    let mut sigs: Vec<Packet> = Vec::new();
+    let mut ppr = PacketParser::from_bytes(frame).expect("parse");
+    let mut session: Option<(Option<SymmetricAlgorithm>, SessionKey)> = None;
+    let keys = me.decryption_keypairs(now_ms);
+    while let PacketParserResult::Some(mut pp) = ppr {
+        match &pp.packet {
+            Packet::PKESK(k) => {
+                for mut pair in keys.iter().cloned() {
+                    if let Some((a, sk)) = k.decrypt(&mut pair, None) {
+                        session = Some((a, sk));
+                        break;
+                    }
+                }
+            }
+            Packet::SEIP(_) => {
+                let (a, sk) = session.as_ref().expect("cannot decrypt");
+                pp.decrypt(Some(a.unwrap_or(SymmetricAlgorithm::AES256)), sk)
+                    .expect("decrypt");
+            }
+            Packet::OnePassSig(_) | Packet::Signature(_) | Packet::Literal(_) => {
+                if let Packet::Literal(_) = &pp.packet {
+                    pp.buffer_unread_content().expect("literal");
+                }
+                sigs.push(pp.packet.clone());
+            }
+            _ => {}
+        }
+        ppr = pp.recurse().expect("recurse").1;
+    }
+    let [ops, lit, sig] = <[Packet; 3]>::try_from(sigs).expect("one-pass, literal, signature");
+    let marker = || Packet::Marker(Marker::default());
+    let pad = || Packet::from(Padding::new(40).expect("padding"));
+    let seq: Vec<Packet> = match shape {
+        Inner::Same => vec![ops, lit, sig],
+        Inner::MarkerFirst => vec![marker(), ops, lit, sig],
+        Inner::MarkerLast => vec![ops, lit, sig, marker()],
+        Inner::TwoPaddings => vec![ops, lit, sig, pad(), pad()],
+        Inner::PaddingBeforeSignature => vec![ops, lit, pad(), sig],
+    };
+    let policy = pgp::policy();
+    let vc = to
+        .cert()
+        .with_policy(&policy, pgp::st(now_ms))
+        .expect("policy");
+    let mut sink = Vec::new();
+    {
+        let m = Message::new(&mut sink);
+        let mut m = Encryptor::for_recipients(m, recipients_of(&vc))
+            .symmetric_algo(cipher)
+            .aead_algo(aead)
+            .build()
+            .expect("encryptor");
+        for p in &seq {
+            p.serialize(&mut m).expect("serialize");
+        }
+        m.finalize().expect("finalize");
+    }
+    sink
+}
+
+/// A message signed by two different primary keys (two signatures).
+pub fn seal_two_signers(
+    first: &Identity,
+    second: &Identity,
+    recipient: &VerifiedContact,
+    payload: &[u8],
+    now_ms: i64,
+) -> Vec<u8> {
+    let p = pgp::policy();
+    let vc = recipient
+        .cert()
+        .with_policy(&p, pgp::st(now_ms))
+        .expect("policy");
+    let mut sink = Vec::new();
+    {
+        let m = Message::new(&mut sink);
+        let m = Encryptor::for_recipients(m, recipients_of(&vc))
+            .symmetric_algo(SymmetricAlgorithm::AES256)
+            .aead_algo(AEADAlgorithm::OCB)
+            .build()
+            .expect("enc");
+        let m = Signer::new(m, first.signer().expect("signer"))
+            .expect("signer")
+            .add_signer(second.signer().expect("signer"))
+            .expect("second signer")
+            .creation_time(pgp::st(now_ms))
+            .add_intended_recipient(recipient.cert())
+            .build()
+            .expect("sign");
+        let mut m = LiteralWriter::new(m).build().expect("literal");
+        m.write_all(payload).expect("write");
+        m.finalize().expect("finalize");
+    }
+    sink
+}
+
+/// A public certificate (document) with a v6 Ed25519 primary and a SIGNING
+/// subkey, and a message to `recipient` signed by that subkey (not the
+/// primary). Returns `(certificate document, frame)`.
+pub fn seal_signed_by_signing_subkey(
+    recipient: &VerifiedContact,
+    payload: &[u8],
+    now_ms: i64,
+) -> (String, Vec<u8>) {
+    let (cert, _) = CertBuilder::new()
+        .set_profile(openpgp::Profile::RFC9580)
+        .expect("profile")
+        .set_cipher_suite(CipherSuite::Cv25519)
+        .set_creation_time(pgp::st(now_ms))
+        .set_primary_key_flags(KeyFlags::empty().set_certification())
+        .add_subkey(KeyFlags::empty().set_signing(), None, None)
+        .add_subkey(KeyFlags::empty().set_transport_encryption(), None, None)
+        .generate()
+        .expect("cert");
+    let p = pgp::policy();
+    let vc_self = cert.with_policy(&p, pgp::st(now_ms)).expect("policy");
+    let sk_pair = vc_self
+        .keys()
+        .subkeys()
+        .for_signing()
+        .unencrypted_secret()
+        .next()
+        .expect("signing subkey")
+        .key()
+        .clone()
+        .into_keypair()
+        .expect("keypair");
+    let vc = recipient
+        .cert()
+        .with_policy(&p, pgp::st(now_ms))
+        .expect("policy");
+    let mut sink = Vec::new();
+    {
+        let m = Message::new(&mut sink);
+        let m = Encryptor::for_recipients(m, recipients_of(&vc))
+            .symmetric_algo(SymmetricAlgorithm::AES256)
+            .aead_algo(AEADAlgorithm::OCB)
+            .build()
+            .expect("enc");
+        let m = Signer::new(m, sk_pair)
+            .expect("signer")
+            .creation_time(pgp::st(now_ms))
+            .add_intended_recipient(recipient.cert())
+            .build()
+            .expect("sign");
+        let mut m = LiteralWriter::new(m).build().expect("literal");
+        m.write_all(payload).expect("write");
+        m.finalize().expect("finalize");
+    }
+    let public = cert.strip_secret_key_material();
+    (
+        super::protection::b64(&public.to_vec().expect("serialize")),
+        sink,
+    )
+}
+
+/// A cleartext-signed (armored, text) version of `content` by `signer`.
+pub fn sign_cleartext(signer: &Identity, content: &[u8], now_ms: i64) -> Vec<u8> {
+    let mut sink = Vec::new();
+    {
+        let m = Message::new(&mut sink);
+        let mut m = Signer::new(m, signer.signer().expect("signer"))
+            .expect("signer")
+            .creation_time(pgp::st(now_ms))
+            .cleartext()
+            .build()
+            .expect("sign");
+        m.write_all(content).expect("write");
+        m.finalize().expect("finalize");
+    }
+    sink
+}
+
+/// The packets of a signed message `[one-pass signature, literal, signature]`
+/// rearranged into the prefix-signature form `[signature, literal]`.
+pub fn prefix_signature_form(msg: &[u8]) -> Vec<u8> {
+    let mut lit: Option<Packet> = None;
+    let mut sig: Option<Packet> = None;
+    let mut ppr = PacketParser::from_bytes(msg).expect("parse");
+    while let PacketParserResult::Some(mut pp) = ppr {
+        match &pp.packet {
+            Packet::Literal(_) => {
+                pp.buffer_unread_content().expect("literal");
+                lit = Some(pp.packet.clone());
+            }
+            Packet::Signature(_) => sig = Some(pp.packet.clone()),
+            _ => {}
+        }
+        ppr = pp.next().expect("next").1;
+    }
+    let mut out = sig.expect("signature").to_vec().expect("serialize");
+    out.extend_from_slice(&lit.expect("literal").to_vec().expect("serialize"));
+    out
 }

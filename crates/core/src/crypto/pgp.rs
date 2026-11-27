@@ -26,8 +26,9 @@ use openpgp::cert::{CertRevocationBuilder, SubkeyRevocationBuilder};
 use openpgp::crypto::{KeyPair, SessionKey};
 use openpgp::packet::key::{Key6, SecretParts, SubordinateRole};
 use openpgp::packet::prelude::*;
+use openpgp::packet::Tag;
 use openpgp::parse::stream::*;
-use openpgp::parse::Parse;
+use openpgp::parse::{Dearmor, PacketParserBuilder, PacketParserResult, Parse};
 use openpgp::policy::StandardPolicy;
 use openpgp::serialize::stream::padding::Padder;
 use openpgp::serialize::stream::{Encryptor, LiteralWriter, Message, Recipient, Signer};
@@ -576,6 +577,8 @@ pub(crate) struct Opened {
 
 #[derive(Default)]
 struct State {
+    /// The session key the frame was decrypted with (for the inner packet check).
+    session: Option<(Option<SymmetricAlgorithm>, SessionKey)>,
     reject: Option<OpenError>,
     signer: Option<Address>,
     issuers: Vec<Address>,
@@ -658,12 +661,8 @@ impl VerificationHelper for Helper<'_> {
                 if aead_algo.is_none() {
                     return Err(self.reject(OpenError::NotAead));
                 }
-                if !matches!(
-                    sym_algo,
-                    SymmetricAlgorithm::AES128
-                        | SymmetricAlgorithm::AES192
-                        | SymmetricAlgorithm::AES256
-                ) {
+                // exactly what AgentNet sends (ADR 0004; rPGP produces the same set)
+                if sym_algo != SymmetricAlgorithm::AES256 || aead_algo != Some(AEADAlgorithm::OCB) {
                     return Err(self.reject(OpenError::UnsupportedCipher));
                 }
             }
@@ -746,6 +745,7 @@ impl DecryptionHelper for Helper<'_> {
             for pair in self.me.iter_mut() {
                 if let Some((algo, sk)) = pkesk.decrypt(pair, sym_algo) {
                     if decrypt(algo, &sk) {
+                        self.st.borrow_mut().session = Some((algo, sk));
                         return Ok(None);
                     }
                 }
@@ -753,6 +753,114 @@ impl DecryptionHelper for Helper<'_> {
         }
         Err(self.reject(OpenError::NotForUs))
     }
+}
+
+// ---------------------------------------------------- canonical frame grammar
+
+/// The outer packet sequence of a frame, checked at packet level BEFORE any
+/// decryption (review finding L2): binary (no ASCII armor), then PKESK v6
+/// (1 to [`MAX_PKESKS`]), then exactly one SEIPD v2 (AES-256, OCB), and nothing
+/// before, between or after (no Marker, no outer Padding, no trailing data).
+/// Sequoia's parser does the parsing; this only inspects the packet tags.
+fn check_outer(frame: &[u8]) -> Result<(), OpenError> {
+    let mut ppr = PacketParserBuilder::from_bytes(frame)
+        .map_err(|_| OpenError::Malformed)?
+        .dearmor(Dearmor::Disabled)
+        .build()
+        .map_err(|_| OpenError::Malformed)?;
+    let mut pkesks = 0usize;
+    let mut seipd = false;
+    while let PacketParserResult::Some(pp) = ppr {
+        if seipd {
+            // anything after the encrypted data
+            return Err(OpenError::BadStructure);
+        }
+        match &pp.packet {
+            Packet::PKESK(k) => {
+                pkesks += 1;
+                if pkesks > MAX_PKESKS {
+                    return Err(OpenError::Malformed);
+                }
+                if !matches!(k, PKESK::V6(_)) {
+                    return Err(OpenError::PkeskNotV6);
+                }
+            }
+            Packet::SKESK(_) => return Err(OpenError::SkeskPresent),
+            Packet::SEIP(SEIP::V2(s)) => {
+                if s.symmetric_algo() != SymmetricAlgorithm::AES256
+                    || s.aead() != AEADAlgorithm::OCB
+                {
+                    return Err(OpenError::UnsupportedCipher);
+                }
+                seipd = true;
+            }
+            Packet::SEIP(_) => return Err(OpenError::NotAead),
+            Packet::CompressedData(_) => return Err(OpenError::Compressed),
+            _ => return Err(OpenError::BadStructure),
+        }
+        // `next` does not recurse into containers
+        ppr = pp.next().map_err(|_| OpenError::Malformed)?.1;
+    }
+    if !seipd || pkesks == 0 {
+        return Err(OpenError::BadStructure);
+    }
+    Ok(())
+}
+
+/// The packet sequence INSIDE the encryption, checked at packet level after
+/// the session key is known: one-pass signature, Literal Data, Signature and an
+/// optional Padding, exactly (no Marker, no second signature, no compression).
+fn check_inner(
+    frame: &[u8],
+    session: &Option<(Option<SymmetricAlgorithm>, SessionKey)>,
+) -> Result<(), OpenError> {
+    let Some((algo, sk)) = session else {
+        return Err(OpenError::Malformed);
+    };
+    let mut ppr = PacketParserBuilder::from_bytes(frame)
+        .map_err(|_| OpenError::Malformed)?
+        .dearmor(Dearmor::Disabled)
+        .build()
+        .map_err(|_| OpenError::Malformed)?;
+    let mut inner: Vec<Tag> = Vec::new();
+    while let PacketParserResult::Some(mut pp) = ppr {
+        if matches!(pp.packet, Packet::SEIP(_)) {
+            pp.decrypt(*algo, sk).map_err(|_| OpenError::Malformed)?;
+        } else if pp.recursion_depth() >= 1 {
+            let tag = pp.packet.tag();
+            if tag == Tag::CompressedData {
+                return Err(OpenError::Compressed);
+            }
+            inner.push(tag);
+        }
+        ppr = pp.recurse().map_err(|_| OpenError::Malformed)?.1;
+    }
+    match inner.as_slice() {
+        [Tag::OnePassSig, Tag::Literal, Tag::Signature]
+        | [Tag::OnePassSig, Tag::Literal, Tag::Signature, Tag::Padding] => Ok(()),
+        _ => Err(OpenError::BadStructure),
+    }
+}
+
+/// A signed (not encrypted) message must be binary and exactly one-pass
+/// signature, Literal Data, Signature (no armor, no cleartext signature
+/// framework, no prefix-signature form).
+fn signed_message_is_canonical(msg: &[u8]) -> bool {
+    let Ok(builder) = PacketParserBuilder::from_bytes(msg) else {
+        return false;
+    };
+    let Ok(mut ppr) = builder.dearmor(Dearmor::Disabled).build() else {
+        return false;
+    };
+    let mut tags: Vec<Tag> = Vec::new();
+    while let PacketParserResult::Some(pp) = ppr {
+        tags.push(pp.packet.tag());
+        match pp.next() {
+            Ok((_, next)) => ppr = next,
+            Err(_) => return false,
+        }
+    }
+    tags == [Tag::OnePassSig, Tag::Literal, Tag::Signature]
 }
 
 /// Decrypt `frame` with `me` and verify the signature. `pinned` returns the
@@ -771,6 +879,7 @@ pub(crate) fn open_message(
     extra: Option<&Cert>,
     allow_unverified: bool,
 ) -> Result<Opened, OpenError> {
+    check_outer(frame)?;
     let p = policy();
     let state = Rc::new(RefCell::new(State::default()));
     let mut me = me;
@@ -802,6 +911,7 @@ pub(crate) fn open_message(
     if let Some(e) = s.reject {
         return Err(e);
     }
+    check_inner(frame, &s.session)?;
     Ok(Opened {
         plaintext,
         signer: s.signer,
@@ -907,6 +1017,9 @@ fn verify_signed_at(
     max: usize,
     now_ms: i64,
 ) -> Option<(Vec<u8>, Option<Address>)> {
+    if !signed_message_is_canonical(msg) {
+        return None;
+    }
     let p = policy();
     let good = Rc::new(RefCell::new(None));
     let ok = Rc::new(RefCell::new(false));
