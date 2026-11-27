@@ -618,6 +618,32 @@ pub fn seal_signed_by_signing_subkey(
     )
 }
 
+/// A disposable v6 Ed25519 certificate whose primary key certifies AND signs,
+/// with one extra SIGNING subkey and one encryption subkey. Returns `(secret
+/// document, public document)`; the secret document is for an independent
+/// implementation that makes the signatures (tests/interop-rpgp), once with the
+/// primary key (control) and once with the signing subkey.
+pub fn cert_with_signing_subkey_documents(now_ms: i64) -> (String, String) {
+    let (cert, _) = CertBuilder::new()
+        .set_profile(openpgp::Profile::RFC9580)
+        .expect("profile")
+        .set_cipher_suite(CipherSuite::Cv25519)
+        .set_creation_time(pgp::st(now_ms))
+        .set_primary_key_flags(KeyFlags::empty().set_certification().set_signing())
+        .add_subkey(KeyFlags::empty().set_signing(), None, None)
+        .add_subkey(KeyFlags::empty().set_transport_encryption(), None, None)
+        .generate()
+        .expect("cert");
+    let secret = super::protection::b64(&cert.as_tsk().to_vec().expect("serialize"));
+    let public = super::protection::b64(
+        &cert
+            .strip_secret_key_material()
+            .to_vec()
+            .expect("serialize"),
+    );
+    (secret, public)
+}
+
 /// A cleartext-signed (armored, text) version of `content` by `signer`.
 pub fn sign_cleartext(signer: &Identity, content: &[u8], now_ms: i64) -> Vec<u8> {
     let mut sink = Vec::new();

@@ -720,11 +720,18 @@ impl VerificationHelper for Helper<'_> {
                 {
                     return Err(self.reject(OpenError::UnsupportedSignature));
                 }
+                // Only the primary key signs AgentNet messages, and that needs no check
+                // here: `get_certs` returns a certificate only when the signature's issuer
+                // fingerprint is the PRIMARY fingerprint of a pinned or embedded
+                // certificate (the lookup is by address), so a signature by a subkey
+                // never reaches this point; it ends as `UnknownSender`, and a subkey that
+                // claims the primary as issuer fails verification (`BadSignature`). Both are
+                // tested with rPGP (tests/interop-rpgp, `rejection_subkey_signature`). An
+                // explicit "key != certificate" branch was removed because it was
+                // unreachable. A lookup by subkey fingerprint must not be added without
+                // restoring it.
                 let cert_fp = good.ka.cert().fingerprint();
-                if key.fingerprint() != cert_fp {
-                    // only the primary key signs AgentNet messages
-                    return Err(self.reject(OpenError::UnsupportedSignature));
-                }
+                debug_assert_eq!(key.fingerprint(), cert_fp);
                 let Some(b) = fp32(&cert_fp) else {
                     return Err(self.reject(OpenError::UnsupportedSignature));
                 };

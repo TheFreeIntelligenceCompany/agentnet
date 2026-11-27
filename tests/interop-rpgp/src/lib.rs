@@ -15,9 +15,14 @@ use base64::engine::general_purpose::URL_SAFE_NO_PAD as B64;
 use base64::Engine as _;
 use pgp::composed::{Message, MessageBuilder, SubpacketConfig};
 use pgp::crypto::aead::{AeadAlgorithm, ChunkSize};
+use pgp::crypto::hash::HashAlgorithm;
+use pgp::crypto::public_key::PublicKeyAlgorithm;
 use pgp::crypto::sym::SymmetricKeyAlgorithm;
-use pgp::packet::{Subpacket, SubpacketData};
-use pgp::types::{Fingerprint, KeyDetails, KeyVersion, Password, SigningKey, Timestamp};
+use pgp::packet::{PacketTrait, PublicKeyEncryptedSessionKey, Subpacket, SubpacketData};
+use pgp::types::{
+    Fingerprint, KeyDetails, KeyId, KeyVersion, Password, PublicParams, SignatureBytes, SigningKey,
+    Timestamp,
+};
 use rand::thread_rng;
 use rpgpie::certificate::{Certificate, Checked};
 use rpgpie::message::unpack;
@@ -84,6 +89,19 @@ pub struct SealOpts {
     pub intended: bool,
     /// Anonymous (wildcard key id/fingerprint) PKESK v6.
     pub anonymous: bool,
+    /// AEAD mode of the SEIPD v2 packet (AgentNet accepts only OCB).
+    pub aead: AeadAlgorithm,
+    /// Sign with `SignatureType::Text` (0x01, canonical text) instead of Binary (0x00).
+    pub text_signature: bool,
+    /// Produce a version 4 signature with a version 6 key (the signing key is wrapped so that
+    /// rPGP's own builder believes it is a v4 key; the signature itself is computed by rPGP).
+    pub v4_signature: bool,
+    /// Name the PRIMARY key of the signer's certificate in the hashed Issuer Fingerprint
+    /// subpacket even when a subkey makes the signature.
+    pub claim_primary_issuer: bool,
+    /// Which of the sender's signing-capable keys signs: 0 is the first (the primary key), 1 the
+    /// next (a signing subkey of a certificate that has one).
+    pub signer_index: usize,
 }
 
 impl Default for SealOpts {
@@ -91,11 +109,110 @@ impl Default for SealOpts {
         Self {
             intended: true,
             anonymous: true,
+            aead: AeadAlgorithm::Ocb,
+            text_signature: false,
+            v4_signature: false,
+            claim_primary_issuer: false,
+            signer_index: 0,
         }
     }
 }
 
-/// Encrypt (PKESK v6 + SEIPD v2, AES-256/OCB) and sign `payload` with rPGP.
+/// A signing key that reports itself as a version 4 key while delegating every operation (and the
+/// fingerprint, key id and parameters) to the real version 6 key. rPGP's message builder chooses
+/// the signature version (and the One-Pass Signature version) from `KeyDetails::version`, so this
+/// makes rPGP emit a v4 signature over the same key. No cryptography is done here.
+#[derive(Debug)]
+struct AsV4<'a, S: SigningKey>(&'a S);
+
+impl<S: SigningKey> KeyDetails for AsV4<'_, S> {
+    fn version(&self) -> KeyVersion {
+        KeyVersion::V4
+    }
+    fn legacy_key_id(&self) -> KeyId {
+        self.0.legacy_key_id()
+    }
+    fn fingerprint(&self) -> Fingerprint {
+        self.0.fingerprint()
+    }
+    fn algorithm(&self) -> PublicKeyAlgorithm {
+        self.0.algorithm()
+    }
+    fn created_at(&self) -> Timestamp {
+        self.0.created_at()
+    }
+    fn legacy_v3_expiration_days(&self) -> Option<u16> {
+        self.0.legacy_v3_expiration_days()
+    }
+    fn public_params(&self) -> &PublicParams {
+        self.0.public_params()
+    }
+}
+
+impl<S: SigningKey> SigningKey for AsV4<'_, S> {
+    fn sign(
+        &self,
+        key_pw: &Password,
+        hash: HashAlgorithm,
+        data: &[u8],
+    ) -> pgp::errors::Result<SignatureBytes> {
+        self.0.sign(key_pw, hash, data)
+    }
+    fn hash_alg(&self) -> HashAlgorithm {
+        self.0.hash_alg()
+    }
+}
+
+/// `(hashed, unhashed)` subpackets. rPGP refuses a v6 Issuer Fingerprint in the hashed area of a
+/// v4 signature, so for `v4_signature` the issuer goes in the unhashed area (where a receiver
+/// still reads it).
+fn subpackets(
+    issuer: Fingerprint,
+    to: &Certificate,
+    o: &SealOpts,
+) -> Result<(Vec<Subpacket>, Vec<Subpacket>)> {
+    let issuer = Subpacket::regular(SubpacketData::IssuerFingerprint(issuer))?;
+    let mut hashed = vec![Subpacket::critical(SubpacketData::SignatureCreationTime(
+        Timestamp::now(),
+    ))?];
+    let mut unhashed = vec![];
+    if o.v4_signature {
+        unhashed.push(issuer);
+    } else {
+        hashed.push(issuer);
+    }
+    if o.intended {
+        hashed.push(Subpacket::critical(
+            SubpacketData::IntendedRecipientFingerprint(to.fingerprint()),
+        )?);
+    }
+    Ok((hashed, unhashed))
+}
+
+/// Add the signature to a builder (a macro because the builder type differs per SEIPD version).
+macro_rules! add_signature {
+    ($b:expr, $from:expr, $signer:expr, $v4:expr, $to:expr, $o:expr) => {{
+        let issuer = if $o.claim_primary_issuer {
+            Certificate::from($from.clone()).fingerprint()
+        } else {
+            $signer.fingerprint()
+        };
+        let (hashed, unhashed) = subpackets(issuer, $to, &$o)?;
+        let cfg = SubpacketConfig::UserDefined { hashed, unhashed };
+        if $o.text_signature {
+            $b.sign_text();
+        }
+        if $o.v4_signature {
+            $b.sign_with_subpackets(&$v4, Password::empty(), $signer.hash_alg(), cfg);
+        } else {
+            $b.sign_with_subpackets(&$signer, Password::empty(), $signer.hash_alg(), cfg);
+        }
+    }};
+}
+
+/// Encrypt (PKESK v6 + SEIPD v2, AES-256, OCB unless `o.aead` says otherwise) and sign `payload`
+/// with rPGP. The signing key is the first signing-capable key of `from` (a signing subkey when
+/// the primary key cannot sign).
 pub fn seal(from: &Tsk, to: &Certificate, payload: &[u8], o: SealOpts) -> Result<Vec<u8>> {
     let mut rng = thread_rng();
     let checked: Checked = to.clone().into();
@@ -105,12 +222,13 @@ pub fn seal(from: &Tsk, to: &Certificate, payload: &[u8], o: SealOpts) -> Result
     }
     let signer = from
         .signing_capable_component_keys()
-        .next()
-        .ok_or_else(|| anyhow!("sender has no valid signing key"))?;
+        .nth(o.signer_index)
+        .ok_or_else(|| anyhow!("sender has no valid signing key at that index"))?;
+    let v4 = AsV4(&signer);
     let mut b = MessageBuilder::from_bytes("", payload.to_vec()).seipd_v2(
         &mut rng,
         SymmetricKeyAlgorithm::AES256,
-        AeadAlgorithm::Ocb,
+        o.aead,
         ChunkSize::default(),
     );
     for k in &keys {
@@ -120,25 +238,61 @@ pub fn seal(from: &Tsk, to: &Certificate, payload: &[u8], o: SealOpts) -> Result
             b.encrypt_to_key(&mut rng, k)?;
         }
     }
-    let mut hashed = vec![
-        Subpacket::critical(SubpacketData::SignatureCreationTime(Timestamp::now()))?,
-        Subpacket::regular(SubpacketData::IssuerFingerprint(signer.fingerprint()))?,
-    ];
-    if o.intended {
-        hashed.push(Subpacket::critical(
-            SubpacketData::IntendedRecipientFingerprint(to.fingerprint()),
-        )?);
-    }
-    b.sign_with_subpackets(
-        &signer,
-        Password::empty(),
-        signer.hash_alg(),
-        SubpacketConfig::UserDefined {
-            hashed,
-            unhashed: vec![],
-        },
-    );
+    add_signature!(b, from, signer, v4, to, o);
     Ok(b.to_vec(&mut rng)?)
+}
+
+/// A signed, NOT encrypted message (one-pass signature, literal data, signature) over `content`,
+/// as AgentNet's adverts are. `o.intended` is ignored (no Intended Recipient).
+pub fn sign_only(from: &Tsk, content: &[u8], mut o: SealOpts) -> Result<Vec<u8>> {
+    let mut rng = thread_rng();
+    o.intended = false;
+    let signer = from
+        .signing_capable_component_keys()
+        .nth(o.signer_index)
+        .ok_or_else(|| anyhow!("sender has no valid signing key at that index"))?;
+    let v4 = AsV4(&signer);
+    let to = Certificate::from(from.clone());
+    let mut b = MessageBuilder::from_bytes("", content.to_vec());
+    add_signature!(b, from, signer, v4, &to, o);
+    Ok(b.to_vec(&mut rng)?)
+}
+
+/// A message with SEIPD version 1 (no AEAD, modification detection code) carrying an anonymous
+/// PKESK **version 6**. rPGP's builder pairs SEIPD v1 only with PKESK v3, so the v6 PKESK (made by
+/// rPGP from the same session key, `from_session_key_v6`) is written in front of the packet the
+/// builder produced. No cryptography is done here: the frame is a genuine v6 PKESK followed by a
+/// genuine SEIPD v1 packet under the same session key.
+pub fn seal_seipd1_with_pkesk_v6(
+    from: &Tsk,
+    to: &Certificate,
+    payload: &[u8],
+    o: SealOpts,
+) -> Result<Vec<u8>> {
+    let mut rng = thread_rng();
+    let checked: Checked = to.clone().into();
+    let keys = checked.valid_encryption_capable_component_keys();
+    let key = keys
+        .first()
+        .ok_or_else(|| anyhow!("recipient has no valid encryption subkey"))?;
+    let signer = from
+        .signing_capable_component_keys()
+        .next()
+        .ok_or_else(|| anyhow!("sender has no valid signing key"))?;
+    let v4 = AsV4(&signer);
+    let mut b = MessageBuilder::from_bytes("", payload.to_vec())
+        .seipd_v1(&mut rng, SymmetricKeyAlgorithm::AES256);
+    add_signature!(b, from, signer, v4, to, o);
+    let mut pkesk =
+        PublicKeyEncryptedSessionKey::from_session_key_v6(&mut rng, b.session_key(), key)?;
+    if let PublicKeyEncryptedSessionKey::V6 { fingerprint, .. } = &mut pkesk {
+        *fingerprint = None; // anonymous, like the control
+    }
+    let seipd = b.to_vec(&mut rng)?;
+    let mut out = Vec::new();
+    pkesk.to_writer_with_header(&mut out)?;
+    out.extend_from_slice(&seipd);
+    Ok(out)
 }
 
 #[derive(Debug)]

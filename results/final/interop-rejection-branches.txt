@@ -1,0 +1,116 @@
+Interop rejection branches (rPGP =0.21.1 builds the input, AgentNet's normal open path rejects it)
+Host: macOS arm64 (Darwin 25.6.0), localhost only, no relay, no network.
+Commands:
+  cd tests/interop-rpgp
+  OPENSSL_DIR=/opt/homebrew/opt/openssl@3 cargo fmt --check            -> clean
+  cargo clippy --locked --all-targets -- -D warnings                   -> clean
+  cargo test --locked -- --nocapture --test-threads=1                  -> output below
+Workspace (same tree): cargo fmt --all --check clean; cargo clippy --workspace --all-targets
+  --all-features --locked -D warnings clean; cargo test --workspace --locked --no-fail-fast:
+  471 passed, 0 failed, 7 ignored (relay-gated).
+Interop crate: 4 (existing) + 5 (rejection_branches) + 1 (rejection_branches_adverts) = 10 passed.
+Files: tests/interop-rpgp/tests/rejection_branches.rs, rejection_branches_adverts.rs.
+Lines "REJECTED"/"ACCEPTED" are the observations; each REJECTED case is asserted exactly
+(OpenError variant and open_error.* counter via OpenError::metric_kind) and has an ACCEPTED/
+reaching-the-next-check control from the same builder path.
+Not covered: see docs/threat-model.md section 9, L2.
+==================== raw output ====================
+   Compiling agentnet-interop-rpgp v0.1.0 (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a38762d8cddd81091/tests/interop-rpgp)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.97s
+     Running unittests src/lib.rs (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a38762d8cddd81091/target/interop/debug/deps/agentnet_interop_rpgp-79d59040730c57da)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/interop.rs (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a38762d8cddd81091/target/interop/debug/deps/interop-b87d33f44b16d1ed)
+
+running 4 tests
+test agentnet_opens_rpgp_message ... rPGP message: 1274 bytes
+--- rPGP packet dump ---
+PublicKeyEncryptedSessionKey(V6 { packet_header: New { header: NewPacketHeader { padding: 1, version: 1, tag: PublicKeyEncryptedSessionKey }, length: Fixed(76) }, fingerprint: None, pk_algo: X25519, values: X25519 { ephemeral: a40f1ca3ad5cb285733b667ed1651ffe15b4362bc3fa3845922591d25a2b907d, session_key: 84b567ef64f3eb66937e3fa182beaa14eec5aa4a91244d9d82925c9d3500d2d399d61ec9f70e6dec, sym_alg: None } })
+SymEncryptedProtectedData(SymEncryptedProtectedData { packet_header: New { header: NewPacketHeader { padding: 1, version: 1, tag: SymEncryptedProtectedData }, length: Fixed(1193) }, config: V2 { sym_alg: AES256, aead: Ocb, chunk_size: C4KiB, salt: f59ea8527a2992b2733c6abf81b0cef0b01ff872b32db452632bf939c47f4a32 }, data: 8ec5b0c3b664b3be21a8f3d34f05ff86036a6159976bdf6eacd2dfadbd23181805b8696c5304aa9c105eb852da46b8cd60c3179f539335890ea99f0a697fbb51e4e362fda4e6c9643233ceeb75f3fb3d0f1a8e2c2a4af1f2efca1b326b545c76c8625c620be8a414a4bd0f8fcd0018249cbc8a48e3c5e371ee3db1384c5955bebf3ff04097703f8254f46867d249d2e15befdf7add28b9f6317c054a0a68348807fc182f0f7d68fd6ea5e9c703ce039c6f747b2787f46a1eb88529a251cd9c10724211330d355a9f60ae9452cb80cda1657166d2e0a7341b1690c9f93dc24f366d3f2dc54ba0ffed874bea1b8d6a05c78ef12bf0d46e63b5c47d526ec37c46ae0482037b4ed1d0a09a467c2e2c412a566d0d21ced7fba383f1326d646087bcc2bb1172f0ae95e08f28e2385f0d3a2a981a66ec6526e1cc12a7eea17785cb94fbcd304ed0ba262a92e6f9305a95ad700ce74014cef33f566061a6db4ad5758b304c13ab9aad2ed64421b1281b2fb73e04ecd11cb03681b2e2da5230e7d9b7f35c74aaa8f37c2a7e3583dfd6faf8359a4a662a2fa77b4ac44912035e2c46c978316cc69f9ad83aefdfc104de8d537ec3996e737a05121f633f8391f47020febcd276f614cf708b0010199fa44847fb9051ca4955e94b6c4e1acc088fc8fb513ca70ba68235ee97f9735c92646a73f1ef465a237ba466a81f3fdcd90f32e75e4dfc4709a8f8b1f74dbc58d92f4ba667e0233983fc700a6e5228873139240ff1fb0c839badef3051c2c59fb922e9ab9e4a80691e87712aafe01b3bd517724f8cf7a2ec58ade85687361a36352880e960728319de6b4dec13ef0594cd8754488d544e845749f80fe66ea9131d849d8d072b024770647c2e0f6d4f8e4c0930090aec022cc5f96b49acf14c8ce969f6fb90fecfea7b40e16699bcd567f754bf7c5313b7cc43f01ee9bdeb18c6f526aeca37ec9a2384f7012d804af16592b8e693b91673a518f6d9d6706fb1f599df6624e06ae615609935996cba9346b6f847582f962439d1c085154dec5724f6c34b85000f46549206c17c00d7134f7787f1a2e4bf9d052e08ea0844039ed9d5097c642a1cb27012c37b6e90448a4173ff3defe8d75bf4261d3203c8a7efb695dfea6303a433521202547b286f61726d3a725f92cb8f78a9ea05e61d1d7682ad58b4cb857499f72406cc52aee05c8478dd2df740e4283efd145ea5cb088e8d826dcc3664dd7ac4780a5e4041e9d0a869431c6cb0b96c4ccef41d506bb7ce405b135528ba494d1ff2cc6b5608e321084e396ea53fb973282b79e911ac801e02e05a9db3fa8617eb3b6bbe7bd18a7e2502b745335e7118f5152b8ba81d7652dfb80fc92a87a10f32d94c28900bea503d670867a65a90bcbd398d8ac2c35247d8e6fc6fec9e14b7ac33266abc9c13e74c8db8ac26b53d2d87bdc6ef381ba4e7e4680ed11064df9e748f963d865628931d7db05261ef3855b09cde78f6d75d2e6023990daa554296a161a63c645069c91665927980b83a0d316433e20037e6da92622a6fd8950a726e51f369f4ffeb02688e835072951e2ebb1a0285da83b0c6f100f38cad916fb2ada8109c7966d6361ee96a6ed6d0484c7ecaffb4ee })
+
+AgentNet opened the rPGP message (embedded and pinned)
+ok
+test agentnet_rejects_nonconforming_rpgp_messages ... no Intended Recipient Fingerprint -> MissingIntendedRecipient
+wrong signer (v6 key of another identity) -> UnknownSender
+wrong signer, sender pinned -> UnknownSender
+v4 signing key -> UnknownSender
+encrypted to another identity -> NotForUs
+named-recipient PKESK v6 -> accepted
+ok
+test rpgp_opens_agentnet_frame ... agentnet frame: 2197 bytes
+--- rPGP packet dump ---
+PublicKeyEncryptedSessionKey(V6 { packet_header: New { header: NewPacketHeader { padding: 1, version: 1, tag: PublicKeyEncryptedSessionKey }, length: Fixed(76) }, fingerprint: None, pk_algo: X25519, values: X25519 { ephemeral: 0a1872e464561afdbeabb0e8b93667997b76bb3ee839e49f8e0cf28a180efb58, session_key: 5184e681ff697ce91b70cc3b99276dd6f1a541e28c0d41180e80da87a8a428928b4bb38f3aef0b2d, sym_alg: None } })
+SymEncryptedProtectedData(SymEncryptedProtectedData { packet_header: New { header: NewPacketHeader { padding: 1, version: 1, tag: SymEncryptedProtectedData }, length: Fixed(2116) }, config: V2 { sym_alg: AES256, aead: Ocb, chunk_size: C4KiB, salt: c863e40e17ab830f15c67442e6ede73f10d22bbe6858c46bc7f6989d6741c403 }, data: 4366ec091de0ef584021c6580f3c0122e9338c610a6e13a39dfde5346e61f62dab33b165c0044f4c642ca3b7132ff1148febe6a643fc94def65c4436d98a3a0f670a6b24f31aead0728d402a65919f6b71df5d22e7f5566476a90d736d764b21470ff71d8e443c9b9c16bf8057ae3c28eb6342d2802139d26ac710d6b64662ad51fe761d4708d35e4263f27bfda2ea4990aebdf46e5c222400ec886685fb8f76152af72128a4769556fd7350c2974d6a6e328d8f832b980f5475ee0cd26bc7a18a9fc6be8cf9e62311329b797a29a76f9b04aa2c0a9414953310f1647df352fa37e9be812e6e83116198b6bb959b57b34bb004175be8f518a89d1fe74a93c0f266134abe148df1812f6ac978776fd55342c187a8dafd36704fd74c3e002424c3ec236e259f42e0a81241e4560b87cd20129d1a89abbc1fd4c35e24da182da259888877e187f244902840665717041ba46f6ca171cba5ea82c6531aa8a6c44369e7b74107457b31e404ec014d0f8859f8df1b5884bf6000f0e344b5f7833f2e4ea69445a621e5d48d600943b6d19091f44392558ab1ab2371a6f2fef834bbf2deec51f869b0b66921d76fa6e35410c595e4c271f4796fdc827f3a96e764f36d163517d7b2c9a8c7d7a6190cd78bed4af25ca2db4d2e58345a05cd2495003270d208e77d15c00fe97e178facd12a6d0586e333d42dcee359fcf9e5ff5ed98c5281cfb8ab929774c290dd81a570b097937a190a25b72152fabf383b6ddb9cd4211b5b562254df1c8e94c513944c20773d5b95cf1ce2f7e39d0b1bb443b73c221fece8b865d850e220b9f91c889ad76ef8f2ca99fbe081b05533d1446fd109cc57c723291a224fe4d8cdb21339838f1245dc3b116a9fb88a27812afc5ba7bda380ee7dd52ad0fa4ae92e49a943d693123eeca5484d0e1dd437055e74a2dbb65a54613d63913be1957d1522e691b04012b0fa011659dee8f646eb421deac78fb828eecc8717c161e39ec24f2ea98e559ec9490cd1b34987c526bcfe70edfc0c9710cd5dd806f2918a372e3e30c50542b8e9ab1bf2f327b81571290afc0c74a0a41cba81b79fc6bc7811ddd902685dc48b0d276e4c5b0dea33fb9a0a04e9af3bb17bc105ac8f9bf15ec7f4e117c2b12ecdd5a1b00f6895e2e54e8d06f699c948d6713ffe8be938613f2525b2f169f186b67caabc3b1b022353a30cdea8bf1afbad9a3367e2b085187efdd8237a8fb5bb05a399aaf575fb5cb42e4c4e688b198616c90ea0d03d30522668118d880c8d30e279157e5a5fcb9f67d5dfc8196342d8ac110241b12b3b5a1455c2b5e85b5a26c4d98baab39d70f7be34d4ac2833bc72920f12ae75b6ad9e08c5b68ca3acdba0fc87fe20167b36f362186b008a51968d80cd7b513049e6c7b3ae690ffcba6c65f48454ef024fd3fdf941098c2d3eba8b61881006be88bb8f7a71328ec83043edb00d9f2710f849d327645e29076a79961090d542894e2118dc170b223cdc5c233a9cfd64ca719a7ed29533865296e5173d53e1dc388c20a5a0b6b7df74a92bfbacaab3aac8ec7ed451289cea4fa9fc9db78d15a42b726ae55e742e3dfe6838dbf5c2acfab8e113b6a0346abed079f6a52e1ee8cf3efdd2e5f7f9c360516b8edb344ea748840be2af7fadbe630752b7816d026fb398b76f1b249d82dd725e2ef5737209d506cae0f78664762b4a8e91aa97f84b404f171a3e119b5f9aaf5a99c5deef301c1ebbd4475debd0a6454b013e5812951b5bacb7f3a97def1e8b6e184a379519d95626b360a539763d2dc9be76c79a71a7a8ea479cb535890b129418421144a64be597b95282b398283e0107781b9c08a82adf591a3302b5ea47a5335724373bd573655be8407da58538be83133ba320154330577e182d3b4d670b1ede4abb9199d38f2060b2fd12e4c675f925336204674b677b1e9ae377811f8eff6c656f17d63201cc48701189dfeb4c850b749aa18e7a0ac5ee7e18e64c49d244b64efd18578f36cd9a134ac2038d9333e3625b9e2556b1783077a70336b395727c5d65aa1f8dc6cee685e4a6208823cf69a365fdee06163ffa1f18ef44ecfe44430564a122b6969018fdb86b49092224586f698a25d50b45c15224f81793eed8c0f7235f7a6c0907f6491b78a7d6074713823bd55c6120a2bfbad9b252df30cded086c08089f29fcddefde4b02f34639a8e91b40f29f363b76d3082fa4c6dce6d9699933a89c6a903210a0f29f199c7a825e9e6b7057c16793b6a577dd514188e3c1c6bd5a67e4f5cd83f28d672b47f76b212f861ac235c77a7d9da614befe9db1e7f440506ffb99dd35359d7423002aaa9b9545a4bbdb70391afcb3c21b09c710a627db747843d0f52bbd27188484858069047ec8a8c0676c1d51feabb2e5bd3caed737ec342c483734047012fef517645ea43fd45156b6a4fc3ab1c612fdd84b94d35dfedc6b8da516deb6995d2739d224f5a3fc6bc7d9f786e96d868b9041c72790f302586e0025a2b6972370b4f1f8e1fd3a51651291ecb16bd6ac1a8b92eaaf419a5051e5dcedfdf81e2d45f1f3659bd12926bed0828f29be2f864ea10ba3ea18156fc476d8f12a8ac953b49f461bc3e2c3ef7768990b778f2cc1f9d00d80f034fff97d9fcbd90bf26e298802795e22b78a66a04f24bdc329d84e5cc4d9c935d4f188406bba9a91b8f8038cbff94ab318427463c7e4e83fcc6765e8aa2d4a7ae37600205bce083820aca9e23ba7b6504b59aca72813136a6f1c755c9f03a65cbc004959868a876595acfa280829a48bcc06714592b1a0f69968219f8cb67d5c34ad06cda4f8a42a88cf8dc6b54974a5f9342563b56a1fe7c4edcf30131e8dd02abce2b536905741608d9ad14474253ff3fe319341fe3214f3f5363a0ab516cbec2dd561f51a34ec9c3d84c7d4866e066088 })
+
+rPGP opened: signer=a4ef7ab2567018f012c5e9a5b15806a31da736afc55e5eeb085de4feba81764f intended=["7cb8956eb9a4f21e8368c92bdcdee08bb9be1ec52d45a8d04329eb7012179343"]
+ok
+test rpgp_rejects_wrong_key_and_tampered_frames ... wrong recipient key -> unpack: Message("Couldn't decrypt message")
+wrong sender certificate -> expected exactly one valid signature from the claimed sender, got 0
+rPGP bit flips: 2197 offsets, accepted=[], panics=0
+ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 57.26s
+
+     Running tests/rejection_branches.rs (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a38762d8cddd81091/target/interop/debug/deps/rejection_branches-dee178e80d1ce0a8)
+
+running 5 tests
+test rejection_aead_modes_other_than_ocb ... --- control, OCB: outer packets ---
+PublicKeyEncryptedSessionKey(V6 { packet_header: New { header: NewPacketHeader { padding: 1, version: 1, tag: PublicKeyEncryptedSessionKey }, length: Fixed(76) }, fingerprint: None, pk_algo: X25519, values: X25519 { ephemeral: 6ab5669fcb01d0f9045c206ea655cfe27bf2a67f259472b63b13b2229c5d5d35, session_key: 4f0ef439f856ada2fe29d4b8418e94904935ccd10c6f0f4800746ccc08cc5183e56bab5d840d4ee9, sym_alg: None } })
+SymEncryptedProtectedData(SymEncryptedProtectedData { packet_header: New { header: NewPacketHeader { padding: 1, version: 1, tag: SymEncryptedProtectedData }, length: Fixed(1196) }, config: V2 { sym_alg: AES256, aead: Ocb, chunk_size: C4KiB, salt: 7e8f02f8f152671830bb6d39acc110ebe5f9f366a81dc8d332bb824ba256b92f } ... })
+ACCEPTED  control: PKESK v6 + SEIPD v2 AES-256 OCB                         -> auth Pinned, body "rejection branches"
+--- EAX: outer packets ---
+PublicKeyEncryptedSessionKey(V6 { packet_header: New { header: NewPacketHeader { padding: 1, version: 1, tag: PublicKeyEncryptedSessionKey }, length: Fixed(76) }, fingerprint: None, pk_algo: X25519, values: X25519 { ephemeral: 72e1321952efc86b01b8c20bb9a4bc327390ab3aa9b83366690c8ebc354e9509, session_key: 33869330eb554f876c83ba0ebeabaecb782cdf037aeff205827e81a693edc41c284490706618c24e, sym_alg: None } })
+SymEncryptedProtectedData(SymEncryptedProtectedData { packet_header: New { header: NewPacketHeader { padding: 1, version: 1, tag: SymEncryptedProtectedData }, length: Fixed(1196) }, config: V2 { sym_alg: AES256, aead: Eax, chunk_size: C4KiB, salt: 8755afc1b6535a59dd12c15627c77bd169d132c271af07426fb08251ec2cb1e6 } ... })
+REJECTED  SEIPD v2 AES-256 EAX, pinned sender                              -> UnsupportedCipher (counter open_error.unsupported_cipher)
+REJECTED  SEIPD v2 AES-256 EAX, unknown sender                             -> UnsupportedCipher (counter open_error.unsupported_cipher)
+--- GCM: outer packets ---
+PublicKeyEncryptedSessionKey(V6 { packet_header: New { header: NewPacketHeader { padding: 1, version: 1, tag: PublicKeyEncryptedSessionKey }, length: Fixed(76) }, fingerprint: None, pk_algo: X25519, values: X25519 { ephemeral: 63fde470c1bc3610911106a304eed7c158a43b3c6316b9f7d151c489c7b8122f, session_key: 916092b69f15d78a639d242de08866ea0dc86be7a2c959f28344064e55a913877e23040e0d84a0ad, sym_alg: None } })
+SymEncryptedProtectedData(SymEncryptedProtectedData { packet_header: New { header: NewPacketHeader { padding: 1, version: 1, tag: SymEncryptedProtectedData }, length: Fixed(1196) }, config: V2 { sym_alg: AES256, aead: Gcm, chunk_size: C4KiB, salt: 87c4191102b621423103ec773575a5debab630dc5319bf1fcbd01952395f0fc5 } ... })
+REJECTED  SEIPD v2 AES-256 GCM, pinned sender                              -> UnsupportedCipher (counter open_error.unsupported_cipher)
+REJECTED  SEIPD v2 AES-256 GCM, unknown sender                             -> UnsupportedCipher (counter open_error.unsupported_cipher)
+ok
+test rejection_seipd_v1_with_pkesk_v6 ... ACCEPTED  control: PKESK v6 + SEIPD v2 AES-256 OCB                         -> auth Pinned, body "rejection branches"
+--- SEIPD v1 + PKESK v6: outer packets ---
+PublicKeyEncryptedSessionKey(V6 { packet_header: New { header: NewPacketHeader { padding: 1, version: 1, tag: PublicKeyEncryptedSessionKey }, length: Fixed(76) }, fingerprint: None, pk_algo: X25519, values: X25519 { ephemeral: 426b266c8de08458764e7b1aca7ac379d2c9268bd8f2842464eb8c66ee888538, session_key: d98dd5fa1f68a78c3eee6e91fedf8e77d7830cb7a533d60a8dc1b9c4fb56f3e53bd50d6057b65926, sym_alg: None } })
+SymEncryptedProtectedData(SymEncryptedProtectedData { packet_header: New { header: NewPacketHeader { padding: 1, version: 1, tag: SymEncryptedProtectedData }, length: Fixed(1169) }, config: V1 ... })
+REJECTED  PKESK v6 + SEIPD v1, pinned sender                               -> NotAead (counter open_error.not_aead)
+REJECTED  PKESK v6 + SEIPD v1, unknown sender                              -> NotAead (counter open_error.not_aead)
+ok
+test rejection_subkey_signature ... control (primary signs), pinned -> Ok((Pinned, "subkey"))
+REJECTED  signing subkey signs, hashed issuer = the subkey, cert pinned    -> UnknownSender (counter open_error.unknown_sender)
+REJECTED  signing subkey signs, hashed issuer = the subkey, unknown sender -> UnknownSender (counter open_error.unknown_sender)
+REJECTED  signing subkey signs, hashed issuer claims the primary, cert pinned -> BadSignature (counter open_error.bad_signature)
+ok
+test rejection_text_type_signature ... ACCEPTED  control: binary (0x00) document signature                        -> auth Pinned, body "rejection branches"
+REJECTED  text (0x01) signature, pinned sender                             -> UnsupportedSignature (counter open_error.unsupported_signature)
+REJECTED  text (0x01) signature, unknown sender (embedded certificate)     -> UnsupportedSignature (counter open_error.unsupported_signature)
+ok
+test rejection_v4_signature_and_v4_key ... ACCEPTED  control: v6 signature by v6 key                                  -> auth Pinned, body "rejection branches"
+REJECTED  control: v6 signature, no Intended Recipient (reaches the IR check) -> MissingIntendedRecipient (counter open_error.missing_intended_recipient)
+REJECTED  v4 signature by the pinned v6 key                                -> BadSignature (counter open_error.bad_signature)
+REJECTED  v4 signature by the v6 key, unknown sender (embedded certificate) -> BadSignature (counter open_error.bad_signature)
+REJECTED  v4 key signs (payload names alice), alice pinned                 -> UnknownSender (counter open_error.unknown_sender)
+REJECTED  v4 key signs, unknown sender                                     -> UnknownSender (counter open_error.unknown_sender)
+ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+     Running tests/rejection_branches_adverts.rs (/Users/dennison/develop/FIC-elipsis/.claude/worktrees/agent-a38762d8cddd81091/target/interop/debug/deps/rejection_branches_adverts-50b0bc59632833d6)
+
+running 1 test
+test rejection_advert_signature_type_and_version ... ACCEPTED  control: advert signed by rPGP, binary v6
+REJECTED  advert with a text (0x01) signature -> BadSignature
+REJECTED  advert with a v4 signature by the v6 key -> BadSignature
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+   Doc-tests agentnet_interop_rpgp
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

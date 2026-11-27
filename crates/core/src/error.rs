@@ -200,6 +200,41 @@ pub enum OpenError {
     TtlTooLong,
 }
 
+impl OpenError {
+    /// The suffix of the `open_error.*` counter the engine increments for this rejection.
+    pub fn metric_kind(&self) -> &'static str {
+        match self {
+            OpenError::Truncated => "truncated",
+            OpenError::FrameTooLarge => "frame_too_large",
+            OpenError::Malformed => "malformed",
+            OpenError::NotForUs => "not_for_us",
+            OpenError::SkeskPresent => "skesk_present",
+            OpenError::PkeskNotV6 => "pkesk_not_v6",
+            OpenError::NotAead => "not_aead",
+            OpenError::UnsupportedCipher => "unsupported_cipher",
+            OpenError::Compressed => "compressed",
+            OpenError::BadStructure => "bad_structure",
+            OpenError::WrongSignatureCount => "wrong_signature_count",
+            OpenError::UnsupportedSignature => "unsupported_signature",
+            OpenError::BadSignature => "bad_signature",
+            OpenError::UnknownSender => "unknown_sender",
+            OpenError::SenderRevoked => "sender_revoked",
+            OpenError::SenderExpired => "sender_expired",
+            OpenError::SignerMismatch => "signer_mismatch",
+            OpenError::MissingIntendedRecipient => "missing_intended_recipient",
+            OpenError::WrongIntendedRecipient => "wrong_intended_recipient",
+            OpenError::MalformedPayload => "malformed_payload",
+            OpenError::UnknownEnvelopeVersion(_) => "unknown_envelope_version",
+            OpenError::InvalidField(_) => "invalid_field",
+            OpenError::WrongRecipient => "wrong_recipient",
+            OpenError::FromFuture => "from_future",
+            OpenError::Expired => "expired",
+            OpenError::ExpiresBeforeCreated => "expires_before_created",
+            OpenError::TtlTooLong => "ttl_too_long",
+        }
+    }
+}
+
 /// Failure in identity generation, persistence or export/import.
 #[derive(Debug, thiserror::Error)]
 pub enum IdentityError {

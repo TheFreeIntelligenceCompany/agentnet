@@ -269,8 +269,9 @@ fn policy_violations_have_distinct_errors() {
     assert_eq!(open_pinned(&b, &f, &a).unwrap_err(), OpenError::Compressed);
 
     // SEIPD v1 (no AEAD): Sequoia only builds it together with a PKESK v3, which is
-    // refused first. (`OpenError::NotAead` for PKESK v6 + SEIPD v1 is defence in depth
-    // that cannot be constructed with this library: UNTESTED directly.)
+    // refused first. (`OpenError::NotAead` for PKESK v6 + SEIPD v1 cannot be built with
+    // this library; it is tested with an rPGP-built message in tests/interop-rpgp,
+    // `rejection_seipd_v1_with_pkesk_v6`.)
     let f = t::seal_seipd1(&a, &contact_of(&b), &payload, NOW)
         .expect("could not build the SEIPD v1 control message");
     assert!(matches!(

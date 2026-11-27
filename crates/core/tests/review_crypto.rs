@@ -368,8 +368,9 @@ mod l2 {
                 .open(&b, &frame, NOW, &lim(), &dir)
                 .unwrap_err(),
             // the issuer is the subkey, whose fingerprint is not an address in
-            // the directory: the signer stays unknown (an explicit
-            // `UnsupportedSignature` branch backs this up in `check`)
+            // the directory: the signer stays unknown (the directory is keyed by
+            // primary fingerprint; there is no separate subkey branch in `check`,
+            // see the comment there and tests/interop-rpgp `rejection_subkey_signature`)
             OpenError::UnknownSender
         );
     }
