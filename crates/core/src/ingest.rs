@@ -11,6 +11,7 @@ use crate::config::UnknownSenders;
 use crate::crypto::envelope::{
     Envelope, MESSAGE_TYPE_ACK_RECEIVED, MESSAGE_TYPE_CONTACT_UPDATE, MESSAGE_TYPE_IDENTITY_REVOKED,
 };
+use crate::crypto::VerifiedRevocation;
 use crate::error::OpenError;
 use crate::guard::{self, HOLD_REPLAY_GUARD};
 use crate::node::{trust_to_db, Node};
@@ -210,8 +211,12 @@ impl Node {
                 }
             };
         // 3. trust
+        let mut sender_is_contact = false;
         let trust = match self.store.read(|c| self.load_contact(c, &env.sender)) {
-            Ok(Some(row)) => row.trust,
+            Ok(Some(row)) => {
+                sender_is_contact = true;
+                row.trust
+            }
             Ok(None) => {
                 // A tombstone may exist for an address that is not a contact
                 // (imported out of band).
@@ -237,6 +242,29 @@ impl Node {
         // from a Trusted contact (other senders' copies are stored like any
         // other message, under the quarantine policy, and never applied).
         if env.message_type == MESSAGE_TYPE_IDENTITY_REVOKED {
+            if !sender_is_contact {
+                // Review finding M2: a stranger's frame must not grow any table.
+                // The unknown-sender policy runs first; then only a revocation
+                // that names an existing contact is considered at all.
+                if self.config.policy.unknown_senders == UnknownSenders::Reject {
+                    self.metrics.inc("drop.rejected_unknown_sender");
+                    self.mark_transport_seen(frame);
+                    return FrameOutcome::Rejected;
+                }
+                let names_a_contact = VerifiedRevocation::parse_and_verify(&env.body, now)
+                    .ok()
+                    .map(|rev| self.store.read(|c| self.load_contact(c, &rev.address)))
+                    .transpose();
+                match names_a_contact {
+                    Err(_) => return self.store_failure(),
+                    Ok(Some(Some(_))) => {}
+                    Ok(_) => {
+                        self.metrics.inc("identity_revoked.dropped_non_contact");
+                        self.mark_transport_seen(frame);
+                        return FrameOutcome::SystemHandled { applied: false };
+                    }
+                }
+            }
             return self.ingest_identity_revoked(frame, &env);
         }
         if env.message_type == MESSAGE_TYPE_CONTACT_UPDATE && trust == Trust::Trusted {

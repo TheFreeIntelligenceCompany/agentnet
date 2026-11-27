@@ -223,8 +223,8 @@ impl Node {
         Ok((true, resealed, ""))
     }
 
-    /// Apply a tombstone that arrived in an envelope. Applicable if it names
-    /// the authenticated sender or an existing contact.
+    /// Apply a tombstone that arrived in an envelope. Applicable only if it names
+    /// an existing contact.
     fn apply_received_revocation(
         &self,
         tx: &Transaction<'_>,
@@ -239,9 +239,10 @@ impl Node {
             // (local revocation is an operator action).
             return Ok((false, 0, "about_self"));
         }
-        let applicable =
-            rev.address == env.sender || self.load_contact(tx, &rev.address)?.is_some();
-        if !applicable {
+        // Only a revocation that names an existing contact is applied (review
+        // finding M2): the `revocations` table is bounded by the contact list.
+        // Out-of-band import (`import_revocation`) remains for other addresses.
+        if self.load_contact(tx, &rev.address)?.is_none() {
             return Ok((false, 0, "unrelated"));
         }
         let (newly, failed) = self.apply_revocation(tx, &rev, "received", now)?;
