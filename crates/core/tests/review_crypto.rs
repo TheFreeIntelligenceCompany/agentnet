@@ -167,3 +167,35 @@ fn m1_expired_subkeys_are_trimmed_and_cannot_come_back() {
     );
     assert!(OpenPgpProtection.open(&b, &f, t2, &lim(), &dir).is_ok());
 }
+
+/// L7: evicting a retained subkey entry (more than 32) destroys its secret.
+#[test]
+fn l7_evicting_a_retained_subkey_strips_its_secret() {
+    let a = ident();
+    let mut b = Identity::generate_with(NOW, Some(Duration::from_secs(30))).unwrap();
+    let original = contact_at(&b, NOW);
+    let keep_until = NOW + 365 * 86_400_000;
+    let mut t = NOW;
+    for _ in 0..40 {
+        t += 60_000;
+        // soft rotation: the previous subkey stays decryptable until `keep_until`
+        b.rotate_kem_with(t, keep_until, Some(t + 30_000), false)
+            .unwrap();
+    }
+    assert!(
+        b.decryption_key_count(t) <= 33,
+        "{} secret subkeys are still held (32 retired plus the current one is the most)",
+        b.decryption_key_count(t)
+    );
+    // a frame sealed to the very first subkey can no longer be opened
+    let f = OpenPgpProtection
+        .seal(&a, &original, &env(&a, &b, "old", NOW + 1_000), NOW + 1_000, MAX_FRAME)
+        .unwrap();
+    let dir = Pinned(vec![contact_at(&a, t)]);
+    assert_eq!(
+        OpenPgpProtection
+            .open(&b, &f, NOW + 2_000, &lim(), &dir)
+            .unwrap_err(),
+        OpenError::NotForUs
+    );
+}
