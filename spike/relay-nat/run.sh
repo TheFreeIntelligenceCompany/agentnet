@@ -31,7 +31,7 @@ export DNS_NS=127.0.0.1
 unset AGENTNET_HOME RUST_LOG || true
 . "$SIMDIR/../netsim-lib.sh"
 
-R=http://127.0.0.1:18660; NA=http://127.0.0.1:18661; NB=http://127.0.0.1:18662
+R=http://127.0.0.1:28660; NA=http://127.0.0.1:28661; NB=http://127.0.0.1:28662
 PUB=an-nat-pub; LANA=an-nat-lana; LANB=an-nat-lanb
 IP_R=172.30.80.10; GWA_PUB=172.30.80.21; GWB_PUB=172.30.80.22; CA=192.168.101.10; CB=192.168.102.10
 RID=""

@@ -1,0 +1,130 @@
+INF 2026-11-27 21:53:19.265+00:00 Sharding configuration:                    topics="waku conf builder" tid=1 file=waku_conf_builder.nim:691 shardingConf="(kind: AutoSharding, numShardsInCluster: 1)" subscribeShards=@[0]
+INF 2026-11-27 21:53:19.345+00:00 Configuration: Enabled protocols           topics="waku conf" tid=1 file=waku_conf.nim:201 relay=true rlnRelay=false store=true filter=true lightPush=true peerExchange=false rendezvous=false
+INF 2026-11-27 21:53:19.345+00:00 Configuration. Network                     topics="waku conf" tid=1 file=waku_conf.nim:210 cluster=66
+INF 2026-11-27 21:53:19.471+00:00 Setting up storage                         tid=1 file=node_factory.nim:491
+INF 2026-11-27 21:53:19.471+00:00 Initializing node                          tid=1 file=node_factory.nim:500
+INF 2026-11-27 21:53:19.509+00:00 Initializing networking                    tid=1 file=waku_node.nim:360 addrs=@[/ip4/10.66.0.1/tcp/60000]
+INF 2026-11-27 21:53:19.521+00:00 Mounting protocols                         tid=1 file=node_factory.nim:506
+INF 2026-11-27 21:53:19.523+00:00 Created WakuMetadata protocol              topics="waku node" tid=1 file=protocol.nim:107 clusterId=66 shards="[0]"
+INF 2026-11-27 21:53:19.694+00:00 starting message store's sqlite database migration topics="waku archive migration" tid=1 file=migrations.nim:57
+INF 2026-11-27 21:53:19.753+00:00 database schema is outdated                topics="sqlite" tid=1 file=db_sqlite.nim:447 userVersion=0 targetVersion=10
+INF 2026-11-27 21:53:19.761+00:00 finished message store's sqlite database migration topics="waku archive migration" tid=1 file=migrations.nim:70
+INF 2026-11-27 21:53:19.917+00:00 mounting waku store protocol               topics="waku node store api" tid=1 file=store.nim:98
+INF 2026-11-27 21:53:19.919+00:00 mounting store client                      topics="waku node store api" tid=1 file=store.nim:117
+INF 2026-11-27 21:53:19.919+00:00 Mounting auto sharding                     topics="waku node" tid=1 file=waku_node.nim:462 clusterId=66 shardCount=1
+INF 2026-11-27 21:53:19.923+00:00 mounting relay protocol                    topics="waku node relay api" tid=1 file=relay.nim:166
+INF 2026-11-27 21:53:19.945+00:00 mounting libp2p ping protocol              topics="waku node ping api" tid=1 file=ping.nim:18
+INF 2026-11-27 21:53:19.953+00:00 No RLN backend configured; RLN is off      tid=1 file=node_factory.nim:329
+INF 2026-11-27 21:53:19.955+00:00 mounting light push                        topics="waku node lightpush api" tid=1 file=lightpush.nim:214
+INF 2026-11-27 21:53:19.956+00:00 mounting lightpush with relay              topics="waku node lightpush api" tid=1 file=lightpush.nim:219
+INF 2026-11-27 21:53:19.959+00:00 mounting legacy light push                 topics="waku node lightpush api" tid=1 file=lightpush.nim:75
+INF 2026-11-27 21:53:19.959+00:00 mounting legacy lightpush with relay       topics="waku node lightpush api" tid=1 file=lightpush.nim:80
+INF 2026-11-27 21:53:19.962+00:00 mounting light push client                 topics="waku node lightpush api" tid=1 file=lightpush.nim:241
+INF 2026-11-27 21:53:19.964+00:00 mounting legacy light push client          topics="waku node lightpush api" tid=1 file=lightpush.nim:101
+INF 2026-11-27 21:53:19.965+00:00 mounting filter protocol                   topics="waku node filter api" tid=1 file=filter.nim:49
+INF 2026-11-27 21:53:19.976+00:00 Starting filter protocol                   topics="waku filter" tid=1 file=protocol.nim:415
+INF 2026-11-27 21:53:19.988+00:00 mounting filter client                     topics="waku node filter api" tid=1 file=filter.nim:82
+INF 2026-11-27 21:53:19.992+00:00 mounting waku peer exchange client         topics="waku node peerexchange api" tid=1 file=peer_exchange.nim:54
+NTC 2026-11-27 21:53:20.015+00:00 REST service started                       tid=1 file=server.nim:189 address=0.0.0.0:8645
+INF 2026-11-27 21:53:20.016+00:00 Starting REST HTTP server                  tid=1 file=builder.nim:128 url=http://0.0.0.0:8645/
+INF 2026-11-27 21:53:20.018+00:00 No external callbacks to be set            topics="wakunode waku" tid=1 file=waku.nim:158
+INF 2026-11-27 21:53:20.022+00:00 Setting up AutonatService                  topics="libp2p autonatservice" tid=1 file=service.nim:208
+INF 2026-11-27 21:53:20.027+00:00 Retrieve dynamic bootstrap nodes           topics="wakunode waku" tid=1 file=waku.nim:477
+INF 2026-11-27 21:53:20.028+00:00 Running nwaku node                         tid=1 file=node_factory.nim:414 version="\"v0.39.2\""
+INF 2026-11-27 21:53:20.037+00:00 Starting Waku node                         topics="waku node" tid=1 file=waku_node.nim:834 version="\"v0.39.2\""
+INF 2026-11-27 21:53:20.039+00:00 Starting switch for peer                   topics="libp2p switch" tid=1 file=switch.nim:403 peerInfo="(peerId: 16Uiu2HAmJb5isNh5wJm8yt7LykyU5WTx4WXg13JmNHLHCn7TLvWK, listenAddrs: [/ip4/0.0.0.0/tcp/60000], addrs: [], protocols: [/ipfs/id/1.0.0, /libp2p/autonat/1.0.0, /libp2p/circuit/relay/0.2.0/hop, /vac/waku/metadata/1.0.0, /vac/waku/store-query/3.0.0, /vac/waku/relay/2.0.0, /ipfs/ping/1.0.0, /vac/waku/lightpush/3.0.0, /vac/waku/lightpush/2.0.0-beta1, /vac/waku/filter-subscribe/2.0.0-beta1, /vac/waku/filter-push/2.0.0-beta1], protoVersion: ipfs/0.1.0, agentVersion: logos-delivery-\"v0.39.2\")"
+INF 2026-11-27 21:53:20.045+00:00 Running AutonatService                     topics="libp2p autonatservice" tid=1 file=service.nim:224
+INF 2026-11-27 21:53:20.106+00:00 Starting TCP transport                     topics="libp2p tcptransport" tid=1 file=tcptransport.nim:119
+INF 2026-11-27 21:53:20.110+00:00 Transport starting                         topics="libp2p transport" tid=1 file=transport.nim:50 addresses=[/ip4/0.0.0.0/tcp/60000]
+INF 2026-11-27 21:53:20.121+00:00 start                                      topics="waku relay" tid=1 file=protocol.nim:530
+INF 2026-11-27 21:53:20.122+00:00 gossipsub start                            topics="libp2p gossipsub" tid=1 file=gossipsub.nim:1175
+INF 2026-11-27 21:53:20.128+00:00 Started libp2p node                        topics="libp2p switch" tid=1 file=switch.nim:446 peerId="(peerId: 16Uiu2HAmJb5isNh5wJm8yt7LykyU5WTx4WXg13JmNHLHCn7TLvWK, listenAddrs: [/ip4/0.0.0.0/tcp/60000], addrs: [/ip4/10.66.0.1/tcp/60000], protocols: [/ipfs/id/1.0.0, /libp2p/autonat/1.0.0, /libp2p/circuit/relay/0.2.0/hop, /vac/waku/metadata/1.0.0, /vac/waku/store-query/3.0.0, /vac/waku/relay/2.0.0, /ipfs/ping/1.0.0, /vac/waku/lightpush/3.0.0, /vac/waku/lightpush/2.0.0-beta1, /vac/waku/filter-subscribe/2.0.0-beta1, /vac/waku/filter-push/2.0.0-beta1], protoVersion: ipfs/0.1.0, agentVersion: logos-delivery-\"v0.39.2\")"
+INF 2026-11-27 21:53:20.133+00:00 Announced addresses resolved               topics="waku node" tid=1 file=waku_node.nim:852 addrs=@[/ip4/10.66.0.1/tcp/60000]
+INF 2026-11-27 21:53:20.136+00:00 Node started successfully                  topics="waku node" tid=1 file=waku_node.nim:879
+INF 2026-11-27 21:53:20.147+00:00 Relay peer connections                     topics="waku node peer_manager" tid=1 file=peer_manager.nim:975 inRelayConns=0/50 outRelayConns=0/25 totalConnections=0/150 notConnectedPeers=0 outsideBackoffPeers=0
+INF 2026-11-27 21:53:20.179+00:00 Health monitor loop start                  tid=1 file=node_health_monitor.nim:569
+INF 2026-11-27 21:53:20.190+00:00 starting keepalive                         tid=1 file=node_health_monitor.nim:738 randomPeersKeepalive=10s allPeersKeepalive=2m
+INF 2026-11-27 21:53:20.204+00:00 REST services are installed                tid=1 file=builder.nim:253
+INF 2026-11-27 21:53:20.205+00:00 Setting up shutdown hooks                  topics="logosdeliverynode main" tid=1 file=logosdeliverynode.nim:60
+INF 2026-11-27 21:53:20.205+00:00 Node setup complete                        topics="logosdeliverynode main" tid=1 file=logosdeliverynode.nim:103
+INF 2026-11-27 21:53:20.548+00:00 node info                                  topics="waku node" tid=1 file=waku_node.nim:427 wakuInfo="(listenAddresses: [/ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmJb5isNh5wJm8yt7LykyU5WTx4WXg13JmNHLHCn7TLvWK], enrUri: enr:-Kq4QDAcsG2wIU2nY-D2gyISL3NNt8C1qglMsGge5IFCRPLjP1p16Ms_CAvapeFdO-3DoDq7ME8V0CNl1PGnogF8b-0FgmlkgnY0gmlwhApCAAGKbXVsdGlhZGRyc4oACAQKQgABBupggnJzhQBCAQAAiXNlY3AyNTZrMaEDWCXfXg8mhbbv88Wv4CTXjYFkDAqfpKYulb1VCQ_BuDCDdGNwgupghXdha3UyDw, mixPubKey: none())"
+INF 2026-11-27 21:53:20.619+00:00 node info                                  topics="waku node" tid=1 file=waku_node.nim:427 wakuInfo="(listenAddresses: [/ip4/10.66.0.1/tcp/60000/p2p/16Uiu2HAmJb5isNh5wJm8yt7LykyU5WTx4WXg13JmNHLHCn7TLvWK], enrUri: enr:-Kq4QDAcsG2wIU2nY-D2gyISL3NNt8C1qglMsGge5IFCRPLjP1p16Ms_CAvapeFdO-3DoDq7ME8V0CNl1PGnogF8b-0FgmlkgnY0gmlwhApCAAGKbXVsdGlhZGRyc4oACAQKQgABBupggnJzhQBCAQAAiXNlY3AyNTZrMaEDWCXfXg8mhbbv88Wv4CTXjYFkDAqfpKYulb1VCQ_BuDCDdGNwgupghXdha3UyDw, mixPubKey: none())"
+INF 2026-11-27 21:53:30.232+00:00 Node is online                             topics="waku online monitor" tid=1 file=online_monitor.nim:53
+WRN 2026-11-27 21:56:19.649+00:00 Missed multiple heartbeats                 topics="libp2p gossipsub" tid=1 file=heartbeat.nim:30 heartbeat=GossipSub delay=1s130ms439us568ns hinterval=1s
+WRN 2026-11-27 21:56:21.392+00:00 Missed multiple heartbeats                 topics="libp2p relay" tid=1 file=heartbeat.nim:30 heartbeat="Reservation timeout" delay=2s117ms207us62ns hinterval=1s
+WRN 2026-11-27 21:56:22.580+00:00 Missed multiple heartbeats                 topics="libp2p gossipsub" tid=1 file=heartbeat.nim:30 heartbeat=GossipSub delay=1s968ms406us323ns hinterval=1s
+INF 2026-11-27 21:58:19.199+00:00 Relay peer connections                     topics="waku node peer_manager" tid=1 file=peer_manager.nim:975 inRelayConns=2/50 outRelayConns=0/25 totalConnections=2/150 notConnectedPeers=1 outsideBackoffPeers=0
+INF 2026-11-27 22:03:17.598+00:00 Relay peer connections                     topics="waku node peer_manager" tid=1 file=peer_manager.nim:975 inRelayConns=1/50 outRelayConns=0/25 totalConnections=1/150 notConnectedPeers=2 outsideBackoffPeers=0
+WRN 2026-11-27 22:08:12.519+00:00 Missed multiple heartbeats                 topics="libp2p gossipsub" tid=1 file=heartbeat.nim:30 heartbeat=GossipSub delay=1s890ms652us949ns hinterval=1s
+WRN 2026-11-27 22:08:12.693+00:00 Missed multiple heartbeats                 topics="libp2p relay" tid=1 file=heartbeat.nim:30 heartbeat="Reservation timeout" delay=2s626ms45us320ns hinterval=1s
+INF 2026-11-27 22:08:16.591+00:00 Relay peer connections                     topics="waku node peer_manager" tid=1 file=peer_manager.nim:975 inRelayConns=2/50 outRelayConns=0/25 totalConnections=2/150 notConnectedPeers=1 outsideBackoffPeers=1
+WRN 2026-11-27 22:09:02.167+00:00 Missed multiple heartbeats                 topics="libp2p gossipsub" tid=1 file=heartbeat.nim:30 heartbeat=GossipSub delay=1s434ms371us291ns hinterval=1s
+WRN 2026-11-27 22:09:02.951+00:00 Missed multiple heartbeats                 topics="libp2p relay" tid=1 file=heartbeat.nim:30 heartbeat="Reservation timeout" delay=1s475ms247us606ns hinterval=1s
+WRN 2026-11-27 22:12:10.959+00:00 Missed multiple heartbeats                 topics="libp2p gossipsub" tid=1 file=heartbeat.nim:30 heartbeat=GossipSub delay=1s291ms730us67ns hinterval=1s
+WRN 2026-11-27 22:12:11.329+00:00 Missed multiple heartbeats                 topics="libp2p relay" tid=1 file=heartbeat.nim:30 heartbeat="Reservation timeout" delay=1s646ms642us707ns hinterval=1s
+INF 2026-11-27 22:13:14.395+00:00 Relay peer connections                     topics="waku node peer_manager" tid=1 file=peer_manager.nim:975 inRelayConns=2/50 outRelayConns=0/25 totalConnections=2/150 notConnectedPeers=1 outsideBackoffPeers=0
+INF 2026-11-27 22:18:12.105+00:00 Relay peer connections                     topics="waku node peer_manager" tid=1 file=peer_manager.nim:975 inRelayConns=2/50 outRelayConns=0/25 totalConnections=2/150 notConnectedPeers=1 outsideBackoffPeers=0
+NTC 2026-11-27 22:22:49.499+00:00 Shutting down after receiving signal       topics="logosdeliverynode main" tid=1 file=logosdeliverynode.nim:91 signal=15
+INF 2026-11-27 22:22:49.562+00:00 Stopping switch                            topics="libp2p switch" tid=1 file=switch.nim:350
+INF 2026-11-27 22:22:49.629+00:00 Stopping AutonatService                    topics="libp2p autonatservice" tid=1 file=service.nim:241
+INF 2026-11-27 22:22:49.768+00:00 stop                                       topics="waku relay" tid=1 file=protocol.nim:535
+INF 2026-11-27 22:22:49.771+00:00 gossipsub stop                             topics="libp2p gossipsub" tid=1 file=gossipsub.nim:1190
+INF 2026-11-27 22:22:50.149+00:00 Stopping TCP transport                     topics="libp2p tcptransport" tid=1 file=tcptransport.nim:164
+INF 2026-11-27 22:22:50.149+00:00 Transport stopping                         topics="libp2p transport" tid=1 file=transport.nim:60 addresses=[/ip4/0.0.0.0/tcp/60000]
+INF 2026-11-27 22:22:50.233+00:00 Transport stopped                          topics="libp2p tcptransport" tid=1 file=tcptransport.nim:192
+INF 2026-11-27 22:22:50.237+00:00 Switch stopped                             topics="libp2p switch" tid=1 file=switch.nim:395
+INF 2026-11-27 22:22:50.555+00:00 Health monitor loop end                    tid=1 file=node_health_monitor.nim:603
+NTC 2026-11-27 22:22:50.625+00:00 REST service stopped                       tid=1 file=server.nim:194 address=0.0.0.0:8645
+INF 2026-11-27 22:24:25.376+00:00 Sharding configuration:                    topics="waku conf builder" tid=1 file=waku_conf_builder.nim:691 shardingConf="(kind: AutoSharding, numShardsInCluster: 1)" subscribeShards=@[0]
+INF 2026-11-27 22:24:26.056+00:00 Configuration: Enabled protocols           topics="waku conf" tid=1 file=waku_conf.nim:201 relay=true rlnRelay=false store=true filter=true lightPush=true peerExchange=false rendezvous=false
+INF 2026-11-27 22:24:26.064+00:00 Configuration. Network                     topics="waku conf" tid=1 file=waku_conf.nim:210 cluster=66
+INF 2026-11-27 22:24:26.789+00:00 Setting up storage                         tid=1 file=node_factory.nim:491
+INF 2026-11-27 22:24:26.789+00:00 Initializing node                          tid=1 file=node_factory.nim:500
+INF 2026-11-27 22:24:27.266+00:00 Initializing networking                    tid=1 file=waku_node.nim:360 addrs=@[/ip4/10.66.0.1/tcp/60000]
+INF 2026-11-27 22:24:27.493+00:00 Mounting protocols                         tid=1 file=node_factory.nim:506
+INF 2026-11-27 22:24:27.503+00:00 Created WakuMetadata protocol              topics="waku node" tid=1 file=protocol.nim:107 clusterId=66 shards="[0]"
+INF 2026-11-27 22:24:30.277+00:00 starting message store's sqlite database migration topics="waku archive migration" tid=1 file=migrations.nim:57
+INF 2026-11-27 22:24:30.432+00:00 database schema is outdated                topics="sqlite" tid=1 file=db_sqlite.nim:447 userVersion=0 targetVersion=10
+INF 2026-11-27 22:24:30.473+00:00 finished message store's sqlite database migration topics="waku archive migration" tid=1 file=migrations.nim:70
+INF 2026-11-27 22:24:30.648+00:00 mounting waku store protocol               topics="waku node store api" tid=1 file=store.nim:98
+INF 2026-11-27 22:24:30.672+00:00 mounting store client                      topics="waku node store api" tid=1 file=store.nim:117
+INF 2026-11-27 22:24:30.678+00:00 Mounting auto sharding                     topics="waku node" tid=1 file=waku_node.nim:462 clusterId=66 shardCount=1
+INF 2026-11-27 22:24:30.691+00:00 mounting relay protocol                    topics="waku node relay api" tid=1 file=relay.nim:166
+INF 2026-11-27 22:24:30.801+00:00 mounting libp2p ping protocol              topics="waku node ping api" tid=1 file=ping.nim:18
+INF 2026-11-27 22:24:30.815+00:00 No RLN backend configured; RLN is off      tid=1 file=node_factory.nim:329
+INF 2026-11-27 22:24:30.874+00:00 mounting light push                        topics="waku node lightpush api" tid=1 file=lightpush.nim:214
+INF 2026-11-27 22:24:30.890+00:00 mounting lightpush with relay              topics="waku node lightpush api" tid=1 file=lightpush.nim:219
+INF 2026-11-27 22:24:30.905+00:00 mounting legacy light push                 topics="waku node lightpush api" tid=1 file=lightpush.nim:75
+INF 2026-11-27 22:24:30.905+00:00 mounting legacy lightpush with relay       topics="waku node lightpush api" tid=1 file=lightpush.nim:80
+INF 2026-11-27 22:24:30.911+00:00 mounting light push client                 topics="waku node lightpush api" tid=1 file=lightpush.nim:241
+INF 2026-11-27 22:24:30.911+00:00 mounting legacy light push client          topics="waku node lightpush api" tid=1 file=lightpush.nim:101
+INF 2026-11-27 22:24:30.918+00:00 mounting filter protocol                   topics="waku node filter api" tid=1 file=filter.nim:49
+INF 2026-11-27 22:24:31.708+00:00 Starting filter protocol                   topics="waku filter" tid=1 file=protocol.nim:415
+INF 2026-11-27 22:24:31.785+00:00 mounting filter client                     topics="waku node filter api" tid=1 file=filter.nim:82
+INF 2026-11-27 22:24:31.796+00:00 mounting waku peer exchange client         topics="waku node peerexchange api" tid=1 file=peer_exchange.nim:54
+NTC 2026-11-27 22:24:32.344+00:00 REST service started                       tid=1 file=server.nim:189 address=0.0.0.0:8645
+INF 2026-11-27 22:24:32.350+00:00 Starting REST HTTP server                  tid=1 file=builder.nim:128 url=http://0.0.0.0:8645/
+INF 2026-11-27 22:24:32.353+00:00 No external callbacks to be set            topics="wakunode waku" tid=1 file=waku.nim:158
+INF 2026-11-27 22:24:32.448+00:00 Setting up AutonatService                  topics="libp2p autonatservice" tid=1 file=service.nim:208
+INF 2026-11-27 22:24:32.481+00:00 Retrieve dynamic bootstrap nodes           topics="wakunode waku" tid=1 file=waku.nim:477
+INF 2026-11-27 22:24:32.485+00:00 Running nwaku node                         tid=1 file=node_factory.nim:414 version="\"v0.39.2\""
+INF 2026-11-27 22:24:32.506+00:00 Starting Waku node                         topics="waku node" tid=1 file=waku_node.nim:834 version="\"v0.39.2\""
+INF 2026-11-27 22:24:32.518+00:00 Starting switch for peer                   topics="libp2p switch" tid=1 file=switch.nim:403 peerInfo="(peerId: 16Uiu2HAmJb5isNh5wJm8yt7LykyU5WTx4WXg13JmNHLHCn7TLvWK, listenAddrs: [/ip4/0.0.0.0/tcp/60000], addrs: [], protocols: [/ipfs/id/1.0.0, /libp2p/autonat/1.0.0, /libp2p/circuit/relay/0.2.0/hop, /vac/waku/metadata/1.0.0, /vac/waku/store-query/3.0.0, /vac/waku/relay/2.0.0, /ipfs/ping/1.0.0, /vac/waku/lightpush/3.0.0, /vac/waku/lightpush/2.0.0-beta1, /vac/waku/filter-subscribe/2.0.0-beta1, /vac/waku/filter-push/2.0.0-beta1], protoVersion: ipfs/0.1.0, agentVersion: logos-delivery-\"v0.39.2\")"
+INF 2026-11-27 22:24:32.603+00:00 Running AutonatService                     topics="libp2p autonatservice" tid=1 file=service.nim:224
+INF 2026-11-27 22:24:33.521+00:00 Starting TCP transport                     topics="libp2p tcptransport" tid=1 file=tcptransport.nim:119
+INF 2026-11-27 22:24:33.601+00:00 Transport starting                         topics="libp2p transport" tid=1 file=transport.nim:50 addresses=[/ip4/0.0.0.0/tcp/60000]
+INF 2026-11-27 22:24:33.735+00:00 start                                      topics="waku relay" tid=1 file=protocol.nim:530
+INF 2026-11-27 22:24:33.772+00:00 gossipsub start                            topics="libp2p gossipsub" tid=1 file=gossipsub.nim:1175
+INF 2026-11-27 22:24:33.907+00:00 Started libp2p node                        topics="libp2p switch" tid=1 file=switch.nim:446 peerId="(peerId: 16Uiu2HAmJb5isNh5wJm8yt7LykyU5WTx4WXg13JmNHLHCn7TLvWK, listenAddrs: [/ip4/0.0.0.0/tcp/60000], addrs: [/ip4/10.66.0.1/tcp/60000], protocols: [/ipfs/id/1.0.0, /libp2p/autonat/1.0.0, /libp2p/circuit/relay/0.2.0/hop, /vac/waku/metadata/1.0.0, /vac/waku/store-query/3.0.0, /vac/waku/relay/2.0.0, /ipfs/ping/1.0.0, /vac/waku/lightpush/3.0.0, /vac/waku/lightpush/2.0.0-beta1, /vac/waku/filter-subscribe/2.0.0-beta1, /vac/waku/filter-push/2.0.0-beta1], protoVersion: ipfs/0.1.0, agentVersion: logos-delivery-\"v0.39.2\")"
+INF 2026-11-27 22:24:33.967+00:00 Announced addresses resolved               topics="waku node" tid=1 file=waku_node.nim:852 addrs=@[/ip4/10.66.0.1/tcp/60000]
+INF 2026-11-27 22:24:34.019+00:00 Node started successfully                  topics="waku node" tid=1 file=waku_node.nim:879
+INF 2026-11-27 22:24:34.356+00:00 Relay peer connections                     topics="waku node peer_manager" tid=1 file=peer_manager.nim:975 inRelayConns=0/50 outRelayConns=0/25 totalConnections=0/150 notConnectedPeers=0 outsideBackoffPeers=0
+INF 2026-11-27 22:24:34.712+00:00 Health monitor loop start                  tid=1 file=node_health_monitor.nim:569
+INF 2026-11-27 22:24:34.782+00:00 starting keepalive                         tid=1 file=node_health_monitor.nim:738 randomPeersKeepalive=10s allPeersKeepalive=2m
+INF 2026-11-27 22:24:34.843+00:00 REST services are installed                tid=1 file=builder.nim:253
+INF 2026-11-27 22:24:34.843+00:00 Setting up shutdown hooks                  topics="logosdeliverynode main" tid=1 file=logosdeliverynode.nim:60
+INF 2026-11-27 22:24:34.846+00:00 Node setup complete                        topics="logosdeliverynode main" tid=1 file=logosdeliverynode.nim:103
+INF 2026-11-27 22:24:45.531+00:00 Node is online                             topics="waku online monitor" tid=1 file=online_monitor.nim:53
+WRN 2026-11-27 22:26:51.355+00:00 Missed multiple heartbeats                 topics="libp2p relay" tid=1 file=heartbeat.nim:30 heartbeat="Reservation timeout" delay=4s16ms68us684ns hinterval=1s
+WRN 2026-11-27 22:26:51.586+00:00 Missed multiple heartbeats                 topics="libp2p gossipsub" tid=1 file=heartbeat.nim:30 heartbeat=GossipSub delay=4s107ms138us79ns hinterval=1s
+INF 2026-11-27 22:29:32.823+00:00 Relay peer connections                     topics="waku node peer_manager" tid=1 file=peer_manager.nim:975 inRelayConns=2/50 outRelayConns=0/25 totalConnections=2/150 notConnectedPeers=0 outsideBackoffPeers=0

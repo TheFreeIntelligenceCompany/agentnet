@@ -1,0 +1,11 @@
+client A -> R tcp/60000 (outbound)                   expect=ok   got=ok   | Connection to 172.30.80.10 60000 port [tcp/*] succeeded! 
+client B -> R tcp/60000 (outbound)                   expect=ok   got=ok   | Connection to 172.30.80.10 60000 port [tcp/*] succeeded! 
+gw-a (LAN side) -> client A tcp/60000 (sanity: it listens on its LAN) expect=ok   got=ok   | Connection to 192.168.101.10 60000 port [tcp/*] succeeded! 
+R -> client A LAN address 192.168.101.10:60000       expect=fail got=fail | nc: connect to 192.168.101.10 port 60000 (tcp) timed out: Operation in progress 
+R -> client B LAN address 192.168.102.10:60000       expect=fail got=fail | nc: connect to 192.168.102.10 port 60000 (tcp) timed out: Operation in progress 
+R -> gw-a public address 172.30.80.21:60000          expect=fail got=fail | nc: connect to 172.30.80.21 port 60000 (tcp) timed out: Operation in progress 
+R -> gw-b public address 172.30.80.22:60000          expect=fail got=fail | nc: connect to 172.30.80.22 port 60000 (tcp) timed out: Operation in progress 
+client B -> client A LAN address (other LAN)         expect=fail got=fail | nc: connect to 192.168.101.10 port 60000 (tcp) timed out: Operation in progress 
+client A -> client B LAN address (other LAN)         expect=fail got=fail | nc: connect to 192.168.102.10 port 60000 (tcp) timed out: Operation in progress 
+gw-b (public side) -> client A LAN address           expect=fail got=fail | nc: connect to 192.168.101.10 port 60000 (tcp) timed out: Operation in progress 
+gw-a (public side) -> client B LAN address           expect=fail got=fail | nc: connect to 192.168.102.10 port 60000 (tcp) timed out: Operation in progress 

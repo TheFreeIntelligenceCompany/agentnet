@@ -1,0 +1,3 @@
+21:54:27.268303 IP 172.29.70.21.42364 > 10.66.0.3.60000: Flags [S], seq 3574002700, win 64240, options [mss 1460,sackOK,TS val 1475534437 ecr 0,nop,wscale 7], length 0
+21:54:28.283324 IP 172.29.70.21.42364 > 10.66.0.3.60000: Flags [S], seq 3574002700, win 64240, options [mss 1460,sackOK,TS val 1475535453 ecr 0,nop,wscale 7], length 0
+21:54:29.306389 IP 172.29.70.21.42364 > 10.66.0.3.60000: Flags [S], seq 3574002700, win 64240, options [mss 1460,sackOK,TS val 1475536476 ecr 0,nop,wscale 7], length 0

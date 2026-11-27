@@ -1,0 +1,5 @@
+intruder -> R:60000 (underlay): rc=1  nc: connect to 172.29.70.10 port 60000 (tcp) timed out: Operation in progress
+intruder -> A:60000 (underlay): rc=1  nc: connect to 172.29.70.21 port 60000 (tcp) timed out: Operation in progress
+intruder -> R:8645 REST (underlay): rc=1  nc: connect to 172.29.70.10 port 8645 (tcp) timed out: Operation in progress
+intruder -> R:51820/udp (underlay): rc=0  Connection to 172.29.70.10 51820 port [udp/*] succeeded!
+R drop-rule packet counter: 10 -> 15

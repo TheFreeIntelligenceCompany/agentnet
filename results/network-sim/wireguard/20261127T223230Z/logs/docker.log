@@ -1,0 +1,121 @@
+couldn't find env file: /Users/<user>/develop/FIC-elipsis/spike/relay-wireguard/.run/env
+ Network an-wg_underlay Creating 
+ Network an-wg_underlay Creating 
+ Volume an-wg_rdata Creating 
+ Volume an-wg_rdata Creating 
+ Volume an-wg_rdata Created 
+ Volume an-wg_rdata Created 
+ Network an-wg_underlay Created 
+ Network an-wg_underlay Created 
+ Container an-wg-a Creating 
+ Container an-wg-r Creating 
+ Container an-wg-b Creating 
+ Container an-wg-r Created 
+ Container an-wg-r-node Creating 
+ Container an-wg-b Created 
+ Container an-wg-a Created 
+ Container an-wg-r-node Created 
+7496e81877a96edb76658a13cce7f84e97977990c66d5f5f0821ed9f53708288
+ Container an-wg-r Starting 
+ Container an-wg-b Starting 
+ Container an-wg-a Starting 
+ Container an-wg-r Started 
+ Container an-wg-b Started 
+ Container an-wg-a Started 
+ Container an-wg-r Running 
+ Container an-wg-r-watchdog Creating 
+ Container an-wg-r-watchdog Created 
+ Container an-wg-r Waiting 
+ Container an-wg-r Healthy 
+ Container an-wg-r-watchdog Starting 
+ Container an-wg-r-watchdog Started 
+ Container an-wg-r Running 
+ Container an-wg-r Waiting 
+ Container an-wg-r Healthy 
+ Container an-wg-r-node Starting 
+ Container an-wg-r-node Started 
+ Container an-wg-a Running 
+ Container an-wg-b Running 
+ Container an-wg-b-node Creating 
+ Container an-wg-a-node Creating 
+ Container an-wg-b-node Created 
+ Container an-wg-a-node Created 
+ Container an-wg-a Waiting 
+ Container an-wg-b Waiting 
+ Container an-wg-a Healthy 
+ Container an-wg-a-node Starting 
+ Container an-wg-b Healthy 
+ Container an-wg-b-node Starting 
+ Container an-wg-a-node Started 
+ Container an-wg-b-node Started 
+an-wg-cap-main-an-wg-br0
+3bd1134f57a82dc22162bf01817d7ac092e8c5dc97e9e1a5c710564126f1ebb7
+an-wg-cap-paths-unguarded-an-wg-br0
+77f988146948e5a2fefb0d3ebeef602181954d045a65770bccf40a8dfb0ba46f
+an-wg-cap-paths-guarded-an-wg-br0
+91f19fbe89c2eaf08cbb535ca01ea523363249a0c47ec9d26845d6c8c61a027c
+ Container an-wg-intruder Creating 
+ Container an-wg-intruder Created 
+ Container an-wg-intruder Starting 
+ Container an-wg-intruder Started 
+ Container an-wg-intruder Running 
+ Container an-wg-intruder-node Creating 
+ Container an-wg-intruder-node Created 
+ Container an-wg-intruder-node Starting 
+ Container an-wg-intruder-node Started 
+an-wg-cap-s4a-an-wg-br0
+400c87cbf4857c9770abf4ef8d0388c8c2286e16816f592abd78205e110c27c2
+an-wg-cap-s4b-an-wg-br0
+477624be6dd5308a006f94ac8868eb6812763a19be808e04c2d3078d4468dd17
+ Container an-wg-intruder-node Stopping 
+ Container an-wg-intruder-node Stopped 
+an-wg-cap-s4c-an-wg-br0
+ Container an-wg-intruder-node Stopping 
+ Container an-wg-intruder-node Stopped 
+ Container an-wg-intruder Stopping 
+ Container an-wg-intruder Stopped 
+Going to remove an-wg-intruder-node, an-wg-intruder
+ Container an-wg-intruder Removing 
+ Container an-wg-intruder-node Removing 
+ Container an-wg-intruder Removed 
+ Container an-wg-intruder-node Removed 
+d31b0b85e8d0193a4c60d92457e90d183e0ab89f3cb3ae09730352640405b932
+an-wg-cap-s5-an-wg-br0
+fe7edd50fd6f624b90bf467709153df0c22e38d3953269a16573d2a51015471e
+an-wg-cap-s5b-an-wg-br0
+406bf36afbfdf80b7740d07809a6def6d9417485b400e87ba3522fa735537283
+an-wg-r-node
+an-wg-r-node
+an-wg-cap-s6-an-wg-br0
+ Container an-wg-a-node Stopping 
+ Container an-wg-r-watchdog Stopping 
+ Container an-wg-b-node Stopping 
+ Container an-wg-r-node Stopping 
+ Container an-wg-r-node Stopped 
+ Container an-wg-r-node Removing 
+ Container an-wg-r-node Removed 
+ Container an-wg-b-node Stopped 
+ Container an-wg-b-node Removing 
+ Container an-wg-b-node Removed 
+ Container an-wg-b Stopping 
+ Container an-wg-a-node Stopped 
+ Container an-wg-a-node Removing 
+ Container an-wg-a-node Removed 
+ Container an-wg-a Stopping 
+ Container an-wg-r-watchdog Stopped 
+ Container an-wg-r-watchdog Removing 
+ Container an-wg-r-watchdog Removed 
+ Container an-wg-r Stopping 
+ Container an-wg-b Stopped 
+ Container an-wg-b Removing 
+ Container an-wg-b Removed 
+ Container an-wg-a Stopped 
+ Container an-wg-a Removing 
+ Container an-wg-a Removed 
+ Container an-wg-r Stopped 
+ Container an-wg-r Removing 
+ Container an-wg-r Removed 
+ Volume an-wg_rdata Removing 
+ Network an-wg_underlay Removing 
+ Volume an-wg_rdata Removed 
+ Network an-wg_underlay Removed 

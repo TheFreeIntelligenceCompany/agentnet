@@ -12,7 +12,7 @@
 #   VARIANT=redial|none   N=trials   MAXWAIT=s   OUTDIR=dir   SETUP/TEARDOWN=shell run before/after all trials
 set -uo pipefail
 VARIANT=${VARIANT:-redial}; N=${N:-3}; MAXWAIT=${MAXWAIT:-1200}; REDIAL_S=${REDIAL_S:-10}; OUTDIR=${OUTDIR:?}
-NB=http://127.0.0.1:18652; RUNDIR="$(cd "$(dirname "$0")" && pwd)/.run"
+NB=http://127.0.0.1:28652; RUNDIR="$(cd "$(dirname "$0")" && pwd)/.run"
 RID=$(grep '^R_PEER_ID=' "$RUNDIR/env" | cut -d= -f2); BPUB=$(cat "$RUNDIR/b.pub"); ADDR="/ip4/10.66.0.1/tcp/60000/p2p/$RID"
 now_ms() { python3 -c 'import time;print(int(time.time()*1000))'; }
 connected() { curl -s -m 3 "$NB/admin/v1/peers" | jq -e --arg id "$RID" '[.[]|select(.connected=="Connected" and (.multiaddr|contains($id)))]|length>0' >/dev/null 2>&1; }

@@ -1,0 +1,6 @@
+### gw-a conntrack -L
+conntrack v1.4.8 (conntrack-tools): 1 flow entries have been shown.
+tcp      6 431996 ESTABLISHED src=192.168.101.10 dst=172.30.80.10 sport=48542 dport=60000 src=172.30.80.10 dst=172.30.80.21 sport=60000 dport=48542 [ASSURED] mark=0 use=1
+### gw-b conntrack -L
+conntrack v1.4.8 (conntrack-tools): 1 flow entries have been shown.
+tcp      6 431996 ESTABLISHED src=192.168.102.10 dst=172.30.80.10 sport=40878 dport=60000 src=172.30.80.10 dst=172.30.80.22 sport=60000 dport=40878 [ASSURED] mark=0 use=1

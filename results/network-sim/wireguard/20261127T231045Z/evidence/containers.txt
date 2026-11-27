@@ -1,0 +1,8 @@
+an-wg-a-node	cb4d14a22b8c	Up 2 seconds
+an-wg-b-node	cb4d14a22b8c	Up 3 seconds
+an-wg-r-watchdog	an-net-tools:local	Up 6 seconds
+an-wg-cap-main-an-wg-br0	an-net-tools:local	Up 12 seconds
+an-wg-r-node	cb4d14a22b8c	Up 5 seconds
+an-wg-b	an-net-tools:local	Up 8 seconds (healthy)
+an-wg-a	an-net-tools:local	Up 8 seconds (healthy)
+an-wg-r	an-net-tools:local	Up 9 seconds (healthy)

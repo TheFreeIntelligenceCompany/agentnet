@@ -1,0 +1,24 @@
+### an-wg-r iptables -S
+-P INPUT DROP
+-P FORWARD DROP
+-P OUTPUT ACCEPT
+-A INPUT -i lo -j ACCEPT
+-A INPUT -i eth0 -p tcp -m tcp --dport 60000 -m comment --comment wgsim-underlay-libp2p-drop -j DROP
+-A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A INPUT -i eth0 -p udp -m udp --dport 51820 -m comment --comment wgsim-wireguard-udp -j ACCEPT
+-A INPUT -s 172.29.70.1/32 -i eth0 -p tcp -m tcp --dport 8645 -m comment --comment wgsim-rest-from-docker-host-only -j ACCEPT
+-A INPUT -s 10.66.0.2/32 -i wg0 -p tcp -m tcp --dport 60000 -m comment --comment wgsim-libp2p-from-A -j ACCEPT
+-A INPUT -s 10.66.0.3/32 -i wg0 -p tcp -m tcp --dport 60000 -m comment --comment wgsim-libp2p-from-B -j ACCEPT
+-A INPUT -i wg0 -p icmp -j ACCEPT
+
+### iptables -vnxL INPUT
+Chain INPUT (policy DROP 0 packets, 0 bytes)
+    pkts      bytes target     prot opt in     out     source               destination         
+       4      300 ACCEPT     0    --  lo     *       0.0.0.0/0            0.0.0.0/0           
+       0        0 DROP       6    --  eth0   *       0.0.0.0/0            0.0.0.0/0            tcp dpt:60000 /* wgsim-underlay-libp2p-drop */
+     206    24531 ACCEPT     0    --  *      *       0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+       2      352 ACCEPT     17   --  eth0   *       0.0.0.0/0            0.0.0.0/0            udp dpt:51820 /* wgsim-wireguard-udp */
+       6      360 ACCEPT     6    --  eth0   *       172.29.70.1          0.0.0.0/0            tcp dpt:8645 /* wgsim-rest-from-docker-host-only */
+       1       60 ACCEPT     6    --  wg0    *       10.66.0.2            0.0.0.0/0            tcp dpt:60000 /* wgsim-libp2p-from-A */
+       1       60 ACCEPT     6    --  wg0    *       10.66.0.3            0.0.0.0/0            tcp dpt:60000 /* wgsim-libp2p-from-B */
+       0        0 ACCEPT     1    --  wg0    *       0.0.0.0/0            0.0.0.0/0           

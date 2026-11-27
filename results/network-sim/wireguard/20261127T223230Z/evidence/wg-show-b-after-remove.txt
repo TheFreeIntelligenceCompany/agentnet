@@ -1,0 +1,11 @@
+interface: wg0
+  public key: eDKuyvrQGWo1qm52JjtMn/Os/aegB0+rVQTWY600TWk=
+  private key: (hidden)
+  listening port: 59039
+
+peer: 5V/VSCyGBWsIVKfVZ1Z1BBDuuVTwJ3GbDHMJf4VPWys=
+  endpoint: 172.29.70.10:51820
+  allowed ips: 10.66.0.1/32
+  latest handshake: 2 minutes, 22 seconds ago
+  transfer: 999.81 KiB received, 560.72 KiB sent
+  persistent keepalive: every 25 seconds

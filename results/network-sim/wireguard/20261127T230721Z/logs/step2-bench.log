@@ -1,0 +1,88 @@
+$ /Users/<user>/develop/FIC-elipsis/target/release/agentnet-acceptance bench --a /tmp/an-net.8PGJ1l/a --b /tmp/an-net.8PGJ1l/b --a-addr an26wphxnf4kwb2557ewvo5uavfqtuzj6eevokbd5rlllnykmu6b6esskdrtu --b-addr an2dvdo377ob3nbrm5zwrde3tlmr6xelzy5qddkbr4jymz5msnwla6qc3z5y4 --n 20 --timeout 600 --pace-ms 400 --tag w --out /Users/<user>/develop/FIC-elipsis/results/network-sim/wireguard/20261127T230721Z/evidence/bench.json
+{
+  "a_to_b": {
+    "delivered": 20,
+    "latency_ms_send_to_delivered": {
+      "definition": "delivered_at - created_at from the sender's own outbox row (same host clock)",
+      "max": 546,
+      "min": 277,
+      "p50": 391,
+      "p95": 513,
+      "p99": 546,
+      "samples": 20
+    },
+    "not_delivered_at_timeout": 0,
+    "raw_latencies_ms": [
+      277,
+      290,
+      315,
+      335,
+      346,
+      353,
+      357,
+      380,
+      381,
+      391,
+      415,
+      426,
+      438,
+      460,
+      468,
+      487,
+      501,
+      507,
+      513,
+      546
+    ],
+    "send_failures": 0,
+    "send_phase_ms": 8078,
+    "sent": 20,
+    "tag": "w-a2b",
+    "terminal_other": {},
+    "total_ms": 8082
+  },
+  "b_to_a": {
+    "delivered": 20,
+    "latency_ms_send_to_delivered": {
+      "definition": "delivered_at - created_at from the sender's own outbox row (same host clock)",
+      "max": 554,
+      "min": 286,
+      "p50": 406,
+      "p95": 526,
+      "p99": 554,
+      "samples": 20
+    },
+    "not_delivered_at_timeout": 0,
+    "raw_latencies_ms": [
+      286,
+      329,
+      329,
+      346,
+      371,
+      376,
+      376,
+      389,
+      390,
+      406,
+      429,
+      429,
+      446,
+      465,
+      481,
+      500,
+      506,
+      521,
+      526,
+      554
+    ],
+    "send_failures": 0,
+    "send_phase_ms": 8077,
+    "sent": 20,
+    "tag": "w-b2a",
+    "terminal_other": {},
+    "total_ms": 8082
+  },
+  "direction_mode": "both directions concurrently, 400 ms pacing",
+  "n_per_direction": 20
+}
+[exit 0]

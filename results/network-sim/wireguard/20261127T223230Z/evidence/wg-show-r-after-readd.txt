@@ -1,0 +1,16 @@
+interface: wg0
+  public key: 5V/VSCyGBWsIVKfVZ1Z1BBDuuVTwJ3GbDHMJf4VPWys=
+  private key: (hidden)
+  listening port: 51820
+
+peer: eDKuyvrQGWo1qm52JjtMn/Os/aegB0+rVQTWY600TWk=
+  endpoint: 172.29.70.22:59039
+  allowed ips: 10.66.0.3/32
+  latest handshake: 7 seconds ago
+  transfer: 64.03 KiB received, 197.84 KiB sent
+
+peer: Q2tBaWI+HXHztcPzkH+jWuEOl/R1VkDmlTe9K843Z2M=
+  endpoint: 172.29.70.21:59798
+  allowed ips: 10.66.0.2/32
+  latest handshake: 1 minute, 23 seconds ago
+  transfer: 776.97 KiB received, 1.11 MiB sent

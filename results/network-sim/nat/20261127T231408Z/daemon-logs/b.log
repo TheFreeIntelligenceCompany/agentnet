@@ -1,0 +1,12 @@
+2026-11-27T23:15:23.164117Z  INFO agentnet_daemon::daemon: agentnet daemon started agent=an24wweb4fmnruqov6beo3ratihlhi5n6t3xlatuv2noairxtn6uvm7nb2vfe socket=/tmp/an-net.Lul1hO/b/agentnet.sock
+agentnet daemon running for an24wweb4fmnruqov6beo3ratihlhi5n6t3xlatuv2noairxtn6uvm7nb2vfe (socket /tmp/an-net.Lul1hO/b/agentnet.sock); stop with Ctrl-C or SIGTERM
+2026-11-27T23:15:40.862697Z  INFO agentnet_daemon::daemon: SIGTERM received
+2026-11-27T23:15:40.871672Z  INFO agentnet_daemon::daemon: agentnet daemon stopped
+2026-11-27T23:15:52.601641Z  INFO agentnet_daemon::daemon: agentnet daemon started agent=an24wweb4fmnruqov6beo3ratihlhi5n6t3xlatuv2noairxtn6uvm7nb2vfe socket=/tmp/an-net.Lul1hO/b/agentnet.sock
+agentnet daemon running for an24wweb4fmnruqov6beo3ratihlhi5n6t3xlatuv2noairxtn6uvm7nb2vfe (socket /tmp/an-net.Lul1hO/b/agentnet.sock); stop with Ctrl-C or SIGTERM
+2026-11-27T23:30:55.105150Z  INFO agentnet_daemon::daemon: SIGTERM received
+2026-11-27T23:30:55.113560Z  INFO agentnet_daemon::daemon: agentnet daemon stopped
+2026-11-27T23:41:09.303049Z  INFO agentnet_daemon::daemon: agentnet daemon started agent=an24wweb4fmnruqov6beo3ratihlhi5n6t3xlatuv2noairxtn6uvm7nb2vfe socket=/tmp/an-net.Lul1hO/b/agentnet.sock
+agentnet daemon running for an24wweb4fmnruqov6beo3ratihlhi5n6t3xlatuv2noairxtn6uvm7nb2vfe (socket /tmp/an-net.Lul1hO/b/agentnet.sock); stop with Ctrl-C or SIGTERM
+2026-11-27T23:41:12.811211Z  INFO agentnet_daemon::daemon: SIGTERM received
+2026-11-27T23:41:12.812568Z  INFO agentnet_daemon::daemon: agentnet daemon stopped
