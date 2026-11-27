@@ -319,17 +319,27 @@ impl Node {
             // a tombstone or a key update (re-seal) may have changed this row
             // since. Re-read it and publish what is current, or nothing.
             let only_tombstone = i64::from(self.local_revocation.is_some());
-            let cur: Option<(String, Vec<u8>, i64, u32, u32, Option<i64>)> = self.store.read(|c| {
-                Ok(c.query_row(
-                    "SELECT topic, frame, expires_at, attempts, failures, kem_until FROM outbox
+            let cur: Option<(String, Vec<u8>, i64, u32, u32, Option<i64>)> =
+                self.store.read(|c| {
+                    Ok(c.query_row(
+                        "SELECT topic, frame, expires_at, attempts, failures, kem_until FROM outbox
                      WHERE message_id = ?1 AND state IN ('queued','sent')
                        AND next_attempt_at IS NOT NULL AND next_attempt_at <= ?2
                        AND (?3 = 0 OR type = ?4)",
-                    params![id, now, only_tombstone, MESSAGE_TYPE_IDENTITY_REVOKED],
-                    |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?, r.get(5)?)),
-                )
-                .optional()?)
-            })?;
+                        params![id, now, only_tombstone, MESSAGE_TYPE_IDENTITY_REVOKED],
+                        |r| {
+                            Ok((
+                                r.get(0)?,
+                                r.get(1)?,
+                                r.get(2)?,
+                                r.get(3)?,
+                                r.get(4)?,
+                                r.get(5)?,
+                            ))
+                        },
+                    )
+                    .optional()?)
+                })?;
             let Some((topic, frame, expires_at, attempts, failures, kem_until)) = cur else {
                 self.metrics.inc("publish.skipped_stale");
                 continue;

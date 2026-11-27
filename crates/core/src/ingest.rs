@@ -202,39 +202,38 @@ impl Node {
             self.metrics.inc("open.directory_failed");
             return self.store_failure();
         }
-        let env =
-            match opened {
-                Ok(o) => {
-                    self.metrics.inc(match o.auth {
-                        SenderAuth::Pinned => "open.auth_pinned",
-                        SenderAuth::EmbeddedCertificate => "open.auth_embedded",
-                    });
-                    auth = o.auth;
-                    o.envelope
-                }
-                Err(OpenError::SenderRevoked) => {
-                    // A revoked identity's messages are dropped like a blocked sender's.
-                    self.metrics.inc("drop.blocked");
-                    self.metrics.inc("open_error.sender_revoked");
-                    self.mark_transport_seen(frame);
-                    return FrameOutcome::Blocked;
-                }
-                Err(OpenError::NotForUs) => {
-                    self.metrics.inc("frame.not_for_us");
-                    self.mark_transport_seen(frame);
-                    return FrameOutcome::NotForUs;
-                }
-                Err(OpenError::FromFuture) => {
-                    self.metrics.inc("open_error.from_future");
-                    return FrameOutcome::Deferred;
-                }
-                Err(e) => {
-                    self.metrics
-                        .inc(&format!("open_error.{}", open_error_kind(&e)));
-                    self.mark_transport_seen(frame);
-                    return FrameOutcome::Invalid;
-                }
-            };
+        let env = match opened {
+            Ok(o) => {
+                self.metrics.inc(match o.auth {
+                    SenderAuth::Pinned => "open.auth_pinned",
+                    SenderAuth::EmbeddedCertificate => "open.auth_embedded",
+                });
+                auth = o.auth;
+                o.envelope
+            }
+            Err(OpenError::SenderRevoked) => {
+                // A revoked identity's messages are dropped like a blocked sender's.
+                self.metrics.inc("drop.blocked");
+                self.metrics.inc("open_error.sender_revoked");
+                self.mark_transport_seen(frame);
+                return FrameOutcome::Blocked;
+            }
+            Err(OpenError::NotForUs) => {
+                self.metrics.inc("frame.not_for_us");
+                self.mark_transport_seen(frame);
+                return FrameOutcome::NotForUs;
+            }
+            Err(OpenError::FromFuture) => {
+                self.metrics.inc("open_error.from_future");
+                return FrameOutcome::Deferred;
+            }
+            Err(e) => {
+                self.metrics
+                    .inc(&format!("open_error.{}", open_error_kind(&e)));
+                self.mark_transport_seen(frame);
+                return FrameOutcome::Invalid;
+            }
+        };
         let digest = crate::crypto::frame_digest(&frame.payload);
         // 3. trust
         let mut sender_is_contact = false;

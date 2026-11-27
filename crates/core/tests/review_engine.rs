@@ -66,11 +66,19 @@ async fn strangers_cannot_grow_the_revocation_table(policy: UnknownSenders) {
     for i in 0..5 {
         let z = w.agent(&format!("z{i}"), cfg());
         let t = tombstone(&w, &z, "throwaway");
-        inject(&w, &a, &forge(&w, &z, &a, MESSAGE_TYPE_IDENTITY_REVOKED, &t));
+        inject(
+            &w,
+            &a,
+            &forge(&w, &z, &a, MESSAGE_TYPE_IDENTITY_REVOKED, &t),
+        );
         a.node.step_receive().await.unwrap();
     }
     assert_eq!(a.n("revocations"), 0, "{policy:?}");
-    assert_eq!(a.n("seen"), 0, "{policy:?}: nothing is remembered about strangers' revocations");
+    assert_eq!(
+        a.n("seen"),
+        0,
+        "{policy:?}: nothing is remembered about strangers' revocations"
+    );
     assert!(a.inbox().await.is_empty());
 }
 
@@ -93,7 +101,11 @@ async fn m2_a_contacts_own_revocation_is_still_applied_and_counted_per_contact()
     b.node.step_receive().await.unwrap();
     exchange(&a, &b).await;
     let t = tombstone(&w, &b, "b stolen");
-    inject(&w, &a, &forge(&w, &b, &a, MESSAGE_TYPE_IDENTITY_REVOKED, &t));
+    inject(
+        &w,
+        &a,
+        &forge(&w, &b, &a, MESSAGE_TYPE_IDENTITY_REVOKED, &t),
+    );
     a.node.step_receive().await.unwrap();
     assert_eq!(a.n("revocations"), 1);
 }
@@ -190,7 +202,11 @@ async fn l1_a_frame_signed_in_the_future_is_deferred_then_accepted() {
     b.node.step_receive().await.unwrap();
     assert_eq!(b.metric("open_error.from_future"), 1);
     assert_eq!(b.metric("open_error.bad_signature"), 0);
-    assert_eq!(b.n("transport_seen"), seen_before, "a deferred frame is not marked seen");
+    assert_eq!(
+        b.n("transport_seen"),
+        seen_before,
+        "a deferred frame is not marked seen"
+    );
     assert!(b.inbox().await.is_empty());
     // the history sync (or a re-poll) offers it again after the clock caught up
     w.advance(ahead);
@@ -226,7 +242,11 @@ async fn l5_a_directory_failure_fails_the_open_with_a_store_error() {
     let r = a.node.step_receive().await.unwrap();
     assert_eq!(r.store_failures, 1);
     assert_eq!(a.metric("open.directory_failed"), 1);
-    assert_eq!(a.n("transport_seen"), seen_before, "not marked seen: it will be retried");
+    assert_eq!(
+        a.n("transport_seen"),
+        seen_before,
+        "not marked seen: it will be retried"
+    );
     assert_eq!(a.n("inbox"), 0);
 }
 
@@ -247,7 +267,11 @@ async fn l6_a_revocation_through_contact_update_is_applied_like_identity_revoked
     let m = a.send(&b, "pending").await;
     // B's revoked certificate arrives as a contact.update from B itself
     let revoked = tombstone(&w, &b, "b stolen");
-    inject(&w, &a, &forge(&w, &b, &a, MESSAGE_TYPE_CONTACT_UPDATE, &revoked));
+    inject(
+        &w,
+        &a,
+        &forge(&w, &b, &a, MESSAGE_TYPE_CONTACT_UPDATE, &revoked),
+    );
     a.node.step_receive().await.unwrap();
     assert_eq!(a.n("revocations"), 1);
     assert_eq!(a.state(&m.message_id).await, DeliveryState::Failed);

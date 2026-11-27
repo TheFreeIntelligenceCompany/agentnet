@@ -218,14 +218,8 @@ impl OpenPgpProtection {
         } else {
             0
         };
-        let frame = pgp::seal_message(
-            signer,
-            recipient.cert(),
-            &payload,
-            now_ms,
-            &opts,
-            pad_floor,
-        )?;
+        let frame =
+            pgp::seal_message(signer, recipient.cert(), &payload, now_ms, &opts, pad_floor)?;
         if frame.len() <= max_frame_len {
             return Ok(frame);
         }

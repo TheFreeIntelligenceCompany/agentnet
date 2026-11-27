@@ -26,10 +26,10 @@ use super::contact::VerifiedContact;
 use super::envelope::Envelope;
 use super::identity::Identity;
 pub use super::pgp::BuildOpts;
-pub use openpgp::types::{AEADAlgorithm as Aead, SymmetricAlgorithm as Cipher};
 use super::pgp::{self};
 use super::protection::{payload_bytes, OpenPgpProtection};
 use crate::error::SealError;
+pub use openpgp::types::{AEADAlgorithm as Aead, SymmetricAlgorithm as Cipher};
 
 /// The JSON payload the engine would put in the literal data packet.
 pub fn payload_for(sender: &Identity, env: &Envelope) -> Vec<u8> {

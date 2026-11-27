@@ -77,7 +77,10 @@ fn m1_revoked_subkey_stays_revoked_after_many_rotations_and_a_stale_merge() {
             }
             Err(IdentityError::CertificateTooLarge { .. }) => {
                 refused = true;
-                assert!(i > 9, "the cap must allow at least 9 rotations (reviewer's case)");
+                assert!(
+                    i > 9,
+                    "the cap must allow at least 9 rotations (reviewer's case)"
+                );
                 break;
             }
             Err(e) => panic!("unexpected {e}"),
@@ -87,7 +90,13 @@ fn m1_revoked_subkey_stays_revoked_after_many_rotations_and_a_stale_merge() {
     let t = last_ok + 1_000;
     let merged = seen_by_a.merge(&original, t).unwrap();
     let f = OpenPgpProtection
-        .seal(&a, &merged, &env(&a, &b, "after compromise", t), t, MAX_FRAME)
+        .seal(
+            &a,
+            &merged,
+            &env(&a, &b, "after compromise", t),
+            t,
+            MAX_FRAME,
+        )
         .unwrap();
     let dir = Pinned(vec![contact_at(&a, t)]);
     // the holder of only the first subkey secret cannot open it ...
@@ -108,7 +117,10 @@ fn m1_revoked_subkey_stays_revoked_after_many_rotations_and_a_stale_merge() {
     );
     // the publisher's own record was not trimmed either
     assert!(b.contact_record().as_bytes().len() <= agentnet_core::crypto::pgp::MAX_CERT_LEN);
-    assert!(refused, "rotations must eventually fail with a clear error, not trim revocations");
+    assert!(
+        refused,
+        "rotations must eventually fail with a clear error, not trim revocations"
+    );
 }
 
 /// M1: a failed rotation changes nothing.
@@ -189,7 +201,13 @@ fn l7_evicting_a_retained_subkey_strips_its_secret() {
     );
     // a frame sealed to the very first subkey can no longer be opened
     let f = OpenPgpProtection
-        .seal(&a, &original, &env(&a, &b, "old", NOW + 1_000), NOW + 1_000, MAX_FRAME)
+        .seal(
+            &a,
+            &original,
+            &env(&a, &b, "old", NOW + 1_000),
+            NOW + 1_000,
+            MAX_FRAME,
+        )
         .unwrap();
     let dir = Pinned(vec![contact_at(&a, t)]);
     assert_eq!(
@@ -419,7 +437,9 @@ mod l2_adverts {
         // ASCII armor
         assert!(!parse(&at::document_from_bytes(&t::armored(&msg))));
         // prefix-signature form
-        assert!(!parse(&at::document_from_bytes(&t::prefix_signature_form(&msg))));
+        assert!(!parse(&at::document_from_bytes(&t::prefix_signature_form(
+            &msg
+        ))));
         // cleartext signature framework
         let record = at::content_of(&doc).unwrap();
         assert!(!parse(&at::document_from_bytes(&t::sign_cleartext(
@@ -449,7 +469,6 @@ fn l4_one_frame_length_per_class_for_every_body_length() {
     assert_eq!(lengths.len(), 2, "frame lengths seen: {lengths:?}");
 }
 
-
 // ------------------------------------------------------------------- L4
 
 /// L4: the padded size is a power of two for EVERY inner length (no gaps).
@@ -458,7 +477,10 @@ fn l4_every_inner_length_has_an_exactly_encodable_padding_target() {
     use agentnet_core::crypto::pgp::padded_total;
     for n in 0..70_000u64 {
         let t = padded_total(n);
-        assert!(t.is_power_of_two() && t >= 1024 && t >= n + 2, "n={n} t={t}");
+        assert!(
+            t.is_power_of_two() && t >= 1024 && t >= n + 2,
+            "n={n} t={t}"
+        );
         // the padding packet needs a body that makes header + body == t - n
         let want = t - n;
         let body_ok = [(2u64, 0u64..192), (3, 192..8384), (6, 8384..u64::MAX)]
@@ -467,7 +489,6 @@ fn l4_every_inner_length_has_an_exactly_encodable_padding_target() {
         assert!(body_ok, "n={n}: no padding packet of total size {want}");
     }
 }
-
 
 // ------------------------------------------------------------------- M3
 
@@ -552,7 +573,8 @@ fn l1_a_signature_time_ahead_of_the_clock_is_from_future_not_bad_signature() {
 fn l3_unhashed_junk_and_invalid_signatures_do_not_survive_sanitising() {
     use agentnet_core::crypto::testing as t;
     let mut b = ident();
-    b.rotate_kem_with(NOW + 10_000, NOW + 10_000, None, true).unwrap();
+    b.rotate_kem_with(NOW + 10_000, NOW + 10_000, None, true)
+        .unwrap();
     let clean = b.contact_record().to_document();
     let bloated = t::public_cert_bloated(&b, 4, 2);
     assert!(
