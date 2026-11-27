@@ -239,7 +239,7 @@ stop the daemon, replace the binary, start the daemon, then run `agentnet doctor
 * **Likely cause.** The receiver is down, answers non-2xx (redirects are never followed), rejects the signature or the timestamp (+-300 s), the URL is not
   loopback/private and `allow_remote` is false, or the secret file is missing, too short (under 32 bytes) or not mode 0600.
 * **Check.** `agentnet network status` (webhook counters), the daemon's stderr, the receiver's logs, `[webhook]` in `agentnet.toml` (`docs/configuration.md`).
-* **Action.** Fix the receiver. After `max_attempts` (default 5) an event is parked and not retried automatically. Recover by replaying from an earlier cursor:
+* **Action.** Fix the receiver. After `max_attempts` (default 5) an event is parked and not retried automatically. The parked record and the cursor advance are written in one SQLite transaction, and `parked` counts only committed rows; if `webhook.db` cannot be written (disk full, read-only), the cursor stays and the same event is retried (daemon log: `webhook: cannot park event; it will be retried`) instead of being skipped. Tested with an injected insert failure; a real full disk is UNTESTED. Recover by replaying from an earlier cursor:
   `agentnet events tail --since <cursor>` (or `--all`), de-duplicating on `event_id`. Receiver duties and the signature scheme: `docs/host-integration.md` section 2.
   Events are recoverable only until `storage.event_max_age_hours` (default 720) for unacknowledged and `storage.event_retention_hours` (default 168) for acknowledged ones.
 

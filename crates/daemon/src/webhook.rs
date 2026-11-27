@@ -258,6 +258,12 @@ pub struct WebhookStats {
     pub cursor: Option<String>,
 }
 
+/// Every attempt to deliver an event failed.
+struct Failure {
+    attempts: u32,
+    last_error: String,
+}
+
 /// The dispatcher. Create with [`Webhook::prepare`], run with [`Webhook::run`].
 pub struct Webhook {
     cfg: WebhookSection,
@@ -371,6 +377,38 @@ impl Webhook {
         Ok(())
     }
 
+    /// Records a parked event AND advances the cursor past it in ONE transaction, so an event can
+    /// never be skipped without a parked record. The in-memory counters change only after the
+    /// commit; on error nothing was written and the same event is retried.
+    fn park_and_advance(
+        &self,
+        ev: &EventRecord,
+        attempts: u32,
+        last_error: &str,
+    ) -> Result<(), DaemonError> {
+        let now = self.clock.now_ms();
+        {
+            let mut db = self.lock_db();
+            let tx = db.transaction().map_err(sql_err)?;
+            tx.execute(
+                "INSERT OR REPLACE INTO parked(event_id,cursor,parked_at,attempts,last_error)
+                 VALUES(?1,?2,?3,?4,?5)",
+                params![ev.event_id, ev.cursor, now, attempts, last_error],
+            )
+            .map_err(sql_err)?;
+            tx.execute(
+                "INSERT INTO kv(k,v) VALUES('cursor',?1) ON CONFLICT(k) DO UPDATE SET v=excluded.v",
+                [&ev.cursor],
+            )
+            .map_err(sql_err)?;
+            tx.commit().map_err(sql_err)?;
+        }
+        let mut s = self.stats.lock().unwrap_or_else(|e| e.into_inner());
+        s.parked += 1;
+        s.cursor = Some(ev.cursor.clone());
+        Ok(())
+    }
+
     /// On the very first start there is no cursor: begin at the current end of
     /// the event log, so enabling the webhook does not replay history. Call
     /// before the engine starts producing events.
@@ -452,11 +490,19 @@ impl Webhook {
         }
     }
 
-    /// Deliver one event with bounded retries. `Ok(true)` delivered, `Ok(false)`
-    /// parked, `Err(())` interrupted by shutdown (cursor must not advance).
-    async fn deliver(&self, ev: &EventRecord, stop: &CancellationToken) -> Result<bool, ()> {
+    /// Deliver one event with bounded retries. `Ok(None)` delivered; `Ok(Some(failure))` every
+    /// attempt failed (the caller parks it and advances the cursor atomically); `Err(())`
+    /// interrupted by shutdown (cursor must not advance).
+    async fn deliver(
+        &self,
+        ev: &EventRecord,
+        stop: &CancellationToken,
+    ) -> Result<Option<Failure>, ()> {
         let Ok(body) = serde_json::to_string(ev) else {
-            return Ok(false);
+            return Ok(Some(Failure {
+                attempts: 0,
+                last_error: "event could not be serialized".into(),
+            }));
         };
         let max = self.cfg.max_attempts.max(1);
         let mut last = String::new();
@@ -468,7 +514,7 @@ impl Webhook {
                 Ok(()) => {
                     let mut s = self.stats.lock().unwrap_or_else(|e| e.into_inner());
                     s.delivered += 1;
-                    return Ok(true);
+                    return Ok(None);
                 }
                 Err(e) => {
                     last = sanitize(&e);
@@ -492,16 +538,10 @@ impl Webhook {
                 }
             }
         }
-        let now = self.clock.now_ms();
-        let _ = self.lock_db().execute(
-            "INSERT OR REPLACE INTO parked(event_id,cursor,parked_at,attempts,last_error)
-             VALUES(?1,?2,?3,?4,?5)",
-            params![ev.event_id, ev.cursor, now, max, last],
-        );
-        let mut s = self.stats.lock().unwrap_or_else(|e| e.into_inner());
-        s.parked += 1;
-        tracing::warn!(event_id = %ev.event_id, "webhook: event parked after {max} attempts");
-        Ok(false)
+        Ok(Some(Failure {
+            attempts: max,
+            last_error: last,
+        }))
     }
 
     /// Run until `stop` is cancelled.
@@ -524,7 +564,23 @@ impl Webhook {
                     for ev in &page.events {
                         if self.wants(ev.event_type) {
                             match self.deliver(ev, &stop).await {
-                                Ok(_) => {}
+                                Ok(None) => {}
+                                Ok(Some(f)) => {
+                                    // One transaction: parked record + cursor. If it fails the
+                                    // cursor stays and this event is retried on the next round.
+                                    if let Err(e) =
+                                        self.park_and_advance(ev, f.attempts, &f.last_error)
+                                    {
+                                        tracing::error!(error = %e, event_id = %ev.event_id,
+                                            "webhook: cannot park event; it will be retried");
+                                        tokio::time::sleep(EVENT_POLL).await;
+                                        break;
+                                    }
+                                    tracing::warn!(event_id = %ev.event_id,
+                                        "webhook: event parked after {} attempts", f.attempts);
+                                    cursor = Some(ev.cursor.clone());
+                                    continue;
+                                }
                                 Err(()) => return,
                             }
                         }

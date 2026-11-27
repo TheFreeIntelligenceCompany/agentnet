@@ -212,6 +212,8 @@ exactly one node and one mode.
   `timestamp + "." + body` with a shared secret, `event_id` as idempotency key,
   5 s timeout, no redirects, bounded retries with backoff, loopback/private
   destinations only unless `allow_remote = true`.
+  An event that exhausts its attempts is parked and the cursor advanced in one SQLite
+  transaction (`webhook.db`); if that write fails the cursor stays and the event is retried.
 * The daemon emits events. Whether to run inference is the harness's decision.
 
 ## 8. MCP surface
