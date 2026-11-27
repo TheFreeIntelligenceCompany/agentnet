@@ -193,10 +193,7 @@ mod tests {
             a.replacen("an2", "an1", 1).parse::<Address>(),
             Err(AddressError::BadPrefix)
         );
-        assert_eq!(
-            "".parse::<Address>().unwrap_err(),
-            AddressError::BadPrefix
-        );
+        assert_eq!("".parse::<Address>().unwrap_err(), AddressError::BadPrefix);
         assert_eq!(
             format!("{a}a").parse::<Address>(),
             Err(AddressError::BadLength)
@@ -218,7 +215,10 @@ mod tests {
         // flip one character of the body: either checksum or encoding error
         let mut flipped = a.clone().into_bytes();
         flipped[20] = if flipped[20] == b'a' { b'b' } else { b'a' };
-        assert!(String::from_utf8(flipped).unwrap().parse::<Address>().is_err());
+        assert!(String::from_utf8(flipped)
+            .unwrap()
+            .parse::<Address>()
+            .is_err());
     }
 
     #[test]

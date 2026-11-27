@@ -12,10 +12,10 @@
 mod common;
 
 use agentnet_core::api::*;
+use agentnet_core::contact::VerifiedContact;
 use agentnet_core::crypto::testing as t;
 use agentnet_core::envelope::{Envelope, MESSAGE_TYPE_MESSAGE};
 use agentnet_core::identity::Identity;
-use agentnet_core::contact::VerifiedContact;
 use common::*;
 
 async fn started(w: &World, names: &[&str]) -> Vec<Agent> {

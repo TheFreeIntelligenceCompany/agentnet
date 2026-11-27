@@ -443,12 +443,10 @@ step1() {
 
   # negative: tampered record
   python3 -I - "$WORK/b.record" > "$WORK/b.tampered" <<'PY'
-import json, sys, base64
-r = json.load(open(sys.argv[1]))
-raw = r["record"]; b = base64.urlsafe_b64decode(raw + "=" * (-len(raw) % 4))
-d = json.loads(b); d["created_at"] = d["created_at"] + 1          # valid JSON, signature no longer matches
-r["record"] = base64.urlsafe_b64encode(json.dumps(d, separators=(",", ":")).encode()).decode().rstrip("=")
-print(json.dumps(r))
+import sys
+t = open(sys.argv[1]).read().strip()      # base64url of the binary OpenPGP certificate
+i = len(t) // 2
+print(t[:i] + ("B" if t[i] == "A" else "A") + t[i + 1:])   # one flipped character: the self-signature or packet no longer verifies
 PY
   local before after
   before="$(anj a contact list | jq -c '[.[]|.address]|sort')"

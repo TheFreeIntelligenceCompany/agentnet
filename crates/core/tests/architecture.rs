@@ -173,7 +173,11 @@ fn the_engine_goes_through_the_message_protection_trait() {
         "api_impl.rs",
     ] {
         let text = std::fs::read_to_string(src.join(f)).unwrap();
-        for bad in ["protection::seal(", "protection::open(", "OpenPgpProtection"] {
+        for bad in [
+            "protection::seal(",
+            "protection::open(",
+            "OpenPgpProtection",
+        ] {
             assert!(!text.contains(bad), "{f} references {bad}");
         }
     }

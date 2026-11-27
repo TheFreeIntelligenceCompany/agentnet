@@ -30,7 +30,9 @@ fn an_unmigrated_data_directory_is_refused_with_the_command_to_run() {
     let (_t, root) = legacy_dir();
     let e = offline::show_identity(&root).unwrap_err().to_string();
     assert!(e.contains("agentnet identity migrate"), "{e}");
-    let e = Identity::load(&root.join("identity.json")).unwrap_err().to_string();
+    let e = Identity::load(&root.join("identity.json"))
+        .unwrap_err()
+        .to_string();
     assert!(e.contains("agentnet identity migrate"), "{e}");
 }
 

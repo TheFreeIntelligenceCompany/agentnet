@@ -180,37 +180,35 @@ impl Node {
         // 2. open
         let now = self.now();
         let dir = |a: &crate::crypto::Address| self.pinned_certificate(a);
-        let env = match self.protection.open(
-            &self.identity,
-            &frame.payload,
-            now,
-            &self.open_limits,
-            &dir,
-        ) {
-            Ok(o) => o.envelope,
-            Err(OpenError::SenderRevoked) => {
-                // A revoked identity's messages are dropped like a blocked sender's.
-                self.metrics.inc("drop.blocked");
-                self.metrics.inc("open_error.sender_revoked");
-                self.mark_transport_seen(frame);
-                return FrameOutcome::Blocked;
-            }
-            Err(OpenError::NotForUs) => {
-                self.metrics.inc("frame.not_for_us");
-                self.mark_transport_seen(frame);
-                return FrameOutcome::NotForUs;
-            }
-            Err(OpenError::FromFuture) => {
-                self.metrics.inc("open_error.from_future");
-                return FrameOutcome::Deferred;
-            }
-            Err(e) => {
-                self.metrics
-                    .inc(&format!("open_error.{}", open_error_kind(&e)));
-                self.mark_transport_seen(frame);
-                return FrameOutcome::Invalid;
-            }
-        };
+        let env =
+            match self
+                .protection
+                .open(&self.identity, &frame.payload, now, &self.open_limits, &dir)
+            {
+                Ok(o) => o.envelope,
+                Err(OpenError::SenderRevoked) => {
+                    // A revoked identity's messages are dropped like a blocked sender's.
+                    self.metrics.inc("drop.blocked");
+                    self.metrics.inc("open_error.sender_revoked");
+                    self.mark_transport_seen(frame);
+                    return FrameOutcome::Blocked;
+                }
+                Err(OpenError::NotForUs) => {
+                    self.metrics.inc("frame.not_for_us");
+                    self.mark_transport_seen(frame);
+                    return FrameOutcome::NotForUs;
+                }
+                Err(OpenError::FromFuture) => {
+                    self.metrics.inc("open_error.from_future");
+                    return FrameOutcome::Deferred;
+                }
+                Err(e) => {
+                    self.metrics
+                        .inc(&format!("open_error.{}", open_error_kind(&e)));
+                    self.mark_transport_seen(frame);
+                    return FrameOutcome::Invalid;
+                }
+            };
         // 3. trust
         let trust = match self.store.read(|c| self.load_contact(c, &env.sender)) {
             Ok(Some(row)) => row.trust,

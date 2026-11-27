@@ -386,7 +386,10 @@ async fn run(cli: Cli) -> CliResult<i32> {
                             }
                         }
                         if st.failed_hidden_rows > 0 {
-                            s.push_str(&format!("{} pending receipt/system row(s) were dropped.\n", st.failed_hidden_rows));
+                            s.push_str(&format!(
+                                "{} pending receipt/system row(s) were dropped.\n",
+                                st.failed_hidden_rows
+                            ));
                         }
                         if st.legacy_contacts.is_empty() {
                             s.push_str("No contacts.\n");
@@ -396,7 +399,10 @@ async fn run(cli: Cli) -> CliResult<i32> {
                                 s.push_str(&format!(
                                     "  {}{}\n",
                                     c.address,
-                                    c.alias.as_deref().map(|a| format!(" ({a})")).unwrap_or_default()
+                                    c.alias
+                                        .as_deref()
+                                        .map(|a| format!(" ({a})"))
+                                        .unwrap_or_default()
                                 ));
                             }
                         }

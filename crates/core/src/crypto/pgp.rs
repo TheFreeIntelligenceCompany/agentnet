@@ -20,6 +20,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use sequoia_openpgp as openpgp;
 
+use openpgp::anyhow;
 use openpgp::cert::prelude::*;
 use openpgp::cert::{CertRevocationBuilder, SubkeyRevocationBuilder};
 use openpgp::crypto::{KeyPair, SessionKey};
@@ -35,7 +36,6 @@ use openpgp::types::{
     AEADAlgorithm, KeyFlags, PublicKeyAlgorithm, ReasonForRevocation, RevocationStatus,
     SignatureType, SymmetricAlgorithm,
 };
-use openpgp::anyhow;
 use openpgp::{Cert, Fingerprint, KeyHandle, Packet, Profile};
 
 use super::address::Address;
@@ -83,8 +83,9 @@ pub(crate) fn cert_address(cert: &Cert) -> Result<Address, ContactError> {
     if k.pk_algo() != PublicKeyAlgorithm::Ed25519 {
         return Err(ContactError::Unsupported("primary key is not Ed25519"));
     }
-    let fp = fp32(&cert.fingerprint())
-        .ok_or(ContactError::Unsupported("fingerprint is not a v6 fingerprint"))?;
+    let fp = fp32(&cert.fingerprint()).ok_or(ContactError::Unsupported(
+        "fingerprint is not a v6 fingerprint",
+    ))?;
     Ok(Address::from_fingerprint(&fp))
 }
 
@@ -99,8 +100,7 @@ pub(crate) fn generate_cert(
     primary_validity: Option<Duration>,
 ) -> openpgp::Result<Cert> {
     let (cert, _rev) = CertBuilder::new()
-        .set_profile(Profile::RFC9580)
-        ?
+        .set_profile(Profile::RFC9580)?
         .set_cipher_suite(CipherSuite::Cv25519)
         .set_creation_time(st(now_ms))
         .set_primary_key_flags(KeyFlags::empty().set_certification().set_signing())
@@ -110,8 +110,7 @@ pub(crate) fn generate_cert(
             enc_validity,
             None,
         )
-        .generate()
-        ?;
+        .generate()?;
     Ok(cert)
 }
 
@@ -137,8 +136,8 @@ pub(crate) fn rotate_cert(
     reason_text: &[u8],
 ) -> openpgp::Result<(Cert, Vec<Fingerprint>)> {
     let p = policy();
-    let mut kp = primary_keypair(cert)
-        .ok_or_else(|| anyhow::anyhow!("no usable primary secret"))?;
+    let mut kp =
+        primary_keypair(cert).ok_or_else(|| anyhow::anyhow!("no usable primary secret"))?;
     let mut packets: Vec<Packet> = Vec::new();
     let mut retired = Vec::new();
     let vc = cert.with_policy(&p, st(now_ms))?;
@@ -170,13 +169,9 @@ pub(crate) fn rotate_cert(
 
 /// A hard primary-key revocation of `cert` effective at `now_ms`; returns the
 /// public certificate carrying the revocation signature.
-pub(crate) fn revoke_primary(
-    cert: &Cert,
-    now_ms: i64,
-    reason: &str,
-) -> openpgp::Result<Cert> {
-    let mut kp = primary_keypair(cert)
-        .ok_or_else(|| anyhow::anyhow!("no usable primary secret"))?;
+pub(crate) fn revoke_primary(cert: &Cert, now_ms: i64, reason: &str) -> openpgp::Result<Cert> {
+    let mut kp =
+        primary_keypair(cert).ok_or_else(|| anyhow::anyhow!("no usable primary secret"))?;
     let sig = CertRevocationBuilder::new()
         .set_reason_for_revocation(ReasonForRevocation::Unspecified, reason.as_bytes())?
         .set_signature_creation_time(st(now_ms))?
@@ -189,10 +184,7 @@ pub(crate) fn revoke_primary(
 }
 
 /// Drop the secret material of the named subkeys (keep the public parts).
-pub(crate) fn strip_subkey_secrets(
-    cert: &Cert,
-    fps: &[Fingerprint],
-) -> openpgp::Result<Cert> {
+pub(crate) fn strip_subkey_secrets(cert: &Cert, fps: &[Fingerprint]) -> openpgp::Result<Cert> {
     // `Cert::into_packets` strips secrets; the TSK form keeps them.
     let packets: Vec<Packet> = cert
         .clone()
@@ -246,13 +238,16 @@ pub(crate) fn sanitize(cert: Cert) -> Result<Cert, ContactError> {
                 out.push(pkt);
             }
             Packet::Signature(ref s) => {
-                let ok = match (ctx, s.typ()) {
-                    (Ctx::Primary, SignatureType::DirectKey | SignatureType::KeyRevocation) => true,
-                    (Ctx::Sub, SignatureType::SubkeyBinding | SignatureType::SubkeyRevocation) => {
-                        true
-                    }
-                    _ => false,
-                };
+                let ok = matches!(
+                    (ctx, s.typ()),
+                    (
+                        Ctx::Primary,
+                        SignatureType::DirectKey | SignatureType::KeyRevocation
+                    ) | (
+                        Ctx::Sub,
+                        SignatureType::SubkeyBinding | SignatureType::SubkeyRevocation
+                    )
+                );
                 if ok && issued_by_primary(s, &primary) {
                     out.push(pkt);
                 }
@@ -261,7 +256,8 @@ pub(crate) fn sanitize(cert: Cert) -> Result<Cert, ContactError> {
             _ => ctx = Ctx::Skip,
         }
     }
-    Cert::from_packets(out.into_iter()).map_err(|_| ContactError::Malformed("not a valid certificate"))
+    Cert::from_packets(out.into_iter())
+        .map_err(|_| ContactError::Malformed("not a valid certificate"))
 }
 
 /// Parse a public certificate (binary or ASCII armor), refuse secret keys and
@@ -270,7 +266,8 @@ pub(crate) fn parse_public(bytes: &[u8]) -> Result<Cert, ContactError> {
     if bytes.len() > MAX_CERT_LEN * 2 {
         return Err(ContactError::TooLarge);
     }
-    let cert = Cert::from_bytes(bytes).map_err(|_| ContactError::Malformed("not an OpenPGP certificate"))?;
+    let cert = Cert::from_bytes(bytes)
+        .map_err(|_| ContactError::Malformed("not an OpenPGP certificate"))?;
     if cert.is_tsk() {
         return Err(ContactError::ContainsSecretKey);
     }
@@ -286,8 +283,13 @@ pub(crate) fn normalize(cert: Cert, now_ms: i64) -> Result<Cert, ContactError> {
     let cert = sanitize(cert)?;
     let t = st(now_ms);
     let valid: Vec<Fingerprint> = {
-        let vc = cert.with_policy(&p, t).map_err(|_| ContactError::NotValid)?;
-        vc.keys().subkeys().map(|ka| ka.key().fingerprint()).collect()
+        let vc = cert
+            .with_policy(&p, t)
+            .map_err(|_| ContactError::NotValid)?;
+        vc.keys()
+            .subkeys()
+            .map(|ka| ka.key().fingerprint())
+            .collect()
     };
     let mut cert = cert.retain_subkeys(|sk| valid.contains(&sk.key().fingerprint()));
     // Fit the size limit.
@@ -300,7 +302,9 @@ pub(crate) fn normalize(cert: Cert, now_ms: i64) -> Result<Cert, ContactError> {
             return Ok(cert);
         }
         let victim: Option<Fingerprint> = {
-            let vc = cert.with_policy(&p, t).map_err(|_| ContactError::NotValid)?;
+            let vc = cert
+                .with_policy(&p, t)
+                .map_err(|_| ContactError::NotValid)?;
             vc.keys()
                 .subkeys()
                 .filter(|ka| {
@@ -366,10 +370,7 @@ pub(crate) fn check_primary_usable(cert: &Cert, now_ms: i64) -> Result<(), Conta
 /// v6 X25519. Checks the CERTIFICATE first (a revoked or expired primary refuses
 /// even if a subkey looks usable; Sequoia's key-level filters do not see a
 /// revoked primary key).
-fn live_encryption_subkeys(
-    cert: &Cert,
-    now_ms: i64,
-) -> Result<Vec<Fingerprint>, SealError> {
+fn live_encryption_subkeys(cert: &Cert, now_ms: i64) -> Result<Vec<Fingerprint>, SealError> {
     let p = policy();
     let t = st(now_ms);
     let vc = cert
@@ -538,7 +539,9 @@ pub(crate) fn seal_message(
             message
         };
         let mut message = LiteralWriter::new(message).build().map_err(c)?;
-        message.write_all(payload).map_err(|_| SealError::Crypto("write"))?;
+        message
+            .write_all(payload)
+            .map_err(|_| SealError::Crypto("write"))?;
         message.finalize().map_err(c)?;
     }
     Ok(sink)
@@ -597,10 +600,7 @@ impl VerificationHelper for Helper<'_> {
             self.st.borrow_mut().issuers.push(addr);
             let cert = match (self.pinned)(&addr) {
                 Some(c) => Some(c),
-                None => self
-                    .extra
-                    .filter(|c| c.fingerprint() == *fp)
-                    .cloned(),
+                None => self.extra.filter(|c| c.fingerprint() == *fp).cloned(),
             };
             let Some(c) = cert else { continue };
             match c.with_policy(&p, self.vt) {
@@ -745,6 +745,7 @@ impl DecryptionHelper for Helper<'_> {
 /// certificate (the one embedded in the payload, second pass only). With
 /// `allow_unverified` a signature made by a key for which no certificate is
 /// available is not an error: the caller gets `signer == None` and the issuers.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn open_message(
     frame: &[u8],
     me: Vec<KeyPair>,
@@ -852,9 +853,7 @@ pub(crate) fn sign_message(
             .build()
             .map_err(e)?;
         let mut message = LiteralWriter::new(message).build().map_err(e)?;
-        message
-            .write_all(content)
-            .map_err(anyhow::Error::from)?;
+        message.write_all(content).map_err(anyhow::Error::from)?;
         message.finalize().map_err(e)?;
     }
     Ok(sink)

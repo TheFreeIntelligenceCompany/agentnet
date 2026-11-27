@@ -24,11 +24,10 @@ use openpgp::{Cert, Packet};
 use super::contact::VerifiedContact;
 use super::envelope::Envelope;
 use super::identity::Identity;
-use super::pgp::{self};
 pub use super::pgp::BuildOpts;
+use super::pgp::{self};
 use super::protection::{payload_bytes, OpenPgpProtection};
 use crate::error::SealError;
-
 
 /// The JSON payload the engine would put in the literal data packet.
 pub fn payload_for(sender: &Identity, env: &Envelope) -> Vec<u8> {
@@ -85,7 +84,7 @@ pub fn forward(
     while let PacketParserResult::Some(mut pp) = ppr {
         match &pp.packet {
             Packet::PKESK(k) => {
-                for mut pair in keys.iter().map(|k| k.clone()) {
+                for mut pair in keys.iter().cloned() {
                     if let Some((a, sk)) = k.decrypt(&mut pair, None) {
                         session = Some((a, sk));
                         break;

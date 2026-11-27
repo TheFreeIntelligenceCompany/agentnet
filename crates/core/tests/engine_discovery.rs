@@ -810,7 +810,11 @@ async fn forged_adverts_are_rejected_and_counted() {
     .map(|k| b.metric(&format!("advert.invalid.{k}")))
     .sum();
     assert_eq!(invalid, 7);
-    assert!(b.metric("advert.invalid.bad_signature") >= 1, "{:?}", b.node.metrics());
+    assert!(
+        b.metric("advert.invalid.bad_signature") >= 1,
+        "{:?}",
+        b.node.metrics()
+    );
     assert!(b.metric("advert.invalid.contact_address_mismatch") >= 1);
     assert_eq!(b.metric("advert.invalid.malformed"), 1);
     assert_eq!(b.metric("advert.invalid.unknown_version"), 1);

@@ -50,13 +50,7 @@ impl World {
     /// Initialise a data dir (exercises `init`) and return its path, address and contact record.
     pub fn init(&self, name: &str) -> (PathBuf, String, String) {
         let path = self.tmp.path().join(name);
-        let rep = init_data_dir(
-            &path,
-            "http://127.0.0.1:8645",
-            &[PEER.to_owned()],
-            false,
-        )
-        .unwrap();
+        let rep = init_data_dir(&path, "http://127.0.0.1:8645", &[PEER.to_owned()], false).unwrap();
         (path, rep.identity.agent_id, rep.identity.contact_record)
     }
 

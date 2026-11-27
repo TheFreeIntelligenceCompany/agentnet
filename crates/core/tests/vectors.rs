@@ -249,5 +249,8 @@ fn rfc9580_a7_tampered_message_does_not_verify() {
             std::io::copy(&mut v, &mut out)?;
             Ok(v.helper_ref().good)
         });
-    assert!(!matches!(r, Ok(1)), "a tampered A.7 message must not verify");
+    assert!(
+        !matches!(r, Ok(1)),
+        "a tampered A.7 message must not verify"
+    );
 }

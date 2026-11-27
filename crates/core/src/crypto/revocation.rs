@@ -96,8 +96,8 @@ impl VerifiedRevocation {
             .map_err(|_| RevocationError::Malformed("certificate is not valid"))?;
         let address = pgp::cert_address(&cert)
             .map_err(|_| RevocationError::Malformed("not a v6 Ed25519 certificate"))?;
-        let (revoked_at, reason) = pgp::primary_revocation(&cert, now_ms)
-            .ok_or(RevocationError::NotRevoked)?;
+        let (revoked_at, reason) =
+            pgp::primary_revocation(&cert, now_ms).ok_or(RevocationError::NotRevoked)?;
         if revoked_at < 0 || revoked_at > now_ms.saturating_add(MAX_REVOKED_AT_FUTURE_MS) {
             return Err(RevocationError::InvalidTimestamp);
         }

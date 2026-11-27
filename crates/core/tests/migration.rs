@@ -31,10 +31,14 @@ fn fixture() -> (tempfile::TempDir, PathBuf, serde_json::Value) {
 fn the_fixture_is_an_old_format_database() {
     let (_d, db, m) = fixture();
     let c = rusqlite::Connection::open(&db).unwrap();
-    let v: i64 = c.query_row("PRAGMA user_version", [], |r| r.get(0)).unwrap();
+    let v: i64 = c
+        .query_row("PRAGMA user_version", [], |r| r.get(0))
+        .unwrap();
     assert_eq!(v, 3);
     let own: String = c
-        .query_row("SELECT value FROM kv WHERE key='own_address'", [], |r| r.get(0))
+        .query_row("SELECT value FROM kv WHERE key='own_address'", [], |r| {
+            r.get(0)
+        })
         .unwrap();
     assert!(own.starts_with("an1"));
     assert_eq!(own, m["owner_address"].as_str().unwrap());
@@ -47,7 +51,11 @@ async fn migration_keeps_history_fails_pending_rows_and_keeps_old_contacts_unusa
     let rep = migrate_store(&db, &id.address().to_string(), 1_700_000_000_000).unwrap();
 
     // pending user messages are listed and failed with a reason that says to re-send
-    let mut ids: Vec<&str> = rep.failed_outbox.iter().map(|r| r.message_id.as_str()).collect();
+    let mut ids: Vec<&str> = rep
+        .failed_outbox
+        .iter()
+        .map(|r| r.message_id.as_str())
+        .collect();
     ids.sort();
     let mut want = vec![
         m["outbound_sent_message_id"].as_str().unwrap(),
@@ -70,7 +78,9 @@ async fn migration_keeps_history_fails_pending_rows_and_keeps_old_contacts_unusa
 
     // the database is at the current schema and no pending row is left
     let c = rusqlite::Connection::open(&db).unwrap();
-    let v: i64 = c.query_row("PRAGMA user_version", [], |r| r.get(0)).unwrap();
+    let v: i64 = c
+        .query_row("PRAGMA user_version", [], |r| r.get(0))
+        .unwrap();
     assert_eq!(v, SCHEMA_VERSION);
     let pending: i64 = c
         .query_row(
@@ -94,14 +104,7 @@ async fn migration_keeps_history_fails_pending_rows_and_keeps_old_contacts_unusa
     // cannot send to the old contact (an1 address) nor does it list it as a contact
     let net = MockNetwork::new();
     let t: Arc<dyn Transport> = Arc::new(net.endpoint());
-    let node = Node::open(
-        id,
-        &db,
-        t,
-        cfg(),
-        Arc::new(agentnet_core::SystemClock),
-    )
-    .unwrap();
+    let node = Node::open(id, &db, t, cfg(), Arc::new(agentnet_core::SystemClock)).unwrap();
     let inbox = node
         .read_inbox(ReadInboxRequest::default())
         .await
@@ -109,7 +112,10 @@ async fn migration_keeps_history_fails_pending_rows_and_keeps_old_contacts_unusa
         .records;
     assert_eq!(inbox.len(), 1);
     assert_eq!(inbox[0].body, "legacy inbound hello");
-    assert_eq!(inbox[0].message_id, m["inbound_message_id"].as_str().unwrap());
+    assert_eq!(
+        inbox[0].message_id,
+        m["inbound_message_id"].as_str().unwrap()
+    );
     assert!(node.list_contacts().await.unwrap().is_empty());
     let e = node
         .send_message(SendMessageRequest {

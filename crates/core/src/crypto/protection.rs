@@ -30,8 +30,8 @@ use std::sync::Arc;
 
 use base64::engine::general_purpose::URL_SAFE_NO_PAD as B64;
 use base64::Engine as _;
-use serde::{Deserialize, Serialize};
 use sequoia_openpgp::Cert;
+use serde::{Deserialize, Serialize};
 
 use super::address::Address;
 use super::contact::VerifiedContact;
@@ -274,9 +274,8 @@ impl MessageProtection for OpenPgpProtection {
         if keys.is_empty() {
             return Err(OpenError::NotForUs);
         }
-        let pinned = |a: &Address| -> Option<Cert> {
-            senders.certificate(a).map(|c| c.cert().clone())
-        };
+        let pinned =
+            |a: &Address| -> Option<Cert> { senders.certificate(a).map(|c| c.cert().clone()) };
         let first = pgp::open_message(
             frame,
             keys,

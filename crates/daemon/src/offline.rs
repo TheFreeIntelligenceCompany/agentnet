@@ -190,7 +190,8 @@ pub fn rotate_kem(
         ));
     }
     let days = expires_in_days.unwrap_or(agentnet_core::identity::DEFAULT_KEM_VALIDITY_DAYS);
-    let expiry = now.saturating_add(i64::try_from(days.saturating_mul(86_400_000)).unwrap_or(i64::MAX / 2));
+    let expiry =
+        now.saturating_add(i64::try_from(days.saturating_mul(86_400_000)).unwrap_or(i64::MAX / 2));
     id.rotate_kem_with(now, keep_until, Some(expiry), revoke_previous)
         .map_err(ident_err)?;
     id.save(&dir.identity(), true).map_err(ident_err)?;

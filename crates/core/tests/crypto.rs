@@ -102,7 +102,15 @@ fn round_trip_all_message_types() {
         MESSAGE_TYPE_CONTACT_UPDATE,
         MESSAGE_TYPE_IDENTITY_REVOKED,
     ] {
-        let mut e = env(&a, &b, if ty == MESSAGE_TYPE_ACK_RECEIVED { "" } else { "body" });
+        let mut e = env(
+            &a,
+            &b,
+            if ty == MESSAGE_TYPE_ACK_RECEIVED {
+                ""
+            } else {
+                "body"
+            },
+        );
         e.message_type = ty.to_owned();
         e.conversation_id = Some("conv-1".into());
         e.correlation_id = Some("corr-1".into());
@@ -135,7 +143,11 @@ fn the_generated_certificate_has_the_profile_of_adr_0004() {
     let id = ident();
     let doc = id.contact_record().to_document();
     let c = VerifiedContact::parse_and_verify(&doc, NOW).unwrap();
-    assert!(doc.len() < 700, "a fresh certificate is small: {}", doc.len());
+    assert!(
+        doc.len() < 700,
+        "a fresh certificate is small: {}",
+        doc.len()
+    );
     assert!(c.address.to_string().starts_with("an2"));
     assert_eq!(c.address, id.address());
     // the encryption subkey has an expiry
@@ -163,8 +175,14 @@ fn a_different_signer_is_unknown_or_a_mismatch() {
     let mut e = env(&alice, &bob, "forged");
     e.sender = alice.address();
     let payload = t::payload_for(&alice, &e);
-    let frame = t::seal_payload(&mallory, &contact_of(&bob), &payload, NOW, BuildOpts::default())
-        .unwrap();
+    let frame = t::seal_payload(
+        &mallory,
+        &contact_of(&bob),
+        &payload,
+        NOW,
+        BuildOpts::default(),
+    )
+    .unwrap();
     // Alice is pinned, Mallory is not: the signer is not who the payload names.
     assert_eq!(
         open_pinned(&bob, &frame, &alice).unwrap_err(),
@@ -241,7 +259,10 @@ fn policy_violations_have_distinct_errors() {
 
     // SKESK
     let f = t::prepend_skesk(&good);
-    assert_eq!(open_pinned(&b, &f, &a).unwrap_err(), OpenError::SkeskPresent);
+    assert_eq!(
+        open_pinned(&b, &f, &a).unwrap_err(),
+        OpenError::SkeskPresent
+    );
 
     // compression
     let f = t::seal_compressed(&a, &contact_of(&b), &payload, NOW);
@@ -324,8 +345,8 @@ fn a_revoked_or_expired_sender_is_rejected_with_its_own_error() {
         OpenError::SenderRevoked
     );
     // an expired sender certificate
-    let short = Identity::generate_with_primary_expiry_for_tests(NOW, Duration::from_secs(3600))
-        .unwrap();
+    let short =
+        Identity::generate_with_primary_expiry_for_tests(NOW, Duration::from_secs(3600)).unwrap();
     let f = seal_to(&short, &b, "x");
     assert!(open_pinned(&b, &f, &short).is_ok());
     let later = NOW + 2 * 3600 * 1000;
@@ -362,7 +383,14 @@ fn the_payload_is_strict_json() {
         assert_eq!(open_pinned(&b, &f, &a).unwrap_err(), want);
     };
     // not JSON, wrong shapes
-    for g in [&b""[..], b"null", b"[]", b"{", b"\xff\xfe", b"{\"agentnet\":2}"] {
+    for g in [
+        &b""[..],
+        b"null",
+        b"[]",
+        b"{",
+        b"\xff\xfe",
+        b"{\"agentnet\":2}",
+    ] {
         reject(g.to_vec(), OpenError::MalformedPayload);
     }
     // unknown field
@@ -404,10 +432,7 @@ fn the_payload_is_strict_json() {
     ] {
         let mut u = v.clone();
         u[k] = bad.into();
-        reject(
-            serde_json::to_vec(&u).unwrap(),
-            OpenError::InvalidField(f),
-        );
+        reject(serde_json::to_vec(&u).unwrap(), OpenError::InvalidField(f));
     }
 }
 
@@ -453,10 +478,7 @@ fn time_checks_and_exact_boundaries() {
         OpenError::FromFuture
     );
     // expires_at == now is expired, one ms later is fine
-    assert_eq!(
-        open_time(NOW - h, NOW, &l).unwrap_err(),
-        OpenError::Expired
-    );
+    assert_eq!(open_time(NOW - h, NOW, &l).unwrap_err(), OpenError::Expired);
     assert!(open_time(NOW - h, NOW + 1, &l).is_ok());
     assert_eq!(
         open_time(NOW, NOW, &l).unwrap_err(),
@@ -486,9 +508,8 @@ fn every_single_byte_flip_and_truncation_is_rejected_without_panic() {
     for i in 0..frame.len() {
         let mut f = frame.clone();
         f[i] ^= 0x01;
-        let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            open_at(&b, &f, &dir, NOW)
-        }));
+        let r =
+            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| open_at(&b, &f, &dir, NOW)));
         match r {
             Ok(Ok(_)) => accepted.push(i),
             Ok(Err(_)) => {}
@@ -500,7 +521,10 @@ fn every_single_byte_flip_and_truncation_is_rejected_without_panic() {
         let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             open_at(&b, &frame[..n], &dir, NOW)
         }));
-        assert!(matches!(r, Ok(Err(_))), "truncation to {n} was not rejected");
+        assert!(
+            matches!(r, Ok(Err(_))),
+            "truncation to {n} was not rejected"
+        );
     }
     // trailing garbage must not be accepted either
     let mut f = frame.clone();
@@ -696,7 +720,9 @@ fn sealing_to_an_expired_subkey_is_refused() {
     let b = Identity::generate_with(NOW, Some(Duration::from_secs(3600))).unwrap();
     let c = contact_of(&b);
     let e = env(&a, &b, "x");
-    assert!(OpenPgpProtection.seal(&a, &c, &e, NOW + 1000, MAX_FRAME).is_ok());
+    assert!(OpenPgpProtection
+        .seal(&a, &c, &e, NOW + 1000, MAX_FRAME)
+        .is_ok());
     assert_eq!(
         OpenPgpProtection
             .seal(&a, &c, &e, NOW + 2 * 3_600_000, MAX_FRAME)
@@ -715,11 +741,13 @@ fn sealing_to_an_expired_subkey_is_refused() {
 #[test]
 fn sealing_to_an_expired_primary_is_refused() {
     let a = ident();
-    let b = Identity::generate_with_primary_expiry_for_tests(NOW, Duration::from_secs(3600))
-        .unwrap();
+    let b =
+        Identity::generate_with_primary_expiry_for_tests(NOW, Duration::from_secs(3600)).unwrap();
     let c = contact_of(&b);
     let e = env(&a, &b, "x");
-    assert!(OpenPgpProtection.seal(&a, &c, &e, NOW + 1000, MAX_FRAME).is_ok());
+    assert!(OpenPgpProtection
+        .seal(&a, &c, &e, NOW + 1000, MAX_FRAME)
+        .is_ok());
     assert_eq!(
         OpenPgpProtection
             .seal(&a, &c, &e, NOW + 2 * 3_600_000, MAX_FRAME)
@@ -738,7 +766,8 @@ fn a_revoked_subkey_is_never_encrypted_to() {
     let (a, mut b) = (ident(), ident());
     let old = contact_of(&b);
     // compromise response: new subkey, old one hard-revoked and its secret destroyed
-    b.rotate_kem_with(NOW + 10_000, NOW + 10_000, None, true).unwrap();
+    b.rotate_kem_with(NOW + 10_000, NOW + 10_000, None, true)
+        .unwrap();
     let merged = old
         .merge(&contact_of_at(&b, NOW + 20_000), NOW + 20_000)
         .unwrap();
@@ -748,7 +777,13 @@ fn a_revoked_subkey_is_never_encrypted_to() {
         .unwrap();
     // only the new subkey was targeted: the message opens with the new key
     let o = OpenPgpProtection
-        .open(&b, &f, NOW + 20_000, &lim(), &pinned_at(&[&a], NOW + 20_000))
+        .open(
+            &b,
+            &f,
+            NOW + 20_000,
+            &lim(),
+            &pinned_at(&[&a], NOW + 20_000),
+        )
         .unwrap();
     assert_eq!(o.envelope.body, "after compromise");
     // a message sealed to the stale certificate (old subkey) can no longer be opened
@@ -757,7 +792,13 @@ fn a_revoked_subkey_is_never_encrypted_to() {
         .unwrap();
     assert_eq!(
         OpenPgpProtection
-            .open(&b, &stale, NOW + 20_000, &lim(), &pinned_at(&[&a], NOW + 20_000))
+            .open(
+                &b,
+                &stale,
+                NOW + 20_000,
+                &lim(),
+                &pinned_at(&[&a], NOW + 20_000)
+            )
             .unwrap_err(),
         OpenError::NotForUs
     );
@@ -842,7 +883,10 @@ fn updates_are_merges_only_and_a_different_primary_is_refused() {
 fn revocations_accumulate_and_are_never_dropped() {
     let a = ident();
     let base = contact_of(&a);
-    let rev_doc = a.create_revocation("test revocation", NOW + 1000).unwrap().to_document();
+    let rev_doc = a
+        .create_revocation("test revocation", NOW + 1000)
+        .unwrap()
+        .to_document();
     let rev = VerifiedRevocation::parse_and_verify(&rev_doc, NOW + 2000).unwrap();
     assert_eq!(rev.address, a.address());
     assert_eq!(rev.reason, "test revocation");
@@ -865,10 +909,17 @@ fn rotation_publishes_a_new_subkey_and_keeps_old_messages_readable_until_retire_
     let (a, mut b) = (ident(), ident());
     let old_cert = contact_of(&b);
     let before = OpenPgpProtection
-        .seal(&a, &old_cert, &env(&a, &b, "sealed to the old subkey"), NOW + 1000, MAX_FRAME)
+        .seal(
+            &a,
+            &old_cert,
+            &env(&a, &b, "sealed to the old subkey"),
+            NOW + 1000,
+            MAX_FRAME,
+        )
         .unwrap();
     let retire = NOW + 7 * 86_400_000;
-    b.rotate_kem(NOW + 5_000, retire, Some(NOW + 90 * 86_400_000)).unwrap();
+    b.rotate_kem(NOW + 5_000, retire, Some(NOW + 90 * 86_400_000))
+        .unwrap();
     assert_eq!(b.previous_kem_count(), 1);
     // the published certificate carries the new subkey; merging it into the stored one works
     let merged = old_cert
@@ -888,7 +939,13 @@ fn rotation_publishes_a_new_subkey_and_keeps_old_messages_readable_until_retire_
     assert_eq!(o.envelope.body, "sealed to the old subkey");
     // ... a sender who merged the update seals to the new subkey only
     let after = OpenPgpProtection
-        .seal(&a, &merged, &env(&a, &b, "sealed to the new subkey"), NOW + 6_000, MAX_FRAME)
+        .seal(
+            &a,
+            &merged,
+            &env(&a, &b, "sealed to the new subkey"),
+            NOW + 6_000,
+            MAX_FRAME,
+        )
         .unwrap();
     assert!(OpenPgpProtection
         .open(&b, &after, NOW + 6_000, &l, &dir)
@@ -904,7 +961,13 @@ fn rotation_publishes_a_new_subkey_and_keeps_old_messages_readable_until_retire_
     };
     // (the message from `before` is long expired by TTL, so use a fresh one sealed to the stale cert)
     let stale = OpenPgpProtection
-        .seal(&a, &old_cert, &env_at(&a, &b, "stale", late), late, MAX_FRAME)
+        .seal(
+            &a,
+            &old_cert,
+            &env_at(&a, &b, "stale", late),
+            late,
+            MAX_FRAME,
+        )
         .unwrap();
     assert_eq!(
         OpenPgpProtection
@@ -913,7 +976,13 @@ fn rotation_publishes_a_new_subkey_and_keeps_old_messages_readable_until_retire_
         OpenError::NotForUs
     );
     let fresh = OpenPgpProtection
-        .seal(&a, &merged, &env_at(&a, &b, "fresh", late - 1), late - 1, MAX_FRAME)
+        .seal(
+            &a,
+            &merged,
+            &env_at(&a, &b, "fresh", late - 1),
+            late - 1,
+            MAX_FRAME,
+        )
         .unwrap();
     assert!(OpenPgpProtection
         .open(&b, &fresh, late, &l, &pinned_at(&[&a], late))
@@ -992,8 +1061,5 @@ fn constants_match_spec() {
     assert_eq!(s.len(), 61);
     assert!(s.starts_with("an2"));
     assert_eq!(agentnet_core::address::INBOX_BUCKETS, 16);
-    assert!(id
-        .inbox_topic()
-        .as_str()
-        .starts_with("/agentnet/1/inbox-"));
+    assert!(id.inbox_topic().as_str().starts_with("/agentnet/1/inbox-"));
 }

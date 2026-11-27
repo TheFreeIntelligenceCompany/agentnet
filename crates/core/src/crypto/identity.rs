@@ -396,7 +396,9 @@ impl Identity {
             return Err(IdentityError::AddressMismatch);
         }
         if pgp::primary_keypair(&cert).is_none() {
-            return Err(IdentityError::Malformed("the primary secret key is missing"));
+            return Err(IdentityError::Malformed(
+                "the primary secret key is missing",
+            ));
         }
         let mut retained = Vec::new();
         for r in &f.retained_subkeys {
@@ -496,7 +498,10 @@ impl Identity {
         let tsk = self.cert.as_tsk().to_vec().unwrap_or_default();
         let b = B64.encode(&tsk);
         // a fragment from the middle of the secret part
-        vec![b[b.len() / 2..b.len() / 2 + 24].to_string(), hex_of(&tsk[tsk.len() / 2..tsk.len() / 2 + 8])]
+        vec![
+            b[b.len() / 2..b.len() / 2 + 24].to_string(),
+            hex_of(&tsk[tsk.len() / 2..tsk.len() / 2 + 8]),
+        ]
     }
 }
 
@@ -580,4 +585,3 @@ fn write_private_file_atomic(
     }
     Ok(())
 }
-

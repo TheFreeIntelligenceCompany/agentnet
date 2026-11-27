@@ -42,12 +42,10 @@ fn init_creates_private_files_and_refuses_to_overwrite() {
     // secrets are not printed
     let secret = std::fs::read_to_string(dir.join("identity.json")).unwrap();
     let key: serde_json::Value = serde_json::from_str(&secret).unwrap();
-    for k in ["certificate"] {
-        assert!(
-            !stdout(&out).contains(key[k].as_str().unwrap()),
-            "{k} leaked"
-        );
-    }
+    assert!(
+        !stdout(&out).contains(key["certificate"].as_str().unwrap()),
+        "the secret certificate leaked"
+    );
     let token = std::fs::read_to_string(dir.join("control.token")).unwrap();
     assert!(!stdout(&out).contains(token.trim()) && !stderr(&out).contains(token.trim()));
 
@@ -760,7 +758,16 @@ fn rotate_kem_with_revoke_previous_destroys_old_keys_and_publishes_a_new_subkey(
         serde_json::from_slice(&std::fs::read(a.join("identity.json")).unwrap()).unwrap();
     assert_eq!(id["retained_subkeys"].as_array().unwrap().len(), 1);
     // revoking rotation: no retired secret subkeys left on disk
-    let v = json_ok(&a, &["identity", "rotate-kem", "--revoke-previous", "--expires-in-days", "30"]);
+    let v = json_ok(
+        &a,
+        &[
+            "identity",
+            "rotate-kem",
+            "--revoke-previous",
+            "--expires-in-days",
+            "30",
+        ],
+    );
     assert_eq!(v["agent_id"], addr.as_str());
     let id: serde_json::Value =
         serde_json::from_slice(&std::fs::read(a.join("identity.json")).unwrap()).unwrap();
@@ -791,12 +798,11 @@ fn identity_revoke_writes_a_key_revocation_and_blocks_further_changes() {
     let doc = v["revocation"].as_str().unwrap().to_owned();
     assert_eq!(mode(&a.join("revocation.json")), 0o600);
     // the printed document verifies and names this address
-    let rev =
-        agentnet_core::crypto::VerifiedRevocation::parse_and_verify(
-            &doc,
-            agentnet_core::clock::system_now_ms(),
-        )
-        .unwrap();
+    let rev = agentnet_core::crypto::VerifiedRevocation::parse_and_verify(
+        &doc,
+        agentnet_core::clock::system_now_ms(),
+    )
+    .unwrap();
     assert_eq!(rev.address.to_string(), addr);
     assert_eq!(rev.reason, "key stolen");
     // show-revocation prints the same document; identity show reports it
