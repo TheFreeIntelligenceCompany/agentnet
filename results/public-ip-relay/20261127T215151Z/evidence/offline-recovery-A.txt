@@ -1,0 +1,21 @@
+22:05:56.248Z stop node A
+22:06:40.190Z
+5 sent from B while A offline
+22:06:50.302Z start node A
+22:07:04.497Z started
+22:07:05.052Z delivered=0/5
+22:07:07.103Z delivered=0/5
+22:07:09.160Z delivered=0/5
+22:07:11.216Z delivered=0/5
+22:07:13.266Z delivered=0/5
+22:07:15.321Z delivered=0/5
+22:07:17.375Z delivered=0/5
+22:07:19.427Z delivered=0/5
+22:07:21.477Z delivered=0/5
+22:07:23.533Z delivered=0/5
+22:07:25.586Z delivered=5/5
+{"state":"delivered","attempts":6,"delivered_at":1795817243631}
+{"state":"delivered","attempts":5,"delivered_at":1795817243880}
+{"state":"delivered","attempts":5,"delivered_at":1795817244380}
+{"state":"delivered","attempts":5,"delivered_at":1795817244631}
+{"state":"delivered","attempts":5,"delivered_at":1795817244640}

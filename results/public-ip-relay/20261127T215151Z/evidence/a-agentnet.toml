@@ -1,0 +1,62 @@
+# agentnet.toml -- PUBLIC mode with the peer allowlist audit kept (own relay on a
+# public address or wss edge). See docs/configuration.md and docs/relay-setup.md.
+# The audit is detective, not preventive; the relay's firewall or edge is the access control.
+#
+# Private mode fails closed: the Logos Delivery node must be on a loopback or
+# private address, connected only to the peers listed here, and on a private
+# cluster id. Public peer discovery and public fallback do not exist. (The
+# optional [discovery] section below is something else: it lists capability
+# adverts on YOUR relay, off by default.)
+
+[network]
+mode = "public"
+# REST endpoint of YOUR local Logos Delivery node (loopback / RFC1918 / 100.64.0.0/10 only).
+node_url = "http://127.0.0.1:18690"
+# Static peers: multiaddrs of your own relay/store node(s), ending in /p2p/<peerId>.
+peers = ["/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAmTJeYvA9hKgP1SvUYCsT8999RJkLrUDoAQ31J9joSioxk"]
+# Cluster ids 1, 2, 3 and 16 select public presets and are rejected.
+cluster_id = 66
+public_discovery = false   # true is a config error in private mode
+public_fallback = false    # true is always a config error
+i_understand_public = true     # you chose public mode (init --public-relay)
+enforce_peer_allowlist = true  # audit the node's peers against the ids in `peers`
+
+[storage]
+retention_hours = 168
+
+[policy]
+unknown_senders = "quarantine"   # quarantine | reject | accept
+auto_trigger = false             # triggers are off until the host enables them
+
+[triggers]
+allowed_sessions = []            # host-approved target_session values
+max_active = 32
+max_matches_per_minute = 60
+default_lifetime_s = 3600
+max_lifetime_hours = 24
+
+# Optional capability discovery (docs/discovery.md). OFF by default: nothing is
+# subscribed or published and the discovery tools return policy_denied.
+# Advertisements are PLAINTEXT: every node on your relay can read them. Only
+# the topic names listed here can be used; the topics exist only on this relay.
+[discovery]
+enabled = false
+topics = []                      # e.g. ["general"]; names are [a-z0-9-]{1,32}
+max_records = 500
+max_advert_ttl_s = 86400
+default_advert_ttl_s = 3600
+republish_interval_s = 900
+max_capabilities = 16
+
+[mcp_http]
+enabled = false
+bind = "127.0.0.1:8650"          # loopback only; bearer token in <data dir>/mcp-http.token
+
+[webhook]
+enabled = false
+url = ""                         # the ONE destination; loopback/private unless allow_remote
+secret_file = ""                 # >= 32 bytes, mode 0600
+allow_remote = false
+timeout_ms = 5000
+max_attempts = 5
+events = ["trigger.matched"]

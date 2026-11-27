@@ -1,0 +1,198 @@
+=================== ROUND 1  22:15:51Z
+R2 subscribe http=200
+conversation c247e3f2-6b1e-4634-b161-f6e3d91255bb
+[pre] ready=True connected=1 violation=None
+[t+0.47] POST peers http=200 time=1.183964s
+[t+3.24] send returned message_id=c6fbf3c6-0f15-4035-97cf-5a93061f6f71
+[t+3.83] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+5.61] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+7.29] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+9.14] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+11.6] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+14.3] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+17.19] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+19.02] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+21.1] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+23.3] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+25.25] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+27.24] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+29.51] node A peers (REST):
+    Ew3jbdZo Connected
+    9joSioxk Connected
+[t+31.0] network status now: ready=False connected=2 violation=node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAmMTovWAkHqUsyhCvGAyGfMuP6qGVBAWq9AiETEw3jbdZo)
+[t+32.65] B inbox count for conversation: 0
+[t+34.3] R2 relay cache for B's inbox content topic (messages R2 received): 0
+[t+35.83] state at end of window: state=queued attempts=0 last_error=transport isolation violation
+--- recovery (stop R2)
+[t+8.0] docker stop an-r2 returned
+[t+9.3] ready=True connected=1 violation=None | state=delivered attempts=1 last_error=None
+[t+9.9] doctor --ready:
+0 failing, 2 warning(s)
+ready: daemon, node, isolation and transport checks are ok
+rc=0
+B inbox count for conversation after recovery: 1
+=================== ROUND 2  22:16:50Z
+R2 subscribe http=200
+conversation 0899ebb9-f672-4a25-80b2-7866425ab96a
+[pre] ready=True connected=1 violation=None
+[t+1.48] POST peers http=200 time=2.717194s
+[t+5.76] send returned message_id=fbe149e2-ff92-4b39-b5d5-8d17cbac3da8
+[t+6.88] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+9.12] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+10.61] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+12.27] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+14.16] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+15.8] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+17.87] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+20.26] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+21.91] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+23.38] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+25.03] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+26.64] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+28.09] node A peers (REST):
+    Ew3jbdZo Connected
+    9joSioxk Connected
+[t+28.34] network status now: ready=False connected=2 violation=node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAmMTovWAkHqUsyhCvGAyGfMuP6qGVBAWq9AiETEw3jbdZo)
+[t+28.85] B inbox count for conversation: 0
+[t+29.79] R2 relay cache for B's inbox content topic (messages R2 received): 0
+[t+30.4] state at end of window: state=queued attempts=0 last_error=transport isolation violation
+--- recovery (stop R2)
+[t+11.4] docker stop an-r2 returned
+[t+14.3] ready=True connected=1 violation=None | state=delivered attempts=1 last_error=None
+[t+14.9] doctor --ready:
+0 failing, 2 warning(s)
+ready: daemon, node, isolation and transport checks are ok
+rc=0
+B inbox count for conversation after recovery: 1
+=================== ROUND 3  22:17:48Z
+R2 subscribe http=200
+conversation 33dca528-2fc8-4c76-8239-753158246595
+[pre] ready=True connected=1 violation=None
+[t+0.37] POST peers http=200 time=1.115468s
+[t+2.43] send returned message_id=d61f1468-4b04-4430-bf8f-8af4a80aa212
+[t+2.82] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+4.82] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+6.5] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+7.86] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+9.55] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+11.79] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+13.83] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+15.61] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+18.75] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+21.85] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+24.39] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+27.39] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+30.08] node A peers (REST):
+    Ew3jbdZo Connected
+    9joSioxk Connected
+[t+31.16] network status now: ready=False connected=2 violation=node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAmMTovWAkHqUsyhCvGAyGfMuP6qGVBAWq9AiETEw3jbdZo)
+[t+33.16] B inbox count for conversation: 0
+[t+35.41] R2 relay cache for B's inbox content topic (messages R2 received): 0
+[t+37.09] state at end of window: state=queued attempts=0 last_error=transport isolation violation
+--- recovery (stop R2)
+[t+9.1] docker stop an-r2 returned
+[t+13.1] ready=True connected=1 violation=None | state=delivered attempts=1 last_error=None
+[t+14.0] doctor --ready:
+0 failing, 2 warning(s)
+ready: daemon, node, isolation and transport checks are ok
+rc=0
+B inbox count for conversation after recovery: 1
+=================== ROUND 4  22:18:53Z
+R2 subscribe http=200
+conversation ae27146e-4631-49a0-9b00-a5496b6e6523
+[pre] ready=True connected=1 violation=None
+[t+1.31] POST peers http=200 time=3.806782s
+[t+8.17] send returned message_id=e341a29b-5245-4ab1-a01d-6a8ff470c9a1
+[t+8.85] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+10.82] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+13.05] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+15.19] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+17.16] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+19.38] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+21.63] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+23.33] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+25.25] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+27.46] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+29.43] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+31.94] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+33.97] node A peers (REST):
+    Ew3jbdZo Connected
+    9joSioxk Connected
+[t+34.93] network status now: ready=False connected=2 violation=node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAmMTovWAkHqUsyhCvGAyGfMuP6qGVBAWq9AiETEw3jbdZo)
+[t+35.81] B inbox count for conversation: 0
+[t+38.11] R2 relay cache for B's inbox content topic (messages R2 received): 0
+[t+39.25] state at end of window: state=queued attempts=0 last_error=transport isolation violation
+--- recovery (stop R2)
+[t+1.4] docker stop an-r2 returned
+[t+2.8] ready=True connected=1 violation=None | state=delivered attempts=1 last_error=None
+[t+3.9] doctor --ready:
+0 failing, 2 warning(s)
+ready: daemon, node, isolation and transport checks are ok
+rc=0
+B inbox count for conversation after recovery: 1
+=================== ROUND 5  22:19:49Z
+R2 subscribe http=200
+conversation 5f7dba9d-1f25-4237-aa50-08e7676e0147
+[pre] ready=True connected=1 violation=None
+[t+0.6] POST peers http=200 time=0.834171s
+[t+1.98] send returned message_id=a3c31e6f-7e14-41f8-9c6e-99a1258a621d
+[t+2.09] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+5.39] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+7.48] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+9.71] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+12.33] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+14.93] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+17.36] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+19.6] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+21.7] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+23.53] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+25.72] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+27.87] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+30.2] node A peers (REST):
+    Ew3jbdZo Connected
+    9joSioxk Connected
+[t+31.62] network status now: ready=False connected=2 violation=node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAmMTovWAkHqUsyhCvGAyGfMuP6qGVBAWq9AiETEw3jbdZo)
+[t+33.19] B inbox count for conversation: 0
+[t+34.62] R2 relay cache for B's inbox content topic (messages R2 received): 0
+[t+35.59] state at end of window: state=queued attempts=0 last_error=transport isolation violation
+--- recovery (stop R2)
+[t+11.1] docker stop an-r2 returned
+[t+12.7] ready=True connected=1 violation=None | state=delivered attempts=1 last_error=None
+[t+13.0] doctor --ready:
+0 failing, 2 warning(s)
+ready: daemon, node, isolation and transport checks are ok
+rc=0
+B inbox count for conversation after recovery: 1
+=================== ROUND 6  22:20:49Z
+R2 subscribe http=200
+conversation 4a6c13da-83a4-4ba2-8107-537a1e6ec3be
+[pre] ready=True connected=1 violation=None
+[t+0.78] POST peers http=200 time=1.763253s
+[t+4.07] send returned message_id=09b8d768-8654-47d5-9386-45b3ce6bc508
+[t+4.52] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+6.5] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+9.11] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+11.65] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+13.81] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+15.51] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+17.89] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+19.96] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+21.66] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+23.83] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+25.85] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+27.83] state=queued attempts=0 sent_at=None last_error=transport isolation violation
+[t+29.42] node A peers (REST):
+    Ew3jbdZo Connected
+    9joSioxk Connected
+[t+30.58] network status now: ready=False connected=2 violation=node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAmMTovWAkHqUsyhCvGAyGfMuP6qGVBAWq9AiETEw3jbdZo)
+[t+31.89] B inbox count for conversation: 0
+[t+33.83] R2 relay cache for B's inbox content topic (messages R2 received): 0
+[t+35.91] state at end of window: state=queued attempts=0 last_error=transport isolation violation
+--- recovery (stop R2)
+[t+10.9] docker stop an-r2 returned
+[t+13.4] ready=True connected=1 violation=None | state=delivered attempts=1 last_error=None
+[t+14.0] doctor --ready:
+0 failing, 2 warning(s)
+ready: daemon, node, isolation and transport checks are ok
+rc=0
+B inbox count for conversation after recovery: 1

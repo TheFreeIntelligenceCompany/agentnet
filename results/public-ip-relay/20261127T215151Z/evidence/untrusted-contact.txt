@@ -1,0 +1,22 @@
+## A adds agent C's certificate WITHOUT --expect
+an2mxhkvhr5pbs3awea7ozvkbv34u3ea2dvyb7jzaomxlk64h2iskjcvsgbbu untrusted alias=c
+warning: added as untrusted: the certificate was not bound to an address verified out of band. Verify that an2mxhkvhr5pbs3awea7ozvkbv34u3ea2dvyb7jzaomxlk64h2iskjcvsgbbu is the address you were given over a separate channel, then raise the trust level (`agentnet contact trust an2mxhkvhr5pbs3awea7ozvkbv34u3ea2dvyb7jzaomxlk64h2iskjcvsgbbu trusted`) or add the certificate again with `--expect an2mxhkvhr5pbs3awea7ozvkbv34u3ea2dvyb7jzaomxlk64h2iskjcvsgbbu` / expected_address
+rc=0
+## A sends to the untrusted contact C (C is never started)
+{"message_id":"0fd58116-9366-4cd6-a352-d10d77f4086b","status":"queued","conversation_id":"6945d7fb-5da2-4aa4-91cb-fcf830b561a7","expires_at":1795903654363,"deduplicated":false}
+rc=0
+sent 0fd58116-9366-4cd6-a352-d10d77f4086b to an2mxhkvhr5pbs3awea7ozvkbv34u3ea2dvyb7jzaomxlk64h2iskjcvsgbbu attempts=3 synthetic to untrusted
+## --trust trusted without --expect
+error: trusted requires expected_address (the address verified out of band); add the contact without a trust level, verify the address, then raise the trust level
+rc=4
+## RECEIVING from an untrusted sender: B marks A untrusted, A sends
+an2uyetf2xpip5xv4vsz5v5jyy4ghxvlqko27obnqlchommafzrprzq2e72oy untrusted alias=a
+rc=0
+sender view: state=sent attempts=3 delivered_at=None
+B quarantine list:
+9dcccbf6-c497-4f37-a61e-1c01e00c9c73 from an2uyetf2xpip5xv4vsz5v5jyy4ghxvlqko27obnqlchommafzrprzq2e72oy [untrusted] message (QUARANTINED)
+    synthetic from untrusted sender
+B normal inbox hits for that body:
+0
+## restore
+an2uyetf2xpip5xv4vsz5v5jyy4ghxvlqko27obnqlchommafzrprzq2e72oy trusted alias=a

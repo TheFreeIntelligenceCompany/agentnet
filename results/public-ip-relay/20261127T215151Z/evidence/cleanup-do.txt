@@ -1,0 +1,5 @@
+deleted at 2026-11-27T22:31:49Z (run started 2026-11-27T21:51:51Z)
+droplets named agentnet-pub-test*: 0
+firewalls named agentnet-pub-test*: 0
+ssh keys named agentnet-pub-test*: 0
+Mac containers an-do-*: 0

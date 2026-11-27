@@ -1,0 +1,5 @@
+22:05:31.297Z stop node B
+22:05:37.231Z 5 sent from A while B's node is down
+22:05:49.501Z start node B
+22:05:52.443Z delivered=0/5
+22:05:56.072Z delivered=5/5

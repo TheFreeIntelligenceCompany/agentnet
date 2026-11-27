@@ -1,0 +1,4 @@
+$ agentnet init --node-url http://127.0.0.1:18690 --peer /ip4/<PUB_IP_R>/tcp/60000/p2p/<R>   (no --public-relay)
+error: invalid configuration: this configuration is not acceptable in private mode (network: isolation violation: static_peers entry rejected in private mode: address must be a literal private IP). Choose one: (1) use a relay on a private address (loopback, RFC 1918, 100.64.0.0/10, e.g. --peer /ip4/10.0.0.5/tcp/60000/p2p/<peerId>), or (2) your relay is reached over a public IP or DNS name: re-run with --public-relay to write the audited public mode (mode = "public", i_understand_public = true, enforce_peer_allowlist = true; docs/relay-setup.md, "Your own relay on a public address")
+rc=4
+ls: /tmp/ando/x: No such file or directory

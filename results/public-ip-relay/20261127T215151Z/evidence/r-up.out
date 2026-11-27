@@ -1,0 +1,4 @@
+net.ipv4.tcp_retries2 = 6
+an-nb 8545/tcp, 30303/tcp, 60000/tcp, 127.0.0.1:18642->8645/tcp
+an-r1 8545/tcp, 30303/tcp, <PUB_IP_R>:60000->60000/tcp, 127.0.0.1:18640->8645/tcp
+/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAmTJeYvA9hKgP1SvUYCsT8999RJkLrUDoAQ31J9joSioxk

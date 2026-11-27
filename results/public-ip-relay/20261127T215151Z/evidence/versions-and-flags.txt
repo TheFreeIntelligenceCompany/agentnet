@@ -1,0 +1,33 @@
+## droplet
+6.8.0-149-generic
+Ubuntu 24.04.5 LTS
+Docker version 29.1.3, build 29.1.3-0ubuntu3~24.04.2
+rustc 1.100.1 (20ddd0171 2026-11-25)
+481eb152f3b3e1ea7ef9e22c05af20bf2ec13ff9
+agentnet 0.1.0
+net.ipv4.tcp_retries2 = 6
+-- R container tcp_retries2:
+6
+-- R peers
+/ip4/172.28.66.1/tcp/54874/p2p/16Uiu2HAmV3dkiAoXNWZe3Ht2YWhkR62a7JnrKCoohVnqsWojM5En Connected
+/ip4/<PUB_IP_A>/tcp/63792/p2p/16Uiu2HAmHeh5Lvicvv7PhvBZ4amazcmvm5q7BCGGcEndcmrGKRVK Connected
+LISTEN 0      4096   <PUB_IP_R>:60000      0.0.0.0:*          
+LISTEN 0      4096          0.0.0.0:22         0.0.0.0:*          
+LISTEN 0      4096             [::]:22            [::]:*          
+an-r2 
+an-nb 8545/tcp, 30303/tcp, 60000/tcp, 127.0.0.1:18642->8645/tcp
+an-r1 8545/tcp, 30303/tcp, <PUB_IP_R>:60000->60000/tcp, 127.0.0.1:18640->8645/tcp
+-- R flags
+[--nodekey=<disposable> --nat=extip:<PUB_IP_R> --relay=true --store=true --store-message-db-url=sqlite:///data/r1-store.sqlite3 --store-message-retention-policy=time:604800;capacity:100000 --filter=true --lightpush=true --max-msg-size=150KiB --cluster-id=66 --num-shards-in-network=1 --shard=0 --discv5-discovery=false --peer-exchange=false --relay-peer-exchange=false --rendezvous=false --enable-kad-discovery=false --quic-support=false --mix=false --rln-relay=false --listen-address=0.0.0.0 --dns-addrs-name-server=127.0.0.1 --tcp-port=60000 --metrics-server=false --peer-persistence=false --local-storage-path=/data --log-level=INFO --rest=true --rest-address=0.0.0.0 --rest-port=8645 --rest-admin=true --rest-relay-cache-capacity=1000 --rest-messaging-cache-capacity=1000]
+-- R2 flags
+[--nodekey=<disposable> --nat=extip:<PUB_IP_R> --relay=true --store=false --filter=false --lightpush=false --max-msg-size=150KiB --cluster-id=66 --num-shards-in-network=1 --shard=0 --discv5-discovery=false --peer-exchange=false --relay-peer-exchange=false --rendezvous=false --enable-kad-discovery=false --quic-support=false --mix=false --rln-relay=false --listen-address=0.0.0.0 --dns-addrs-name-server=127.0.0.1 --tcp-port=60001 --metrics-server=false --peer-persistence=false --local-storage-path=/data --log-level=INFO --rest=true --rest-address=0.0.0.0 --rest-port=8645 --rest-admin=true --rest-relay-cache-capacity=1000 --rest-messaging-cache-capacity=1000]
+-- B node flags
+[--nodekey=<disposable> --nat=extip:172.28.66.22 --relay=true --store=false --filter=false --lightpush=false --staticnode=/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAmTJeYvA9hKgP1SvUYCsT8999RJkLrUDoAQ31J9joSioxk --storenode=/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAmTJeYvA9hKgP1SvUYCsT8999RJkLrUDoAQ31J9joSioxk --filternode=/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAmTJeYvA9hKgP1SvUYCsT8999RJkLrUDoAQ31J9joSioxk --lightpushnode=/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAmTJeYvA9hKgP1SvUYCsT8999RJkLrUDoAQ31J9joSioxk --max-msg-size=150KiB --cluster-id=66 --num-shards-in-network=1 --shard=0 --discv5-discovery=false --peer-exchange=false --relay-peer-exchange=false --rendezvous=false --enable-kad-discovery=false --quic-support=false --mix=false --rln-relay=false --listen-address=0.0.0.0 --dns-addrs-name-server=127.0.0.1 --tcp-port=60000 --metrics-server=false --peer-persistence=false --local-storage-path=/data --log-level=INFO --rest=true --rest-address=0.0.0.0 --rest-port=8645 --rest-admin=true --rest-relay-cache-capacity=1000 --rest-messaging-cache-capacity=1000]
+wakuorg/nwaku@sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73
+## Mac
+26.6.2
+arm64
+agentnet 0.1.0
+Mac binary built from 481eb15 (per coordinator), local HEAD ebf278fcc49c06b3d50ff0c5d9fc8f71cc7427ba
+-- node A flags
+wakuorg/nwaku@sha256:cb4d14a22b8c5dad6ebfd86316c4fe33c4be8d68d48f155429c59117fc7c6b73 [--nodekey=<disposable> --nat=none --relay=true --store=false --filter=false --lightpush=false --staticnode=/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAmTJeYvA9hKgP1SvUYCsT8999RJkLrUDoAQ31J9joSioxk --storenode=/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAmTJeYvA9hKgP1SvUYCsT8999RJkLrUDoAQ31J9joSioxk --filternode=/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAmTJeYvA9hKgP1SvUYCsT8999RJkLrUDoAQ31J9joSioxk --lightpushnode=/ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAmTJeYvA9hKgP1SvUYCsT8999RJkLrUDoAQ31J9joSioxk --max-msg-size=150KiB --cluster-id=66 --num-shards-in-network=1 --shard=0 --discv5-discovery=false --peer-exchange=false --relay-peer-exchange=false --rendezvous=false --enable-kad-discovery=false --quic-support=false --mix=false --rln-relay=false --listen-address=0.0.0.0 --dns-addrs-name-server=127.0.0.1 --tcp-port=60000 --metrics-server=false --peer-persistence=false --local-storage-path=/data --log-level=INFO --rest=true --rest-address=0.0.0.0 --rest-port=8645 --rest-admin=true --rest-relay-cache-capacity=1000 --rest-messaging-cache-capacity=1000]

@@ -1,0 +1,120 @@
+packets total: 9222
+--- distinct SOURCE addresses of packets to <PUB_IP_R>:60000
+   4282 <PUB_IP_A>
+--- src/dst pairs
+   2211 <PUB_IP_R>.60000 > <PUB_IP_A>.56772
+   2202 <PUB_IP_A>.56772 > <PUB_IP_R>.60000
+   1801 <PUB_IP_R>.60000 > <PUB_IP_A>.57117
+   1683 <PUB_IP_A>.57117 > <PUB_IP_R>.60000
+    192 <PUB_IP_A>.60463 > <PUB_IP_R>.60000
+    187 <PUB_IP_R>.60000 > <PUB_IP_A>.60463
+    157 <PUB_IP_A>.63792 > <PUB_IP_R>.60000
+    145 <PUB_IP_R>.60000 > <PUB_IP_A>.63792
+     11 <PUB_IP_R>.60000 > <PUB_IP_A>.55129
+     10 <PUB_IP_A>.55129 > <PUB_IP_R>.60000
+      8 <PUB_IP_R>.60962 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.60882 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.60382 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.59086 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.58678 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.57950 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.57440 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.57372 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.55518 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.55242 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.55190 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.54772 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.54090 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.53910 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.53684 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.53644 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.53422 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.53274 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.52610 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.52518 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.51862 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.51802 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.51592 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.51350 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.51058 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.50884 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.50668 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.49860 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.49638 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.49632 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.49084 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.48940 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.48684 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.47554 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.46468 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.45908 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.45690 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.44990 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.44504 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.44432 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.43610 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.43408 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.43354 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.43322 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.43098 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.42388 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.42356 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.42314 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.42180 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.41124 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.41116 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.40776 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.40600 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.39468 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.39076 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.38306 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.37932 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.37928 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.37488 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.37258 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.37116 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.36778 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.36152 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.35572 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.35372 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.34388 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.33702 > <PUB_IP_A>.60000
+      8 <PUB_IP_R>.33686 > <PUB_IP_A>.60000
+      7 <PUB_IP_R>.39824 > <PUB_IP_A>.60000
+      5 <PUB_IP_A>.63772 > <PUB_IP_R>.60000
+      5 <PUB_IP_A>.63598 > <PUB_IP_R>.60000
+      5 <PUB_IP_A>.63431 > <PUB_IP_R>.60000
+      5 <PUB_IP_A>.62694 > <PUB_IP_R>.60000
+      5 <PUB_IP_R>.55434 > <PUB_IP_A>.60000
+      4 <PUB_IP_A>.63407 > <PUB_IP_R>.60000
+      4 <PUB_IP_A>.63257 > <PUB_IP_R>.60000
+      4 <PUB_IP_A>.62937 > <PUB_IP_R>.60000
+      4 <PUB_IP_R>.60000 > <PUB_IP_A>.63772
+      4 <PUB_IP_R>.60000 > <PUB_IP_A>.63598
+      4 <PUB_IP_R>.60000 > <PUB_IP_A>.63431
+      4 <PUB_IP_R>.60000 > <PUB_IP_A>.62694
+      3 <PUB_IP_A>.63110 > <PUB_IP_R>.60000
+      3 <PUB_IP_A>.63089 > <PUB_IP_R>.60000
+      3 <PUB_IP_R>.60000 > <PUB_IP_A>.63407
+      3 <PUB_IP_R>.60000 > <PUB_IP_A>.63257
+      3 <PUB_IP_R>.60000 > <PUB_IP_A>.62937
+      2 <PUB_IP_R>.60000 > <PUB_IP_A>.63110
+      2 <PUB_IP_R>.60000 > <PUB_IP_A>.63089
+--- body grep (raw packet bytes, count of hits per known synthetic string)
+synthetic                  0
+benchA                     0
+benchB                     0
+tiny synthetic body        0
+first message              0
+offB                       0
+offA                       0
+from untrusted sender      0
+race round                 0
+fw-trial                   0
+key-test                   0
+mcp send_message           0
+BEGIN PGP                  0
+an2                        0
+--- noise / multistream strings (control)
+10
+10

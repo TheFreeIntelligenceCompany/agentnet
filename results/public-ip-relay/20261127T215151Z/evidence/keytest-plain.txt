@@ -1,0 +1,108 @@
+[t+0.0] POST /admin/v1/peers [R2] on node A REST (127.0.0.1:18690)
+http=200
+[t+2.0] node A peers:
+    /ip4/<PUB_IP_R>/tcp/60001/p2p/16Uiu2HAmMTovWAkHqUsyhCvGAyGfMuP6qGVBAWq9AiETEw3jbdZo Connected
+    /ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAmTJeYvA9hKgP1SvUYCsT8999RJkLrUDoAQ31J9joSioxk Connected
+[t+4.3] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+6.5] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+8.2] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+9.9] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+11.9] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+14.0] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+15.9] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+19.0] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+20.9] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+22.8] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+24.8] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+27.6] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+29.8] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+31.9] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+34.3] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+36.4] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+37.8] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+39.0] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+40.6] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+42.2] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+44.1] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+45.7] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+47.6] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+51.0] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+52.4] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+54.1] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+55.8] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+58.2] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+60.3] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+62.1] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+63.9] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+65.8] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+68.1] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+69.7] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+72.2] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+73.7] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+75.4] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+76.8] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+78.4] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+80.2] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+81.7] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+83.3] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+84.6] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+87.5] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+89.7] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+91.8] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+94.0] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+96.4] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+98.6] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+100.9] ready=True connected=2 violation=None detail=node reachable; 2 connected peer(s) (public mode: peers not audited)
+[t+102.4] doctor --ready:
+[ok  ] data dir permissions: directory 0700, files 0600
+[ok  ] config: /tmp/ando/a/agentnet.toml valid (public mode, 1 peer(s))
+[ok  ] identity: address an2uyetf2xpip5xv4vsz5v5jyy4ghxvlqko27obnqlchommafzrprzq2e72oy
+[ok  ] encryption subkey: expires in 364 day(s)
+[ok  ] replay guard: inactive (store generation 74)
+[ok  ] daemon socket: daemon answers on agentnet.sock
+[ok  ] node reachable: http://127.0.0.1:18690 answered 200
+[ok  ] clock: within 1 s of the node's clock
+[skip] isolation: not audited in public mode; the node may be connected to any peer
+       -> to audit your own relay on a public address set network.enforce_peer_allowlist = true (and list the relay in network.peers)
+[skip] peers == allowlist: public mode: no allowlist audit (set network.enforce_peer_allowlist to audit)
+[ok  ] history sync: last successful relay Store sync 7 s ago (interval 15 s)
+[ok  ] transport ready: node reachable; 2 connected peer(s) (public mode: peers not audited)
+[ok  ] local inbox database: inbox query works (this tests the local database, not the relay Store)
+0 failing, 1 warning(s)
+ready: daemon, node, isolation and transport checks are ok
+doctor --ready rc=0
+[t+103.7] network status (human):
+mode: public
+ready: true
+connected peers: 2
+isolation: not audited (public mode)
+queue: outbox queued=0 sent-unacked=2, inbox unread=30 quarantined=0, events unacked=30, active triggers=0
+last live poll: 2026-11-27 22:24:18 UTC
+last history sync: 2026-11-27 22:24:09 UTC
+detail: node reachable; 2 connected peer(s) (public mode: peers not audited)
+daemon: version 0.1.0 uptime 133s
+webhook: disabled
+rc=0
+[t+105.0] SEND message in conversation 5acb5ca3-0302-4ae5-8283-cdd61fc30cba
+message_id=8c99c615-dbca-4a39-a75b-a5cd2c69b86e
+[t+105.9] state=sent attempts=1 sent_at=1795818259062 last_error=None
+[t+109.9] state=delivered attempts=1 sent_at=1795818259062 last_error=None
+[t+114.1] state=delivered attempts=1 sent_at=1795818259062 last_error=None
+[t+118.7] state=delivered attempts=1 sent_at=1795818259062 last_error=None
+[t+122.6] state=delivered attempts=1 sent_at=1795818259062 last_error=None
+[t+126.5] state=delivered attempts=1 sent_at=1795818259062 last_error=None
+[t+130.2] state=delivered attempts=1 sent_at=1795818259062 last_error=None
+[t+133.9] state=delivered attempts=1 sent_at=1795818259062 last_error=None
+[t+137.5] state=delivered attempts=1 sent_at=1795818259062 last_error=None
+[t+140.7] state=delivered attempts=1 sent_at=1795818259062 last_error=None
+[t+143.9] state=delivered attempts=1 sent_at=1795818259062 last_error=None
+[t+147.3] state=delivered attempts=1 sent_at=1795818259062 last_error=None
+[t+150.9] state=delivered attempts=1 sent_at=1795818259062 last_error=None
+[t+154.5] state=delivered attempts=1 sent_at=1795818259062 last_error=None
+[t+158.0] state=delivered attempts=1 sent_at=1795818259062 last_error=None
+[t+161.5] state=delivered attempts=1 sent_at=1795818259062 last_error=None
+[t+164.6] B inbox for conversation (count):
+1
+[t+166.1] node A peers now:
+    /ip4/<PUB_IP_R>/tcp/60001/p2p/16Uiu2HAmMTovWAkHqUsyhCvGAyGfMuP6qGVBAWq9AiETEw3jbdZo Connected
+    /ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAmTJeYvA9hKgP1SvUYCsT8999RJkLrUDoAQ31J9joSioxk Connected

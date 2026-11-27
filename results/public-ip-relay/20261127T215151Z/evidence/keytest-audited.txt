@@ -1,0 +1,64 @@
+[t+0.0] POST /admin/v1/peers [R2] on node A REST (127.0.0.1:18690)
+http=200
+[t+4.7] node A peers:
+    /ip4/<PUB_IP_R>/tcp/60001/p2p/16Uiu2HAmMTovWAkHqUsyhCvGAyGfMuP6qGVBAWq9AiETEw3jbdZo Connected
+    /ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAmTJeYvA9hKgP1SvUYCsT8999RJkLrUDoAQ31J9joSioxk Connected
+[t+7.4] ready=False connected=2 violation=node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAmMTovWAkHqUsyhCvGAyGfMuP6qGVBAWq9AiETEw3jbdZo) detail=isolation violation: node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAmMTovWAkHqUsyhCvGAyGfMuP6qGVBAWq9AiETEw3jbdZo)
+[t+10.6] doctor --ready:
+[ok  ] data dir permissions: directory 0700, files 0600
+[ok  ] config: /tmp/ando/a/agentnet.toml valid (public mode, 1 peer(s))
+[ok  ] identity: address an2uyetf2xpip5xv4vsz5v5jyy4ghxvlqko27obnqlchommafzrprzq2e72oy
+[ok  ] encryption subkey: expires in 364 day(s)
+[ok  ] replay guard: inactive (store generation 61)
+[ok  ] daemon socket: daemon answers on agentnet.sock
+[ok  ] node reachable: http://127.0.0.1:18690 answered 200
+[ok  ] clock: within 0 s of the node's clock
+[FAIL] isolation: node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAmMTovWAkHqUsyhCvGAyGfMuP6qGVBAWq9AiETEw3jbdZo)
+       -> the node is connected to a peer outside agentnet.toml: restart it with the verified flags
+[FAIL] peers == allowlist: the node knows 1 peer(s) outside the allowlist; they are known, not connected (a connected one would be an isolation violation); the entry clears when the node restarts
+       -> the node should only know the peers in agentnet.toml; check its discovery flags, then restart the node to clear stale entries
+[ok  ] history sync: last successful relay Store sync 23 s ago (interval 15 s)
+[warn] transport ready: isolation violation: node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAmMTovWAkHqUsyhCvGAyGfMuP6qGVBAWq9AiETEw3jbdZo)
+       -> messages queue locally until the node is ready
+[ok  ] local inbox database: inbox query works (this tests the local database, not the relay Store)
+2 failing, 2 warning(s)
+NOT READY: messaging is not operational:
+  - isolation: FAILED: node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAmMTovWAkHqUsyhCvGAyGfMuP6qGVBAWq9AiETEw3jbdZo) -> the node is connected to a peer outside agentnet.toml: restart it with the verified flags
+  - transport ready: warning: isolation violation: node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAmMTovWAkHqUsyhCvGAyGfMuP6qGVBAWq9AiETEw3jbdZo) -> messages queue locally until the node is ready
+  - peers == allowlist: FAILED: the node knows 1 peer(s) outside the allowlist; they are known, not connected (a connected one would be an isolation violation); the entry clears when the node restarts
+doctor --ready rc=7
+[t+14.4] network status (human):
+mode: public
+ready: false
+connected peers: 2
+ISOLATION VIOLATION: node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAmMTovWAkHqUsyhCvGAyGfMuP6qGVBAWq9AiETEw3jbdZo)
+queue: outbox queued=0 sent-unacked=2, inbox unread=30 quarantined=0, events unacked=30, active triggers=0
+last live poll: 2026-11-27 22:08:55 UTC
+last history sync: 2026-11-27 22:08:42 UTC
+detail: isolation violation: node is connected to 1 peer(s) not in the allowlist (e.g. 16Uiu2HAmMTovWAkHqUsyhCvGAyGfMuP6qGVBAWq9AiETEw3jbdZo)
+daemon: version 0.1.0 uptime 844s
+webhook: disabled
+rc=0
+[t+15.5] SEND message in conversation fc27ab74-26d8-4d19-a67f-b2b376986f44
+message_id=fb47b434-80eb-4ea0-a44d-8c86149e65aa
+[t+16.8] state=queued attempts=0 sent_at=None last_error=None
+[t+23.3] state=queued attempts=0 sent_at=None last_error=None
+[t+28.2] state=queued attempts=0 sent_at=None last_error=None
+[t+33.4] state=queued attempts=0 sent_at=None last_error=None
+[t+38.2] state=queued attempts=0 sent_at=None last_error=None
+[t+42.1] state=queued attempts=0 sent_at=None last_error=None
+[t+45.7] state=queued attempts=0 sent_at=None last_error=None
+[t+49.3] state=queued attempts=0 sent_at=None last_error=None
+[t+53.2] state=queued attempts=0 sent_at=None last_error=None
+[t+56.9] state=queued attempts=0 sent_at=None last_error=None
+[t+61.1] state=queued attempts=0 sent_at=None last_error=None
+[t+65.5] state=queued attempts=0 sent_at=None last_error=None
+[t+69.2] state=queued attempts=0 sent_at=None last_error=None
+[t+72.8] state=queued attempts=0 sent_at=None last_error=None
+[t+76.8] state=queued attempts=0 sent_at=None last_error=None
+[t+80.6] state=queued attempts=0 sent_at=None last_error=None
+[t+84.6] B inbox for conversation (count):
+0
+[t+86.3] node A peers now:
+    /ip4/<PUB_IP_R>/tcp/60001/p2p/16Uiu2HAmMTovWAkHqUsyhCvGAyGfMuP6qGVBAWq9AiETEw3jbdZo Connected
+    /ip4/<PUB_IP_R>/tcp/60000/p2p/16Uiu2HAmTJeYvA9hKgP1SvUYCsT8999RJkLrUDoAQ31J9joSioxk Connected

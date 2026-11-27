@@ -1,0 +1,30 @@
+## doctor --ready (plain public mode, before R2 connection)
+[ok  ] data dir permissions: directory 0700, files 0600
+[ok  ] config: a/agentnet.toml valid (public mode, 1 peer(s))
+[ok  ] identity: address an2uyetf2xpip5xv4vsz5v5jyy4ghxvlqko27obnqlchommafzrprzq2e72oy
+[ok  ] encryption subkey: expires in 364 day(s)
+[ok  ] replay guard: inactive (store generation 74)
+[ok  ] daemon socket: daemon answers on agentnet.sock
+[ok  ] node reachable: http://127.0.0.1:18690 answered 200
+[ok  ] clock: within 0 s of the node's clock
+[skip] isolation: not audited in public mode; the node may be connected to any peer
+       -> to audit your own relay on a public address set network.enforce_peer_allowlist = true (and list the relay in network.peers)
+[skip] peers == allowlist: public mode: no allowlist audit (set network.enforce_peer_allowlist to audit)
+[ok  ] history sync: last successful relay Store sync 3 s ago (interval 15 s)
+[ok  ] transport ready: node reachable; 1 connected peer(s) (public mode: peers not audited)
+[ok  ] local inbox database: inbox query works (this tests the local database, not the relay Store)
+0 failing, 1 warning(s)
+ready: daemon, node, isolation and transport checks are ok
+rc=
+## network status
+mode: public
+ready: true
+connected peers: 1
+isolation: not audited (public mode)
+queue: outbox queued=0 sent-unacked=2, inbox unread=30 quarantined=0, events unacked=30, active triggers=0
+last live poll: 2026-11-27 22:22:24 UTC
+last history sync: 2026-11-27 22:22:20 UTC
+detail: node reachable; 1 connected peer(s) (public mode: peers not audited)
+daemon: version 0.1.0 uptime 19s
+webhook: disabled
+{"daemon":{"agent_id":"an2uyetf2xpip5xv4vsz5v5jyy4ghxvlqko27obnqlchommafzrprzq2e72oy","mcp_http":{"addr":null,"enabled":false},"mode":"public","protocol":1,"uptime_s":19,"version":"0.1.0","webhook":{"cursor":null,"delivered":0,"enabled":false,"last_error":null,"parked":0,"retries":0}},"network":{"connected_peers":1,"detail":"node reachable; 1 connected peer(s) (public mode: peers not audited)","identity_revoked":false,"isolation_audited":false,"isolation_violation":null,"last_history_sync_at":1795818140925,"last_live_poll_at":1795818144832,"mode":"public","peers":null,"queue":{"active_triggers":0,"events_unacked":30,"inbox_quarantined":0,"inbox_unread":30,"outbox_queued":0,"outbox_sent_unacked":2},"ready":true,"replay_guard":null}}

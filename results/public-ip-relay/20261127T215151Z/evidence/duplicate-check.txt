@@ -1,0 +1,2 @@
+A inbox 21 distinct 21
+B inbox 22 distinct 22

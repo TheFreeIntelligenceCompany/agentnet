@@ -1,0 +1,1 @@
+agentnet-pub-test-fw    succeeded    <droplet-id>    protocol:tcp,ports:22,address:<PUB_IP_A>/32,action:allow protocol:tcp,ports:60000,address:<PUB_IP_A>/32,action:allow protocol:tcp,ports:60001,address:<PUB_IP_A>/32,action:allow

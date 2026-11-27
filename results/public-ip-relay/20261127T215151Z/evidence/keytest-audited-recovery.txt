@@ -1,0 +1,21 @@
+[t+1.3] docker stop an-r2 returned
+[t+2.5] ready=True connected=1 violation=None | state=queued attempts=0 last_error=None
+[t+5.3] ready=True connected=1 violation=None | state=delivered attempts=1 last_error=None
+[t+6.0] doctor --ready:
+[ok  ] data dir permissions: directory 0700, files 0600
+[ok  ] config: /tmp/ando/a/agentnet.toml valid (public mode, 1 peer(s))
+[ok  ] identity: address an2uyetf2xpip5xv4vsz5v5jyy4ghxvlqko27obnqlchommafzrprzq2e72oy
+[ok  ] encryption subkey: expires in 364 day(s)
+[ok  ] replay guard: inactive (store generation 62)
+[ok  ] daemon socket: daemon answers on agentnet.sock
+[ok  ] node reachable: http://127.0.0.1:18690 answered 200
+[ok  ] clock: within 0 s of the node's clock
+[ok  ] isolation: no isolation violation reported
+[warn] peers == allowlist: the node knows 1 peer(s) outside the allowlist; they are known, not connected (a connected one would be an isolation violation); the entry clears when the node restarts
+       -> the node should only know the peers in agentnet.toml; check its discovery flags, then restart the node to clear stale entries
+[ok  ] history sync: last successful relay Store sync 5 s ago (interval 15 s)
+[ok  ] transport ready: node reachable; 1 connected allowed peer(s)
+[ok  ] local inbox database: inbox query works (this tests the local database, not the relay Store)
+0 failing, 2 warning(s)
+ready: daemon, node, isolation and transport checks are ok
+rc=0

@@ -1,0 +1,9 @@
+## A adds B with a WRONG --expect (A's own address)
+error: contact certificate is not for the expected address
+rc=4
+## A adds B with --expect <B>
+an2ennbdbbsfj2wn3h35dno72lwxm763h5wcrks5bladnzh2uad74pvsi2rea trusted alias=b
+rc=0
+## B adds A with --expect <A>
+an2uyetf2xpip5xv4vsz5v5jyy4ghxvlqko27obnqlchommafzrprzq2e72oy trusted alias=a
+rc=0

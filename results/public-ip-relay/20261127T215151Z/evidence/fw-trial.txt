@@ -1,0 +1,27 @@
+22:27:55.916Z remove inbound rule tcp/60000 for the Mac (tcp/22 kept)
+22:27:58.731Z remove-rules returned
+22:28:02.045Z firewall status succeeded
+22:28:02.759Z docker restart an-do-node-a (kills the established flow)
+22:28:31.257Z node A restarted
+22:28:47.403Z message queued during block: 4167f5f5-eab2-4061-b971-768e7e084fd1
+22:29:32.880Z nc from Mac to R:60000 during block:
+nc: connectx to <PUB_IP_R> port 60000 (tcp) failed: Operation timed out
+22:29:38.181Z node A peers: ['CannotConnect']
+22:29:38.903Z agent A network status:
+mode: public
+ready: false
+connected peers: 0
+isolation: ok
+22:29:44.479Z message: queued 0 transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+22:29:45.195Z tcp/22 still works: yes
+22:29:46.642Z add rule back
+22:29:48.803Z add-rules returned
+22:29:50.018Z firewall status succeeded
+22:29:50.889Z peers=['CannotConnect'] msg=queued 0
+22:29:53.664Z peers=['Connected'] msg=queued 0
+22:29:55.067Z >>> node A Connected
+22:29:59.929Z peers=['Connected'] msg=queued 0
+22:30:06.535Z peers=['Connected'] msg=queued 0
+22:30:12.955Z peers=['Connected'] msg=queued 0
+22:30:17.065Z peers=['Connected'] msg=delivered 1
+22:30:17.823Z >>> message delivered

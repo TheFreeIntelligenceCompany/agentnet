@@ -1,0 +1,14 @@
+## Mac: published docker ports
+an-do-node-a 8545/tcp, 30303/tcp, 60000/tcp, 127.0.0.1:18690->8645/tcp
+## Mac: listeners on tcp/60000 (host)
+(empty = none)
+## colima VM: count of listeners on :60000
+0
+time="2026-11-27T17:08:18-05:00" level=fatal msg="exit status 1"
+## node A container established sockets
+ESTAB remote=<PUB_IP_R>:60000
+## Mac lsof established to :60000 to R
+limactl 87679 <user>   17u  IPv4 0x3c33be0f3e8ef741      0t0  TCP <LAN_IP_A>:56772-><PUB_IP_R>:60000 (ESTABLISHED)
+## droplet -> Mac public IP :60000
+rc=1
+nc: connect to <PUB_IP_A> port 60000 (tcp) timed out: Operation now in progress
