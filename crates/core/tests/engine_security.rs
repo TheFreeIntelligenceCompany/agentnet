@@ -258,6 +258,7 @@ async fn time_checks_skew_expiry_ttl() {
     b.node
         .add_contact(AddContactRequest {
             contact_record: m.contact_record().to_document(),
+            expected_address: Some(m.address().to_string()),
             ..Default::default()
         })
         .await

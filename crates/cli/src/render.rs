@@ -101,12 +101,16 @@ pub fn trust(t: Trust) -> &'static str {
 
 pub fn contact_line(c: &ContactInfo) -> String {
     format!(
-        "{} {}{}",
+        "{} {}{}{}",
         c.address,
         trust(c.trust),
         c.alias
             .as_deref()
             .map(|a| format!(" alias={}", clean(a)))
+            .unwrap_or_default(),
+        c.warning
+            .as_deref()
+            .map(|w| format!("\nwarning: {}", clean(w)))
             .unwrap_or_default()
     )
 }

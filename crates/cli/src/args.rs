@@ -262,6 +262,14 @@ pub enum IdentityCmd {
     /// revoked as compromised and its secret key destroyed at once: messages already
     /// sealed to it are lost unless re-sealed by their senders. There is no forward
     /// secrecy against a later compromise of a subkey you still hold.
+    ///
+    /// Revoked subkeys are kept in the certificate (with their revocation) until they
+    /// expire, so the certificate grows; the cap is 8192 bytes, about 21 revoking
+    /// rotations per subkey validity period (default 365 days). A rotation that would
+    /// exceed it is refused and changes nothing: wait for old subkeys to expire, rotate
+    /// without --revoke-previous less often, or create a new identity. --revoke-previous
+    /// also destroys the secrets of earlier retained (merely retired) subkeys.
+    /// A certificate above about 5 KiB can no longer be advertised (discovery).
     RotateKem {
         /// Lifetime of the new encryption subkey in days (default 365).
         #[arg(long, value_name = "DAYS")]
@@ -297,9 +305,13 @@ pub enum IdentityCmd {
     /// aside as `identity.json.legacy-v1`, keeps the inbox history and the dedupe state,
     /// lists every pending old-format outbound message and marks it failed (re-send it
     /// after adding the recipient's new certificate), and keeps old contacts as
-    /// unverified legacy entries that cannot be sent to until re-added with
-    /// `contact add --expect <new address>`. Prints the new address. Requires the
-    /// daemon to be stopped.
+    /// unverified legacy entries (not contacts: `an1` addresses are refused as
+    /// recipients) until each contact's NEW certificate is added; nothing links it to
+    /// the legacy entry, so verify the new address out of band and add it with
+    /// `contact add --expect <new address>` (without --expect it is added untrusted).
+    /// The retired identity file keeps the OLD SECRET KEYS on disk; the command prints
+    /// its path and a warning, delete it once you no longer need it. Prints the new
+    /// address. Requires the daemon to be stopped.
     Migrate,
 }
 
@@ -325,7 +337,9 @@ pub enum ContactCmd {
     /// Add a contact from its public OpenPGP certificate, or merge an update into a known one.
     ///
     /// First contact pins the certificate's fingerprint: pass --expect with the
-    /// address obtained out of band. An update for a known address is merged into the
+    /// address obtained out of band. Without --expect the contact is added as
+    /// untrusted (a warning says how to verify and raise trust) and --trust
+    /// trusted is refused. An update for a known address is merged into the
     /// stored certificate (new subkeys, expiry, revocations); it never replaces it.
     Add {
         /// The certificate (base64url or ASCII armor), `@FILE` to read it from a file, or `-` for stdin.
@@ -336,7 +350,7 @@ pub enum ContactCmd {
         /// Local nickname.
         #[arg(long, value_name = "ALIAS")]
         alias: Option<String>,
-        /// Trust decision (default: trusted).
+        /// Trust decision (default: trusted with --expect, untrusted without it).
         #[arg(long, value_enum)]
         trust: Option<TrustArg>,
     },

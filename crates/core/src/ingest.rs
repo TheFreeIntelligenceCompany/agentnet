@@ -11,6 +11,7 @@ use crate::config::UnknownSenders;
 use crate::crypto::envelope::{
     Envelope, MESSAGE_TYPE_ACK_RECEIVED, MESSAGE_TYPE_CONTACT_UPDATE, MESSAGE_TYPE_IDENTITY_REVOKED,
 };
+use crate::crypto::{SenderAuth, VerifiedRevocation};
 use crate::error::OpenError;
 use crate::guard::{self, HOLD_REPLAY_GUARD};
 use crate::node::{trust_to_db, Node};
@@ -113,6 +114,9 @@ fn open_error_kind(e: &OpenError) -> &'static str {
     }
 }
 
+/// Longest random delay before a re-ack is first published (ms).
+const REACK_DELAY_MAX_MS: i64 = 5_000;
+
 enum MsgTx {
     Duplicate {
         reacked: bool,
@@ -179,39 +183,65 @@ impl Node {
         }
         // 2. open
         let now = self.now();
-        let dir = |a: &crate::crypto::Address| self.pinned_certificate(a);
-        let env =
-            match self
-                .protection
-                .open(&self.identity, &frame.payload, now, &self.open_limits, &dir)
-            {
-                Ok(o) => o.envelope,
-                Err(OpenError::SenderRevoked) => {
-                    // A revoked identity's messages are dropped like a blocked sender's.
-                    self.metrics.inc("drop.blocked");
-                    self.metrics.inc("open_error.sender_revoked");
-                    self.mark_transport_seen(frame);
-                    return FrameOutcome::Blocked;
-                }
-                Err(OpenError::NotForUs) => {
-                    self.metrics.inc("frame.not_for_us");
-                    self.mark_transport_seen(frame);
-                    return FrameOutcome::NotForUs;
-                }
-                Err(OpenError::FromFuture) => {
-                    self.metrics.inc("open_error.from_future");
-                    return FrameOutcome::Deferred;
-                }
-                Err(e) => {
-                    self.metrics
-                        .inc(&format!("open_error.{}", open_error_kind(&e)));
-                    self.mark_transport_seen(frame);
-                    return FrameOutcome::Invalid;
-                }
-            };
+        let auth: SenderAuth;
+        // The sender directory is fallible (review finding L5): a lookup that
+        // fails is remembered and fails the whole open as a store failure; the
+        // frame is not marked seen and will be seen again.
+        let dir_failed = std::cell::Cell::new(false);
+        let dir = |a: &crate::crypto::Address| match self.pinned_certificate(a) {
+            Ok(c) => c,
+            Err(_) => {
+                dir_failed.set(true);
+                None
+            }
+        };
+        let opened =
+            self.protection
+                .open(&self.identity, &frame.payload, now, &self.open_limits, &dir);
+        if dir_failed.get() {
+            self.metrics.inc("open.directory_failed");
+            return self.store_failure();
+        }
+        let env = match opened {
+            Ok(o) => {
+                self.metrics.inc(match o.auth {
+                    SenderAuth::Pinned => "open.auth_pinned",
+                    SenderAuth::EmbeddedCertificate => "open.auth_embedded",
+                });
+                auth = o.auth;
+                o.envelope
+            }
+            Err(OpenError::SenderRevoked) => {
+                // A revoked identity's messages are dropped like a blocked sender's.
+                self.metrics.inc("drop.blocked");
+                self.metrics.inc("open_error.sender_revoked");
+                self.mark_transport_seen(frame);
+                return FrameOutcome::Blocked;
+            }
+            Err(OpenError::NotForUs) => {
+                self.metrics.inc("frame.not_for_us");
+                self.mark_transport_seen(frame);
+                return FrameOutcome::NotForUs;
+            }
+            Err(OpenError::FromFuture) => {
+                self.metrics.inc("open_error.from_future");
+                return FrameOutcome::Deferred;
+            }
+            Err(e) => {
+                self.metrics
+                    .inc(&format!("open_error.{}", open_error_kind(&e)));
+                self.mark_transport_seen(frame);
+                return FrameOutcome::Invalid;
+            }
+        };
+        let digest = crate::crypto::frame_digest(&frame.payload);
         // 3. trust
+        let mut sender_is_contact = false;
         let trust = match self.store.read(|c| self.load_contact(c, &env.sender)) {
-            Ok(Some(row)) => row.trust,
+            Ok(Some(row)) => {
+                sender_is_contact = true;
+                row.trust
+            }
             Ok(None) => {
                 // A tombstone may exist for an address that is not a contact
                 // (imported out of band).
@@ -223,6 +253,14 @@ impl Node {
             }
             Err(_) => return self.store_failure(),
         };
+        // A sender that IS a contact must have been authenticated against its
+        // pinned certificate. An embedded-certificate authentication for a contact
+        // means the directory and the contact table disagree (a race or a failure):
+        // treat it like a store failure and see the frame again.
+        if sender_is_contact && auth == SenderAuth::EmbeddedCertificate {
+            self.metrics.inc("open.auth_mismatch");
+            return self.store_failure();
+        }
         if trust == Trust::Blocked {
             self.metrics.inc("drop.blocked");
             self.mark_transport_seen(frame);
@@ -237,10 +275,33 @@ impl Node {
         // from a Trusted contact (other senders' copies are stored like any
         // other message, under the quarantine policy, and never applied).
         if env.message_type == MESSAGE_TYPE_IDENTITY_REVOKED {
-            return self.ingest_identity_revoked(frame, &env);
+            if !sender_is_contact {
+                // Review finding M2: a stranger's frame must not grow any table.
+                // The unknown-sender policy runs first; then only a revocation
+                // that names an existing contact is considered at all.
+                if self.config.policy.unknown_senders == UnknownSenders::Reject {
+                    self.metrics.inc("drop.rejected_unknown_sender");
+                    self.mark_transport_seen(frame);
+                    return FrameOutcome::Rejected;
+                }
+                let names_a_contact = VerifiedRevocation::parse_and_verify(&env.body, now)
+                    .ok()
+                    .map(|rev| self.store.read(|c| self.load_contact(c, &rev.address)))
+                    .transpose();
+                match names_a_contact {
+                    Err(_) => return self.store_failure(),
+                    Ok(Some(Some(_))) => {}
+                    Ok(_) => {
+                        self.metrics.inc("identity_revoked.dropped_non_contact");
+                        self.mark_transport_seen(frame);
+                        return FrameOutcome::SystemHandled { applied: false };
+                    }
+                }
+            }
+            return self.ingest_identity_revoked(frame, &env, &digest);
         }
         if env.message_type == MESSAGE_TYPE_CONTACT_UPDATE && trust == Trust::Trusted {
-            return self.ingest_contact_update(frame, &env);
+            return self.ingest_contact_update(frame, &env, &digest);
         }
         let policy = self.config.policy.unknown_senders;
         if trust != Trust::Trusted && policy == UnknownSenders::Reject {
@@ -261,7 +322,7 @@ impl Node {
         // 5. one transaction
         let res = self
             .store
-            .tx(|tx| self.persist_message(tx, &env, trust, quarantine, hold, now));
+            .tx(|tx| self.persist_message(tx, &env, trust, quarantine, hold, now, &digest));
         let res = match res {
             Ok(r) => r,
             Err(_) => return self.store_failure(),
@@ -322,6 +383,7 @@ impl Node {
         FrameOutcome::StoreFailure
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn persist_message(
         &self,
         tx: &Transaction<'_>,
@@ -330,6 +392,7 @@ impl Node {
         quarantine: bool,
         hold: bool,
         now: i64,
+        digest: &[u8; 32],
     ) -> Result<MsgTx, StoreError> {
         let quarantine_slot = quarantine || hold;
         let sender = env.sender.to_string();
@@ -351,7 +414,7 @@ impl Node {
                 .optional()?;
             let mut reacked = false;
             if stored_q == Some(0) {
-                reacked = self.reack_if_due(tx, env, last, now)?;
+                reacked = self.reack_if_due(tx, env, last, now, digest)?;
             }
             return Ok(MsgTx::Duplicate { reacked });
         }
@@ -375,8 +438,8 @@ impl Node {
             }
         }
         tx.execute(
-            "INSERT INTO seen (sender, message_id, expires_at) VALUES (?1, ?2, ?3)",
-            params![sender, env.message_id, env.expires_at],
+            "INSERT INTO seen (sender, message_id, expires_at, frame_digest) VALUES (?1, ?2, ?3, ?4)",
+            params![sender, env.message_id, env.expires_at, digest.as_slice()],
         )?;
         guard::bump_generation(tx)?;
         tx.execute(
@@ -442,7 +505,38 @@ impl Node {
         env: &Envelope,
         last: Option<i64>,
         now: i64,
+        digest: &[u8; 32],
     ) -> Result<bool, StoreError> {
+        // Review finding M3: only a copy that is byte-identical to the first one
+        // seen is a sender retry (the sender re-publishes the stored frame). A
+        // byte-different copy (an extra PKESK, ...) is what a relay participant
+        // can make from a captured frame to watch for the ack. It is not re-acked
+        // while the first ack is still stored. Trade-off: after a key update the
+        // sender re-seals (new bytes) and its retry is not re-acked until the
+        // stored ack has been pruned; the sender retries until the message expires.
+        let stored: Option<Vec<u8>> = tx
+            .query_row(
+                "SELECT frame_digest FROM seen WHERE sender = ?1 AND message_id = ?2",
+                params![env.sender.to_string(), env.message_id],
+                |r| r.get(0),
+            )
+            .optional()?
+            .flatten();
+        let identical = stored.as_deref().is_none_or(|d| d == digest.as_slice());
+        if !identical {
+            let ack_stored = tx
+                .query_row(
+                    "SELECT 1 FROM outbox WHERE is_ack = 1 AND recipient = ?1 AND correlation_id = ?2",
+                    params![env.sender.to_string(), env.message_id],
+                    |_| Ok(()),
+                )
+                .optional()?
+                .is_some();
+            if ack_stored {
+                self.metrics.inc("ack.reack_suppressed_mutated");
+                return Ok(false);
+            }
+        }
         let min = i64::try_from(
             self.config
                 .delivery
@@ -451,7 +545,7 @@ impl Node {
         )
         .unwrap_or(i64::MAX);
         if last.is_none_or(|l| now.saturating_sub(l) >= min) {
-            if self.queue_ack(tx, env, now)? {
+            if self.queue_ack_delayed(tx, env, now, self.reack_delay_ms())? {
                 tx.execute(
                     "UPDATE seen SET last_reack_at = ?3 WHERE sender = ?1 AND message_id = ?2",
                     params![env.sender.to_string(), env.message_id, now],
@@ -472,6 +566,27 @@ impl Node {
         tx: &Transaction<'_>,
         orig: &Envelope,
         now: i64,
+    ) -> Result<bool, StoreError> {
+        self.queue_ack_delayed(tx, orig, now, 0)
+    }
+
+    /// A random delay in `1..=REACK_DELAY_MAX_MS` for re-acks, so the time of a
+    /// re-ack does not follow the triggering frame exactly (review finding M3).
+    pub(crate) fn reack_delay_ms(&self) -> i64 {
+        let r = {
+            let mut g = self.rng.lock().unwrap_or_else(|e| e.into_inner());
+            crate::node::splitmix(&mut g)
+        };
+        1 + i64::try_from(r % REACK_DELAY_MAX_MS as u64).unwrap_or(0)
+    }
+
+    /// [`Self::queue_ack`] with the first attempt delayed by `delay_ms`.
+    pub(crate) fn queue_ack_delayed(
+        &self,
+        tx: &Transaction<'_>,
+        orig: &Envelope,
+        now: i64,
+        delay_ms: i64,
     ) -> Result<bool, StoreError> {
         if self.local_revocation.is_some() {
             // A revoked identity sends nothing except its tombstone.
@@ -520,6 +635,8 @@ impl Node {
                 is_ack: true,
                 hidden: false,
                 idempotency_key: None,
+                delay_ms,
+                kem_until: row.contact.kem_expires_at,
             },
             now,
         )?;

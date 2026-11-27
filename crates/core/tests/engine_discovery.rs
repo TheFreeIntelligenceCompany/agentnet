@@ -1303,3 +1303,95 @@ async fn republished_frames_deduplicate_and_a_live_plus_history_copy_is_one_row(
     );
     assert!(b.metric("advert.ignored_stale") >= 1);
 }
+
+/// L10: a withdrawal tombstone is not evicted before its own expiry, so a
+/// replay of the withdrawn advert is still ignored when the table is full; live
+/// adverts are evicted first, and with only tombstones left a newcomer is dropped.
+#[tokio::test]
+async fn a_withdrawal_tombstone_is_not_evicted_before_its_expiry() {
+    let w = World::new();
+    let mut c = dcfg();
+    c.discovery.max_records = 2;
+    let obs = start(&w, "obs", c).await;
+    // a0 advertises (ttl 100 s: the soonest-expiring), then withdraws
+    let a0 = start(&w, "a0", dcfg()).await;
+    let mut r = adv(TOPIC, &["x"]);
+    r.ttl_seconds = Some(100);
+    a0.node.advertise_agent(r).await.unwrap();
+    a0.node.step_adverts().await.unwrap();
+    obs.node.step_receive().await.unwrap();
+    let old = published_adverts(&w, &dtopic(TOPIC)).remove(0);
+    a0.node.withdraw_advert(TOPIC.into()).await.unwrap();
+    a0.node.step_adverts().await.unwrap();
+    obs.node.step_receive().await.unwrap();
+    assert_eq!(obs.metric("advert.withdrawal_applied"), 1);
+    // a1 (live, longer ttl) fills the table
+    let a1 = start(&w, "a1", dcfg()).await;
+    a1.node.advertise_agent(adv(TOPIC, &["x"])).await.unwrap();
+    a1.node.step_adverts().await.unwrap();
+    obs.node.step_receive().await.unwrap();
+    assert_eq!(obs.n("adverts"), 2);
+    // a2 arrives: the LIVE a1 is evicted, not the sooner-expiring tombstone
+    let a2 = start(&w, "a2", dcfg()).await;
+    a2.node.advertise_agent(adv(TOPIC, &["x"])).await.unwrap();
+    a2.node.step_adverts().await.unwrap();
+    obs.node.step_receive().await.unwrap();
+    assert_eq!(obs.metric("advert.evicted"), 1);
+    // the replay of a0's withdrawn advert is still ignored
+    w.net.inject_raw(&dtopic(TOPIC), &old);
+    obs.node.step_receive().await.unwrap();
+    assert_eq!(obs.metric("advert.ignored_stale"), 1);
+    let found: Vec<String> = obs
+        .node
+        .discover_agents(disc(TOPIC))
+        .await
+        .unwrap()
+        .agents
+        .into_iter()
+        .map(|a| a.address)
+        .collect();
+    assert_eq!(found, vec![a2.addr.clone()]);
+    // a2 withdraws too: only tombstones remain, so a newcomer is dropped
+    a2.node.withdraw_advert(TOPIC.into()).await.unwrap();
+    a2.node.step_adverts().await.unwrap();
+    obs.node.step_receive().await.unwrap();
+    let a3 = start(&w, "a3", dcfg()).await;
+    a3.node.advertise_agent(adv(TOPIC, &["x"])).await.unwrap();
+    a3.node.step_adverts().await.unwrap();
+    obs.node.step_receive().await.unwrap();
+    assert_eq!(obs.metric("advert.dropped_full"), 1);
+    assert_eq!(obs.metric("advert.evicted"), 1);
+    assert_eq!(obs.n("adverts"), 2);
+}
+
+/// A certificate grown by many revoking rotations does not fit an
+/// advertisement (the record limit is 8 KiB and embeds the whole certificate):
+/// advertising fails with a clear TooLarge error and nothing is stored; a fresh
+/// certificate advertises normally. (`docs/discovery.md`.)
+#[tokio::test]
+async fn a_certificate_grown_by_rotations_cannot_advertise() {
+    let w = World::new();
+    let mut id = Identity::generate_default(w.now_ms()).unwrap();
+    let mut t = w.now_ms();
+    let mut rotations = 0;
+    loop {
+        t += 10_000;
+        if id.rotate_kem_with(t, t, None, true).is_err() {
+            break;
+        }
+        rotations += 1;
+    }
+    assert!(rotations >= 9, "{rotations}");
+    let a = w.agent_with("big", dcfg(), id);
+    a.node.step_receive().await.unwrap();
+    let e = a
+        .node
+        .advertise_agent(adv(TOPIC, &["x"]))
+        .await
+        .unwrap_err();
+    assert_eq!(e.code, agentnet_core::api::ErrorCode::TooLarge);
+    assert!(e.message.contains("certificate"), "{}", e.message);
+    assert_eq!(a.n("adverts"), 0);
+    let ok = start(&w, "small", dcfg()).await;
+    ok.node.advertise_agent(adv(TOPIC, &["x"])).await.unwrap();
+}

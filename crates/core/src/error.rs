@@ -239,6 +239,17 @@ pub enum IdentityError {
     Encrypt,
     #[error("OpenPGP operation failed: {0}")]
     Crypto(&'static str),
+    /// The published certificate would exceed the size limit (review finding M1).
+    #[error(
+        "the public certificate would exceed the {limit}-byte limit: revoked encryption subkeys \
+         are kept until they expire (dropping a revocation would let a stale certificate make \
+         the subkey usable again). Wait for the oldest subkeys to expire, rotate without \
+         --revoke-previous less often, or create a new identity"
+    )]
+    CertificateTooLarge {
+        /// The limit in bytes.
+        limit: usize,
+    },
 }
 
 /// Map a serde_json error to a static, plaintext-free reason.

@@ -60,7 +60,7 @@ certificate; `contact add --expect <address>` binds them.
 ## 3. Contact record: the certificate
 
 A contact record is the peer's **public OpenPGP certificate**, document form
-base64url (no padding) of the binary certificate, at most 4096 bytes after
+base64url (no padding) of the binary certificate, at most 8192 bytes after
 sanitizing (ASCII armor is accepted on input; secret key material is refused
 with `ContactError::ContainsSecretKey`). Alias and trust level are local
 application data.
@@ -70,12 +70,24 @@ Acceptance (`crypto::contact`, `crypto::pgp`):
 1. Parse; refuse secret keys; require a v6 Ed25519 primary key.
 2. **Sanitize**: keep only the primary key, the subkeys, and the primary's own
    direct-key and key-revocation signatures and the subkeys' own binding and
-   revocation signatures. User IDs, user attributes, **third-party
+   revocation signatures, **each verified against the primary key** (invalid
+   signatures are dropped). User IDs, user attributes, **third-party
    certifications**, designated-revoker revocations, unknown packets, markers
-   and unhashed junk are dropped before anything is stored.
+   and every unhashed subpacket area are dropped before anything is stored, so
+   the stored form of a bloated certificate is byte-identical to a clean one.
 3. Require a valid self-signature under the policy; drop subkeys without a
-   valid binding signature; drop the oldest retired subkeys if the result would
-   exceed 4096 bytes.
+   valid binding signature. If the result exceeds 8192 bytes (`MAX_CERT_LEN`),
+   drop only subkeys whose authenticated **expiry has passed**; a revoked but
+   unexpired subkey is never dropped together with its revocation (an expired
+   subkey that is merged again stays unusable). If it still exceeds the cap the
+   certificate is refused (`TooLarge`), and a local rotation that would exceed it
+   is refused with `CertificateTooLarge` and changes nothing. Arithmetic: a
+   fresh certificate is 419 B and every rotation with `--revoke-previous` adds
+   369 B, so (8192 - 419) / 369 = 21 revoking rotations per subkey validity
+   period (default 365 days, about one every 17 days); wait for old subkeys to
+   expire, rotate without `--revoke-previous` less often, or create a new
+   identity. The record is also embedded in adverts (8192 B record limit), so a
+   certificate above about 5 KiB cannot advertise.
 4. For a new contact: the primary must be alive and not revoked and at least one
    encryption subkey must be live (bound, not expired, not revoked, v6 X25519).
 5. A certificate whose **primary key is revoked** is still parsed (it is how a
@@ -150,7 +162,8 @@ at `now + clock_skew`.
 
 ## 5. Message (frame) and receiver policy
 
-A frame is **one OpenPGP message** (binary, no AgentNet header):
+A frame is **one OpenPGP message** (binary, no AgentNet header, no suite or
+version byte: the receiver recognises it by parsing the packet grammar):
 
 ```
 PKESK v6 (anonymous, X25519)       one per live encryption subkey of the recipient
@@ -175,6 +188,15 @@ used; if that still does not fit, `TooLarge` with a body-size hint.
 **Opening** (`MessageProtection::open`, all in `crypto`, fail closed, one error
 variant and one `open_error.*` counter each):
 
+0. **Canonical grammar** (L2), checked with Sequoia's packet parser and
+   `Dearmor::Disabled`, never by byte heuristics: the outer sequence must be
+   exactly PKESK v6 (1 to 8) then one SEIPD v2 with AES-256 and OCB, nothing
+   before, between or after (no armor, Marker, outer Padding or trailing data);
+   after decryption the inner sequence must be exactly one-pass signature,
+   Literal Data, Signature and at most one Padding. Adverts are exactly one-pass
+   signature, Literal Data, Signature (no armor, cleartext signature or
+   prefix-signature form). The accepted cipher is pinned to what AgentNet sends
+   (AES-256/OCB), which is also all that rPGP 0.21.1 emits (`tests/interop-rpgp`);
 1. size: empty (`Truncated`), longer than `max_payload_len` (`FrameTooLarge`);
 2. not an OpenPGP message / damaged (`Malformed`);
 3. trial decryption: the recipient is anonymous, so every PKESK is tried with
@@ -212,14 +234,33 @@ Then the engine's checks: trust, quarantine policy, dedupe, replay guard.
 
 ### Size and padding
 
+Padding is a standard Padding packet. The inner length is padded to a power of
+two of at least 1 KiB; a class whose target no Padding packet can hit exactly is
+skipped for the next one (L4), so every body length of a class gives the same
+frame length. **Acks** carry no certificate and are padded as if they carried the
+payload of the smallest ordinary message (body `x`) of the same sender, so an
+ack has the length of the smallest message (M3). A duplicate that arrives
+byte-different is not re-acked while the first ack row is stored
+(`seen.frame_digest`, schema v5), and every re-ack waits a random 1 to 5000 ms; a
+sender that re-seals a pending message after a key update therefore gets no
+re-ack until the stored ack is pruned and retries until expiry (trade-off).
+
 Fixed overhead: about 420 B (PKESK, SEIPD framing, signature packets) plus
-the embedded sender certificate (about 600 B base64) plus 16 B per 4 KiB AEAD
-chunk. Measured on this implementation (macOS arm64, debug build,
-`crates/core/tests/crypto.rs::measured_frame_sizes_for_the_body_limit`,
-`results/adr0004/frame-sizes.txt`): body 0 B: 2,197 B; 1,024 B: 4,245 B;
-65,536 B: 131,720 B; worst case JSON expansion (65,536 quote characters, padded
-size would not fit so the unpadded frame is used): 132,881 B. The Logos limit is
-153,600 B, so the 64 KiB body limit is unchanged. Within a bucket all frames have
+the embedded sender certificate (419 B binary, about 560 B base64, for a fresh
+identity; up to 8,192 B binary, 10.9 KiB base64, at the cap) plus 16 B per 4 KiB
+AEAD chunk. Measured after the review fixes (Linux x86_64, debug build,
+`crates/core/tests/review_crypto.rs::frame_sizes_with_a_fresh_and_a_maximal_sender_certificate_fit_the_transport_limit`):
+
+| Body | fresh certificate | maximal certificate (8,168 B) |
+|---|---|---|
+| 0 B | 2,197 B | 16,584 B |
+| 1,024 B | 4,245 B | 16,584 B |
+| 65,536 B | 131,720 B | 131,720 B |
+| 65,536 quote characters (worst JSON expansion, unpadded) | 132,881 B | 143,245 B |
+| ack | 2,197 B | 16,584 B |
+
+All are below the Logos limit of 153,600 B (asserted by the test), so the 64 KiB
+body limit is unchanged. Within a bucket all frames have
 the same length; the smallest bucket is 1,024 B of inner packets.
 
 ## 6. Identity file and export
@@ -246,10 +287,17 @@ protected memory and is never printed (`Debug` shows the address only; tested).
 * Not audited at the pinned versions (neither Sequoia nor this glue); an
   independent review is required (`docs/crypto-requirements.md`, condition 11).
 * Metadata: relays see the content topic (inbox bucket), timing, the padded
-  length class, the publisher's network identity, and that the payload is an
-  OpenPGP v6 SEIPD v2 / AES-256 / OCB message. They do not see sender, recipient
-  fingerprint, key ids or payload. Anyone on a bucket sees every frame addressed
-  to it and trial-decrypts them.
+  length class (which includes the sender certificate, so it reveals certificate
+  growth from rotations), the number of PKESKs (the recipient's live encryption
+  subkeys, at most 8), the publisher's network identity, and that the payload is
+  an OpenPGP v6 SEIPD v2 / AES-256 / OCB message. They do not see sender,
+  recipient fingerprint, key ids or payload, and cannot tell an ack from the
+  smallest message by size. Anyone on a bucket sees every frame addressed to it
+  and trial-decrypts them (`docs/threat-model.md` section 4).
+* A revoked encryption subkey stays revoked: no later merge of an older
+  certificate makes it usable for sealing again (M1). With `--revoke-previous`
+  the secrets of all earlier subkeys, including merely retired ones, are
+  destroyed.
 * Replay, rollback and concurrent-identity limits are those of section 10.
 
 ## 8. Delivery, retries and receipts

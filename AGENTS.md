@@ -68,9 +68,13 @@ results/           raw evidence; every claim in docs points here
   construction. The 13 conditions are restated in `docs/crypto-requirements.md`. Keep that table true.
 - Never describe the implementation as audited, production-secure or
   forward-secret. It is none of these.
-- All cryptography stays behind `agentnet_core::crypto` and the
-  `MessageProtection` trait. Transport, MCP and daemon socket/webhook code must
-  not import crypto crates (an architecture test enforces this).
+- All message-protection cryptography (OpenPGP via `sequoia-openpgp`, the OpenSSL
+  backend, `age`) stays behind `agentnet_core::crypto` and the `MessageProtection`
+  trait. Transport, MCP, CLI and daemon code must not import those crates (an
+  architecture test enforces this). The daemon's webhook request signature is a
+  standard HMAC-SHA256 (`hmac`/`sha2`/`subtle` crates, constant-time comparison)
+  and is not message protection; `hmac` is confined to `crates/daemon/src/webhook.rs`
+  (also enforced by an architecture test). Do not widen that exception.
 - Crypto dependencies are exact-pinned; published RFC vectors live in
   `crates/core/tests/vectors.rs`. Fetch vectors from the source, never from memory.
 - Independent cryptographic review is required before production use with

@@ -24,10 +24,12 @@ use openpgp::anyhow;
 use openpgp::cert::prelude::*;
 use openpgp::cert::{CertRevocationBuilder, SubkeyRevocationBuilder};
 use openpgp::crypto::{KeyPair, SessionKey};
+use openpgp::packet::key;
 use openpgp::packet::key::{Key6, SecretParts, SubordinateRole};
 use openpgp::packet::prelude::*;
+use openpgp::packet::Tag;
 use openpgp::parse::stream::*;
-use openpgp::parse::Parse;
+use openpgp::parse::{Dearmor, PacketParserBuilder, PacketParserResult, Parse};
 use openpgp::policy::StandardPolicy;
 use openpgp::serialize::stream::padding::Padder;
 use openpgp::serialize::stream::{Encryptor, LiteralWriter, Message, Recipient, Signer};
@@ -41,8 +43,18 @@ use openpgp::{Cert, Fingerprint, KeyHandle, Packet, Profile};
 use super::address::Address;
 use crate::error::{ContactError, OpenError, SealError};
 
-/// Largest accepted binary certificate (ADR 0004, lead decision 6).
-pub const MAX_CERT_LEN: usize = 4096;
+/// Largest accepted binary certificate (ADR 0004 decision 6, raised from 4096
+/// by the review of 2026-11-27, finding M1).
+///
+/// Arithmetic (measured, `results/review-fixes/`): a fresh certificate is 419
+/// bytes; every rotation with `--revoke-previous` adds 369 bytes (new subkey
+/// and binding plus the revocation of the old one). Revoked subkeys that have
+/// not expired are never dropped, so the cap bounds the number of rotations
+/// within one subkey validity period (default 365 days): (8192 - 419) / 369 =
+/// 21 rotations, about one every 17 days. Every message embeds the sender
+/// certificate (base64url, so up to 10.9 KiB); a maximal certificate plus a
+/// 64 KiB body still pads to 128 KiB, below the 150 KiB frame limit.
+pub const MAX_CERT_LEN: usize = 8192;
 /// Smallest padded size of the inner packet sequence (bytes).
 pub const MIN_PAD_BUCKET: u64 = 1024;
 /// Most PKESKs a message may carry (bound on trial decryptions per frame).
@@ -210,12 +222,17 @@ fn issued_by_primary(s: &Signature, primary: &KeyHandle) -> bool {
     s.get_issuers().iter().any(|h| h.aliases(primary))
 }
 
-/// Keep only what AgentNet uses of a certificate: the primary key, subkeys,
-/// and the primary's own direct-key / key-revocation signatures and the
-/// subkeys' own binding / revocation signatures. User IDs, user attributes,
-/// third-party certifications, designated-revoker revocations, unknown packets
-/// and markers are dropped (a certificate-flooding and third-party-
-/// certification defence; `docs/threat-model.md`).
+/// Rebuild a certificate from validated components only (review finding L3):
+/// the primary key, the subkeys, and the primary's own direct-key / key-revocation
+/// signatures and the subkeys' own binding / revocation signatures, each of which
+/// must VERIFY cryptographically against the primary key (an invalid signature that
+/// merely claims the primary as issuer is dropped). The unhashed subpacket area of
+/// every kept signature is cleared (it is not covered by the signature, so anyone
+/// can fill it: bloat or smuggling). User IDs, user attributes, third-party
+/// certifications, designated-revoker revocations, unknown packets and markers are
+/// dropped (a certificate-flooding and third-party-certification defence;
+/// `docs/threat-model.md`). The result is canonical: a clean certificate and the
+/// same certificate with junk added sanitize to the same bytes.
 pub(crate) fn sanitize(cert: Cert) -> Result<Cert, ContactError> {
     #[derive(PartialEq, Clone, Copy)]
     enum Ctx {
@@ -224,7 +241,9 @@ pub(crate) fn sanitize(cert: Cert) -> Result<Cert, ContactError> {
         Skip,
     }
     let primary_fp = cert.fingerprint();
-    let primary: KeyHandle = primary_fp.clone().into();
+    let primary_handle: KeyHandle = primary_fp.clone().into();
+    let primary = cert.primary_key().key().clone();
+    let mut sub: Option<Key<key::PublicParts, key::SubordinateRole>> = None;
     let mut ctx = Ctx::Skip;
     let mut out: Vec<Packet> = Vec::new();
     for pkt in cert.into_packets() {
@@ -233,23 +252,33 @@ pub(crate) fn sanitize(cert: Cert) -> Result<Cert, ContactError> {
                 ctx = Ctx::Primary;
                 out.push(pkt);
             }
-            Packet::PublicSubkey(_) => {
+            Packet::PublicSubkey(k) => {
                 ctx = Ctx::Sub;
-                out.push(pkt);
+                sub = Some(k.clone());
+                out.push(Packet::PublicSubkey(k));
             }
-            Packet::Signature(ref s) => {
-                let ok = matches!(
-                    (ctx, s.typ()),
-                    (
-                        Ctx::Primary,
-                        SignatureType::DirectKey | SignatureType::KeyRevocation
-                    ) | (
-                        Ctx::Sub,
-                        SignatureType::SubkeyBinding | SignatureType::SubkeyRevocation
-                    )
-                );
-                if ok && issued_by_primary(s, &primary) {
-                    out.push(pkt);
+            Packet::Signature(mut s) => {
+                if !issued_by_primary(&s, &primary_handle) {
+                    continue;
+                }
+                let ok = match (ctx, s.typ()) {
+                    (Ctx::Primary, SignatureType::DirectKey) => {
+                        s.verify_direct_key(&primary, &primary).is_ok()
+                    }
+                    (Ctx::Primary, SignatureType::KeyRevocation) => {
+                        s.verify_primary_key_revocation(&primary, &primary).is_ok()
+                    }
+                    (Ctx::Sub, SignatureType::SubkeyBinding) => sub
+                        .as_ref()
+                        .is_some_and(|k| s.verify_subkey_binding(&primary, &primary, k).is_ok()),
+                    (Ctx::Sub, SignatureType::SubkeyRevocation) => sub
+                        .as_ref()
+                        .is_some_and(|k| s.verify_subkey_revocation(&primary, &primary, k).is_ok()),
+                    _ => false,
+                };
+                if ok {
+                    s.unhashed_area_mut().clear();
+                    out.push(Packet::Signature(s));
                 }
             }
             // secret keys never get here (refused earlier); everything else is dropped
@@ -276,8 +305,16 @@ pub(crate) fn parse_public(bytes: &[u8]) -> Result<Cert, ContactError> {
 }
 
 /// Sanitize, require a valid self-signature at `now_ms`, drop subkeys without
-/// a valid binding, and fit the size limit by dropping the oldest retired
-/// (revoked or expired) subkeys.
+/// a valid binding, and fit the size limit by dropping the oldest subkeys whose
+/// authenticated expiry has passed.
+///
+/// A subkey that is revoked but has not expired is NEVER dropped (review
+/// finding M1): dropping it together with its revocation would let a stale copy
+/// of the certificate, merged back in, make it usable for sealing again. An
+/// expired subkey that comes back through a stale certificate is still expired
+/// (its own binding signature carries the expiry and time only moves forward),
+/// so dropping it is safe. If the certificate still exceeds
+/// [`MAX_CERT_LEN`] the result is [`ContactError::TooLarge`].
 pub(crate) fn normalize(cert: Cert, now_ms: i64) -> Result<Cert, ContactError> {
     let p = policy();
     let cert = sanitize(cert)?;
@@ -307,10 +344,7 @@ pub(crate) fn normalize(cert: Cert, now_ms: i64) -> Result<Cert, ContactError> {
                 .map_err(|_| ContactError::NotValid)?;
             vc.keys()
                 .subkeys()
-                .filter(|ka| {
-                    matches!(ka.revocation_status(), RevocationStatus::Revoked(_))
-                        || ka.alive().is_err()
-                })
+                .filter(|ka| ka.key_expiration_time().is_some_and(|e| e <= t))
                 .min_by_key(|ka| ka.key().creation_time())
                 .map(|ka| ka.key().fingerprint())
         };
@@ -450,9 +484,11 @@ impl Default for BuildOpts {
     }
 }
 
-/// Padding packet body length so that header + body == `want` bytes.
-fn padding_body_for_total(want: u64) -> u64 {
-    // new-format length encoding: 1 tag byte + 1 (<192), 2 (<8384) or 5 length bytes
+/// Padding packet body length so that header + body == `want` bytes, or None
+/// when no body length gives exactly that total (new-format length encoding:
+/// 1 tag byte + 1 length byte for bodies < 192, 2 for < 8384, else 5; so the
+/// totals 194 and 8387 to 8389 cannot be hit).
+fn padding_body_for_total(want: u64) -> Option<u64> {
     for h in [2u64, 3, 6] {
         if want < h {
             continue;
@@ -464,20 +500,31 @@ fn padding_body_for_total(want: u64) -> u64 {
             _ => body >= 8384,
         };
         if ok {
-            return body;
+            return Some(body);
         }
     }
-    0
+    None
 }
 
 /// Total size of the inner packet sequence after padding: the smallest power of
-/// two >= max(`MIN_PAD_BUCKET`, n + 2).
-pub(crate) fn padded_total(n: u64) -> u64 {
+/// two >= max(`MIN_PAD_BUCKET`, n + 2) whose padding packet can be encoded
+/// exactly (review finding L4: for a few deficits no padding packet has exactly
+/// that size; those messages move to the next class instead of leaving theirs).
+pub fn padded_total(n: u64) -> u64 {
+    padded_total_with_floor(n, 0)
+}
+
+/// [`padded_total`] for an inner sequence of `n` bytes that must not land in a
+/// smaller class than one of `n + floor` bytes would (acks are padded as if
+/// they carried the payload of the smallest ordinary message; review finding M3).
+pub fn padded_total_with_floor(n: u64, floor: u64) -> u64 {
     let mut t = MIN_PAD_BUCKET;
-    while t < n + 2 {
+    loop {
+        if t >= n + floor + 2 && padding_body_for_total(t - n).is_some() {
+            return t;
+        }
         t *= 2;
     }
-    t
 }
 
 /// Build one OpenPGP message: PKESK v6 (anonymous) to every live encryption
@@ -491,6 +538,7 @@ pub(crate) fn seal_message(
     payload: &[u8],
     now_ms: i64,
     opts: &BuildOpts,
+    pad_floor: u64,
 ) -> Result<Vec<u8>, SealError> {
     let live = live_encryption_subkeys(recipient_cert, now_ms)?;
     let p = policy();
@@ -519,8 +567,8 @@ pub(crate) fn seal_message(
         let message = if opts.pad {
             Padder::new(message)
                 .with_policy(|n: u64| {
-                    let total = padded_total(n);
-                    n + padding_body_for_total(total - n)
+                    let total = padded_total_with_floor(n, pad_floor);
+                    n + padding_body_for_total(total - n).unwrap_or(0)
                 })
                 .build()
                 .map_err(c)?
@@ -561,6 +609,8 @@ pub(crate) struct Opened {
 
 #[derive(Default)]
 struct State {
+    /// The session key the frame was decrypted with (for the inner packet check).
+    session: Option<(Option<SymmetricAlgorithm>, SessionKey)>,
     reject: Option<OpenError>,
     signer: Option<Address>,
     issuers: Vec<Address>,
@@ -643,12 +693,8 @@ impl VerificationHelper for Helper<'_> {
                 if aead_algo.is_none() {
                     return Err(self.reject(OpenError::NotAead));
                 }
-                if !matches!(
-                    sym_algo,
-                    SymmetricAlgorithm::AES128
-                        | SymmetricAlgorithm::AES192
-                        | SymmetricAlgorithm::AES256
-                ) {
+                // exactly what AgentNet sends (ADR 0004; rPGP produces the same set)
+                if sym_algo != SymmetricAlgorithm::AES256 || aead_algo != Some(AEADAlgorithm::OCB) {
                     return Err(self.reject(OpenError::UnsupportedCipher));
                 }
             }
@@ -705,6 +751,18 @@ impl VerificationHelper for Helper<'_> {
                     Err(self.reject(OpenError::UnknownSender))
                 }
             }
+            // A signature made after the verification time (a sender whose clock
+            // is ahead by more than the permitted skew) is "from the future",
+            // which the engine defers and re-evaluates, not a bad signature
+            // (review finding L1).
+            Err(VerificationError::BadSignature { error, .. })
+                if matches!(
+                    error.downcast_ref::<openpgp::Error>(),
+                    Some(openpgp::Error::NotYetLive(_))
+                ) =>
+            {
+                Err(self.reject(OpenError::FromFuture))
+            }
             Err(_) => Err(self.reject(OpenError::BadSignature)),
         }
     }
@@ -731,6 +789,7 @@ impl DecryptionHelper for Helper<'_> {
             for pair in self.me.iter_mut() {
                 if let Some((algo, sk)) = pkesk.decrypt(pair, sym_algo) {
                     if decrypt(algo, &sk) {
+                        self.st.borrow_mut().session = Some((algo, sk));
                         return Ok(None);
                     }
                 }
@@ -738,6 +797,114 @@ impl DecryptionHelper for Helper<'_> {
         }
         Err(self.reject(OpenError::NotForUs))
     }
+}
+
+// ---------------------------------------------------- canonical frame grammar
+
+/// The outer packet sequence of a frame, checked at packet level BEFORE any
+/// decryption (review finding L2): binary (no ASCII armor), then PKESK v6
+/// (1 to [`MAX_PKESKS`]), then exactly one SEIPD v2 (AES-256, OCB), and nothing
+/// before, between or after (no Marker, no outer Padding, no trailing data).
+/// Sequoia's parser does the parsing; this only inspects the packet tags.
+fn check_outer(frame: &[u8]) -> Result<(), OpenError> {
+    let mut ppr = PacketParserBuilder::from_bytes(frame)
+        .map_err(|_| OpenError::Malformed)?
+        .dearmor(Dearmor::Disabled)
+        .build()
+        .map_err(|_| OpenError::Malformed)?;
+    let mut pkesks = 0usize;
+    let mut seipd = false;
+    while let PacketParserResult::Some(pp) = ppr {
+        if seipd {
+            // anything after the encrypted data
+            return Err(OpenError::BadStructure);
+        }
+        match &pp.packet {
+            Packet::PKESK(k) => {
+                pkesks += 1;
+                if pkesks > MAX_PKESKS {
+                    return Err(OpenError::Malformed);
+                }
+                if !matches!(k, PKESK::V6(_)) {
+                    return Err(OpenError::PkeskNotV6);
+                }
+            }
+            Packet::SKESK(_) => return Err(OpenError::SkeskPresent),
+            Packet::SEIP(SEIP::V2(s)) => {
+                if s.symmetric_algo() != SymmetricAlgorithm::AES256
+                    || s.aead() != AEADAlgorithm::OCB
+                {
+                    return Err(OpenError::UnsupportedCipher);
+                }
+                seipd = true;
+            }
+            Packet::SEIP(_) => return Err(OpenError::NotAead),
+            Packet::CompressedData(_) => return Err(OpenError::Compressed),
+            _ => return Err(OpenError::BadStructure),
+        }
+        // `next` does not recurse into containers
+        ppr = pp.next().map_err(|_| OpenError::Malformed)?.1;
+    }
+    if !seipd || pkesks == 0 {
+        return Err(OpenError::BadStructure);
+    }
+    Ok(())
+}
+
+/// The packet sequence INSIDE the encryption, checked at packet level after
+/// the session key is known: one-pass signature, Literal Data, Signature and an
+/// optional Padding, exactly (no Marker, no second signature, no compression).
+fn check_inner(
+    frame: &[u8],
+    session: &Option<(Option<SymmetricAlgorithm>, SessionKey)>,
+) -> Result<(), OpenError> {
+    let Some((algo, sk)) = session else {
+        return Err(OpenError::Malformed);
+    };
+    let mut ppr = PacketParserBuilder::from_bytes(frame)
+        .map_err(|_| OpenError::Malformed)?
+        .dearmor(Dearmor::Disabled)
+        .build()
+        .map_err(|_| OpenError::Malformed)?;
+    let mut inner: Vec<Tag> = Vec::new();
+    while let PacketParserResult::Some(mut pp) = ppr {
+        if matches!(pp.packet, Packet::SEIP(_)) {
+            pp.decrypt(*algo, sk).map_err(|_| OpenError::Malformed)?;
+        } else if pp.recursion_depth() >= 1 {
+            let tag = pp.packet.tag();
+            if tag == Tag::CompressedData {
+                return Err(OpenError::Compressed);
+            }
+            inner.push(tag);
+        }
+        ppr = pp.recurse().map_err(|_| OpenError::Malformed)?.1;
+    }
+    match inner.as_slice() {
+        [Tag::OnePassSig, Tag::Literal, Tag::Signature]
+        | [Tag::OnePassSig, Tag::Literal, Tag::Signature, Tag::Padding] => Ok(()),
+        _ => Err(OpenError::BadStructure),
+    }
+}
+
+/// A signed (not encrypted) message must be binary and exactly one-pass
+/// signature, Literal Data, Signature (no armor, no cleartext signature
+/// framework, no prefix-signature form).
+fn signed_message_is_canonical(msg: &[u8]) -> bool {
+    let Ok(builder) = PacketParserBuilder::from_bytes(msg) else {
+        return false;
+    };
+    let Ok(mut ppr) = builder.dearmor(Dearmor::Disabled).build() else {
+        return false;
+    };
+    let mut tags: Vec<Tag> = Vec::new();
+    while let PacketParserResult::Some(pp) = ppr {
+        tags.push(pp.packet.tag());
+        match pp.next() {
+            Ok((_, next)) => ppr = next,
+            Err(_) => return false,
+        }
+    }
+    tags == [Tag::OnePassSig, Tag::Literal, Tag::Signature]
 }
 
 /// Decrypt `frame` with `me` and verify the signature. `pinned` returns the
@@ -756,6 +923,7 @@ pub(crate) fn open_message(
     extra: Option<&Cert>,
     allow_unverified: bool,
 ) -> Result<Opened, OpenError> {
+    check_outer(frame)?;
     let p = policy();
     let state = Rc::new(RefCell::new(State::default()));
     let mut me = me;
@@ -787,6 +955,7 @@ pub(crate) fn open_message(
     if let Some(e) = s.reject {
         return Err(e);
     }
+    check_inner(frame, &s.session)?;
     Ok(Opened {
         plaintext,
         signer: s.signer,
@@ -892,6 +1061,9 @@ fn verify_signed_at(
     max: usize,
     now_ms: i64,
 ) -> Option<(Vec<u8>, Option<Address>)> {
+    if !signed_message_is_canonical(msg) {
+        return None;
+    }
     let p = policy();
     let good = Rc::new(RefCell::new(None));
     let ok = Rc::new(RefCell::new(false));

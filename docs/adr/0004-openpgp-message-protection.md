@@ -49,13 +49,15 @@ rotation and revocation, no silent downgrade, and an independent cryptographic r
 4. **Domain separation moves out of the signature.** Because an OpenPGP data signature has no application context, the AgentNet identity
    certificate must not be used for any other OpenPGP signing, and the payload carries a strict `v`/schema (a signed notation naming the protocol
    is an open option, UNTESTED).
-5. **Implementation is behind the existing `MessageProtection` trait as a new suite** (suite id 2, `crates/core/src/crypto/`, the only place a
-   crypto crate may be imported), dispatched from the frame's first byte (`0xC1`, new-format PKESK, versus `AN`). The library is a pinned
+5. **Implementation is behind the existing `MessageProtection` trait** (`crates/core/src/crypto/`, the only place a
+   crypto crate may be imported). As built there is a single scheme: no suite id and no first-byte dispatch; the hard cutover (decision 1 below)
+   removed the `AN` frame, and the receiver recognises a frame by parsing the OpenPGP packet grammar (canonical form enforced since the review of 2026-11-27,
+   `docs/protocol.md` section 5). The library is a pinned
    exact version. **Which library (rPGP + rpgpie, or Sequoia) is the repository holder's decision**: spike recommendation rPGP + rpgpie as the shipping
    candidate and Sequoia as a CI cross-check, or Sequoia if the LGPL and backend consequences (section 2.2/2.3 of the notes) are accepted. The
    wire format is identical either way.
 6. Padding policy: pad the inner packet sequence to a power of two (minimum 1024 B in practice) with a Padding packet; the relay limit
-   (153,600 B) is not reached for a 64 KiB body (131,720 B measured).
+   (153,600 B) is not reached for a 64 KiB body (131,720 B measured, also with a maximal sender certificate).
 
 Not decided here and left open (notes section 8): where `inbox_buckets` and the protocol tag live, whether TTL moves into signature subpackets,
 whether to reuse existing Ed25519 identities, the discovery-advert signing, and the `deny.toml` policy for LGPL or OpenSSL.
@@ -89,7 +91,7 @@ The owner ruled that the HPKE + Ed25519 scheme of ADR 0002 fails the "no hand-ro
    moved into signature subpackets. No notation data is used; the identity certificate is used for nothing but AgentNet.
 5. **Inbox topic.** The bucket is taken from the leading byte(s) of the v6 fingerprint (which is already a SHA-256 output); no extra hash or
    domain string.
-6. **Contact record = the certificate** (binary, base64 for transport; at most 4096 B), with local-only alias and trust level. Updates are merges.
+6. **Contact record = the certificate** (binary, base64 for transport; at most 8192 B since the review of 2026-11-27, `docs/protocol.md` section 3), with local-only alias and trust level. Updates are merges.
    Rotation is a new encryption subkey with expiry; revocation is a standard subkey or key revocation signature; a revoked identity is distributed
    as the merged certificate.
 7. **Discovery adverts** are OpenPGP signed messages made by the identity certificate (signed, not encrypted), with the topic inside the signed
@@ -115,7 +117,7 @@ Changed or lost relative to ADR 0002:
   must evaluate.
 * `key_epoch` ordering and "conflicting record" rules disappear; revocations accumulate on merge, but first contact with a stale certificate stays
   a trust-bootstrap problem (as with the old contact record).
-* Fixed overhead is about 420 B per message plus padding (smallest padded message 1173 B versus 564 B today); AEAD adds 16 B per 4 KiB chunk.
+* Fixed overhead is about 420 B per message plus padding (smallest padded message 2,197 B with the embedded 419 B sender certificate as built, versus 564 B for ADR 0002; measured sizes in `docs/protocol.md` section 5); AEAD adds 16 B per 4 KiB chunk.
 * Receiver-side checks that the libraries do not do (Intended Recipient required; rPGP does not evaluate it at all) are application code and
   security-critical. Sequoia's low-level key iteration does not see a revoked primary key: sender code must check certificate validity (found and fixed
   in the spike).

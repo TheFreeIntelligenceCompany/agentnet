@@ -40,6 +40,7 @@ pub use contact::{ContactRecord, VerifiedContact};
 pub use envelope::{Envelope, OpenLimits, OpenedEnvelope, SenderAuth};
 pub use identity::Identity;
 pub use protection::{
-    default_protection, MessageProtection, NoSenders, OpenPgpProtection, SenderDirectory,
+    default_protection, frame_digest, MessageProtection, NoSenders, OpenPgpProtection,
+    SenderDirectory,
 };
 pub use revocation::{SignedRevocation, VerifiedRevocation};

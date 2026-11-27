@@ -1,11 +1,16 @@
 //! System messages and the state transitions behind them.
 //!
-//! * `contact.update`: a Trusted contact tells us its new signed contact record
-//!   after a KEM rotation; applied only if it verifies, names the authenticated
-//!   sender and has a strictly higher `key_epoch`. Pending outbox rows to that
-//!   contact are re-sealed to the new key in the same transaction.
-//! * `identity.revoked`: a self-authenticating tombstone; the named address is
-//!   marked revoked (blocked, no sends, cannot be re-added or re-trusted).
+//! * `contact.update`: a Trusted contact sends its current signed certificate
+//!   (after a KEM rotation). It is MERGED into the stored certificate (same
+//!   primary key only: new encryption subkeys, expiry updates and revocations
+//!   are accepted, nothing is replaced or dropped; a stale certificate cannot
+//!   bring back a revoked subkey). Pending outbox rows to that contact are
+//!   re-sealed to the new key in the same transaction. A primary-key revocation
+//!   inside the update is applied like `identity.revoked`.
+//! * `identity.revoked`: a self-authenticating tombstone; applied only when it
+//!   names an existing contact (strangers' tombstones are dropped and counted,
+//!   so the `revocations` table cannot be grown by third parties). The address
+//!   is marked revoked (blocked, no sends, cannot be re-added or re-trusted).
 //! * announcements at start (`contact.update` after a local rotation,
 //!   `identity.revoked` after a local revocation), hidden from the user outbox.
 //! * release of messages held by the replay guard.
@@ -49,6 +54,7 @@ impl Node {
         &self,
         frame: &InboundFrame,
         env: &Envelope,
+        digest: &[u8; 32],
     ) -> FrameOutcome {
         let now = self.now();
         let sender = env.sender.to_string();
@@ -61,12 +67,12 @@ impl Node {
                 )
                 .optional()?;
             if let Some(last) = seen {
-                let reacked = self.reack_if_due(tx, env, last, now)?;
+                let reacked = self.reack_if_due(tx, env, last, now, digest)?;
                 return Ok(SysTx::Duplicate { reacked });
             }
             tx.execute(
-                "INSERT INTO seen (sender, message_id, expires_at) VALUES (?1, ?2, ?3)",
-                params![sender, env.message_id, env.expires_at],
+                "INSERT INTO seen (sender, message_id, expires_at, frame_digest) VALUES (?1, ?2, ?3, ?4)",
+                params![sender, env.message_id, env.expires_at, digest.as_slice()],
             )?;
             guard::bump_generation(tx)?;
             let (applied, resealed, why) = self.apply_contact_update(tx, env, now)?;
@@ -91,6 +97,7 @@ impl Node {
         &self,
         frame: &InboundFrame,
         env: &Envelope,
+        digest: &[u8; 32],
     ) -> FrameOutcome {
         let now = self.now();
         let sender = env.sender.to_string();
@@ -106,13 +113,13 @@ impl Node {
                 let reacked = if Self::is_revoked(tx, &env.sender)? {
                     false
                 } else {
-                    self.reack_if_due(tx, env, last, now)?
+                    self.reack_if_due(tx, env, last, now, digest)?
                 };
                 return Ok(SysTx::Duplicate { reacked });
             }
             tx.execute(
-                "INSERT INTO seen (sender, message_id, expires_at) VALUES (?1, ?2, ?3)",
-                params![sender, env.message_id, env.expires_at],
+                "INSERT INTO seen (sender, message_id, expires_at, frame_digest) VALUES (?1, ?2, ?3, ?4)",
+                params![sender, env.message_id, env.expires_at, digest.as_slice()],
             )?;
             guard::bump_generation(tx)?;
             let (applied, failed, why) = self.apply_received_revocation(tx, env, now)?;
@@ -208,23 +215,29 @@ impl Node {
             params![env.sender.to_string(), merged.document(), now],
         )?;
         let revoked_now = merged.revocation(now).is_some();
+        if revoked_now {
+            // A primary-key revocation that arrives through a contact update takes
+            // the same path as `identity.revoked` (review finding L6): revocation
+            // row, adverts purged, pending sends to the contact failed.
+            if let Ok(rev) = VerifiedRevocation::parse_and_verify(merged.document(), now) {
+                let (_, failed) = self.apply_revocation(tx, &rev, "contact_update", now)?;
+                return Ok((true, failed, ""));
+            }
+            return Ok((true, 0, ""));
+        }
         let row = ContactRow {
             contact: merged,
             trust: stored.trust,
             alias: stored.alias,
             added_at: stored.added_at,
-            revoked: revoked_now,
+            revoked: false,
         };
-        let resealed = if revoked_now {
-            0
-        } else {
-            self.reseal_outbox(tx, &row, now)?
-        };
+        let resealed = self.reseal_outbox(tx, &row, now)?;
         Ok((true, resealed, ""))
     }
 
-    /// Apply a tombstone that arrived in an envelope. Applicable if it names
-    /// the authenticated sender or an existing contact.
+    /// Apply a tombstone that arrived in an envelope. Applicable only if it names
+    /// an existing contact.
     fn apply_received_revocation(
         &self,
         tx: &Transaction<'_>,
@@ -239,9 +252,10 @@ impl Node {
             // (local revocation is an operator action).
             return Ok((false, 0, "about_self"));
         }
-        let applicable =
-            rev.address == env.sender || self.load_contact(tx, &rev.address)?.is_some();
-        if !applicable {
+        // Only a revocation that names an existing contact is applied (review
+        // finding M2): the `revocations` table is bounded by the contact list.
+        // Out-of-band import (`import_revocation`) remains for other addresses.
+        if self.load_contact(tx, &rev.address)?.is_none() {
             return Ok((false, 0, "unrelated"));
         }
         let (newly, failed) = self.apply_revocation(tx, &rev, "received", now)?;
@@ -376,8 +390,8 @@ impl Node {
             {
                 Ok(frame) => {
                     tx.execute(
-                        "UPDATE outbox SET frame = ?2, next_attempt_at = ?3 WHERE message_id = ?1",
-                        params![message_id, frame, now],
+                        "UPDATE outbox SET frame = ?2, next_attempt_at = ?3, kem_until = ?4 WHERE message_id = ?1",
+                        params![message_id, frame, now, row.contact.kem_expires_at],
                     )?;
                     n += 1;
                 }
@@ -432,6 +446,8 @@ impl Node {
                 is_ack: false,
                 hidden: true,
                 idempotency_key: None,
+                delay_ms: 0,
+                kem_until: row.contact.kem_expires_at,
             },
             now,
         )?;

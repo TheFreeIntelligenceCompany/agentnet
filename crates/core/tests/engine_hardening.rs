@@ -435,7 +435,7 @@ async fn tombstones_delivered_in_envelopes_are_applied_only_when_relevant() {
     exchange(&a, &b).await;
     exchange(&a, &c).await;
     // a stranger (Z, no contact) forwards B's tombstone: B is a contact -> applied
-    // (self-authenticating, so any trust level may deliver it)
+    // (self-authenticating, so any non-blocked sender may deliver it)
     let tb = tombstone(&w, &b, "b stolen");
     inject(
         &w,
@@ -454,14 +454,17 @@ async fn tombstones_delivered_in_envelopes_are_applied_only_when_relevant() {
     );
     a.node.step_receive().await.unwrap();
     assert_eq!(a.metric("identity_revoked.ignored_unrelated"), 1);
-    // ... but Z announcing its own tombstone is applied (names the sender)
+    // ... and Z announcing its own tombstone is dropped too: Z is not a contact,
+    // and the revocations table must not grow from strangers (review finding M2)
     inject(
         &w,
         &a,
         &forge(&w, &z, &a, MESSAGE_TYPE_IDENTITY_REVOKED, &tz),
     );
     a.node.step_receive().await.unwrap();
-    assert_eq!(a.metric("identity_revoked.applied"), 2);
+    assert_eq!(a.metric("identity_revoked.applied"), 1);
+    assert_eq!(a.metric("identity_revoked.dropped_non_contact"), 1);
+    assert_eq!(a.n("revocations"), 1);
     // a forged body is ignored
     inject(
         &w,
@@ -779,6 +782,7 @@ async fn migration_guard_by_default_and_full_state_copy_keeps_history() {
         let _ = n
             .add_contact(AddContactRequest {
                 contact_record: a.record.clone(),
+                expected_address: Some(a.addr.clone()),
                 ..Default::default()
             })
             .await;
@@ -834,6 +838,7 @@ async fn concurrent_identity_in_two_data_dirs_is_not_prevented() {
     node2
         .add_contact(AddContactRequest {
             contact_record: a.record.clone(),
+            expected_address: Some(a.addr.clone()),
             ..Default::default()
         })
         .await

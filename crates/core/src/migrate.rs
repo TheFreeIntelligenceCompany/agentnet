@@ -4,8 +4,11 @@
 //! silently. Migration is explicit and changes the database in one transaction:
 //!
 //! * every old contact moves to `legacy_contacts` (kept as an *unverified legacy
-//!   entry*: it cannot be sent to and sends nothing until the contact's new
-//!   certificate is added with `contact add --expect <new address>`),
+//!   entry*: it is not a contact, `an1` addresses are refused as recipients, and
+//!   nothing is sent until the contact's NEW certificate is added. Nothing links
+//!   the new certificate to the legacy entry: verify the new address out of band
+//!   and add it with `contact add --expect <new address>`; without `--expect` the
+//!   contact is added untrusted (and `--trust trusted` is refused)),
 //! * every pending (`queued` or `sent`) outbox row is marked `failed` with a
 //!   reason that says to re-send, and every such user message is listed in the
 //!   report (acks and hidden system rows are failed too, silently),

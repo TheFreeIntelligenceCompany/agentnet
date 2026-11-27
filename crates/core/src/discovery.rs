@@ -77,7 +77,10 @@ fn advert_api_err(e: AdvertError) -> ApiError {
     match e {
         AdvertError::TooLarge => ApiError::new(
             ErrorCode::TooLarge,
-            "the advertisement is too large (at most 8 KiB); use fewer or shorter capabilities",
+            "the advertisement is too large (at most 8 KiB, which includes this agent's whole certificate); \
+             use fewer or shorter capabilities. A certificate grown by many revoking key rotations \
+             (above about 5 KiB) cannot be advertised at all: it shrinks only as old subkeys expire, \
+             or with a new identity",
         ),
         other => ApiError::invalid(other.to_string()),
     }
@@ -524,17 +527,22 @@ impl Node {
         } else {
             let n: i64 = tx.query_row("SELECT COUNT(*) FROM adverts", [], |r| r.get(0))?;
             if u64::try_from(n).unwrap_or(u64::MAX) >= self.config.discovery.max_records {
-                // Evict the soonest-expiring record, unless the newcomer would
-                // expire even sooner (then the newcomer is the one dropped).
-                let victim: Option<(i64, i64)> = tx
+                // Evict the soonest-expiring LIVE record, unless the newcomer
+                // would expire even sooner (then the newcomer is the one
+                // dropped). A withdrawal tombstone is never evicted before its
+                // own expiry (which is the withdrawn advert's expiry): dropping
+                // it early would let a replay of the withdrawn advert in again.
+                // With only tombstones stored, the newcomer is dropped.
+                let victim: Option<(i64, i64, bool)> = tx
                     .query_row(
-                        "SELECT rid, expires_at FROM adverts ORDER BY expires_at, rid LIMIT 1",
+                        "SELECT rid, expires_at, cap_names = '' FROM adverts
+                         ORDER BY cap_names = '', expires_at, rid LIMIT 1",
                         [],
-                        |r| Ok((r.get(0)?, r.get(1)?)),
+                        |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
                     )
                     .optional()?;
                 match victim {
-                    Some((rid, exp)) if exp <= v.expires_at => {
+                    Some((rid, exp, false)) if exp <= v.expires_at => {
                         tx.execute("DELETE FROM adverts WHERE rid = ?1", [rid])?;
                         self.metrics.inc("advert.evicted");
                     }
@@ -604,7 +612,8 @@ impl Node {
         let mut n = tx.execute("DELETE FROM adverts WHERE expires_at <= ?1", [now])?;
         n += tx.execute(
             "DELETE FROM adverts WHERE rid NOT IN
-               (SELECT rid FROM adverts ORDER BY expires_at DESC, rid DESC LIMIT ?1)",
+               (SELECT rid FROM adverts
+                ORDER BY cap_names = '' DESC, expires_at DESC, rid DESC LIMIT ?1)",
             [i64::try_from(self.config.discovery.max_records).unwrap_or(i64::MAX)],
         )?;
         Ok(n)
