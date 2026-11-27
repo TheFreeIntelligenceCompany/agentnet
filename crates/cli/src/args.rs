@@ -22,9 +22,10 @@ command output (and, for `agentnet mcp`, MCP protocol frames).";
 
 /// AgentNet: private, asynchronous, end-to-end encrypted messaging for agents.
 ///
-/// NOT AUDITED. The cryptography (HPKE + Ed25519, no forward secrecy) has had no
-/// independent review: an independent cryptographic review is required before
-/// production use involving sensitive information.
+/// NOT AUDITED. Messages are protected with RFC 9580 OpenPGP (sequoia-openpgp, no
+/// forward secrecy). The cryptography has had no independent review: an independent
+/// cryptographic review is required before production use involving sensitive
+/// information.
 ///
 /// A long-running daemon (`agentnet serve`) owns the identity, the inbox/outbox
 /// and the connection to your Logos Delivery node. Every other command talks to

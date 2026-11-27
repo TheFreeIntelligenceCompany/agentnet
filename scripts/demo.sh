@@ -37,6 +37,7 @@ PID_A=""
 PID_B=""
 STARTED_SERVICES=""   # relay compose services this script started (and will stop)
 STARTED_ALL=0
+RELAY_STEP_REACHED=0   # set once the relay step runs; before that no relay state is known
 STAGE="starting"
 OK=0
 
@@ -71,7 +72,7 @@ cleanup() {
       (cd "$RELAY_DIR" && docker-compose -f docker-compose.yml stop $STARTED_SERVICES >/dev/null 2>&1 \
         && docker-compose -f docker-compose.yml rm -f $STARTED_SERVICES >/dev/null 2>&1)
     fi
-  else
+  elif [ "$RELAY_STEP_REACHED" -eq 1 ]; then
     log "relay containers were already running before this script: left untouched"
   fi
   if [ -n "$WORK" ] && [ -d "$WORK" ]; then
@@ -152,6 +153,7 @@ log "using $("$BIN" --version) at $BIN"
 
 # ---------------------------------------------------------------- 3. relay topology
 STAGE="starting the local relay topology"
+RELAY_STEP_REACHED=1
 running_services=""
 for s in r1:an-r1 na:an-na nb:an-nb; do
   if [ "$(docker inspect -f '{{.State.Running}}' "${s#*:}" 2>/dev/null)" = true ]; then
