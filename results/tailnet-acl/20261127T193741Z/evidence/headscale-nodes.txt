@@ -1,0 +1,6 @@
+# 2026-11-27T19:56:59Z box1: cd ~/hs; ./headscale -c config.yaml nodes list -o json | jq -c ".[]|{id,name,ips:.ip_addresses,tags:.tags,online,expiry}"
+{"id":1,"name":"acl-r","ips":["<TS_IP_R>","<TS_IP6_R>"],"tags":["tag:agentnet-relay"],"online":true,"expiry":null}
+{"id":2,"name":"acl-c1","ips":["<TS_IP_C1>","<TS_IP6_C1>"],"tags":["tag:agentnet-client"],"online":true,"expiry":null}
+{"id":3,"name":"acl-c2","ips":["<TS_IP_C2>","<TS_IP6_C2>"],"tags":["tag:agentnet-guest"],"online":true,"expiry":null}
+[rc=0]
+

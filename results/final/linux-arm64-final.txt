@@ -1,6 +1,1583 @@
+4b08e58 (source tree of the final code; later commits add evidence files only)
 aarch64
 rustc 1.89.0 (29483883e 2025-08-04)
 OpenSSL 3.0.22 25 Aug 2026 (Library: OpenSSL 3.0.22 25 Aug 2026)
-error: could not find `Cargo.toml` in `/src` or any parent directory
-error: could not find `Cargo.toml` in `/src` or any parent directory
-finished exit=101
+Cargo.toml
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded darling_macro v0.24.1
+  Downloaded secrecy v0.10.3
+  Downloaded thread_local v1.1.10
+  Downloaded inout v0.1.4
+  Downloaded new_debug_unreachable v1.0.6
+  Downloaded httpdate v1.0.3
+  Downloaded i18n-embed-impl v0.8.4
+  Downloaded tower-service v0.3.3
+  Downloaded tracing-log v0.2.0
+  Downloaded tracing-core v0.1.36
+  Downloaded xxhash-rust v0.8.21
+  Downloaded yoke v0.8.4
+  Downloaded icu_properties v2.4.0
+  Downloaded want v0.3.2
+  Downloaded writeable v0.6.4
+  Downloaded version_check v0.9.5
+  Downloaded toml_edit v0.25.21+spec-1.1.0
+  Downloaded indexmap v2.14.2
+  Downloaded tower v0.5.3
+  Downloaded nix v0.31.4
+  Downloaded tokio-util v0.7.20
+  Downloaded tower-http v0.6.11
+  Downloaded x25519-dalek v2.0.1
+  Downloaded tracing-subscriber v0.3.23
+  Downloaded zerocopy v0.8.65
+  Downloaded libsqlite3-sys v0.40.0
+  Downloaded lalrpop v0.23.2
+  Downloaded ossl v1.5.5
+  Downloaded itertools v0.15.0
+  Downloaded libc v0.2.191
+  Downloaded rmcp v3.11.0
+  Downloaded icu_normalizer v2.4.0
+  Downloaded icu_properties_data v2.4.0
+  Downloaded sha1collisiondetection v0.3.4
+  Downloaded regex-automata v0.4.19
+  Downloaded tracing v0.1.44
+  Downloaded futures-util v0.3.34
+  Downloaded openssl-sys v0.9.118
+  Downloaded uuid v1.29.3
+  Downloaded unicode-normalization v0.1.26
+  Downloaded rust-embed v8.14.0
+  Downloaded itertools v0.13.0
+  Downloaded typenum v1.20.1
+  Downloaded sha3 v0.10.9
+  Downloaded url v2.5.9
+  Downloaded winnow v1.0.5
+  Downloaded webpki-roots v1.0.12
+  Downloaded vcpkg v0.2.15
+  Downloaded winnow v0.7.15
+  Downloaded unicode-width v0.2.3
+  Downloaded unic-langid-impl v0.9.6
+  Downloaded idna v1.1.0
+  Downloaded linux-raw-sys v0.12.1
+  Downloaded zerovec v0.11.9
+  Downloaded zerotrie v0.2.5
+  Downloaded link-section v0.19.4
+  Downloaded petgraph v0.8.3
+  Downloaded rustix v1.1.6
+  Downloaded untrusted v0.9.0
+  Downloaded unicode-ident v1.0.27
+  Downloaded pastey v0.2.3
+  Downloaded walkdir v2.5.1
+  Downloaded utf_types v1.0.0
+  Downloaded tokio v1.54.1
+  Downloaded utf8_iter v1.1.0
+  Downloaded universal-hash v0.5.1
+  Downloaded unicode-xid v0.2.6
+  Downloaded unicode-general-category v1.1.0
+  Downloaded unicase v2.10.0
+  Downloaded unic-langid v0.9.6
+  Downloaded type-map v0.5.1
+  Downloaded try-lock v0.2.5
+  Downloaded password-hash v0.5.0
+  Downloaded ring v0.17.14
+  Downloaded parking_lot_core v0.9.12
+  Downloaded ipnet v2.12.2
+  Downloaded intl-memoizer v0.5.3
+  Downloaded icu_provider v2.4.0
+  Downloaded hyper v1.13.0
+  Downloaded hkdf v0.12.4
+  Downloaded rustls v0.23.46
+  Downloaded regex-syntax v0.8.12
+  Downloaded crypto-bigint v0.5.5
+  Downloaded utf8parse v0.2.2
+  Downloaded percent-encoding v2.3.2
+  Downloaded pbkdf2 v0.12.2
+  Downloaded hpke v0.12.0
+  Downloaded parking_lot v0.12.5
+  Downloaded p256 v0.13.2
+  Downloaded openssl-probe v0.2.2
+  Downloaded opaque-debug v0.3.1
+  Downloaded once_cell v1.21.4
+  Downloaded is_terminal_polyfill v1.70.2
+  Downloaded io_tee v0.1.1
+  Downloaded intl_pluralrules v7.0.2
+  Downloaded ident_case v1.0.1
+  Downloaded hashbrown v0.17.2
+  Downloaded generic-array v0.14.7
+  Downloaded futures-task v0.3.34
+  Downloaded futures-sink v0.3.34
+  Downloaded futures-macro v0.3.34
+  Downloaded futures-io v0.3.34
+  Downloaded zmij v1.0.23
+  Downloaded zerovec-derive v0.11.7
+  Downloaded zeroize_derive v1.5.0
+  Downloaded zeroize v1.9.2
+  Downloaded zerofrom-derive v0.1.8
+  Downloaded zerofrom v0.1.8
+  Downloaded yoke-derive v0.8.4
+  Downloaded litemap v0.8.3
+  Downloaded linktime-proc-macro v0.2.3
+  Downloaded libloading v0.8.9
+  Downloaded lalrpop-util v0.23.2
+  Downloaded kem v0.3.0-pre.0
+  Downloaded keccak v0.2.2
+  Downloaded keccak v0.1.6
+  Downloaded itoa v1.0.19
+  Downloaded aws-lc-sys v0.47.0
+  Downloaded hyper-util v0.1.21
+  Downloaded hashbrown v0.15.5
+  Downloaded lazy_static v1.5.1
+  Downloaded jobserver v0.1.35
+  Downloaded syn v3.0.10
+  Downloaded icu_collections v2.4.0
+  Downloaded http v1.5.0
+  Downloaded syn v2.0.119
+  Downloaded der v0.7.10
+  Downloaded clap_builder v4.6.10
+  Downloaded chacha20poly1305 v0.10.1
+  Downloaded cc v1.11.3
+  Downloaded bytes v1.12.2
+  Downloaded arc-swap v1.9.5
+  Downloaded toml v0.9.12+spec-1.1.0
+  Downloaded icu_normalizer_data v2.4.0
+  Downloaded icu_locale_core v2.4.0
+  Downloaded toml v0.5.11
+  Downloaded tokio-stream v0.1.19
+  Downloaded pin-project v1.2.0
+  Downloaded quinn-proto v0.11.19
+  Downloaded tracing-attributes v0.1.31
+  Downloaded toml_writer v1.2.0+spec-1.1.0
+  Downloaded toml_parser v1.1.7+spec-1.1.0
+  Downloaded toml_datetime v1.1.3+spec-1.1.0
+  Downloaded toml_datetime v0.7.5+spec-1.1.0
+  Downloaded tokio-rustls v0.26.6
+  Downloaded pin-project-lite v0.2.18
+  Downloaded pin-project-internal v1.2.0
+  Downloaded phf_shared v0.14.0
+  Downloaded hybrid-array v0.4.15
+  Downloaded tower-layer v0.3.3
+  Downloaded tokio-macros v2.7.2
+  Downloaded iana-time-zone v0.1.65
+  Downloaded i18n-embed v0.16.0
+  Downloaded httparse v1.10.1
+  Downloaded hmac v0.12.1
+  Downloaded hashlink v0.12.2
+  Downloaded glob v0.3.4
+  Downloaded getrandom v0.4.3
+  Downloaded getrandom v0.2.17
+  Downloaded nom v8.0.0
+  Downloaded nom v7.1.3
+  Downloaded mio v1.2.5
+  Downloaded sha3 v0.12.0
+  Downloaded rusqlite v0.42.0
+  Downloaded reqwest v0.13.5
+  Downloaded regex v1.13.2
+  Downloaded process-wrap v10.0.2
+  Downloaded i18n-embed-fl v0.10.1
+  Downloaded i18n-config v0.4.8
+  Downloaded hyper-rustls v0.27.10
+  Downloaded hybrid-array v0.2.3
+  Downloaded http-body-util v0.1.5
+  Downloaded http-body v1.1.0
+  Downloaded heck v0.5.0
+  Downloaded group v0.13.0
+  Downloaded ghash v0.5.1
+  Downloaded minimal-lexical v0.2.1
+  Downloaded memchr v2.8.3
+  Downloaded serde_json v1.0.154
+  Downloaded reqwest v0.12.28
+  Downloaded rand v0.10.4
+  Downloaded darling_core v0.24.1
+  Downloaded chrono v0.4.45
+  Downloaded borsh v1.8.1
+  Downloaded bindgen v0.72.1
+  Downloaded base64 v0.23.1
+  Downloaded base64 v0.22.1
+  Downloaded axum v0.8.9
+  Downloaded aws-lc-rs v1.19.0
+  Downloaded aho-corasick v1.1.5
+  Downloaded aes-gcm v0.10.3
+  Downloaded aes v0.8.4
+  Downloaded num-traits v0.2.19
+  Downloaded nu-ansi-term v0.50.3
+  Downloaded ml-kem v0.2.3
+  Downloaded mime_guess v2.0.5
+  Downloaded mime v0.3.18
+  Downloaded memsec v0.7.0
+  Downloaded matchit v0.8.4
+  Downloaded log v0.4.35
+  Downloaded lock_api v0.4.14
+  Downloaded sharded-slab v0.1.7
+  Downloaded serde v1.0.229
+  Downloaded schemars v1.2.3
+  Downloaded rustls-webpki v0.103.17
+  Downloaded rand v0.8.8
+  Downloaded quinn v0.11.12
+  Downloaded futures-channel v0.3.34
+  Downloaded futures v0.3.34
+  Downloaded fs_extra v1.3.0
+  Downloaded fluent-bundle v0.16.0
+  Downloaded elliptic-curve v0.13.8
+  Downloaded darling v0.24.1
+  Downloaded curve25519-dalek v4.1.3
+  Downloaded ctor v1.0.14
+  Downloaded const-oid v0.10.3
+  Downloaded const-oid v0.9.6
+  Downloaded clap_derive v4.6.9
+  Downloaded clap v4.6.10
+  Downloaded chacha20 v0.10.2
+  Downloaded cexpr v0.6.0
+  Downloaded buffered-reader v1.4.1
+  Downloaded borsh-derive v1.8.1
+  Downloaded blake2 v0.10.6
+  Downloaded bitflags v2.13.2
+  Downloaded bech32 v0.11.1
+  Downloaded basic-toml v0.1.10
+  Downloaded autocfg v1.5.1
+  Downloaded async-trait v0.1.92
+  Downloaded anyhow v1.0.105
+  Downloaded annotate-snippets v0.11.5
+  Downloaded allocator-api2 v0.2.21
+  Downloaded age v0.12.1
+  Downloaded matchers v0.2.0
+  Downloaded lru-slab v0.1.3
+  Downloaded tinyvec v1.13.3
+  Downloaded term v1.2.1
+  Downloaded socket2 v0.6.5
+  Downloaded smallvec v1.16.6
+  Downloaded sha2 v0.11.2
+  Downloaded serde_derive v1.0.229
+  Downloaded serde_core v1.0.229
+  Downloaded semver v1.0.28
+  Downloaded sec1 v0.7.3
+  Downloaded ryu v1.0.23
+  Downloaded rustls-platform-verifier v0.7.1
+  Downloaded rustls-pki-types v1.16.0
+  Downloaded ref-cast v1.0.27
+  Downloaded quote v1.0.47
+  Downloaded quinn-udp v0.5.16
+  Downloaded proc-macro2 v1.0.107
+  Downloaded proc-macro-error3 v3.1.1
+  Downloaded primeorder v0.13.6
+  Downloaded prettyplease v0.2.37
+  Downloaded polyval v0.6.2
+  Downloaded poly1305 v0.8.0
+  Downloaded pkg-config v0.3.34
+  Downloaded futures-executor v0.3.34
+  Downloaded foldhash v0.2.0
+  Downloaded foldhash v0.1.5
+  Downloaded fluent-syntax v0.12.0
+  Downloaded fixedbitset v0.5.9
+  Downloaded find-msvc-tools v0.1.15
+  Downloaded ff v0.13.1
+  Downloaded fallible-iterator v0.3.0
+  Downloaded ena v0.14.4
+  Downloaded either v1.19.0
+  Downloaded sequoia-openpgp v2.5.0
+  Downloaded displaydoc v0.2.7
+  Downloaded digest v0.11.3
+  Downloaded digest v0.10.7
+  Downloaded ctr v0.9.2
+  Downloaded cmake v0.1.58
+  Downloaded clang-sys v1.9.1
+  Downloaded chacha20 v0.9.1
+  Downloaded bit-vec v0.10.2
+  Downloaded bit-set v0.11.1
+  Downloaded axum-core v0.5.6
+  Downloaded argon2 v0.5.3
+  Downloaded anstyle-query v1.1.5
+  Downloaded anstyle v1.0.14
+  Downloaded age-core v0.12.0
+  Downloaded idna_adapter v1.2.2
+  Downloaded tinystr v0.8.5
+  Downloaded thiserror-impl v2.0.21
+  Downloaded thiserror-impl v1.0.69
+  Downloaded thiserror v2.0.21
+  Downloaded thiserror v1.0.69
+  Downloaded synstructure v0.14.0
+  Downloaded strsim v0.11.1
+  Downloaded string_cache v0.11.0
+  Downloaded sse-stream v0.2.6
+  Downloaded slab v0.4.12
+  Downloaded siphasher v1.0.4
+  Downloaded signal-hook-registry v1.4.8
+  Downloaded shlex v2.0.1
+  Downloaded shlex v1.3.0
+  Downloaded sha2 v0.10.9
+  Downloaded serde_spanned v1.1.3
+  Downloaded serde_derive_internals v0.30.0
+  Downloaded self_cell v1.3.0
+  Downloaded schemars_derive v1.2.3
+  Downloaded same-file v1.0.6
+  Downloaded rustversion v1.0.23
+  Downloaded rustls-native-certs v0.8.5
+  Downloaded rpassword v7.5.5
+  Downloaded rmcp-macros v3.11.0
+  Downloaded rand_pcg v0.10.3
+  Downloaded rand_core v0.10.1
+  Downloaded rand_core v0.6.4
+  Downloaded rand_chacha v0.3.1
+  Downloaded proc-macro-error-attr3 v3.1.1
+  Downloaded ppv-lite86 v0.2.21
+  Downloaded potential_utf v0.1.6
+  Downloaded futures-core v0.3.34
+  Downloaded fs4 v0.13.1
+  Downloaded form_urlencoded v1.2.3
+  Downloaded fallible-streaming-iterator v0.1.9
+  Downloaded errno v0.3.15
+  Downloaded equivalent v1.0.3
+  Downloaded dyn-clone v1.0.20
+  Downloaded data-encoding v2.11.1
+  Downloaded cookie-factory v0.3.3
+  Downloaded colorchoice v1.0.5
+  Downloaded cipher v0.4.4
+  Downloaded cfg-if v1.0.5
+  Downloaded base64ct v1.8.3
+  Downloaded anstyle-parse v1.0.0
+  Downloaded anstream v1.0.0
+  Downloaded terminal_size v0.4.4
+  Downloaded sync_wrapper v1.0.2
+  Downloaded subtle v2.6.1
+  Downloaded stable_deref_trait v1.2.1
+  Downloaded sponge-cursor v0.1.0
+  Downloaded serde_urlencoded v0.7.1
+  Downloaded scrypt v0.11.0
+  Downloaded scopeguard v1.2.0
+  Downloaded salsa20 v0.10.2
+  Downloaded rustc_version v0.4.1
+  Downloaded rustc-hash v2.1.3
+  Downloaded rust-embed-utils v8.14.0
+  Downloaded rust-embed-impl v8.14.0
+  Downloaded rtoolbox v0.0.6
+  Downloaded ref-cast-impl v1.0.27
+  Downloaded proc-macro-crate v3.5.0
+  Downloaded precomputed-hash v0.1.1
+  Downloaded fluent-langneg v0.13.1
+  Downloaded fluent v0.17.0
+  Downloaded find-crate v0.6.3
+  Downloaded dunce v1.0.5
+  Downloaded crypto-common v0.2.2
+  Downloaded crypto-common v0.1.7
+  Downloaded cpufeatures v0.3.1
+  Downloaded cpufeatures v0.2.17
+  Downloaded clap_lex v1.1.2
+  Downloaded cfg_aliases v0.2.2
+  Downloaded block-buffer v0.10.4
+  Downloaded base16ct v0.2.0
+  Downloaded atomic-waker v1.1.2
+  Downloaded ascii-canvas v4.0.0
+  Downloaded aead v0.5.2
+  Downloaded block-buffer v0.12.1
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.27
+   Compiling quote v1.0.47
+   Compiling cfg-if v1.0.5
+   Compiling libc v0.2.191
+   Compiling typenum v1.20.1
+   Compiling memchr v2.8.3
+   Compiling version_check v0.9.5
+   Compiling generic-array v0.14.7
+   Compiling subtle v2.6.1
+   Compiling stable_deref_trait v1.2.1
+   Compiling pin-project-lite v0.2.18
+   Compiling futures-core v0.3.34
+   Compiling serde_core v1.0.229
+   Compiling shlex v2.0.1
+   Compiling find-msvc-tools v0.1.15
+   Compiling cc v1.11.3
+   Compiling hybrid-array v0.4.15
+   Compiling rustc-hash v2.1.3
+   Compiling syn v3.0.10
+   Compiling syn v2.0.119
+   Compiling getrandom v0.2.17
+   Compiling smallvec v1.16.6
+   Compiling bytes v1.12.2
+   Compiling rand_core v0.6.4
+   Compiling crypto-common v0.2.2
+   Compiling block-buffer v0.12.1
+   Compiling futures-sink v0.3.34
+   Compiling log v0.4.35
+   Compiling serde v1.0.229
+   Compiling const-oid v0.10.3
+   Compiling itoa v1.0.19
+   Compiling digest v0.11.3
+   Compiling futures-channel v0.3.34
+   Compiling futures-task v0.3.34
+   Compiling futures-io v0.3.34
+   Compiling slab v0.4.12
+   Compiling cpufeatures v0.3.1
+   Compiling errno v0.3.15
+   Compiling mio v1.2.5
+   Compiling socket2 v0.6.5
+   Compiling synstructure v0.14.0
+   Compiling signal-hook-registry v1.4.8
+   Compiling same-file v1.0.6
+   Compiling thiserror v2.0.21
+   Compiling parking_lot_core v0.9.12
+   Compiling walkdir v2.5.1
+   Compiling cpufeatures v0.2.17
+   Compiling zeroize_derive v1.5.0
+   Compiling glob v0.3.4
+   Compiling displaydoc v0.2.7
+   Compiling zerofrom-derive v0.1.8
+   Compiling yoke-derive v0.8.4
+   Compiling serde_derive v1.0.229
+   Compiling zerovec-derive v0.11.7
+   Compiling futures-macro v0.3.34
+   Compiling zeroize v1.9.2
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling digest v0.10.7
+   Compiling tokio-macros v2.7.2
+   Compiling tinystr v0.8.5
+   Compiling thiserror-impl v2.0.21
+   Compiling once_cell v1.21.4
+   Compiling zerofrom v0.1.8
+   Compiling regex-syntax v0.8.12
+   Compiling yoke v0.8.4
+   Compiling zerovec v0.11.9
+   Compiling either v1.19.0
+   Compiling anstyle v1.0.14
+   Compiling regex-automata v0.4.19
+   Compiling clang-sys v1.9.1
+   Compiling futures-util v0.3.34
+   Compiling unic-langid-impl v0.9.6
+   Compiling http v1.5.0
+   Compiling scopeguard v1.2.0
+   Compiling bitflags v2.13.2
+   Compiling pkg-config v0.3.34
+   Compiling prettyplease v0.2.37
+   Compiling http-body v1.1.0
+   Compiling lock_api v0.4.14
+   Compiling unic-langid v0.9.6
+   Compiling regex v1.13.2
+   Compiling inout v0.1.4
+   Compiling litemap v0.8.3
+   Compiling utf_types v1.0.0
+   Compiling minimal-lexical v0.2.1
+   Compiling tokio v1.54.1
+   Compiling writeable v0.6.4
+   Compiling vcpkg v0.2.15
+   Compiling nom v7.1.3
+   Compiling utf8_iter v1.1.0
+   Compiling icu_locale_core v2.4.0
+   Compiling cipher v0.4.4
+   Compiling potential_utf v0.1.6
+   Compiling zerotrie v0.2.5
+   Compiling tracing-core v0.1.36
+   Compiling type-map v0.5.1
+   Compiling libloading v0.8.9
+   Compiling bindgen v0.72.1
+   Compiling icu_normalizer_data v2.4.0
+   Compiling mime v0.3.18
+   Compiling unicase v2.10.0
+   Compiling icu_properties_data v2.4.0
+   Compiling percent-encoding v2.3.2
+   Compiling unicode-width v0.2.3
+   Compiling annotate-snippets v0.11.5
+   Compiling mime_guess v2.0.5
+   Compiling icu_provider v2.4.0
+   Compiling cexpr v0.6.0
+   Compiling icu_collections v2.4.0
+   Compiling itertools v0.13.0
+   Compiling hmac v0.12.1
+   Compiling tracing-attributes v0.1.31
+   Compiling ring v0.17.14
+   Compiling strsim v0.11.1
+   Compiling tower-service v0.3.3
+   Compiling equivalent v1.0.3
+   Compiling shlex v1.3.0
+   Compiling parking_lot v0.12.5
+   Compiling fluent-syntax v0.12.0
+   Compiling universal-hash v0.5.1
+   Compiling sha2 v0.11.2
+   Compiling opaque-debug v0.3.1
+   Compiling const-oid v0.9.6
+   Compiling zmij v1.0.23
+   Compiling httparse v1.10.1
+   Compiling thiserror v1.0.69
+   Compiling self_cell v1.3.0
+   Compiling der v0.7.10
+   Compiling rust-embed-utils v8.14.0
+   Compiling icu_properties v2.4.0
+   Compiling icu_normalizer v2.4.0
+   Compiling rustls-pki-types v1.16.0
+   Compiling thiserror-impl v1.0.69
+   Compiling ff v0.13.1
+   Compiling try-lock v0.2.5
+   Compiling untrusted v0.9.0
+   Compiling base16ct v0.2.0
+   Compiling rustversion v1.0.23
+   Compiling zerocopy v0.8.65
+   Compiling sec1 v0.7.3
+   Compiling want v0.3.2
+   Compiling group v0.13.0
+   Compiling idna_adapter v1.2.2
+   Compiling rust-embed-impl v8.14.0
+   Compiling tracing v0.1.44
+   Compiling openssl-sys v0.9.118
+   Compiling hkdf v0.12.4
+   Compiling futures-executor v0.3.34
+   Compiling http-body-util v0.1.5
+   Compiling toml v0.5.11
+   Compiling basic-toml v0.1.10
+   Compiling crypto-bigint v0.5.5
+   Compiling sync_wrapper v1.0.2
+   Compiling aho-corasick v1.1.5
+   Compiling rustls v0.23.46
+   Compiling tower-layer v0.3.3
+   Compiling lalrpop-util v0.23.2
+   Compiling base64 v0.23.1
+   Compiling semver v1.0.28
+   Compiling atomic-waker v1.1.2
+   Compiling foldhash v0.2.0
+   Compiling hashbrown v0.17.2
+   Compiling httpdate v1.0.3
+   Compiling foldhash v0.1.5
+   Compiling siphasher v1.0.4
+   Compiling hashbrown v0.15.5
+   Compiling phf_shared v0.14.0
+   Compiling indexmap v2.14.2
+   Compiling hyper v1.13.0
+   Compiling rustc_version v0.4.1
+   Compiling rustls-webpki v0.103.17
+   Compiling i18n-config v0.4.8
+   Compiling elliptic-curve v0.13.8
+   Compiling find-crate v0.6.3
+   Compiling futures v0.3.34
+   Compiling idna v1.1.0
+   Compiling polyval v0.6.2
+   Compiling form_urlencoded v1.2.3
+   Compiling intl-memoizer v0.5.3
+   Compiling intl_pluralrules v7.0.2
+   Compiling fluent-langneg v0.13.1
+   Compiling sha2 v0.10.9
+   Compiling aead v0.5.2
+   Compiling keccak v0.2.2
+   Compiling base64 v0.22.1
+   Compiling getrandom v0.4.3
+   Compiling fixedbitset v0.5.9
+   Compiling term v1.2.1
+   Compiling rand_core v0.10.1
+   Compiling bit-vec v0.10.2
+   Compiling autocfg v1.5.1
+   Compiling new_debug_unreachable v1.0.6
+   Compiling precomputed-hash v0.1.1
+   Compiling sponge-cursor v0.1.0
+   Compiling serde_json v1.0.154
+   Compiling ipnet v2.12.2
+   Compiling sha3 v0.12.0
+   Compiling hyper-util v0.1.21
+   Compiling num-traits v0.2.19
+   Compiling string_cache v0.11.0
+   Compiling ppv-lite86 v0.2.21
+   Compiling bit-set v0.11.1
+   Compiling ascii-canvas v4.0.0
+   Compiling petgraph v0.8.3
+   Compiling arc-swap v1.9.5
+   Compiling fluent-bundle v0.16.0
+   Compiling ghash v0.5.1
+   Compiling i18n-embed-impl v0.8.4
+   Compiling primeorder v0.13.6
+   Compiling curve25519-dalek v4.1.3
+   Compiling tower v0.5.3
+   Compiling poly1305 v0.8.0
+   Compiling aes v0.8.4
+   Compiling ctr v0.9.2
+   Compiling chacha20 v0.9.1
+   Compiling itertools v0.15.0
+   Compiling ena v0.14.4
+   Compiling rustix v1.1.6
+   Compiling unicode-xid v0.2.6
+   Compiling ident_case v1.0.1
+   Compiling cfg_aliases v0.2.2
+   Compiling nix v0.31.4
+   Compiling tokio-rustls v0.26.6
+   Compiling lalrpop v0.23.2
+   Compiling darling_core v0.24.1
+   Compiling chacha20poly1305 v0.10.1
+   Compiling aes-gcm v0.10.3
+   Compiling p256 v0.13.2
+   Compiling fluent v0.17.0
+   Compiling rand_chacha v0.3.1
+   Compiling url v2.5.9
+   Compiling rust-embed v8.14.0
+   Compiling webpki-roots v1.0.12
+   Compiling ossl v1.5.5
+   Compiling libsqlite3-sys v0.40.0
+   Compiling keccak v0.1.6
+   Compiling proc-macro-error-attr3 v3.1.1
+   Compiling anyhow v1.0.105
+   Compiling dyn-clone v1.0.20
+   Compiling sha1collisiondetection v0.3.4
+   Compiling base64ct v1.8.3
+   Compiling ryu v1.0.23
+   Compiling ref-cast v1.0.27
+   Compiling lazy_static v1.5.1
+   Compiling linux-raw-sys v0.12.1
+   Compiling serde_urlencoded v0.7.1
+   Compiling password-hash v0.5.0
+   Compiling proc-macro-error3 v3.1.1
+   Compiling sequoia-openpgp v2.5.0
+   Compiling sha3 v0.10.9
+   Compiling darling_macro v0.24.1
+   Compiling hyper-rustls v0.27.10
+   Compiling i18n-embed v0.16.0
+   Compiling tower-http v0.6.11
+   Compiling rand v0.8.8
+   Compiling hpke v0.12.0
+   Compiling cookie-factory v0.3.3
+   Compiling pbkdf2 v0.12.2
+   Compiling salsa20 v0.10.2
+   Compiling blake2 v0.10.6
+   Compiling kem v0.3.0-pre.0
+   Compiling secrecy v0.10.3
+   Compiling pin-project-internal v1.2.0
+   Compiling async-trait v0.1.92
+   Compiling ref-cast-impl v1.0.27
+   Compiling serde_derive_internals v0.30.0
+   Compiling hybrid-array v0.2.3
+   Compiling nom v8.0.0
+   Compiling linktime-proc-macro v0.2.3
+   Compiling unicode-general-category v1.1.0
+   Compiling bech32 v0.11.1
+   Compiling link-section v0.19.4
+   Compiling io_tee v0.1.1
+   Compiling age-core v0.12.0
+   Compiling pin-project v1.2.0
+   Compiling ml-kem v0.2.3
+   Compiling schemars_derive v1.2.3
+   Compiling darling v0.24.1
+   Compiling ctor v1.0.14
+   Compiling argon2 v0.5.3
+   Compiling scrypt v0.11.0
+   Compiling x25519-dalek v2.0.1
+   Compiling chrono v0.4.45
+   Compiling reqwest v0.12.28
+   Compiling i18n-embed-fl v0.10.1
+   Compiling uuid v1.29.3
+   Compiling chacha20 v0.10.2
+   Compiling hashlink v0.12.2
+   Compiling tokio-util v0.7.20
+   Compiling buffered-reader v1.4.1
+   Compiling xxhash-rust v0.8.21
+   Compiling fallible-iterator v0.3.0
+   Compiling rmcp v3.11.0
+   Compiling memsec v0.7.0
+   Compiling tinyvec v1.13.3
+   Compiling fallible-streaming-iterator v0.1.9
+   Compiling rusqlite v0.42.0
+   Compiling unicode-normalization v0.1.26
+   Compiling process-wrap v10.0.2
+   Compiling rand v0.10.4
+   Compiling schemars v1.2.3
+   Compiling rmcp-macros v3.11.0
+   Compiling agentnet-transport v0.1.0 (/src/crates/transport)
+   Compiling axum-core v0.5.6
+   Compiling sse-stream v0.2.6
+   Compiling tokio-stream v0.1.19
+   Compiling pastey v0.2.3
+   Compiling utf8parse v0.2.2
+   Compiling matchit v0.8.4
+   Compiling data-encoding v2.11.1
+   Compiling winnow v1.0.5
+   Compiling toml_parser v1.1.7+spec-1.1.0
+   Compiling axum v0.8.9
+   Compiling anstyle-parse v1.0.0
+   Compiling toml_datetime v0.7.5+spec-1.1.0
+   Compiling serde_spanned v1.1.3
+   Compiling anstyle-query v1.1.5
+   Compiling is_terminal_polyfill v1.70.2
+   Compiling winnow v0.7.15
+   Compiling age v0.12.1
+   Compiling toml_writer v1.2.0+spec-1.1.0
+   Compiling colorchoice v1.0.5
+   Compiling anstream v1.0.0
+   Compiling toml v0.9.12+spec-1.1.0
+   Compiling terminal_size v0.4.4
+   Compiling fs4 v0.13.1
+   Compiling clap_lex v1.1.2
+   Compiling heck v0.5.0
+   Compiling clap_builder v4.6.10
+   Compiling clap_derive v4.6.9
+   Compiling sharded-slab v0.1.7
+   Compiling matchers v0.2.0
+   Compiling tracing-log v0.2.0
+   Compiling rtoolbox v0.0.6
+   Compiling thread_local v1.1.10
+   Compiling nu-ansi-term v0.50.3
+   Compiling rpassword v7.5.5
+   Compiling tracing-subscriber v0.3.23
+   Compiling agentnet-core v0.1.0 (/src/crates/core)
+   Compiling clap v4.6.10
+   Compiling agentnet-mcp v0.1.0 (/src/crates/mcp)
+   Compiling agentnet-daemon v0.1.0 (/src/crates/daemon)
+   Compiling agentnet-cli v0.1.0 (/src/crates/cli)
+   Compiling agentnet-acceptance v0.1.0 (/src/tests/acceptance)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 13m 36s
+BUILD_OK
+ Downloading crates ...
+  Downloaded strum v0.28.0
+  Downloaded vsimd v0.8.0
+  Downloaded num v0.4.3
+  Downloaded strum_macros v0.28.0
+  Downloaded uuid-simd v0.8.0
+  Downloaded wait-timeout v0.2.1
+  Downloaded num-complex v0.4.6
+  Downloaded ahash v0.8.14
+  Downloaded fraction v0.17.0
+  Downloaded num-bigint v0.4.8
+  Downloaded proptest v1.12.0
+  Downloaded micromap v0.3.0
+  Downloaded fnv v1.0.7
+  Downloaded jsonschema-value v0.63.1
+  Downloaded fancy-regex v0.20.2
+  Downloaded tempfile v3.27.0
+  Downloaded rand_xorshift v0.5.0
+  Downloaded core_detect v1.0.0
+  Downloaded borrow-or-share v0.2.4
+  Downloaded referencing v0.63.1
+  Downloaded quick-error v1.2.3
+  Downloaded fluent-uri v0.4.1
+  Downloaded fastrand v2.5.0
+  Downloaded bit-vec v0.8.0
+  Downloaded bit-set v0.8.0
+  Downloaded rusty-fork v0.3.1
+  Downloaded outref v0.5.2
+  Downloaded num-rational v0.4.2
+  Downloaded num-integer v0.1.47
+  Downloaded num-cmp v0.1.0
+  Downloaded jsonschema-regex v0.63.1
+  Downloaded email_address v0.2.10
+  Downloaded bytecount v0.6.9
+  Downloaded unarray v0.1.4
+  Downloaded num-iter v0.1.46
+  Downloaded jsonschema v0.63.1
+   Compiling jobserver v0.1.35
+   Compiling dunce v1.0.5
+   Compiling fs_extra v1.3.0
+   Compiling aws-lc-rs v1.19.0
+   Compiling num-traits v0.2.19
+   Compiling serde_json v1.0.154
+   Compiling rustls v0.23.46
+   Compiling cc v1.11.3
+   Compiling allocator-api2 v0.2.21
+   Compiling hashbrown v0.17.2
+   Compiling cmake v0.1.58
+   Compiling regex-automata v0.4.19
+   Compiling tokio-util v0.7.20
+   Compiling hashlink v0.12.2
+   Compiling aws-lc-sys v0.47.0
+   Compiling ring v0.17.14
+   Compiling openssl-sys v0.9.118
+   Compiling libsqlite3-sys v0.40.0
+   Compiling fastrand v2.5.0
+   Compiling tempfile v3.27.0
+   Compiling regex v1.13.2
+   Compiling lalrpop-util v0.23.2
+   Compiling openssl-probe v0.2.2
+   Compiling rustls-native-certs v0.8.5
+   Compiling chrono v0.4.45
+   Compiling indexmap v2.14.2
+   Compiling rmcp v3.11.0
+   Compiling schemars v1.2.3
+   Compiling process-wrap v10.0.2
+   Compiling wait-timeout v0.2.1
+   Compiling fnv v1.0.7
+   Compiling quick-error v1.2.3
+   Compiling bit-vec v0.10.2
+   Compiling rusty-fork v0.3.1
+   Compiling bit-set v0.11.1
+   Compiling rand_xorshift v0.5.0
+   Compiling unarray v0.1.4
+   Compiling core_detect v1.0.0
+   Compiling num-integer v0.1.47
+   Compiling proptest v1.12.0
+   Compiling matchers v0.2.0
+   Compiling tracing-subscriber v0.3.23
+   Compiling num-bigint v0.4.8
+   Compiling ahash v0.8.14
+   Compiling num-rational v0.4.2
+   Compiling num-iter v0.1.46
+   Compiling num-complex v0.4.6
+   Compiling num v0.4.3
+   Compiling jsonschema-value v0.63.1
+   Compiling borrow-or-share v0.2.4
+   Compiling bit-vec v0.8.0
+   Compiling bit-set v0.8.0
+   Compiling fluent-uri v0.4.1
+   Compiling fraction v0.17.0
+   Compiling strum_macros v0.28.0
+   Compiling vsimd v0.8.0
+   Compiling outref v0.5.2
+   Compiling num-cmp v0.1.0
+   Compiling micromap v0.3.0
+   Compiling bytecount v0.6.9
+   Compiling referencing v0.63.1
+   Compiling uuid-simd v0.8.0
+   Compiling fancy-regex v0.20.2
+   Compiling jsonschema-regex v0.63.1
+   Compiling email_address v0.2.10
+   Compiling rusqlite v0.42.0
+   Compiling strum v0.28.0
+   Compiling jsonschema v0.63.1
+   Compiling ossl v1.5.5
+   Compiling sequoia-openpgp v2.5.0
+   Compiling rustls-webpki v0.103.17
+   Compiling tokio-rustls v0.26.6
+   Compiling rustls-platform-verifier v0.7.1
+   Compiling hyper-rustls v0.27.10
+   Compiling reqwest v0.12.28
+   Compiling reqwest v0.13.5
+   Compiling agentnet-transport v0.1.0 (/src/crates/transport)
+   Compiling agentnet-core v0.1.0 (/src/crates/core)
+   Compiling agentnet-mcp v0.1.0 (/src/crates/mcp)
+   Compiling agentnet-daemon v0.1.0 (/src/crates/daemon)
+   Compiling agentnet-acceptance v0.1.0 (/src/tests/acceptance)
+   Compiling agentnet-cli v0.1.0 (/src/crates/cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 47m 26s
+     Running unittests src/main.rs (/target/debug/deps/agentnet_acceptance-a87bd1df91adf95e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (/target/debug/deps/agentnet-cdc22e477459fcec)
+
+running 17 tests
+test doctor::tests::history_sync_probe_levels ... ok
+test doctor::tests::http_date ... ok
+test doctor::tests::isolation_line_in_each_mode ... ok
+test doctor::tests::kem_expiry_levels ... ok
+test doctor::tests::not_ready_when_a_required_check_was_skipped_or_not_run ... ok
+test doctor::tests::not_ready_when_the_isolation_audit_fails ... ok
+test doctor::tests::not_ready_when_the_daemon_socket_is_unavailable ... ok
+test doctor::tests::not_ready_when_the_transport_is_not_ready ... ok
+test doctor::tests::peer_ids ... ok
+test doctor::tests::ready_in_plain_public_mode_never_claims_isolation_ok ... ok
+test doctor::tests::ready_when_every_required_check_is_ok_even_with_the_single_instance_warning ... ok
+test render::hint_tests::bare_serve_hint_gets_the_data_dir_and_other_text_is_unchanged ... ok
+test render::hint_tests::expired_key_hint_names_the_cli_command ... ok
+test render::hint_tests::shell_quoting_handles_spaces_and_single_quotes ... ok
+test render::hint_tests::unknown_recipient_becomes_the_cli_command_with_the_real_directory ... ok
+test render::tests::network_status_isolation_line_per_mode ... ok
+test render::tests::network_status_json_exposes_isolation_audited ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/cli.rs (/target/debug/deps/cli-6a38270f6fda39ac)
+
+running 29 tests
+test discovery_help_warns_that_adverts_are_public ... ok
+test doctor_always_warns_that_a_second_instance_of_the_identity_cannot_be_detected ... ok
+test doctor_exit_zero_with_the_daemon_down_but_ready_mode_fails_and_says_why ... ok
+test doctor_ready_mode_passes_for_a_running_daemon_with_a_ready_transport ... ok
+test discovery_commands_are_denied_by_default ... ok
+test doctor_ready_mode_with_a_failing_check_still_exits_7_and_json_stays_a_check_array ... ok
+test doctor_reports_problems_with_actions_and_exit_code_7 ... ok
+test contact_revoke_imports_a_tombstone_into_a_running_daemon ... ok
+test init_creates_private_files_and_refuses_to_overwrite ... ok
+test discovery_advertise_list_add_contact_and_withdraw_via_the_cli ... ok
+test init_public_relay_needs_a_peer_and_private_peers_stay_private ... ok
+test init_with_a_public_peer_fails_and_names_the_public_relay_flag ... ok
+test init_without_peers_warns_and_serve_refuses_until_configured ... ok
+test identity_revoke_writes_a_key_revocation_and_blocks_further_changes ... ok
+test init_public_relay_writes_the_audited_public_config_and_doctor_accepts_it ... ok
+test every_command_has_help_and_the_top_level_documents_exit_codes ... ok
+test missing_daemon_error_names_the_data_dir ... ok
+test mcp_without_a_daemon_starts_and_every_tool_says_unavailable ... ok
+test mcp_embedded_runs_the_daemon_in_process_and_holds_the_lock ... ok
+test relay_print_config_has_the_verified_flags_and_marks_tailscale_untested ... ok
+test printed_next_steps_keep_the_data_dir_shell_quoted ... ok
+test rotate_kem_with_revoke_previous_destroys_old_keys_and_publishes_a_new_subkey ... ok
+test rotate_kem_keeps_the_address_and_changes_the_record ... ok
+test top_level_help_says_the_cryptography_is_not_audited ... ok
+test sending_to_an_unknown_recipient_prescribes_the_cli_command ... ok
+test identity_import_starts_in_replay_guard_mode_unless_told_otherwise ... ok
+test identity_export_import_round_trip_gives_the_same_address ... ok
+test mcp_stdio_is_a_thin_client_of_a_running_daemon ... ok
+test serve_runs_rejects_a_second_instance_and_stops_cleanly_on_sigterm ... ok
+
+test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 18.60s
+
+     Running tests/relay_discovery.rs (/target/debug/deps/relay_discovery-05d2cee993c37848)
+
+running 1 test
+test signed_capability_discovery_works_over_the_private_relay ... ignored, needs the local relay topology: run with AGENTNET_RELAY_TESTS=1 -- --ignored
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/relay_e2e.rs (/target/debug/deps/relay_e2e-ff44e1fdf1a61198)
+
+running 1 test
+test two_agentnet_serve_processes_exchange_messages_over_the_private_relay ... ignored, needs the local relay topology: run with AGENTNET_RELAY_TESTS=1 -- --ignored
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/target/debug/deps/agentnet_core-fd5e2e3b554d32e0)
+
+running 12 tests
+test config::tests::defaults_are_valid_and_match_the_documented_values ... ok
+test config::tests::discovery_validation ... ok
+test config::tests::partial_toml_like_json_and_unknown_keys ... ok
+test crypto::address::tests::ordering_and_hash ... ok
+test crypto::address::tests::topic_and_all_buckets_valid ... ok
+test crypto::address::tests::trailing_bits_must_be_zero ... ok
+test cursor::tests::roundtrip_and_kind_checks ... ok
+test crypto::address::tests::roundtrip_and_serde ... ok
+test crypto::address::tests::strictness ... ok
+test store::tests::refuses_a_newer_database ... ok
+test store::tests::migrates_a_v2_database_to_v3 ... ok
+test store::tests::migrates_a_v1_database ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.25s
+
+     Running tests/architecture.rs (/target/debug/deps/architecture-d585bedab805a588)
+
+running 5 tests
+test the_reference_matcher_works ... ok
+test the_engine_goes_through_the_message_protection_trait ... ok
+test transport_mcp_daemon_and_cli_do_not_depend_on_the_cryptographic_crates ... ok
+test hmac_is_used_only_for_the_webhook_request_signature ... ok
+test only_the_crypto_module_references_the_cryptographic_crates ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.23s
+
+     Running tests/crypto.rs (/target/debug/deps/crypto-d9124f0617b9ad45)
+
+running 41 tests
+test a_certificate_dated_ahead_of_the_clock_is_accepted_only_within_the_skew ... ok
+test a_receipt_from_an_unknown_sender_cannot_be_authenticated ... ok
+test a_payload_recipient_that_is_not_me_is_rejected_after_a_valid_signature ... ok
+test a_different_signer_is_unknown_or_a_mismatch ... ok
+test a_revoked_subkey_is_never_encrypted_to ... ok
+test a_revoked_or_expired_sender_is_rejected_with_its_own_error ... ok
+test an_unsigned_message_is_rejected ... ok
+test constants_match_spec ... ok
+test an_embedded_certificate_of_another_address_is_rejected ... ok
+test a_signature_without_intended_recipient_is_rejected_even_when_forwarded ... ok
+test contact_documents_are_validated ... ok
+test a_stripped_or_forged_subkey_binding_is_refused ... ok
+test debug_output_has_no_secret_material ... ok
+test a_third_party_padded_message_is_accepted ... ok
+test frame_size_limits_are_enforced_before_any_cryptography ... ok
+test junk_in_a_certificate_is_dropped_before_anything_is_stored ... ok
+test identity_file_roundtrip_permissions_and_atomic_writes ... ok
+test measured_frame_sizes_for_the_body_limit ... ok
+test revocations_accumulate_and_are_never_dropped ... ok
+test equal_frame_length_within_a_bucket_and_steps_between ... ok
+test rotation_publishes_a_new_subkey_and_keeps_old_messages_readable_until_retire_time ... ok
+test seal_rejects_mismatches ... ok
+test sealing_to_a_certificate_with_a_revoked_primary_is_refused ... ok
+test sealing_to_an_expired_primary_is_refused ... ok
+test policy_violations_have_distinct_errors ... ok
+test secret_key_material_is_never_accepted_as_a_contact ... ok
+test sealing_to_an_expired_subkey_is_refused ... ok
+test the_generated_certificate_has_the_profile_of_adr_0004 ... ok
+test surreptitious_forwarding_is_rejected_by_the_intended_recipient ... ok
+test round_trip_all_message_types ... ok
+test arbitrary_bytes_never_panic ... ok
+test time_checks_and_exact_boundaries ... ok
+test too_large_messages_are_refused_with_a_hint ... ok
+test unicode_bodies_are_byte_exact ... ok
+test unknown_sender_is_authenticated_by_the_embedded_certificate ... ok
+test wrong_recipient_is_not_for_us ... ok
+test updates_are_merges_only_and_a_different_primary_is_refused ... ok
+test the_payload_is_strict_json ... ok
+test valid_prefix_then_garbage_never_panics ... ok
+test every_single_byte_flip_and_truncation_is_rejected_without_panic ... ok
+test encrypted_export_import ... ok
+
+test result: ok. 41 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.91s
+
+     Running tests/engine_delivery.rs (/target/debug/deps/engine_delivery-bb004d3737f16ab6)
+
+running 26 tests
+test a_to_b_message_ack_status_hints_and_event ... ok
+test crash_between_inbox_commit_and_ack_publish_ack_still_goes_out ... ok
+test contact_management ... ok
+test crash_between_send_message_and_step_send ... ok
+test expired_recipient_kem_key_is_refused_with_clear_error ... ok
+test backoff_ceiling_caps_and_is_seed_deterministic ... ok
+test crash_receiver_mid_stream_no_duplicate_processing ... ok
+test history_past_retention_is_not_recovered_and_sender_expires ... ok
+test disk_failure_inbound_not_acked_then_recovered ... ok
+test invalid_config_is_refused ... ok
+test history_unavailable_keeps_watermark_and_recovers_later ... ok
+test isolation_violation_blocks_everything_until_cleared ... ok
+test idempotency_key_semantics ... ok
+test inbox_saturation_not_acked_then_accepted_after_space_frees ... ok
+test late_ack_after_expiry_still_marks_delivered ... ok
+test opening_store_with_different_identity_is_refused ... ok
+test lost_publish_retries_with_backoff_bounds_then_delivers ... ok
+test duplicates_reordering_and_lost_ack ... ok
+test published_acks_and_reacks_are_pruned_after_retention ... ok
+test outbox_saturation_returns_unavailable ... ok
+test repeated_history_cursor_is_a_failed_pass_and_the_interval_is_requeried ... ok
+test self_send_works_through_relay_echo ... ok
+test ttl_expiry_of_outbox_and_cap ... ok
+test send_validation ... ok
+test offline_recipient_recovers_20_via_history ... ok
+test a_192_frame_burst_in_one_poll_reaches_the_inbox_without_history_sync ... ok
+
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.92s
+
+     Running tests/engine_discovery.rs (/target/debug/deps/engine_discovery-8f493b50909287cd)
+
+running 29 tests
+test a_failed_publish_is_retried_soon ... ok
+test a_revoked_local_identity_advertises_nothing ... ok
+test a_higher_seq_replaces_and_a_replay_of_an_older_one_is_ignored ... ok
+test a_new_kem_key_re_issues_the_advert_with_the_current_contact_record ... ok
+test a_topic_less_version_1_advert_is_rejected_not_accepted_for_any_topic ... ok
+test a_certificate_grown_by_rotations_cannot_advertise ... ok
+test a_topic_outside_the_host_list_is_denied ... ok
+test a_withdrawal_replayed_onto_another_topic_does_not_remove_the_advert_there ... ok
+test a_late_starting_node_learns_live_adverts_through_history_sync ... ok
+test advertise_then_another_node_discovers_it_and_can_add_the_contact ... ok
+test an_advert_replayed_onto_another_enabled_topic_is_rejected ... ok
+test adverts_and_sealed_frames_never_cross_topics ... ok
+test disabled_by_default_subscribes_to_nothing_and_denies_the_tools ... ok
+test enabled_subscribes_to_exactly_the_listed_topics ... ok
+test expired_adverts_are_not_returned_and_are_pruned ... ok
+test a_withdrawal_tombstone_is_not_evicted_before_its_expiry ... ok
+test own_publication_coming_back_is_ignored ... ok
+test forged_adverts_are_rejected_and_counted ... ok
+test republish_schedule_follows_the_interval_until_expiry ... ok
+test garbage_oversize_and_malformed_frames_do_not_panic ... ok
+test receiving_adverts_has_no_side_effects_on_contacts_events_or_triggers ... ok
+test request_validation ... ok
+test republished_frames_deduplicate_and_a_live_plus_history_copy_is_one_row ... ok
+test the_sequence_number_survives_a_restart ... ok
+test blocked_and_revoked_advertisers_are_dropped_purged_and_never_evict ... ok
+test ttl_is_defaulted_and_capped ... ok
+test capability_filter_is_an_exact_match_and_results_paginate ... ok
+test withdrawal_removes_the_advert_and_blocks_a_replay ... ok
+test the_table_is_capped_by_evicting_the_soonest_expiring ... ok
+
+test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.71s
+
+     Running tests/engine_hardening.rs (/target/debug/deps/engine_hardening-8e33959c26560042)
+
+running 20 tests
+test contact_records_are_merged_never_replaced ... ok
+test accepting_a_rollback_does_not_release_held_messages_of_a_blocked_sender ... ok
+test accepting_a_rollback_does_not_release_held_messages_of_a_revoked_sender ... ok
+test concurrent_identity_in_two_data_dirs_is_not_prevented ... ok
+test accepting_a_rollback_requarantines_held_messages_of_a_distrusted_sender ... ok
+test accept_rollback_releases_unexpired_held_messages ... ok
+test forged_tombstones_are_rejected_and_out_of_band_import_works ... ok
+test identity_revocation_propagates_and_blocks_the_revoked_contact ... ok
+test key_update_during_a_pending_publish_publishes_the_resealed_frame ... ok
+test missing_sidecar_next_to_a_database_means_unknown_history ... ok
+test migration_guard_by_default_and_full_state_copy_keeps_history ... ok
+test contact_updates_from_wrong_untrusted_or_replayed_sources_are_not_applied ... ok
+test replay_across_kem_revocation_and_after_pruning ... ok
+test replay_after_restart_is_rejected ... ok
+test rollback_guard_holds_replays_from_a_sender_clock_ahead_within_the_skew ... ok
+test rollback_enters_the_replay_guard_and_holds_replayed_frames ... ok
+test revocation_during_a_pending_publish_stops_later_frames_of_the_batch ... ok
+test rotation_with_overlap_keeps_old_frames_openable_and_announces_the_new_record ... ok
+test rotation_with_revoke_reseals_pending_messages_after_contact_update ... ok
+test tombstones_delivered_in_envelopes_are_applied_only_when_relevant ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.27s
+
+     Running tests/engine_openpgp_regressions.rs (/target/debug/deps/engine_openpgp_regressions-201014fc3f5f068f)
+
+running 2 tests
+test a_message_without_the_intended_recipient_fingerprint_is_rejected_by_the_receive_step ... ok
+test send_to_a_contact_with_a_revoked_primary_key_is_refused_and_nothing_is_published ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.28s
+
+     Running tests/engine_random.rs (/target/debug/deps/engine_random-c7bdebcc43d0f741)
+
+running 1 test
+test random_schedules_converge_exactly_once has been running for over 60 seconds
+test random_schedules_converge_exactly_once ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 66.11s
+
+     Running tests/engine_run.rs (/target/debug/deps/engine_run-c179ab38d24e2c9a)
+
+running 3 tests
+test run_smoke_delivers_and_shuts_down_promptly ... ok
+test run_recovers_via_history_when_transport_comes_back ... ok
+test inbound_channel_applies_backpressure_and_loses_nothing ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.17s
+
+     Running tests/engine_security.rs (/target/debug/deps/engine_security-aa3cee1f529c727f)
+
+running 11 tests
+test max_attempts_stops_publishing_until_expiry ... ok
+test get_message_never_returns_quarantined_content ... ok
+test quarantine_hides_message_and_emits_nothing ... ok
+test get_message_follows_inbox_visibility_and_disambiguates_senders ... ok
+test ack_rules_wrong_party_unknown_id_untrusted_and_no_ping_pong ... ok
+test replay_now_and_after_dedupe_pruning ... ok
+test time_checks_skew_expiry_ttl ... ok
+test too_large_publish_is_permanent_failure ... ok
+test tampered_foreign_forged_and_forwarded_frames_create_nothing ... ok
+test reject_blocked_accept_untrusted_and_quarantine_cap ... ok
+test quarantine_listing_is_paged_within_a_byte_budget ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 15.58s
+
+     Running tests/engine_triggers.rs (/target/debug/deps/engine_triggers-ced6a14ded9d35bb)
+
+running 11 tests
+test delete_trigger_is_idempotent ... ok
+test once_trigger_consumed_exactly_once_under_duplicates_and_two_messages ... ok
+test filter_combinations ... ok
+test events_replay_ack_and_pruning ... ok
+test rate_budget_blocks_recording_and_does_not_consume_once_triggers ... ok
+test policy_gates_on_create_trigger ... ok
+test trigger_expiry ... ok
+test pagination_cursors_for_inbox_outbox_conversation ... ok
+test since_cursor_closes_reply_before_trigger_race ... ok
+test unauthorized_senders_never_match ... ok
+test limit_defaults_and_caps ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.35s
+
+     Running tests/migration.rs (/target/debug/deps/migration-805930d0e6795cf5)
+
+running 4 tests
+test the_legacy_fixture_files_are_all_present ... ok
+test the_fixture_is_an_old_format_database ... ok
+test a_second_migration_finds_nothing_left_to_convert ... ok
+test migration_keeps_history_fails_pending_rows_and_keeps_old_contacts_unusable ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.13s
+
+     Running tests/review_crypto.rs (/target/debug/deps/review_crypto-2db901712137cb2f)
+
+running 22 tests
+test l2::l2_a_prepended_marker_packet_is_rejected ... ok
+test l2::l2_an_appended_outer_padding_packet_is_rejected ... ok
+test l2::l2_a_signature_made_by_a_signing_subkey_is_not_accepted ... ok
+test l2::l2_an_ascii_armored_frame_is_rejected ... ok
+test l2::l2_a_message_without_padding_still_opens ... ok
+test l2::l2_extra_foreign_pkesks_are_accepted_up_to_the_maximum_and_refused_beyond ... ok
+test l1_a_signature_time_ahead_of_the_clock_is_from_future_not_bad_signature ... ok
+test l2::l2_trailing_data_is_rejected ... ok
+test l2_adverts::l2_only_the_canonical_binary_advert_is_accepted ... ok
+test l2::l2_two_signatures_are_wrong_signature_count ... ok
+test l2::l2_other_ciphers_and_aead_modes_are_rejected ... ok
+test l2::the_canonical_frame_opens ... ok
+test l3_unhashed_junk_and_invalid_signatures_do_not_survive_sanitising ... ok
+test l2::l2_inner_markers_extra_padding_and_misplaced_padding_are_rejected ... ok
+test l4_every_inner_length_has_an_exactly_encodable_padding_target ... ok
+test frame_sizes_with_a_fresh_and_a_maximal_sender_certificate_fit_the_transport_limit ... ok
+test m1_a_refused_rotation_leaves_the_identity_unchanged ... ok
+test m3_an_ack_has_the_size_of_the_smallest_ordinary_message ... ok
+test l7_evicting_a_retained_subkey_strips_its_secret ... ok
+test m1_revoked_subkey_stays_revoked_after_many_rotations_and_a_stale_merge ... ok
+test l4_one_frame_length_per_class_for_every_body_length ... ok
+test m1_expired_subkeys_are_trimmed_and_cannot_come_back ... ok
+
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.87s
+
+     Running tests/review_engine.rs (/target/debug/deps/review_engine-86cccd51027e55e6)
+
+running 10 tests
+test l5_a_directory_failure_fails_the_open_with_a_store_error ... ok
+test l6_a_frame_sealed_to_an_expired_subkey_is_not_republished ... ok
+test l1_a_frame_signed_in_the_future_is_deferred_then_accepted ... ok
+test l6_a_revocation_through_contact_update_is_applied_like_identity_revoked ... ok
+test l9_first_contact_without_expected_address_is_untrusted ... ok
+test m2_a_contacts_own_revocation_is_still_applied_and_counted_per_contact ... ok
+test m3_a_mutated_duplicate_is_not_re_acked_but_a_byte_identical_retry_is ... ok
+test m2_strangers_cannot_grow_the_revocation_table_under_quarantine ... ok
+test m2_strangers_cannot_grow_the_revocation_table_under_reject ... ok
+test m1_a_stale_contact_update_does_not_resurrect_a_revoked_subkey ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.05s
+
+     Running tests/vectors.rs (/target/debug/deps/vectors-733440244c8ebcef)
+
+running 7 tests
+test rfc6234_sha256_vectors ... ok
+test rfc4648_base32_vectors_and_the_address_alphabet ... ok
+test rfc9580_a3_is_accepted_as_a_contact_and_names_the_published_fingerprint ... ok
+test rfc9580_a3_and_a4_fingerprint_and_policy ... ok
+test rfc9580_a7_tampered_message_does_not_verify ... ok
+test rfc9580_a7_inline_signature_verifies ... ok
+test rfc9580_a85_seipd2_ocb_with_padding_packet_decrypts ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running unittests src/lib.rs (/target/debug/deps/agentnet_daemon-d00da34405732241)
+
+running 20 tests
+test config::tests::mapping_to_node_and_transport_configs ... ok
+test config::tests::defaults_are_private_and_need_peers ... ok
+test config::tests::enforce_peer_allowlist_rejections_are_actionable ... ok
+test config::tests::mcp_http_bind_must_be_loopback ... ok
+test config::tests::engine_errors_are_surfaced ... ok
+test config::tests::node_config_reports_whether_isolation_is_audited ... ok
+test config::tests::private_mode_surfaces_transport_errors ... ok
+test config::tests::enforce_peer_allowlist_with_a_public_wss_relay ... ok
+test datadir::tests::hex_round_trip ... ok
+test config::tests::unknown_keys_are_rejected ... ok
+test config::tests::samples_parse_and_validate ... ok
+test config::tests::webhook_matrix ... ok
+test webhook::tests::blocklist ... ok
+test datadir::tests::lock_is_exclusive_and_released_on_drop ... ok
+test proto::tests::bounded_line_reader ... ok
+test proto::tests::hello_debug_hides_the_token ... ok
+test config::tests::public_requires_the_flag_and_flags_are_checked ... ok
+test datadir::tests::dir_perms_and_tokens ... ok
+test webhook::tests::signature_round_trip_and_failures ... ok
+test webhook::tests::localhost_resolves_to_a_pinned_loopback_address ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/discovery.rs (/target/debug/deps/discovery-6fe83370b7a68d3d)
+
+running 3 tests
+test discovery_config_is_off_by_default_and_parses ... ok
+test disabled_daemon_denies_over_the_socket_and_stays_off_the_wire ... ok
+test advertise_and_discover_end_to_end_through_two_daemons ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.44s
+
+     Running tests/harness.rs (/target/debug/deps/harness-1cb5f417840de180)
+
+running 5 tests
+test documented_sample_configs_match_the_code ... ok
+test fetch_mode_resolves_the_event_message_id_with_get_message_then_acknowledges ... ok
+test embed_example_runs ... ok
+test webhook_mode_verifies_signatures_and_dedupes ... ok
+test socket_mode_records_one_turn_per_event_and_resumes_from_its_cursor ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.21s
+
+     Running tests/migrate.rs (/target/debug/deps/migrate-5a2d375e6e9025cb)
+
+running 2 tests
+test an_unmigrated_data_directory_is_refused_with_the_command_to_run ... ok
+test migrate_creates_a_fresh_identity_and_keeps_the_history ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.14s
+
+     Running tests/rotation_revocation.rs (/target/debug/deps/rotation_revocation-69133393b92917f7)
+
+running 3 tests
+test accept_rollback_is_a_no_op_on_a_healthy_store_and_needs_the_lock ... ok
+test a_revoked_identity_only_delivers_its_tombstone ... ok
+test offline_rotation_with_revoke_is_announced_at_the_next_start ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.66s
+
+     Running tests/socket_api.rs (/target/debug/deps/socket_api-352d385a97b5aab5)
+
+running 16 tests
+test every_method_round_trips_and_equals_the_direct_node ... ok
+test http_mcp_serves_with_its_token_and_only_on_loopback ... ok
+test crash_recovery_reacquires_the_lock_and_keeps_state ... ok
+test lock_exclusivity_and_graceful_shutdown_cleanup ... ok
+test event_stream_survives_a_daemon_restart_by_resuming_from_the_cursor ... ok
+test quarantine_list_and_release_through_the_socket ... ok
+test remote_agent_reports_unavailable_when_down_and_recovers ... ok
+test shutdown_request_through_the_socket ... ok
+test remote_agent_with_a_wrong_token_is_denied_not_unavailable ... ok
+test changes_stream_resubscribes_after_a_daemon_restart ... ok
+test events_replay_live_ack_and_reconnect_without_loss ... ok
+test startup_refuses_bad_configuration_and_permissions ... ok
+test socket_file_is_private ... ok
+test socket_auth_matrix ... ok
+test hello_timeout_closes_the_connection ... ok
+test quarantine_list_is_paged_through_the_socket ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.93s
+
+     Running tests/webhook_triggers.rs (/target/debug/deps/webhook_triggers-7cfac8f566b6cdf2)
+
+running 11 tests
+test redirects_are_not_followed ... ok
+test message_received_can_be_enabled_and_disabled_per_config ... ok
+test parks_after_max_attempts_and_continues_with_the_next_event ... ok
+test startup_rejects_unsafe_webhook_setups ... ok
+test resumes_from_its_cursor_after_a_restart_without_loss_or_repeat ... ok
+test triggers_are_off_by_default ... ok
+test one_shot_trigger_yields_exactly_one_event_despite_duplicate_deliveries ... ok
+test retries_on_500_then_succeeds_with_one_effect_per_event_id ... ok
+test signed_delivery_verifies_and_carries_no_plaintext ... ok
+test unauthorized_senders_never_produce_trigger_events ... ok
+test a_failed_parking_insert_does_not_advance_the_cursor_and_the_event_is_retried ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.94s
+
+     Running unittests src/lib.rs (/target/debug/deps/agentnet_mcp-1f47f80a8fc83d96)
+
+running 7 tests
+test uris::tests::hints_map_to_uris ... ok
+test uris::tests::subscribable_rules ... ok
+test uris::tests::parses_base_uris ... ok
+test uris::tests::percent_roundtrip ... ok
+test uris::tests::rejects_bad_queries ... ok
+test uris::tests::parses_query_and_decodes ... ok
+test uris::tests::unknown_uris_are_not_found ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/resources.rs (/target/debug/deps/resources-bc8a8dddf46ed709)
+
+running 10 tests
+test capabilities_and_server_info ... ok
+test legacy_clients_get_the_legacy_not_found_code ... ok
+test engine_errors_on_resource_reads_map_to_standard_codes ... ok
+test lists_resources_and_templates ... ok
+test reads_are_uncacheable_json_documents ... ok
+test invalid_query_arguments_are_invalid_params ... ok
+test inbox_pagination_by_cursor_in_the_uri ... ok
+test resource_documents_have_the_documented_shape ... ok
+test unknown_uri_is_the_standard_not_found_error ... ok
+test outbox_and_conversation_pagination ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.13s
+
+     Running tests/subscriptions.rs (/target/debug/deps/subscriptions-2dcee73e744e5a64)
+
+running 17 tests
+test client_disconnect_ends_listens_promptly_on_the_stdio_code_path ... ok
+test cancel_stops_notifications_and_releases_resources ... ok
+test hint_right_after_acknowledgment_is_not_lost ... ok
+test bursts_under_capacity_are_coalesced ... ok
+test http_shutdown_ends_open_streams_promptly ... ok
+test legacy_pump_ends_when_session_ends ... ok
+test each_hint_kind_maps_to_its_uri ... ok
+test legacy_subscribe_rejects_unknown_uris_and_2026_listen_is_unavailable ... ok
+test legacy_lagged_receiver_notifies_all_subscribed_uris ... ok
+test many_listens_open_and_close_without_leaks ... ok
+test only_known_uris_are_accepted ... ok
+test server_shutdown_token_ends_listens ... ok
+test http_listen_filters_cancels_and_cleans_up ... ok
+test conversation_template_instances_are_subscribable ... ok
+test lagged_receiver_notifies_every_subscribed_uri_once ... ok
+test listen_notifies_only_for_the_subscribed_uri ... ok
+test legacy_subscribe_and_unsubscribe ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.97s
+
+     Running tests/tools.rs (/target/debug/deps/tools-24b2996c6ce72067)
+
+running 18 tests
+test engine_domain_errors_surface_actionably ... ok
+test discovery_policy_errors_map_to_policy_denied ... ok
+test discovery_tool_descriptions_carry_the_warnings ... ok
+test every_api_error_code_maps_consistently ... ok
+test input_schemas_encode_the_documented_limits ... ok
+test discovery_input_schemas_encode_the_documented_limits ... ok
+test get_message_returns_one_visible_message_and_hides_quarantined ... ok
+test discovery_tools_happy_path_pagination_and_output_schemas ... ok
+test mutating_tools_emit_hints_after_persistence ... ok
+test list_contacts_pages_and_exposes_only_public_fields ... ok
+test session_ids_follow_the_engine_rule_and_errors_say_how ... ok
+test happy_paths_every_tool_and_outputs_match_declared_schemas ... ok
+test boundary_validation_rejects_before_reaching_the_engine ... ok
+test tool_annotations_mark_read_only_tools ... ok
+test unknown_tool_is_a_protocol_error ... ok
+test tool_descriptions_state_the_trust_and_delivery_semantics ... ok
+test schema_violations_are_tool_errors_not_protocol_errors ... ok
+test tools_list_has_all_tools_with_valid_documented_schemas ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.33s
+
+     Running tests/transports.rs (/target/debug/deps/transports-1dd3c715be6529fa)
+
+running 17 tests
+test http_options_debug_redacts_the_token ... ok
+test fifty_concurrent_tool_calls_over_http ... ok
+test http_configured_origins_and_hosts_are_honoured ... ok
+test serve_http_refuses_unsafe_configuration ... ok
+test http_version_negotiation_table ... ok
+test router_fails_closed_with_an_unusable_token ... ok
+test http_auth_origin_and_host_rules ... ok
+   Compiling bitflags v2.13.2
+   Compiling anstyle v1.0.14
+   Compiling strsim v0.11.1
+   Compiling rustls v0.23.46
+   Compiling rustls-webpki v0.103.17
+   Compiling form_urlencoded v1.2.3
+   Compiling annotate-snippets v0.11.5
+   Compiling darling_core v0.24.1
+   Compiling url v2.5.9
+   Compiling nix v0.31.4
+   Compiling bindgen v0.72.1
+   Compiling tower-http v0.6.11
+   Compiling i18n-embed-fl v0.10.1
+test fifty_concurrent_tool_calls_over_stdio has been running for over 60 seconds
+test http_binary_refuses_non_loopback_and_serves_loopback has been running for over 60 seconds
+test stdio_exits_promptly_on_eof_with_an_active_listener has been running for over 60 seconds
+test stdio_exits_promptly_on_eof_without_listeners has been running for over 60 seconds
+test stdio_listen_and_legacy_subscribe_end_to_end has been running for over 60 seconds
+test stdio_raw_discover_and_unsupported_versions has been running for over 60 seconds
+   Compiling rusqlite v0.42.0
+   Compiling process-wrap v10.0.2
+   Compiling darling_macro v0.24.1
+   Compiling agentnet-transport v0.1.0 (/src/crates/transport)
+   Compiling openssl-sys v0.9.118
+   Compiling ossl v1.5.5
+   Compiling tokio-rustls v0.26.6
+   Compiling hyper-rustls v0.27.10
+   Compiling rustls-platform-verifier v0.7.1
+   Compiling reqwest v0.13.5
+   Compiling darling v0.24.1
+   Compiling rmcp-macros v3.11.0
+   Compiling age v0.12.1
+   Compiling rmcp v3.11.0
+   Compiling sequoia-openpgp v2.5.0
+   Compiling agentnet-core v0.1.0 (/src/crates/core)
+   Compiling agentnet-mcp v0.1.0 (/src/crates/mcp)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 6m 07s
+test stdio_exits_promptly_on_eof_without_listeners ... ok
+test stdio_raw_discover_and_unsupported_versions ... ok
+test stdio_seeded_pagination_through_the_process ... ok
+test stdio_stdout_carries_only_protocol_frames ... ok
+test fifty_concurrent_tool_calls_over_stdio ... ok
+test http_binary_refuses_non_loopback_and_serves_loopback ... ok
+test tools_and_resources_over_http ... ok
+test stdio_exits_promptly_on_eof_with_an_active_listener ... ok
+test stdio_version_negotiation_table ... ok
+test stdio_listen_and_legacy_subscribe_end_to_end ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 369.67s
+
+     Running unittests src/lib.rs (/target/debug/deps/agentnet_transport-83bafb4df8d19641)
+
+running 91 tests
+test logos_rest::config::tests::enforced_public_mode_needs_peers_and_a_private_cluster ... ok
+test logos_rest::config::tests::deserializes_with_defaults_and_durations ... ok
+test logos_rest::config::tests::enforce_flag_is_rejected_in_private_mode_and_plain_public_is_unchanged ... ok
+test logos_rest::config::tests::private_peer_addrs_reject_relay_hops_and_extra_components ... ok
+test logos_rest::config::tests::enforced_public_mode_accepts_public_ip_and_dns_forms ... ok
+test logos_rest::config::tests::enforced_public_mode_rejects_bad_forms ... ok
+test logos_rest::config::tests::public_mode_rules ... ok
+test logos_rest::config::tests::shard_and_numeric_limits ... ok
+test logos_rest::config::tests::multiaddr_peer_id_extraction ... ok
+test logos_rest::config::tests::store_peer_must_be_private_and_allowlisted ... ok
+test logos_rest::config::tests::accepts_private_hosts ... ok
+test logos_rest::config::tests::rejects_malformed_urls ... ok
+test logos_rest::config::tests::private_mode_rejects_preset_clusters_and_empty_allowlist ... ok
+test logos_rest::config::tests::rejects_public_hosts_in_private_mode ... ok
+test logos_rest::config::tests::static_peers_validation_and_derived_allowlist ... ok
+test logos_rest::tests::enforced_public_mode_fails_closed_without_the_admin_api ... ok
+test logos_rest::tests::enforced_public_mode_fails_closed_with_a_foreign_peer ... ok
+test logos_rest::tests::foreign_connected_peer_fails_closed_everywhere ... ok
+test logos_rest::tests::admin_unavailable_fails_closed_as_unavailable ... ok
+test logos_rest::tests::enforced_public_mode_redials_the_static_peers ... ok
+test logos_rest::tests::history_request_shape_and_hash_verification ... ok
+test logos_rest::tests::history_window_and_error_mapping ... ok
+test logos_rest::tests::long_error_bodies_are_truncated ... ok
+test logos_rest::tests::new_rejects_public_hosts_and_bad_config ... ok
+test logos_rest::tests::plain_public_publish_issues_no_audit_get ... ok
+test logos_rest::tests::plain_public_status_does_not_call_peers_allowed ... ok
+test logos_rest::tests::no_dial_when_peer_already_connected_or_no_static_peers ... ok
+test logos_rest::tests::no_redirects_and_no_proxy_env ... ok
+test logos_rest::tests::poll_subscribes_lazily_and_maps_errors ... ok
+test logos_rest::tests::poll_truncated_tail_delivers_complete_frames_and_reports ... ok
+test logos_rest::tests::enforced_public_mode_publishes_with_only_the_allowlisted_peer ... ok
+test logos_rest::tests::public_mode_skips_the_audit ... ok
+test logos_rest::tests::publish_audits_immediately_before_every_publish_enforced_public ... ok
+test logos_rest::tests::publish_audits_immediately_before_every_publish_private ... ok
+test logos_rest::tests::publish_sends_expected_request_and_returns_local_hash ... ok
+test logos_rest::tests::redial_also_runs_from_poll_and_history_with_cached_audit ... ok
+test logos_rest::tests::publish_error_mapping_end_to_end ... ok
+test logos_rest::tests::redial_issued_when_disconnected_and_only_static_peers_in_body ... ok
+test logos_rest::tests::rejected_config_never_contacts_the_node_or_dials ... ok
+test logos_rest::tests::status_reports_peers_and_readiness ... ok
+test logos_rest::tests::poll_skips_and_counts_an_oversized_frame_in_the_middle ... ok
+test logos_rest::tests::subscribe_and_poll_with_resubscribe_on_404 ... ok
+test logos_rest::tests::timestamps_are_unique_under_concurrency ... ok
+test logos_rest::tests::too_large_is_rejected_locally_without_touching_the_node ... ok
+test logos_rest::tests::wrong_allowlist_is_a_violation ... ok
+test logos_rest::wire::tests::hash_matches_real_node_vector ... ok
+test logos_rest::wire::tests::parse_hash_forms ... ok
+test logos_rest::wire::tests::peers_parsing_and_audit ... ok
+test logos_rest::wire::tests::peers_parsing_is_strict ... ok
+test logos_rest::wire::tests::percent_encoding ... ok
+test logos_rest::wire::tests::publish_error_mapping ... ok
+test logos_rest::wire::tests::relay_poll_meta_participates_in_hash_and_oversize_is_skipped ... ok
+test logos_rest::wire::tests::relay_poll_parsing ... ok
+test logos_rest::wire::tests::relay_response_bound_covers_a_full_node_cache ... ok
+test logos_rest::wire::tests::relay_stream_bounds_memory_and_survives_odd_chunking ... ok
+test logos_rest::wire::tests::relay_stream_truncation_keeps_complete_frames ... ok
+test logos_rest::wire::tests::store_envelope_is_required ... ok
+test logos_rest::wire::tests::store_page_counts_mismatch_and_malformed ... ok
+test logos_rest::wire::tests::store_page_errors ... ok
+test logos_rest::wire::tests::store_page_with_real_vector ... ok
+test logos_rest::wire::tests::varints_and_size_arithmetic ... ok
+test mock::tests::clock_is_manual ... ok
+test mock::tests::delay_holds_until_release ... ok
+test mock::tests::drop_next_publishes_is_accepted_but_lost ... ok
+test mock::tests::duplicate_delivery_repeats_frames ... ok
+test mock::tests::expire_before_removes_old_frames ... ok
+test mock::tests::fail_next_publishes_returns_unavailable_without_effect ... ok
+test mock::tests::history_availability_switch ... ok
+test mock::tests::history_pagination_and_window ... ok
+test mock::tests::history_retention_by_capacity ... ok
+test mock::tests::history_retention_by_time ... ok
+test mock::tests::inject_raw_is_delivered_stored_and_introspectable ... ok
+test mock::tests::isolation_violation_blocks_everything_and_is_reported ... ok
+test mock::tests::live_queue_overflow_drops_oldest_and_counts ... ok
+test mock::tests::max_payload_enforced ... ok
+test mock::tests::node_restart_resubscribes_transparently ... ok
+test mock::tests::offline_endpoint_misses_live_but_has_history ... ok
+test mock::tests::publish_counts_are_per_topic ... ok
+test mock::tests::publish_delivers_to_all_including_publisher ... ok
+test mock::tests::reorder_is_seeded_and_deterministic ... ok
+test mock::tests::status_reports_configured_peers ... ok
+test mock::tests::timestamps_strictly_increase_even_with_frozen_clock ... ok
+test mock::tests::topics_are_separated_in_poll ... ok
+test mock::tests::transport_id_is_deterministic_and_matches_history ... ok
+test mock::tests::unsubscribed_endpoint_gets_nothing_live_but_history_has_it ... ok
+test tests::content_topic_validation ... ok
+test logos_rest::tests::violation_clears_when_peers_recover_after_interval ... ok
+test logos_rest::tests::audit_is_cached_then_refreshed_after_interval ... ok
+test logos_rest::tests::connection_refused_and_timeout_are_unavailable ... ok
+test logos_rest::tests::redial_is_rate_limited_and_failures_are_not_fatal ... ok
+test logos_rest::tests::poll_delivers_192_maximum_size_frames_in_one_response ... ok
+
+test result: ok. 91 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.84s
+
+     Running tests/logos_rest_relay.rs (/target/debug/deps/logos_rest_relay-22219799caeb223e)
+
+running 6 tests
+test a_to_b_and_b_to_a_with_identical_ids_in_live_and_history ... ignored, needs the local relay topology: run with AGENTNET_RELAY_TESTS=1 -- --ignored
+test adapter_redial_restores_a_disconnected_client ... ignored, needs the local relay topology: run with AGENTNET_RELAY_TESTS=1 -- --ignored
+test history_paginates_across_pages_and_dedupes_against_live ... ignored, needs the local relay topology: run with AGENTNET_RELAY_TESTS=1 -- --ignored
+test isolation_audit_passes_with_right_allowlist_and_fails_closed_with_wrong_one ... ignored, needs the local relay topology: run with AGENTNET_RELAY_TESTS=1 -- --ignored
+test max_payload_len_is_accepted_and_delivered_and_one_more_is_rejected_locally ... ignored, needs the local relay topology: run with AGENTNET_RELAY_TESTS=1 -- --ignored
+test private_mode_config_rejects_public_ip_and_hostnames ... ok
+
+test result: ok. 1 passed; 0 failed; 5 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+   Doc-tests agentnet_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests agentnet_daemon
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests agentnet_mcp
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests agentnet_transport
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+TEST_OK
+finished exit=0

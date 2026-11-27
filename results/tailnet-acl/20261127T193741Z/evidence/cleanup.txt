@@ -1,0 +1,12 @@
+# 2026-11-27T19:57:11Z box3: pkill -f "agentnet --data-dir /data/home/a2 serve"; docker rm -f an-a2 >/dev/null; sudo tailscale logout; echo logout_rc=$?; pkill -f tsshim.py; docker ps --format "{{.Names}}"
+logout_rc=0
+[rc=0]
+
+# 2026-11-27T19:57:13Z box2: pkill -f "agentnet --data-dir /data/home/a1 serve"; docker rm -f an-a1 >/dev/null; sudo tailscale logout; echo logout_rc=$?; pkill -f tsshim.py; docker ps --format "{{.Names}}"
+logout_rc=0
+[rc=0]
+
+# 2026-11-27T19:57:14Z box1: pkill -f "agentnet --data-dir /data/home/b serve"; docker rm -f an-nb an-r1 >/dev/null; sudo tailscale logout; echo logout_rc=$?; pkill -x headscale; pkill -f tsshim.py; sleep 1; docker ps --format "{{.Names}}"; pgrep -a headscale; pgrep -af "agentnet|tsshim"
+logout_rc=0
+[rc=1]
+

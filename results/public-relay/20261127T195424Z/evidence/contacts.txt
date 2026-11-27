@@ -1,0 +1,23 @@
+# A adds B's certificate with a wrong --expect (A's own address)
+error: contact certificate is not for the expected address
+rc=4
+# without --expect: untrusted
+{"address":"an2wt2qnjv6pu7g2a7i3lh76jh5qtgmdue7rw5sqzsd5xe772woyuytufiy5m","alias":"bob-noexpect","trust":"untrusted","inbox_topic":"/agentnet/1/inbox-05/proto","added_at":1795809403394,"kem_expires_at":1827345280000,"updated":false,"revoked":false,"warning":"added as untrusted: the certificate was 
+rc=0
+# A adds B with the right --expect (upgrades)
+{"address":"an2wt2qnjv6pu7g2a7i3lh76jh5qtgmdue7rw5sqzsd5xe772woyuytufiy5m","alias":"bob","trust":"untrusted","inbox_topic":"/agentnet/1/inbox-05/proto","added_at":1795809403394,"kem_expires_at":1827345280000,"updated":false,"revoked":false}
+rc=0
+# B wrong --expect
+error: contact certificate is not for the expected address
+rc=4
+# B right --expect
+{"address":"an2cg2olxroib4ocbwgnvfdbm3sqgxqjuh2rbbiypipeck6q5urr5yqetdeui","alias":"alice","trust":"trusted","inbox_topic":"/agentnet/1/inbox-04/proto","added_at":1795809404367,"kem_expires_at":1827345370000,"updated":false,"revoked":false}
+# lists
+an2wt2qnjv6pu7g2a7i3lh76jh5qtgmdue7rw5sqzsd5xe772woyuytufiy5m untrusted alias=bob
+an2cg2olxroib4ocbwgnvfdbm3sqgxqjuh2rbbiypipeck6q5urr5yqetdeui trusted alias=alice
+# NOTE: re-adding a known untrusted contact with the right --expect did NOT raise trust (trust stayed untrusted, updated:false); removing and re-adding with --expect:
+removed an2wt2qnjv6pu7g2a7i3lh76jh5qtgmdue7rw5sqzsd5xe772woyuytufiy5m
+rc=0
+{"address":"an2wt2qnjv6pu7g2a7i3lh76jh5qtgmdue7rw5sqzsd5xe772woyuytufiy5m","alias":"bob","trust":"trusted","inbox_topic":"/agentnet/1/inbox-05/proto","added_at":1795809414165,"kem_expires_at":1827345280000,"updated":false,"revoked":false}
+
+an2wt2qnjv6pu7g2a7i3lh76jh5qtgmdue7rw5sqzsd5xe772woyuytufiy5m trusted alias=bob

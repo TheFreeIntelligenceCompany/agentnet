@@ -1,0 +1,29 @@
+# 2026-11-27T19:48:47Z box2: for i in 1 2 3 4 5; do ~/agentnet --json --data-dir ~/a1 send an2pptpdy7se5bdkjssoca4mkiqiqgelrq5eowaenjdl2abavut6r7uyjkpsm "capture $i" | jq -r .message_id; sleep 3; done
+4085eced-aa71-43a3-bcee-c21605b45281
+d7695278-3d28-4cc1-8f3c-741e8e3f5a1b
+e11793c1-7ebe-47ce-ad05-9e124788aa01
+e856d4e7-eb12-498f-b72f-91464a872c52
+0fcf5df9-34bd-4685-bbef-2d8b3a283bf4
+[rc=0]
+
+# 2026-11-27T19:49:15Z box1: cat /tmp/cap.txt; echo "tcp/60000 on tailscale0 packets:"; grep -c "IP " /tmp/cap-ts.txt; echo "tcp/60000 on primary iface packets:"; grep -c "IP " /tmp/cap-eth.txt; echo "udp/41641 on primary iface packets:"; grep -c "IP " /tmp/cap-udp.txt; grep -h "listening\|packets captured" /tmp/cap-ts.txt /tmp/cap-eth.txt; echo "sample tailscale0:"; sed -n 2,7p /tmp/cap-ts.txt
+primary=eth0
+tcp/60000 on tailscale0 packets:
+157
+tcp/60000 on primary iface packets:
+0
+udp/41641 on primary iface packets:
+10
+listening on tailscale0, link-type RAW (Raw IP), snapshot length 262144 bytes
+157 packets captured
+listening on eth0, link-type EN10MB (Ethernet), snapshot length 262144 bytes
+0 packets captured
+sample tailscale0:
+listening on tailscale0, link-type RAW (Raw IP), snapshot length 262144 bytes
+19:48:46.394963 IP <TS_IP_C1>.44232 > <TS_IP_R>.60000: Flags [P.], seq 3925412580:3925412610, ack 1337204525, win 467, options [nop,nop,TS val 1538663723 ecr 1085200138], length 30
+19:48:46.395065 IP <TS_IP_R>.60000 > <TS_IP_C1>.44232: Flags [.], ack 30, win 67, options [nop,nop,TS val 1085206950 ecr 1538663723], length 0
+19:48:46.395080 IP <TS_IP_C1>.44232 > <TS_IP_R>.60000: Flags [P.], seq 30:80, ack 1, win 467, options [nop,nop,TS val 1538663723 ecr 1085200138], length 50
+19:48:46.395088 IP <TS_IP_R>.60000 > <TS_IP_C1>.44232: Flags [.], ack 80, win 67, options [nop,nop,TS val 1085206950 ecr 1538663723], length 0
+19:48:46.395089 IP <TS_IP_C1>.44232 > <TS_IP_R>.60000: Flags [P.], seq 80:128, ack 1, win 467, options [nop,nop,TS val 1538663723 ecr 1085200138], length 48
+[rc=0]
+

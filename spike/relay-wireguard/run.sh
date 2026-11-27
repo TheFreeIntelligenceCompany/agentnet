@@ -5,6 +5,7 @@
 #   BIN_DIR=/path/to/target/release ./run.sh      # use these agentnet / agentnet-acceptance binaries (default: <repo>/target/release)
 #   STEPS="1 2 3" ./run.sh         # subset (1 and 2 always run; 3 needs the main capture from 1+2)
 #   KEEP_UP=1 ./run.sh             # leave the containers running afterwards (default: everything is removed)
+#   WATCHDOG=1 ./run.sh            # also run the stale-watchdog sidecar (compose profile watchdog) in R's netns; R_TCP_RETRIES2=15 restores the kernel default
 #   KEEP_RUN=1 ./run.sh            # keep .run/ (WireGuard + node keys, DISPOSABLE, gitignored)
 #   N_MSGS=20 PEER_LOSS_TIMEOUT=600 RELAY_DOWN_TIMEOUT=900 CONTROL_TIMEOUT=240   # knobs
 #
@@ -38,7 +39,7 @@ BR=an-wg-br0
 UL=172.29.70.0/24; OVL=10.66.0.0/24
 IP_R=172.29.70.10; IP_A=172.29.70.21; IP_B=172.29.70.22; IP_I=172.29.70.66; IP_GW=172.29.70.1
 RID=""
-compose() { ( cd "$SIMDIR" && docker-compose --env-file .run/env "$@" ); }
+compose() { ( cd "$SIMDIR" && docker-compose --env-file .run/env --profile watchdog "$@" ); }   # --profile watchdog only makes the service addressable (down/rm); it starts only with WATCHDOG=1
 wx() { local m=$1; shift; docker exec "an-wg-$m" "$@"; }                       # exec in a machine's sidecar (its netns)
 fw_rule_drop='INPUT -i eth0 -p tcp --dport 60000 -m comment --comment wgsim-underlay-libp2p-drop -j DROP'
 enc() { jq -rn --arg t "$1" '$t|@uri'; }
@@ -62,15 +63,15 @@ cleanup() {
   for n in "$WORK"/*.stderr; do [ -e "$n" ] && save_daemon_log "$(basename "$n" .stderr)"; done
   cap_cleanup
   mkdir -p "$RES/evidence/container-logs"
-  for n in an-wg-r-node an-wg-a-node an-wg-b-node an-wg-intruder-node; do docker logs "$n" 2>&1 | redact > "$RES/evidence/container-logs/$n.log" 2>/dev/null; done
+  for n in an-wg-r-node an-wg-a-node an-wg-b-node an-wg-intruder-node an-wg-r-watchdog; do docker logs "$n" 2>&1 | redact > "$RES/evidence/container-logs/$n.log" 2>/dev/null; done
   cap_fix_perms
   if [ "${KEEP_UP:-0}" != 1 ]; then
     compose --profile intruder down -v >> "$RES/logs/docker.log" 2>&1
     docker ps -a --format '{{.Names}}' | grep '^an-wg' | while read -r c; do log "WARNING: leftover container $c"; done
   fi
   [ "${KEEP_RUN:-0}" = 1 ] || { [ -d "$SIMDIR/.run" ] && rm -f "$SIMDIR"/.run/*; }
-  ENV_JSON="$(jq -nc --arg host "$(uname -srm)" --arg kern "$(cat "$RES/evidence/vm-kernel.txt" 2>/dev/null)" --arg bin "$("$BIN" --version 2>&1)" \
-    '{host:$host, colima_vm_kernel:$kern, agentnet:$bin, wireguard:"kernel module (not userspace)", node_image:"wakuorg/nwaku@sha256:cb4d14a2... v0.39.2 linux/amd64 under qemu", topology:"underlay 172.29.70.0/24, overlay 10.66.0.0/24, machines R/A/B (+ intruder), agents on the host via 127.0.0.1 REST ports"}')"
+  ENV_JSON="$(jq -nc --arg host "$(uname -srm)" --arg kern "$(cat "$RES/evidence/vm-kernel.txt" 2>/dev/null)" --arg bin "$("$BIN" --version 2>&1)" --arg wd "${WATCHDOG:-0}" --arg rt "${R_TCP_RETRIES2:-6}" \
+    '{stale_watchdog_sidecar:$wd, relay_tcp_retries2:$rt, host:$host, colima_vm_kernel:$kern, agentnet:$bin, wireguard:"kernel module (not userspace)", node_image:"wakuorg/nwaku@sha256:cb4d14a2... v0.39.2 linux/amd64 under qemu", topology:"underlay 172.29.70.0/24, overlay 10.66.0.0/24, machines R/A/B (+ intruder), agents on the host via 127.0.0.1 REST ports"}')"
   write_summary
   rm -rf "${WORK:?}"
   if jq -e -s 'any(.[]; .status=="FAIL")' "$RES/checks.jsonl" >/dev/null 2>&1; then exit 1; fi
@@ -103,6 +104,7 @@ step1() {
   # capture from before the first WireGuard handshake
   cap_start main "$BR"; sleep 3
   compose up -d wg-r wg-a wg-b >> "$RES/logs/docker.log" 2>&1
+  [ "${WATCHDOG:-0}" = 1 ] && { compose up -d stale-watchdog >> "$RES/logs/docker.log" 2>&1; log "stale-watchdog sidecar started on R"; }
   compose up -d node-r >> "$RES/logs/docker.log" 2>&1
   wait_for 120 "R node health" health "$R" || { fail "1.setup" "R's node did not become healthy"; return 1; }
   RID="$(curl -s -m 5 "$R/info" | jq -r '.listenAddresses[0]|split("/p2p/")[1]')"
@@ -397,7 +399,7 @@ out = {"frames_examined": len(frames), "frames": []}
 leak = False
 for f in frames:
     raw = base64.b64decode(f.get("payload", ""))
-    hit = any(s in raw for s in (b"CONTROL", b"marker", b"plaintext", b"w-CONTROL", b"an1"))
+    hit = any(s in raw for s in (b"CONTROL", b"marker", b"plaintext", b"w-CONTROL", b"an1", b"an2"))
     leak = leak or hit
     out["frames"].append({"contentTopic": f.get("contentTopic"), "payload_bytes": len(raw), "first_8_bytes_hex": raw[:8].hex(), "plaintext_marker_or_address_found": hit})
 out["any_plaintext_found"] = leak

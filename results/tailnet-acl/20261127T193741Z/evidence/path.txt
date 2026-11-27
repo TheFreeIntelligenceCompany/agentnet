@@ -1,0 +1,10 @@
+# 2026-11-27T19:40:03Z box2: tailscale ping -c 6 <TS_IP_R>; tailscale status; tailscale status --json | jq -c "{Self:{Relay:.Self.Relay,Tags:.Self.Tags},peers:[.Peer[]|{Relay,CurAddr,Tags,Active}]}"
+pong from acl-r (<TS_IP_R>) via DERP(sea) in 17ms
+pong from acl-r (<TS_IP_R>) via DERP(sea) in 16ms
+pong from acl-r (<TS_IP_R>) via DERP(sea) in 17ms
+pong from acl-r (<TS_IP_R>) via <PUBLIC_IP4>:42130 in 1ms
+<TS_IP_C1>  acl-c1  tagged-devices  linux  -                                   
+<TS_IP_R>  acl-r   tagged-devices  linux  active; direct <PUBLIC_IP4>:42130  
+{"Self":{"Relay":"sea","Tags":["tag:agentnet-client"]},"peers":[{"Relay":"sea","CurAddr":"<PUBLIC_IP4>:42130","Tags":["tag:agentnet-relay"],"Active":true}]}
+[rc=0]
+

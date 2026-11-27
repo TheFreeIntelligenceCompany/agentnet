@@ -1,0 +1,139 @@
+{
+ "frames_examined": 22,
+ "frames": [
+  {
+   "contentTopic": "/agentnet/1/inbox-01/proto",
+   "payload_bytes": 2197,
+   "first_8_bytes_hex": "c14c0600198e8b04",
+   "plaintext_marker_or_address_found": false
+  },
+  {
+   "contentTopic": "/agentnet/1/inbox-04/proto",
+   "payload_bytes": 2197,
+   "first_8_bytes_hex": "c14c0600190037fb",
+   "plaintext_marker_or_address_found": false
+  },
+  {
+   "contentTopic": "/agentnet/1/inbox-01/proto",
+   "payload_bytes": 2197,
+   "first_8_bytes_hex": "c14c06001902e96b",
+   "plaintext_marker_or_address_found": false
+  },
+  {
+   "contentTopic": "/agentnet/1/inbox-01/proto",
+   "payload_bytes": 2197,
+   "first_8_bytes_hex": "c14c0600191aecf3",
+   "plaintext_marker_or_address_found": false
+  },
+  {
+   "contentTopic": "/agentnet/1/inbox-01/proto",
+   "payload_bytes": 2197,
+   "first_8_bytes_hex": "c14c06001942015c",
+   "plaintext_marker_or_address_found": false
+  },
+  {
+   "contentTopic": "/agentnet/1/inbox-01/proto",
+   "payload_bytes": 2197,
+   "first_8_bytes_hex": "c14c06001938fc3f",
+   "plaintext_marker_or_address_found": false
+  },
+  {
+   "contentTopic": "/agentnet/1/inbox-01/proto",
+   "payload_bytes": 2197,
+   "first_8_bytes_hex": "c14c06001913b697",
+   "plaintext_marker_or_address_found": false
+  },
+  {
+   "contentTopic": "/agentnet/1/inbox-01/proto",
+   "payload_bytes": 2197,
+   "first_8_bytes_hex": "c14c060019b283e4",
+   "plaintext_marker_or_address_found": false
+  },
+  {
+   "contentTopic": "/agentnet/1/inbox-01/proto",
+   "payload_bytes": 2197,
+   "first_8_bytes_hex": "c14c060019de0786",
+   "plaintext_marker_or_address_found": false
+  },
+  {
+   "contentTopic": "/agentnet/1/inbox-01/proto",
+   "payload_bytes": 2197,
+   "first_8_bytes_hex": "c14c060019b619c4",
+   "plaintext_marker_or_address_found": false
+  },
+  {
+   "contentTopic": "/agentnet/1/inbox-01/proto",
+   "payload_bytes": 2197,
+   "first_8_bytes_hex": "c14c0600198bb0af",
+   "plaintext_marker_or_address_found": false
+  },
+  {
+   "contentTopic": "/agentnet/1/inbox-01/proto",
+   "payload_bytes": 2197,
+   "first_8_bytes_hex": "c14c060019723572",
+   "plaintext_marker_or_address_found": false
+  },
+  {
+   "contentTopic": "/agentnet/1/inbox-01/proto",
+   "payload_bytes": 2197,
+   "first_8_bytes_hex": "c14c060019de0786",
+   "plaintext_marker_or_address_found": false
+  },
+  {
+   "contentTopic": "/agentnet/1/inbox-01/proto",
+   "payload_bytes": 2197,
+   "first_8_bytes_hex": "c14c0600193d5764",
+   "plaintext_marker_or_address_found": false
+  },
+  {
+   "contentTopic": "/agentnet/1/inbox-01/proto",
+   "payload_bytes": 2197,
+   "first_8_bytes_hex": "c14c060019bdbc89",
+   "plaintext_marker_or_address_found": false
+  },
+  {
+   "contentTopic": "/agentnet/1/inbox-01/proto",
+   "payload_bytes": 2197,
+   "first_8_bytes_hex": "c14c0600199031fe",
+   "plaintext_marker_or_address_found": false
+  },
+  {
+   "contentTopic": "/agentnet/1/inbox-01/proto",
+   "payload_bytes": 2197,
+   "first_8_bytes_hex": "c14c060019353811",
+   "plaintext_marker_or_address_found": false
+  },
+  {
+   "contentTopic": "/agentnet/1/inbox-01/proto",
+   "payload_bytes": 2197,
+   "first_8_bytes_hex": "c14c060019b619c4",
+   "plaintext_marker_or_address_found": false
+  },
+  {
+   "contentTopic": "/agentnet/1/inbox-01/proto",
+   "payload_bytes": 2197,
+   "first_8_bytes_hex": "c14c06001938cb2c",
+   "plaintext_marker_or_address_found": false
+  },
+  {
+   "contentTopic": "/agentnet/1/inbox-01/proto",
+   "payload_bytes": 2197,
+   "first_8_bytes_hex": "c14c060019ab2590",
+   "plaintext_marker_or_address_found": false
+  },
+  {
+   "contentTopic": "/agentnet/1/inbox-01/proto",
+   "payload_bytes": 2197,
+   "first_8_bytes_hex": "c14c060019a6b95e",
+   "plaintext_marker_or_address_found": false
+  },
+  {
+   "contentTopic": "/agentnet/1/inbox-01/proto",
+   "payload_bytes": 2197,
+   "first_8_bytes_hex": "c14c0600192e5140",
+   "plaintext_marker_or_address_found": false
+  }
+ ],
+ "any_plaintext_found": false,
+ "note": "The intruder holds no AgentNet identity key: it sees ciphertext frames (padded length, topic, time). It is NOT shown here that decryption is impossible beyond the absence of plaintext in the payload; the wrong-recipient test is results/a2-e2e-crypto."
+}

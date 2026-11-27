@@ -731,7 +731,12 @@ impl VerificationHelper for Helper<'_> {
                 // unreachable. A lookup by subkey fingerprint must not be added without
                 // restoring it.
                 let cert_fp = good.ka.cert().fingerprint();
-                debug_assert_eq!(key.fingerprint(), cert_fp);
+                // Kept as a runtime check even though no test input reaches it: if a
+                // lookup by subkey fingerprint were ever added, a subkey signature must
+                // still be refused here.
+                if key.fingerprint() != cert_fp {
+                    return Err(self.reject(OpenError::UnsupportedSignature));
+                }
                 let Some(b) = fp32(&cert_fp) else {
                     return Err(self.reject(OpenError::UnsupportedSignature));
                 };

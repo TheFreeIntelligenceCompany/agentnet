@@ -1,0 +1,10 @@
+interface: wg0
+  public key: VVx60Dlypz42QWBq0/olebmMlyttXMPVYKYqqxIm2FY=
+  private key: (hidden)
+  listening port: 51820
+
+peer: ZVCrtd/M/AT+nVZKh2bdPIzFCAhWJhlbiQQr4T+f5Rs=
+  endpoint: 172.29.70.21:43472
+  allowed ips: 10.66.0.2/32
+  latest handshake: 8 seconds ago
+  transfer: 401.43 KiB received, 844.92 KiB sent

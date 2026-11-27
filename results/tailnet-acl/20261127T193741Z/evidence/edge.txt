@@ -1,0 +1,12 @@
+# 2026-11-27T19:56:53Z box2: curl -sS --http1.1 -m 10 -X POST -H 'Upgrade: tailscale-control-protocol' -H 'Connection: Upgrade' https://<HS_HOST>/ts2021 -o /dev/null -w 'POST+Upgrade:tailscale-control-protocol via edge (HTTP/1.1): http=%{http_code}\n'; curl -sS --http1.1 -m 10 -H 'Upgrade: websocket' -H 'Connection: Upgrade' -H 'Sec-WebSocket-Version: 13' -H 'Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==' https://<HS_HOST>/ts2021 -o /dev/null -w 'GET+Upgrade:websocket via edge (HTTP/1.1): http=%{http_code}\n'; curl -sS -m 10 https://<HS_HOST>/health
+POST+Upgrade:tailscale-control-protocol via edge (HTTP/1.1): http=500
+GET+Upgrade:websocket via edge (HTTP/1.1): http=101
+{"status":"pass"}
+[rc=0]
+
+# 2026-11-27T19:56:58Z box1: cd ~/hs; grep -c "no upgrade header" hs.log; grep -m2 "no upgrade header" hs.log; cat ~/shim.log | wc -l
+1
+2026-11-27T19:56:53Z WRN ../../../home/runner/work/headscale/headscale/hscontrol/noise.go:106 > no upgrade header in TS2021 request. If headscale is behind a reverse proxy, make sure it is configured to pass WebSockets through.
+0
+[rc=0]
+

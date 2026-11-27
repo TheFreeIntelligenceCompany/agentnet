@@ -1,0 +1,37 @@
+19:51:30 port-forward killed
+19:51:30 peers=['CanConnect'] state=None err=None
+19:51:33 peers=['CanConnect'] state=None err=None
+19:51:36 sent 4006f901-b322-4582-881c-6e971e41b2fd
+19:51:36 peers=['CanConnect'] state=queued err=None
+19:51:40 peers=['CanConnect'] state=queued err=None
+19:51:43 peers=['CannotConnect'] state=queued err=transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+19:51:46 peers=['CannotConnect'] state=queued err=transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+19:51:49 peers=['CannotConnect'] state=queued err=transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+19:51:52 peers=['CannotConnect'] state=queued err=transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+19:51:55 peers=['CannotConnect'] state=queued err=transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+19:51:59 peers=['CannotConnect'] state=queued err=transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+19:52:02 peers=['CannotConnect'] state=queued err=transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+19:52:05 peers=['CannotConnect'] state=queued err=transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+19:52:08 peers=['CannotConnect'] state=queued err=transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+19:52:11 peers=['CannotConnect'] state=queued err=transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+19:52:14 peers=['CannotConnect'] state=queued err=transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+19:52:17 peers=['CannotConnect'] state=queued err=transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+19:52:20 peers=['CannotConnect'] state=queued err=transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+19:52:24 peers=['CannotConnect'] state=queued err=transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+19:52:27 peers=['CannotConnect'] state=queued err=transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+19:52:30 peers=['CannotConnect'] state=queued err=transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+19:52:33 peers=['CannotConnect'] state=queued err=transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+19:52:36 peers=['CannotConnect'] state=queued err=transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+19:52:40 peers=['CannotConnect'] state=queued err=transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+19:52:43 peers=['CannotConnect'] state=queued err=transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+19:52:46 port-forward restored (down 76 s)
+19:52:46 peers=['CannotConnect'] state=queued err=transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+19:52:49 peers=['CannotConnect'] state=queued err=transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+19:52:52 peers=['CannotConnect'] state=queued err=transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+19:52:56 peers=['CannotConnect'] state=queued err=transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+19:52:59 A lists R Connected 12.4 s after restore
+19:52:59 peers=['Connected'] state=queued err=transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+19:53:02 peers=['Connected'] state=queued err=transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+19:53:05 peers=['Connected'] state=queued err=transport unavailable: node reported NoPeersToPublish (no connected peers; the node also returns this for a message just
+19:53:08 delivered 21.7 s after restore
+{"down_s": 76, "connected_after_restore_s": 12.430395126342773, "delivered_after_restore_s": 21.745315074920654}

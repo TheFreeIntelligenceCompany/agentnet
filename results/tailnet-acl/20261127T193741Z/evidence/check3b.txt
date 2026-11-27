@@ -1,0 +1,36 @@
+# 2026-11-27T19:44:55Z box1: bash /tmp/policy-apply.sh /tmp/policy-3b-visibility-variant.hujson
+Policy is valid
+applied 2026-11-27T19:44:55.921Z sha256=8eda8ac277c4b7f2
+2026-11-27T19:44:55Z INF Received SIGHUP, reloading ACL policy signal=hangup
+2026-11-27T19:44:56Z INF Policy reload completed with changes policy.changed=true route.changes=0 total.changes=1
+[rc=0]
+
+# 2026-11-27T19:45:01Z box3: tailscale status; ip route get <TS_IP_R>; tailscale ping -c 3 <TS_IP_R> 2>&1; for p in 9999 60000 22; do echo "port $p:"; timeout 10 nc -z -v -w 5 <TS_IP_R> $p; echo "rc=$?"; done
+<TS_IP_C2>  acl-c2  tagged-devices  linux  -                                                                   
+<TS_IP_R>  acl-r   tagged-devices  linux  active; direct [<PUBLIC_IP6>]:41641, tx 780 rx 508  
+<TS_IP_R> dev tailscale0 table 52 src <TS_IP_C2> uid 1000 
+    cache 
+pong from acl-r (<TS_IP_R>) via [<PUBLIC_IP6>]:41641 in 1ms
+port 9999:
+rc=1
+port 60000:
+rc=1
+port 22:
+rc=1
+nc: connect to <TS_IP_R> port 9999 (tcp) failed: Connection refused
+nc: connect to <TS_IP_R> port 60000 (tcp) timed out: Operation now in progress
+nc: connect to <TS_IP_R> port 22 (tcp) timed out: Operation now in progress
+[rc=0]
+
+# 2026-11-27T19:45:11Z box1: sudo ss -ltn | grep -E ":9999 " ; echo "(nothing listens on 9999: connection refused means the packet was admitted)"
+(nothing listens on 9999: connection refused means the packet was admitted)
+[rc=0]
+
+# 2026-11-27T19:45:17Z box1: bash /tmp/policy-apply.sh /tmp/policy-main.hujson
+Policy is valid
+applied 2026-11-27T19:45:18.187Z sha256=2ff924b4dd277604
+2026-11-27T19:44:56Z INF Policy reload completed with changes policy.changed=true route.changes=0 total.changes=1
+2026-11-27T19:45:18Z INF Received SIGHUP, reloading ACL policy signal=hangup
+2026-11-27T19:45:18Z INF Policy reload completed with changes policy.changed=true route.changes=0 total.changes=1
+[rc=0]
+

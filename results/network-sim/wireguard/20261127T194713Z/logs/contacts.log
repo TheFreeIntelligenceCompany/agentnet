@@ -1,0 +1,6 @@
+$ /Users/<user>/develop/FIC-elipsis/target/release/agentnet --json --data-dir /tmp/an-net.niTV2M/a contact add @/tmp/an-net.niTV2M/b.record --expect an26uq7mojy6nvbgz2dwtp43pk4iyarrh5jcdfminau3tksyzhmi44p56rnf4 --alias b
+{"address":"an26uq7mojy6nvbgz2dwtp43pk4iyarrh5jcdfminau3tksyzhmi44p56rnf4","alias":"b","trust":"trusted","inbox_topic":"/agentnet/1/inbox-01/proto","added_at":1795808969749,"kem_expires_at":1827344967000,"updated":false,"revoked":false}
+[exit 0]
+$ /Users/<user>/develop/FIC-elipsis/target/release/agentnet --json --data-dir /tmp/an-net.niTV2M/b contact add @/tmp/an-net.niTV2M/a.record --expect an26qsc5d6v27zln4wz56ndhnkx6lwujn3fvl6icwjxsu7rbzrhamckx2ni5e --alias a
+{"address":"an26qsc5d6v27zln4wz56ndhnkx6lwujn3fvl6icwjxsu7rbzrhamckx2ni5e","alias":"a","trust":"trusted","inbox_topic":"/agentnet/1/inbox-04/proto","added_at":1795808969804,"kem_expires_at":1827344967000,"updated":false,"revoked":false}
+[exit 0]

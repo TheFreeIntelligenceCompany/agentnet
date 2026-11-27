@@ -1,0 +1,94 @@
+# 2026-11-27T19:43:47Z box3: tailscale status; echo ---; ip route get <TS_IP_R>; echo ---; tailscale ping -c 2 <TS_IP_R> 2>&1; echo ---; time nc -z -v -w 8 <TS_IP_R> 60000; echo nc_rc=$?; tailscale status --json | jq -c "{peers:(.Peer|length), Self:.Self.Tags}"
+<TS_IP_C2>  acl-c2  tagged-devices  linux  -  
+---
+<TS_IP_R> via 172.16.0.1 dev eth0 src 172.16.0.2 uid 1000 
+    cache 
+---
+no matching peer
+---
+nc_rc=1
+{"peers":0,"Self":["tag:agentnet-guest"]}
+nc: connect to <TS_IP_R> port 60000 (tcp) timed out: Operation now in progress
+
+real	0m8.009s
+user	0m0.001s
+sys	0m0.000s
+[rc=0]
+
+# 2026-11-27T19:43:56Z box3: curl -s 127.0.0.1:18660/admin/v1/peers | jq -c "[.[]|{multiaddr,connected}]"; ~/agentnet --data-dir ~/a2 doctor --ready; echo exit=$?
+[{"multiaddr":"/ip4/<TS_IP_R>/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV","connected":"CannotConnect"}]
+[ok  ] data dir permissions: directory 0700, files 0600
+[ok  ] config: /data/home/a2/agentnet.toml valid (private mode, 1 peer(s))
+[ok  ] identity: address an2veci4hqpv6mgzxbjhvtiuqlvszr63humohejusnroboyip3bn3is7pygcu
+[ok  ] encryption subkey: expires in 364 day(s)
+[ok  ] replay guard: inactive (store generation 0)
+[warn] single instance: the same identity running in two data directories cannot be detected or prevented (the data-dir lock only covers one directory); both would receive, persist and acknowledge every message independently and may both fire triggers
+       -> run each identity in exactly one place; to move it, stop the old daemon first and copy agentnet.db + agentnet.generation or use `identity export/import`
+[ok  ] daemon socket: daemon answers on agentnet.sock
+[ok  ] node reachable: http://127.0.0.1:18660 answered 200
+[ok  ] clock: within 0 s of the node's clock
+[ok  ] isolation: no isolation violation reported
+[warn] peers == allowlist: no peer connected yet
+       -> start the relay first; the node redials with backoff
+[warn] history sync: no history sync has completed yet (just started, or the relay Store has not answered)
+       -> check the relay's Store (docs/runbook.md section 6.4): the node's /health, its store flags and the `last history sync` line of `network status`; until a pass completes, messages sent while this daemon was offline are not recovered
+[warn] transport ready: node reachable; 0 connected allowed peer(s)
+       -> messages queue locally until the node is ready
+[ok  ] local inbox database: inbox query works (this tests the local database, not the relay Store)
+0 failing, 4 warning(s)
+exit=7
+NOT READY: messaging is not operational:
+  - transport ready: warning: node reachable; 0 connected allowed peer(s) -> messages queue locally until the node is ready
+[rc=0]
+
+# 2026-11-27T19:44:17Z box3: curl -s 127.0.0.1:18660/relay/v1/auto/messages/%2Fagentnet%2F1%2Finbox-06%2Fproto | jq -c "length"
+jq: parse error: Invalid numeric literal at EOF at line 1, column 26
+[rc=5]
+
+# 2026-11-27T19:44:18Z box2: for i in 1 2 3; do ~/agentnet --json --data-dir ~/a1 send an2pptpdy7se5bdkjssoca4mkiqiqgelrq5eowaenjdl2abavut6r7uyjkpsm "while-guest-denied $i" | jq -r .message_id; sleep 2; done
+d2dd1881-9040-4eb8-9597-4dfd56bfbb75
+0ab73805-4083-40c8-b185-dbb869319ac4
+594a3ce9-cd74-4f8b-a83d-39aad96c990f
+[rc=0]
+
+# 2026-11-27T19:44:24Z box3: curl -s 127.0.0.1:18660/relay/v1/auto/messages/%2Fagentnet%2F1%2Finbox-06%2Fproto | jq -c "length"; curl -s 127.0.0.1:18660/admin/v1/peers | jq -c "[.[]|.connected]"; docker logs an-a2 2>&1 | grep -c -i "totalConnections=[1-9]"; docker logs an-a2 2>&1 | grep -o "totalConnections=[0-9]*" | sort | uniq -c
+["CannotConnect"]
+0
+      1 totalConnections=0
+jq: parse error: Invalid numeric literal at EOF at line 1, column 26
+[rc=0]
+
+# 2026-11-27T19:44:25Z box1: curl -s 127.0.0.1:18640/admin/v1/peers | jq -c "[.[]|{multiaddr,connected}]"; echo "A2 peer id/ip mentions in R log:"; docker logs an-r1 2>&1 | grep -c -E "100\.64\.0\.3"; docker logs an-r1 2>&1 | grep -c -F "$(docker logs an-a2 2>&1 | grep -o -m1 "16Uiu2HA[A-Za-z0-9]*" | head -n 1)"
+[{"multiaddr":"/ip4/172.28.66.1/tcp/44232/p2p/16Uiu2HAmRcvJH1vDnzTmEDLsadTXHJ8RuV3DpsrNkhwe24EWQiVU","connected":"Connected"},{"multiaddr":"/ip4/172.28.66.1/tcp/37408/p2p/16Uiu2HAmGGTNKYN2QDGjGj2HK1fXFUZ4js6P5K1VmMvEofo4MfAZ","connected":"Connected"}]
+A2 peer id/ip mentions in R log:
+0
+50
+[rc=0]
+
+# 2026-11-27T19:44:31Z box3: curl -s 127.0.0.1:18660/relay/v1/auto/messages/%2Fagentnet%2F1%2Finbox-06%2Fproto; echo; curl -s 127.0.0.1:18660/debug/v1/info | jq -c .
+/agentnet/1/inbox-06/proto
+{"listenAddresses":["/ip4/<TS_IP_C2>/tcp/60000/p2p/16Uiu2HAm5fdUwMWvpFmjnxmdKbC5C1YT4iDdo6ompmS7HidtFiq6"],"enrUri":"enr:-Kq4QK4h9v-II75DeVhAJMv7nmExMloRzwrcV4SqzTRXftbtLP4Yh2FgL5NliQe0Ab_Xv9oaivWPwvzEMhjxruM7bqEFgmlkgnY0gmlwhGRAAAOKbXVsdGlhZGRyc4oACARkQAADBupggnJzhQBCAQAAiXNlY3AyNTZrMaECmCgtOME4g4N2065idpd6GV-MN7P1VrhMjZOBTiTkmMmDdGNwgupghXdha3UyAQ"}
+[rc=0]
+
+# 2026-11-27T19:44:39Z box3: curl -s -X POST -H "content-type: application/json" -d "[\"/agentnet/1/inbox-06/proto\"]" 127.0.0.1:18660/relay/v1/auto/subscriptions; echo; curl -s 127.0.0.1:18660/relay/v1/auto/messages/%2Fagentnet%2F1%2Finbox-06%2Fproto
+OK
+[rc=0]
+
+# 2026-11-27T19:44:40Z box2: for i in 1 2 3; do ~/agentnet --json --data-dir ~/a1 send an2pptpdy7se5bdkjssoca4mkiqiqgelrq5eowaenjdl2abavut6r7uyjkpsm "while-guest-denied-sub $i" | jq -r .message_id; sleep 2; done
+3f9a2f48-c028-48a3-a574-f97608f388b4
+39688ca9-8d81-4ebe-83d0-a39933a9862f
+93b1315b-3f3f-456b-9186-b9da1b5d258c
+[rc=0]
+
+# 2026-11-27T19:44:46Z box3: curl -s 127.0.0.1:18660/relay/v1/auto/messages/%2Fagentnet%2F1%2Finbox-06%2Fproto; echo; curl -s 127.0.0.1:18660/admin/v1/peers | jq -c "[.[]|.connected]"
+[]
+["CannotConnect"]
+[rc=0]
+
+# 2026-11-27T19:44:46Z box1: curl -s 127.0.0.1:18640/admin/v1/peers | jq -c "[.[]|{multiaddr,connected}]"; echo "mentions of A2 tailnet ip / A2 peer id in R log:"; docker logs an-r1 2>&1 | grep -c -E "100\.64\.0\.3"; docker logs an-r1 2>&1 | grep -c -F 16Uiu2HAm5fdUwMWvpFmjnxmdKbC5C1YT4iDdo6ompmS7HidtFiq6
+[{"multiaddr":"/ip4/172.28.66.1/tcp/44232/p2p/16Uiu2HAmRcvJH1vDnzTmEDLsadTXHJ8RuV3DpsrNkhwe24EWQiVU","connected":"Connected"},{"multiaddr":"/ip4/172.28.66.1/tcp/37408/p2p/16Uiu2HAmGGTNKYN2QDGjGj2HK1fXFUZ4js6P5K1VmMvEofo4MfAZ","connected":"Connected"}]
+mentions of A2 tailnet ip / A2 peer id in R log:
+0
+0
+[rc=1]
+

@@ -1,0 +1,2 @@
+A inbox rows 21 unique 21 all burst ids present True next_cursor aW5ib3g6MjE
+B inbox rows 22 unique 22 all burst ids present True next_cursor aW5ib3g6MjI

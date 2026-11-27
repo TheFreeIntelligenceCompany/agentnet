@@ -1,0 +1,54 @@
+# 2026-11-27T19:54:49Z box2: sudo iptables -I OUTPUT 1 -o lo -j ACCEPT; sudo iptables -I OUTPUT 2 -p udp --dport 53 -j ACCEPT; sudo iptables -I OUTPUT 3 -p udp -j DROP; sudo iptables -I INPUT 1 -i lo -j ACCEPT; sudo iptables -I INPUT 2 -p udp --sport 53 -j ACCEPT; sudo iptables -I INPUT 3 -p udp -j DROP; sudo ip6tables -I OUTPUT 1 -o lo -j ACCEPT; sudo ip6tables -I OUTPUT 2 -p udp --dport 53 -j ACCEPT; sudo ip6tables -I OUTPUT 3 -p udp -j DROP; sudo ip6tables -I INPUT 1 -i lo -j ACCEPT; sudo ip6tables -I INPUT 2 -p udp --sport 53 -j ACCEPT; sudo ip6tables -I INPUT 3 -p udp -j DROP; sudo iptables -S OUTPUT; sudo iptables -S INPUT; tailscale debug rebind; sleep 3; for i in 1 2 3; do tailscale ping -c 1 --timeout 10s <TS_IP_R>; done
+-P OUTPUT ACCEPT
+-A OUTPUT -o lo -j ACCEPT
+-A OUTPUT -p udp -m udp --dport 53 -j ACCEPT
+-A OUTPUT -p udp -j DROP
+-P INPUT ACCEPT
+-A INPUT -i lo -j ACCEPT
+-A INPUT -p udp -m udp --sport 53 -j ACCEPT
+-A INPUT -p udp -j DROP
+-A INPUT -j ts-input
+pong from acl-r (<TS_IP_R>) via DERP(sea) in 16ms
+pong from acl-r (<TS_IP_R>) via DERP(sea) in 17ms
+pong from acl-r (<TS_IP_R>) via DERP(sea) in 18ms
+error Access denied: debug access denied: 
+
+Use 'sudo tailscale debug rebind'.
+To not require root, use 'sudo tailscale set --operator=$USER' once.
+direct connection not established
+direct connection not established
+direct connection not established
+[rc=1]
+
+# 2026-11-27T19:55:35Z box2: tailscale ping -c 4 --timeout 10s <TS_IP_R>; tailscale status --json | jq -c "{Relay:.Self.Relay,peers:[.Peer[]|{CurAddr,Relay,Active}]}"; tailscale status
+pong from acl-r (<TS_IP_R>) via DERP(sea) in 17ms
+pong from acl-r (<TS_IP_R>) via DERP(sea) in 16ms
+pong from acl-r (<TS_IP_R>) via DERP(sea) in 18ms
+pong from acl-r (<TS_IP_R>) via DERP(sea) in 18ms
+{"Relay":"sea","peers":[{"CurAddr":"","Relay":"sea","Active":true}]}
+<TS_IP_C1>  acl-c1  tagged-devices  linux  -                                          
+<TS_IP_R>  acl-r   tagged-devices  linux  active; relay "sea", tx 968536 rx 1425216  
+direct connection not established
+[rc=0]
+
+# 2026-11-27T19:56:08Z box2: tailscale status --json | jq -c "{peers:[.Peer[]|{CurAddr,Relay,Active}]}"; docker restart an-a1 >/dev/null; date -u +%T.%3N; for i in $(seq 1 60); do c=$(curl -s -m 2 127.0.0.1:18650/admin/v1/peers | jq -r ".[0].connected"); [ "$c" = Connected ] && break; sleep 2; done; echo "$(date -u +%T.%3N) node peer: $c"; tailscale status --json | jq -c "{peers:[.Peer[]|{CurAddr,Relay,Active}]}"
+{"peers":[{"CurAddr":"","Relay":"sea","Active":true}]}
+19:56:09.403
+19:56:11.561 node peer: Connected
+{"peers":[{"CurAddr":"","Relay":"sea","Active":true}]}
+jq: parse error: Invalid numeric literal at line 1, column 7
+[rc=0]
+
+# 2026-11-27T19:56:17Z box2: ~/agentnet --json --data-dir ~/a1 send an2pptpdy7se5bdkjssoca4mkiqiqgelrq5eowaenjdl2abavut6r7uyjkpsm 'after restart over DERP' | tee /tmp/m3.json; sleep 4; ~/agentnet --json --data-dir ~/a1 status $(jq -r .message_id /tmp/m3.json) | jq -c '{state,attempts,rtt:(.delivered_at-.created_at)}'; tailscale status --json | jq -c '{peers:[.Peer[]|{CurAddr,Relay}]}'
+{"message_id":"a60da0ad-db36-4201-bc83-d2fe20c2bf03","status":"queued","conversation_id":"7df2e4d3-6177-4af4-a22d-6054058d70b6","expires_at":1795895777959,"deduplicated":false}
+{"state":"delivered","attempts":1,"rtt":631}
+{"peers":[{"CurAddr":"","Relay":"sea"}]}
+[rc=0]
+
+# 2026-11-27T19:56:22Z box2: for t in iptables ip6tables; do sudo $t -D OUTPUT -o lo -j ACCEPT; sudo $t -D OUTPUT -p udp --dport 53 -j ACCEPT; sudo $t -D OUTPUT -p udp -j DROP; sudo $t -D INPUT -i lo -j ACCEPT; sudo $t -D INPUT -p udp --sport 53 -j ACCEPT; sudo $t -D INPUT -p udp -j DROP; done; sudo iptables -S OUTPUT; sudo iptables -S INPUT; sleep 20; tailscale ping -c 4 <TS_IP_R>
+-P OUTPUT ACCEPT
+-P INPUT ACCEPT
+-A INPUT -j ts-input
+pong from acl-r (<TS_IP_R>) via <PUBLIC_IP4>:42130 in 1ms
+[rc=0]
+

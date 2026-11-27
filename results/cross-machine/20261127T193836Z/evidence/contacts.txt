@@ -1,0 +1,14 @@
+# wrong --expect (A adds B's cert expecting A's own address)
+error: contact certificate is not for the expected address
+rc=4
+# right --expect
+{"address":"an252cz23js4g5i43mvfvgkimk524bgwr2agu5pvui4nrdaimiwf3xito2yf4","alias":"bob","trust":"trusted","inbox_topic":"/agentnet/1/inbox-05/proto","added_at":1795808808066,"kem_expires_at":1827344616000,"updated":false,"revoked":false}
+rc=0
+# B side wrong expect
+# B side right expect
+{"address":"an2zptjqvkudaapzjcfized43cuwlci5myilvsjhpnzu2jh4zpdr7vz6uy7ni","alias":"alice","trust":"trusted","inbox_topic":"/agentnet/1/inbox-06/proto","added_at":1795808809917,"kem_expires_at":1827344763000,"updated":false,"revoked":false}
+
+an252cz23js4g5i43mvfvgkimk524bgwr2agu5pvui4nrdaimiwf3xito2yf4 trusted alias=bob
+an2zptjqvkudaapzjcfized43cuwlci5myilvsjhpnzu2jh4zpdr7vz6uy7ni trusted alias=alice
+error: contact certificate is not for the expected address
+rc=4

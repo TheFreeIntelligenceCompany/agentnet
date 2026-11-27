@@ -1,0 +1,6 @@
+## Mac listeners on the test ports and any 60000/8000
+ssh       17705 <user>    7u  IPv4 0x8aa3081824a1946b      0t0  TCP 127.0.0.1:61660 (LISTEN)
+ssh       88182 <user>   28u  IPv4 0x5009cf82842ffb60      0t0  TCP 127.0.0.1:18655 (LISTEN)
+## agentnet process sockets
+COMMAND    PID     USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+agentnet 63874 <user>   14u  IPv4 0x28fea0190d840a00      0t0  TCP 127.0.0.1:51639->127.0.0.1:18655 (ESTABLISHED)

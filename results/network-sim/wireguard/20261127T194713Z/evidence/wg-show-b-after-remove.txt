@@ -1,0 +1,11 @@
+interface: wg0
+  public key: 2gDJsu13CTcH7/UcQxbxeHIHqE95iJ1k0omO1QOq+X4=
+  private key: (hidden)
+  listening port: 48769
+
+peer: VVx60Dlypz42QWBq0/olebmMlyttXMPVYKYqqxIm2FY=
+  endpoint: 172.29.70.10:51820
+  allowed ips: 10.66.0.1/32
+  latest handshake: 1 minute, 39 seconds ago
+  transfer: 1007.64 KiB received, 387.90 KiB sent
+  persistent keepalive: every 25 seconds

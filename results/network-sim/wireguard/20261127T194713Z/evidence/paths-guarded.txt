@@ -1,0 +1,1 @@
+guarded: A->R underlay:60000 rc=1 [ nc: connect to 172.29.70.10 port 60000 (tcp) timed out: Operation in progress]; A->10.66.0.3:60000 rc=1 [ nc: connect to 10.66.0.3 port 60000 (tcp) failed: Connection refused]; A->10.66.0.1:60000 rc=0 [ Connection to 10.66.0.1 60000 port [tcp/*] succeeded!]; underlay packets to an overlay address: 0; SYNs to R:60000 on the underlay: 6

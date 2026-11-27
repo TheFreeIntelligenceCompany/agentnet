@@ -1,0 +1,211 @@
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  2.048kB
+Step 1/2 : FROM alpine:3.20
+3.20: Pulling from library/alpine
+3f26bc2dec0b: Pulling fs layer
+cee42a41056b: Download complete
+8b093306b817: Download complete
+3f26bc2dec0b: Download complete
+3f26bc2dec0b: Pull complete
+Digest: sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+Status: Downloaded newer image for alpine:3.20
+ ---> d9e853e87e55
+Step 2/2 : RUN apk add --no-cache wireguard-tools iptables ip6tables conntrack-tools tcpdump iproute2 curl netcat-openbsd bind-tools busybox-extras jq
+ ---> Running in ec889c6aecb9
+fetch https://dl-cdn.alpinelinux.org/alpine/v3.20/main/aarch64/APKINDEX.tar.gz
+fetch https://dl-cdn.alpinelinux.org/alpine/v3.20/community/aarch64/APKINDEX.tar.gz
+(1/55) Installing fstrm (0.6.1-r4)
+(2/55) Installing krb5-conf (1.0-r2)
+(3/55) Installing libcom_err (1.47.0-r5)
+(4/55) Installing keyutils-libs (1.6.3-r3)
+(5/55) Installing libverto (0.3.2-r2)
+(6/55) Installing krb5-libs (1.21.3-r0)
+(7/55) Installing json-c (0.17-r0)
+(8/55) Installing nghttp2-libs (1.62.1-r0)
+(9/55) Installing protobuf-c (1.5.0-r0)
+(10/55) Installing libuv (1.48.0-r0)
+(11/55) Installing xz-libs (5.8.3-r0)
+(12/55) Installing libxml2 (2.12.10-r0)
+(13/55) Installing bind-libs (9.18.49-r0)
+(14/55) Installing bind-tools (9.18.49-r0)
+(15/55) Installing busybox-extras (1.36.1-r31)
+Executing busybox-extras-1.36.1-r31.post-install
+(16/55) Installing libmnl (1.0.5-r2)
+(17/55) Installing libnfnetlink (1.0.2-r3)
+(18/55) Installing libnetfilter_conntrack (1.0.9-r3)
+(19/55) Installing libnetfilter_cthelper (1.0.1-r2)
+(20/55) Installing libnetfilter_cttimeout (1.0.1-r2)
+(21/55) Installing libnetfilter_queue (1.0.5-r2)
+(22/55) Installing conntrack-tools (1.4.8-r0)
+(23/55) Installing ca-certificates (20261020-r0)
+(24/55) Installing brotli-libs (1.1.0-r2)
+(25/55) Installing c-ares (1.33.1-r0)
+(26/55) Installing libunistring (1.2-r0)
+(27/55) Installing libidn2 (2.3.7-r0)
+(28/55) Installing libpsl (0.21.5-r1)
+(29/55) Installing zstd-libs (1.5.6-r0)
+(30/55) Installing libcurl (8.14.1-r2)
+(31/55) Installing curl (8.14.1-r2)
+(32/55) Installing libnftnl (1.2.6-r0)
+(33/55) Installing libxtables (1.8.10-r3)
+(34/55) Installing iptables (1.8.10-r3)
+(35/55) Installing libcap2 (2.78-r0)
+(36/55) Installing libelf (0.191-r0)
+(37/55) Installing iproute2-minimal (6.9.0-r0)
+(38/55) Installing iproute2-tc (6.9.0-r0)
+(39/55) Installing iproute2-ss (6.9.0-r0)
+(40/55) Installing iproute2 (6.9.0-r0)
+Executing iproute2-6.9.0-r0.post-install
+(41/55) Installing oniguruma (6.9.9-r0)
+(42/55) Installing jq (1.7.1-r0)
+(43/55) Installing libmd (1.1.0-r0)
+(44/55) Installing libbsd (0.12.2-r0)
+(45/55) Installing netcat-openbsd (1.226-r0)
+(46/55) Installing libpcap (1.10.4-r1)
+(47/55) Installing tcpdump (4.99.4-r1)
+(48/55) Installing wireguard-tools-wg (1.0.20210914-r4)
+(49/55) Installing ncurses-terminfo-base (6.4_p20240420-r2)
+(50/55) Installing libncursesw (6.4_p20240420-r2)
+(51/55) Installing readline (8.2.10-r0)
+(52/55) Installing bash (5.2.26-r0)
+Executing bash-5.2.26-r0.post-install
+(53/55) Installing openresolv (3.13.2-r0)
+(54/55) Installing wireguard-tools-wg-quick (1.0.20210914-r4)
+(55/55) Installing wireguard-tools (1.0.20210914-r4)
+Executing busybox-1.36.1-r31.trigger
+Executing ca-certificates-20261020-r0.trigger
+OK: 43 MiB in 69 packages
+ ---> Removed intermediate container ec889c6aecb9
+ ---> c6cabf948176
+Successfully built c6cabf948176
+Successfully tagged an-net-tools:local
+couldn't find env file: /Users/<user>/develop/FIC-elipsis/spike/relay-wireguard/.run/env
+ Network an-wg_underlay Creating 
+ Volume an-wg_rdata Creating 
+ Volume an-wg_rdata Creating 
+ Network an-wg_underlay Creating 
+ Volume an-wg_rdata Created 
+ Volume an-wg_rdata Created 
+ Network an-wg_underlay Created 
+ Network an-wg_underlay Created 
+ Container an-wg-a Creating 
+ Container an-wg-r Creating 
+ Container an-wg-b Creating 
+ Container an-wg-b Created 
+ Container an-wg-r Created 
+ Container an-wg-r-node Creating 
+ Container an-wg-a Created 
+ Container an-wg-r-node Created 
+421da1c688c0371dab6dd100281f82b8b846641feae72a51bbe54fe43b8566cd
+ Container an-wg-a Starting 
+ Container an-wg-b Starting 
+ Container an-wg-r Starting 
+ Container an-wg-a Started 
+ Container an-wg-b Started 
+Error response from daemon: failed to set up container networking: driver failed programming external connectivity on endpoint an-wg-r (a09da563b556989e08f68efb425f47db78281c27dcb90922e0c22a46467a9541): Bind for 127.0.0.1:18650 failed: port is already allocated
+ Container an-wg-r-watchdog Creating 
+ Container an-wg-r-watchdog Created 
+ Container an-wg-r Starting 
+ Container an-wg-r Started 
+ Container an-wg-r Waiting 
+ Container an-wg-r Healthy 
+ Container an-wg-r-watchdog Starting 
+ Container an-wg-r-watchdog Started 
+ Container an-wg-r Recreate 
+ Container an-wg-r Recreated 
+ Container an-wg-r-node Recreate 
+ Container an-wg-r-node Recreated 
+ Container an-wg-r Starting 
+ Container an-wg-r Started 
+ Container an-wg-r Waiting 
+ Container an-wg-r Healthy 
+ Container an-wg-r-node Starting 
+ Container an-wg-r-node Started 
+ Container an-wg-a Running 
+ Container an-wg-b Running 
+ Container an-wg-b-node Creating 
+ Container an-wg-a-node Creating 
+ Container an-wg-b-node Created 
+ Container an-wg-a-node Created 
+ Container an-wg-b Waiting 
+ Container an-wg-a Waiting 
+ Container an-wg-a Healthy 
+ Container an-wg-b Healthy 
+ Container an-wg-a-node Starting 
+ Container an-wg-b-node Starting 
+ Container an-wg-a-node Started 
+ Container an-wg-b-node Started 
+an-wg-cap-main-an-wg-br0
+277003753b628c4421deb3ef984bf709f86de44409cd31e2f97031c8c560c497
+an-wg-cap-paths-unguarded-an-wg-br0
+df48e9720627ed9495f2353dfc024b8650841d2cb99786ae80b60b48faaac997
+an-wg-cap-paths-guarded-an-wg-br0
+3c7e10ed7cd80de38337f5a4274ae655ff468ede3edc2577803830acb1d04c31
+ Container an-wg-intruder Creating 
+ Container an-wg-intruder Created 
+ Container an-wg-intruder Starting 
+ Container an-wg-intruder Started 
+ Container an-wg-intruder Running 
+ Container an-wg-intruder-node Creating 
+ Container an-wg-intruder-node Created 
+ Container an-wg-intruder-node Starting 
+ Container an-wg-intruder-node Started 
+an-wg-cap-s4a-an-wg-br0
+a6c961db4c8c4da6682060ab34b79dbecb3943c44e3058f6c71427c193205b7d
+an-wg-cap-s4b-an-wg-br0
+4a76632f138a3b25f0d24dbf75f1e2146b3cf965afc52a633db9057f039dcd69
+ Container an-wg-intruder-node Stopping 
+ Container an-wg-intruder-node Stopped 
+an-wg-cap-s4c-an-wg-br0
+ Container an-wg-intruder-node Stopping 
+ Container an-wg-intruder-node Stopped 
+ Container an-wg-intruder Stopping 
+ Container an-wg-intruder Stopped 
+Going to remove an-wg-intruder-node, an-wg-intruder
+ Container an-wg-intruder Removing 
+ Container an-wg-intruder-node Removing 
+ Container an-wg-intruder Removed 
+ Container an-wg-intruder-node Removed 
+bdf62540009a5953b0805fffc68dfc6977d42b9e095f00ea483ae097eea5f90c
+an-wg-cap-s5-an-wg-br0
+f1caf185161bc097af4e0f87a7daf35c2bacca89b759a1ccbcc16370243b9f4b
+an-wg-cap-s5b-an-wg-br0
+24750fe4087dbb3facefc697b78fe80f3eedb04b704c7f0da16b53b1145952e9
+an-wg-r-node
+an-wg-r-node
+an-wg-cap-s6-an-wg-br0
+ Container an-wg-r-watchdog Stopping 
+ Container an-wg-b-node Stopping 
+ Container an-wg-a-node Stopping 
+ Container an-wg-r-node Stopping 
+ Container an-wg-r-node Stopped 
+ Container an-wg-r-node Removing 
+ Container an-wg-r-node Removed 
+ Container an-wg-b-node Stopped 
+ Container an-wg-b-node Removing 
+ Container an-wg-a-node Stopped 
+ Container an-wg-a-node Removing 
+ Container an-wg-b-node Removed 
+ Container an-wg-b Stopping 
+ Container an-wg-a-node Removed 
+ Container an-wg-a Stopping 
+ Container an-wg-r-watchdog Stopped 
+ Container an-wg-r-watchdog Removing 
+ Container an-wg-r-watchdog Removed 
+ Container an-wg-r Stopping 
+ Container an-wg-b Stopped 
+ Container an-wg-b Removing 
+ Container an-wg-b Removed 
+ Container an-wg-a Stopped 
+ Container an-wg-a Removing 
+ Container an-wg-a Removed 
+ Container an-wg-r Stopped 
+ Container an-wg-r Removing 
+ Container an-wg-r Removed 
+ Volume an-wg_rdata Removing 
+ Network an-wg_underlay Removing 
+ Volume an-wg_rdata Removed 
+ Network an-wg_underlay Removed 

@@ -1,0 +1,32 @@
+{
+ "elapsed_ms": 64,
+ "is_error": false,
+ "result": {
+  "conversation_id": "x-mcp",
+  "deduplicated": false,
+  "expires_at": 1795895242354,
+  "message_id": "6d008a84-e1c1-4a60-bc4b-5f8dadd76f32",
+  "status": "queued"
+ },
+ "tool": "send_message"
+}
+{
+ "elapsed_ms": 23,
+ "is_error": false,
+ "result": {
+  "attempts": 1,
+  "conversation_id": "x-mcp",
+  "created_at": 1795808842354,
+  "delivered_at": 1795808842738,
+  "expires_at": 1795895242354,
+  "last_attempt_at": 1795808842358,
+  "last_error": null,
+  "message_id": "6d008a84-e1c1-4a60-bc4b-5f8dadd76f32",
+  "message_type": "message",
+  "next_attempt_at": null,
+  "recipient": "an252cz23js4g5i43mvfvgkimk524bgwr2agu5pvui4nrdaimiwf3xito2yf4",
+  "sent_at": 1795808842358,
+  "state": "delivered"
+ },
+ "tool": "get_message_status"
+}

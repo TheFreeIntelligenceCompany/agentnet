@@ -1,0 +1,35 @@
+# 2026-11-27T19:45:21Z box2: for p in 22 80 443 8080 9090 8645 18640 18642 9999; do timeout 6 nc -z -w 3 <TS_IP_R> $p && echo "OPEN $p" || echo "closed/filtered $p"; done; bash /tmp/scan.sh <TS_IP_R>
+closed/filtered 22
+closed/filtered 80
+closed/filtered 443
+closed/filtered 8080
+closed/filtered 9090
+closed/filtered 8645
+closed/filtered 18640
+closed/filtered 18642
+closed/filtered 9999
+scan start 19:45:48 target=<TS_IP_R>
+instabox: command timed out after 60s and was killed
+[rc=124]
+
+# 2026-11-27T19:46:21Z box1: sudo ss -ltn | awk "NR==1||/:22 |:60000|:5[0-9][0-9][0-9][0-9] /"; tailscale status --json | jq -r ".Self.Addrs // empty | length"; for p in 22 60000; do nc -z -w 2 <TS_IP_R> $p && echo "local OPEN $p"; done
+State  Recv-Q Send-Q                  Local Address:Port  Peer Address:Port
+LISTEN 0      4096                       <TS_IP_R>:60000      0.0.0.0:*   
+LISTEN 0      128                           0.0.0.0:22         0.0.0.0:*   
+LISTEN 0      4096            <TS_IP_R>%tailscale0:58436      0.0.0.0:*   
+LISTEN 0      4096   [<TS_IP6_R>]%tailscale0:59780         [::]:*   
+LISTEN 0      128                              [::]:22            [::]:*   
+5
+local OPEN 22
+local OPEN 60000
+Connection to <TS_IP_R> 22 port [tcp/ssh] succeeded!
+Connection to <TS_IP_R> 60000 port [tcp/*] succeeded!
+[rc=0]
+
+# 2026-11-27T19:48:34Z box2: cat /tmp/scan.out
+scan start 19:46:28 target=<TS_IP_R>
+      1 open 58436
+      5 open 60000
+scan done 19:47:59
+[rc=0]
+

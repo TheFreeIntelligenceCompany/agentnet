@@ -1,0 +1,88 @@
+$ /Users/<user>/develop/FIC-elipsis/target/release/agentnet-acceptance bench --a /tmp/an-net.niTV2M/a --b /tmp/an-net.niTV2M/b --a-addr an26qsc5d6v27zln4wz56ndhnkx6lwujn3fvl6icwjxsu7rbzrhamckx2ni5e --b-addr an26uq7mojy6nvbgz2dwtp43pk4iyarrh5jcdfminau3tksyzhmi44p56rnf4 --n 20 --timeout 600 --pace-ms 400 --tag w --out /Users/<user>/develop/FIC-elipsis/results/network-sim/wireguard/20261127T194713Z/evidence/bench.json
+{
+  "a_to_b": {
+    "delivered": 20,
+    "latency_ms_send_to_delivered": {
+      "definition": "delivered_at - created_at from the sender's own outbox row (same host clock)",
+      "max": 20071,
+      "min": 1347,
+      "p50": 17806,
+      "p95": 19838,
+      "p99": 20071,
+      "samples": 20
+    },
+    "not_delivered_at_timeout": 0,
+    "raw_latencies_ms": [
+      1347,
+      1652,
+      4091,
+      5864,
+      5895,
+      5921,
+      9926,
+      9936,
+      17416,
+      17806,
+      17808,
+      19169,
+      19393,
+      19473,
+      19558,
+      19696,
+      19787,
+      19793,
+      19838,
+      20071
+    ],
+    "send_failures": 0,
+    "send_phase_ms": 8124,
+    "sent": 20,
+    "tag": "w-a2b",
+    "terminal_other": {},
+    "total_ms": 27212
+  },
+  "b_to_a": {
+    "delivered": 20,
+    "latency_ms_send_to_delivered": {
+      "definition": "delivered_at - created_at from the sender's own outbox row (same host clock)",
+      "max": 20185,
+      "min": 606,
+      "p50": 16288,
+      "p95": 20095,
+      "p99": 20185,
+      "samples": 20
+    },
+    "not_delivered_at_timeout": 0,
+    "raw_latencies_ms": [
+      606,
+      2733,
+      3554,
+      5211,
+      5435,
+      5468,
+      6637,
+      11629,
+      15913,
+      16288,
+      16478,
+      16648,
+      16863,
+      16896,
+      16909,
+      16994,
+      19040,
+      19048,
+      20095,
+      20185
+    ],
+    "send_failures": 0,
+    "send_phase_ms": 8150,
+    "sent": 20,
+    "tag": "w-b2a",
+    "terminal_other": {},
+    "total_ms": 28092
+  },
+  "direction_mode": "both directions concurrently, 400 ms pacing",
+  "n_per_direction": 20
+}
+[exit 0]

@@ -1,0 +1,5 @@
+try 1 at +170 ms: subscribe B-topic HTTP 404, A-topic HTTP 404
+try 2 at +3378 ms: subscribe B-topic HTTP 404, A-topic HTTP 404
+try 3 at +6466 ms: subscribe B-topic HTTP 404, A-topic HTTP 404
+try 4 at +9595 ms: subscribe B-topic HTTP 404, A-topic HTTP 404
+try 5 at +12791 ms: subscribe B-topic HTTP 200, A-topic HTTP 200
