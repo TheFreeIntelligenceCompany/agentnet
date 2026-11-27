@@ -1,0 +1,25 @@
+$ /data/home/main/target/release/examples/embed
+alice queued 1fb5ae58-5dd4-4bb9-b7de-b69fdc14a9fd (Queued)
+bob received "hello from an embedded engine" from an2zz7dlhx2k662z3mrrj32auuri55ck2flk4e7wo7axk5crbzqfyism4mcfq
+alice's status is now Delivered (authenticated ack)
+[exit 0]
+$ /data/home/main/target/release/examples/embed
+alice queued 8547ffb9-6d88-47c4-abf2-8c4b82aef24d (Queued)
+bob received "hello from an embedded engine" from an2vgy34beqop5yiohgjcv4chfw2jdfjna7howj36ijdtha62fzqdhoatxbh4
+alice's status is now Delivered (authenticated ack)
+[exit 0]
+$ /data/home/main/target/release/examples/embed
+alice queued e12906e3-46a4-42e6-8920-8dd95cbb0619 (Queued)
+bob received "hello from an embedded engine" from an2t57dn46t5shi2mlnpgqv7fbbxc5q73sig2pqdf3asnqfhtpt7gwcoaz4m4
+alice's status is now Delivered (authenticated ack)
+[exit 0]
+$ /data/home/main/target/release/examples/embed
+alice queued cc51b0e7-10c4-4480-9531-734eff7a1857 (Queued)
+bob received "hello from an embedded engine" from an2p233ea5fy4pkrjttfq6eea6hzhnot3lu2uv7poknpsri4tm34gaahxiw6m
+alice's status is now Delivered (authenticated ack)
+[exit 0]
+$ /data/home/main/target/release/examples/embed
+alice queued 0a7e9060-d5c8-48bd-9c65-e38e72f85ad3 (Queued)
+bob received "hello from an embedded engine" from an2r55rqoq5ttgj5zqporoncj7h7ab53ewxosdt2idst5x6ruuym3hir4lxjm
+alice's status is now Delivered (authenticated ack)
+[exit 0]

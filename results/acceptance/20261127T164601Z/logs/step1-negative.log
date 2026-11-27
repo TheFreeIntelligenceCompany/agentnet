@@ -1,0 +1,8 @@
+$ /data/home/main/target/release/agentnet --json --data-dir /tmp/an-acc.YxIkRd/a contact add @/tmp/an-acc.YxIkRd/b.tampered --expect an2zutsuetgzbdg54sxu7zvki57xwwwpfok5esasrs263rtx6th23szulrurq --alias tampered
+{"error":{"code":"invalid_argument","message":"invalid contact certificate: the certificate has no valid self-signature under the policy"}}
+[stderr] error: invalid contact certificate: the certificate has no valid self-signature under the policy
+[exit 4]
+$ /data/home/main/target/release/agentnet --json --data-dir /tmp/an-acc.YxIkRd/a contact add @/tmp/an-acc.YxIkRd/b.record --expect an2awqdofzne6dsx37qibbhq2i4pyp3h6e7a725than23uymhlkjelpcvo45m --alias wrong
+{"error":{"code":"invalid_argument","message":"contact certificate is not for the expected address"}}
+[stderr] error: contact certificate is not for the expected address
+[exit 4]

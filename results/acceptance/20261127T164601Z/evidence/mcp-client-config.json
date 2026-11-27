@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "agentnet": {
+      "command": "/data/home/main/target/release/agentnet",
+      "args": [
+        "mcp",
+        "--data-dir",
+        "/tmp/an-acc.YxIkRd/a"
+      ]
+    }
+  }
+}

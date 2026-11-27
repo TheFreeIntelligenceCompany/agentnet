@@ -1,0 +1,24 @@
+$ /data/home/main/target/release/agentnet --json --data-dir /tmp/an-acc.YxIkRd/b network status
+{"daemon":{"agent_id":"an2zutsuetgzbdg54sxu7zvki57xwwwpfok5esasrs263rtx6th23szulrurq","mcp_http":{"addr":null,"enabled":false},"mode":"private","protocol":1,"uptime_s":60,"version":"0.1.0","webhook":{"cursor":null,"delivered":0,"enabled":false,"last_error":null,"parked":0,"retries":0}},"network":{"connected_peers":0,"detail":"node reachable; 0 connected allowed peer(s)","identity_revoked":false,"isolation_audited":true,"isolation_violation":null,"last_history_sync_at":1795798190146,"last_live_poll_at":1795798253550,"mode":"private","peers":null,"queue":{"active_triggers":0,"events_unacked":24,"inbox_quarantined":0,"inbox_unread":24,"outbox_queued":0,"outbox_sent_unacked":0},"ready":false,"replay_guard":null}}
+[exit 0]
+$ /data/home/main/target/release/agentnet --data-dir /tmp/an-acc.YxIkRd/b doctor
+[ok  ] data dir permissions: directory 0700, files 0600
+[ok  ] config: /tmp/an-acc.YxIkRd/b/agentnet.toml valid (private mode, 1 peer(s))
+[ok  ] identity: address an2zutsuetgzbdg54sxu7zvki57xwwwpfok5esasrs263rtx6th23szulrurq
+[ok  ] encryption subkey: expires in 364 day(s)
+[ok  ] replay guard: inactive (store generation 24)
+[warn] single instance: the same identity running in two data directories cannot be detected or prevented (the data-dir lock only covers one directory); both would receive, persist and acknowledge every message independently and may both fire triggers
+       -> run each identity in exactly one place; to move it, stop the old daemon first and copy agentnet.db + agentnet.generation or use `identity export/import`
+[ok  ] daemon socket: daemon answers on agentnet.sock
+[ok  ] node reachable: http://127.0.0.1:18642 answered 200
+[ok  ] clock: within 0 s of the node's clock
+[ok  ] isolation: no isolation violation reported
+[warn] peers == allowlist: no peer connected yet
+       -> start the relay first; the node redials with backoff
+[warn] history sync: last successful relay Store sync 63 s ago (interval 15 s)
+       -> check the relay's Store (docs/runbook.md section 6.4): the node's /health, its store flags and the `last history sync` line of `network status`; until a pass completes, messages sent while this daemon was offline are not recovered
+[warn] transport ready: node reachable; 0 connected allowed peer(s)
+       -> messages queue locally until the node is ready
+[ok  ] local inbox database: inbox query works (this tests the local database, not the relay Store)
+0 failing, 4 warning(s)
+[exit 0]

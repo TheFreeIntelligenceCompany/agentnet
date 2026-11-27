@@ -1,0 +1,9 @@
+$ /data/home/main/target/release/agentnet --json --data-dir /tmp/an-acc.YxIkRd/m identity export --out /tmp/an-acc.YxIkRd/m.export --passphrase-file /tmp/an-acc.YxIkRd/pass.txt
+{"address":"an2tpqyphhpe55eqlfih27jeerbj3clk4wjszjmx7mjnae6t4vfuxlal4t22q","file":"/tmp/an-acc.YxIkRd/m.export"}
+[exit 0]
+$ /data/home/main/target/release/agentnet --json --data-dir /tmp/an-acc.YxIkRd/m2 identity import --in /tmp/an-acc.YxIkRd/m.export --passphrase-file /tmp/an-acc.YxIkRd/pass.txt --node-url http://127.0.0.1:18642 --peer /ip4/172.28.66.10/tcp/60000/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV
+{"address":"an2tpqyphhpe55eqlfih27jeerbj3clk4wjszjmx7mjnae6t4vfuxlal4t22q","data_dir":"/tmp/an-acc.YxIkRd/m2","peers_configured":true,"replay_guard":true}
+[exit 0]
+$ /data/home/main/target/release/agentnet --json --data-dir /tmp/an-acc.YxIkRd/m2 contact add @/tmp/an-acc.YxIkRd/a.record --expect an2awqdofzne6dsx37qibbhq2i4pyp3h6e7a725than23uymhlkjelpcvo45m --alias a
+{"address":"an2awqdofzne6dsx37qibbhq2i4pyp3h6e7a725than23uymhlkjelpcvo45m","alias":"a","trust":"trusted","inbox_topic":"/agentnet/1/inbox-00/proto","added_at":1795798743528,"kem_expires_at":1827333969000,"updated":false,"revoked":false}
+[exit 0]

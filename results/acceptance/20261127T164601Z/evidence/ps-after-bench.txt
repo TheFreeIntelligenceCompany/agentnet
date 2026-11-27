@@ -1,0 +1,2 @@
+ 225981 26692  0.6       08:13 /data/home/main/target/release/agentnet --data-dir /tmp/an-acc.YxIkRd/a serve
+ 228421 27032  0.7       05:25 /data/home/main/target/release/agentnet --data-dir /tmp/an-acc.YxIkRd/b serve

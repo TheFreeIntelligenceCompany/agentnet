@@ -1,0 +1,42 @@
+$ /data/home/main/target/release/agentnet-acceptance config-check --config /data/home/main/results/acceptance/20261127T164601Z/evidence/mcp-client-config.json --server agentnet --expect-address an2awqdofzne6dsx37qibbhq2i4pyp3h6e7a725than23uymhlkjelpcvo45m --out /data/home/main/results/acceptance/20261127T164601Z/evidence/step6-config-check.json
+{
+  "args": [
+    "mcp",
+    "--data-dir",
+    "/tmp/an-acc.YxIkRd/a"
+  ],
+  "command": "/data/home/main/target/release/agentnet",
+  "get_identity": {
+    "agent_id": "an2awqdofzne6dsx37qibbhq2i4pyp3h6e7a725than23uymhlkjelpcvo45m",
+    "contact_record": "xioGawmz0RsAAAAgR_8qeYuYZK9nESGheC9QUtp77R9qj3IZ_cHYFFPLHRLCpgYfGwoAAAA3BYJrCbPRAwsJBwMVCggCmwMCHgkiIQYFoDcXLSeHK-_wQEJ4aRx-H7P4nwf12ZwN1umGHWpJFgAAAABOiyCz2Ijwvk7XsjTopBEBg24kwY5w4nDtkmxJnNk3VFw44uQDZoQ8su_Gm7X8HN-QxFgamXcYd2RXaWbtagPfYq6-whfwA8k7FVfofNuqoGv_qats9wJwHYzF6t5Xm-_M8g_OKgZrCbPRGQAAACD-xzpM1pbtKDPvhbVa2xUIRhx8sKjNGs-6NVjF_375OMKhBhgbCgAAADIFgmsJs9EFiQHhM4ACmwQiIQYFoDcXLSeHK-_wQEJ4aRx-H7P4nwf12ZwN1umGHWpJFgAAAAD2jyAznMW-Iwbd_jQRykjMZSuAFUSX5Vxe4wM7IR1xnl7wHHYN0sUG9Ykxk9QdL_gHzh7XtoPZFO88wiHSCI_5awHybRS1etyA-Q0k2dicL7Ub7_XpGszl_4mN-WPJiaOX7wQ",
+    "created_at": 1795797969930,
+    "inbox_topic": "/agentnet/1/inbox-00/proto",
+    "kem_expires_at": 1827333969930
+  },
+  "ok": true,
+  "protocol": {
+    "negotiated_protocol_version": "2026-07-28",
+    "server_info": {
+      "name": "agentnet",
+      "version": "0.1.0"
+    }
+  },
+  "tools": [
+    "acknowledge_message",
+    "add_contact",
+    "advertise_agent",
+    "create_trigger",
+    "delete_trigger",
+    "discover_agents",
+    "get_identity",
+    "get_message",
+    "get_message_status",
+    "list_contacts",
+    "list_triggers",
+    "network_status",
+    "read_inbox",
+    "send_message",
+    "withdraw_advert"
+  ]
+}
+[exit 0]

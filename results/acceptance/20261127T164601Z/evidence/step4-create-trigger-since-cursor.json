@@ -1,0 +1,25 @@
+{
+  "elapsed_ms": 7,
+  "is_error": false,
+  "protocol": {
+    "negotiated_protocol_version": "2026-07-28",
+    "server_info": {
+      "name": "agentnet",
+      "version": "0.1.0"
+    }
+  },
+  "result": {
+    "conversation_id": null,
+    "correlation_id": null,
+    "created_at": 1795798336065,
+    "expires_at": 1795801936065,
+    "match_count": 1,
+    "message_type": null,
+    "once": true,
+    "sender": "an2awqdofzne6dsx37qibbhq2i4pyp3h6e7a725than23uymhlkjelpcvo45m",
+    "state": "consumed",
+    "target_session": "demo-session",
+    "trigger_id": "02fe702b-514d-4501-a1f8-73cbee92b7fc"
+  },
+  "tool": "create_trigger"
+}

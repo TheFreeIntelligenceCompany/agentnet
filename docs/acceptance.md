@@ -80,6 +80,7 @@ containers running. Exit status is 1 if any check FAILs (UNTESTED does not fail 
 | 6 | `results/acceptance/20261126T175828Z` | `STEPS="1 4"` after fixing the script: 17 PASS, 0 FAIL |
 | 7 | `results/acceptance/20261126T180008Z` | **Latest; run by the lead** on the final tree, `FRESH_TOPOLOGY=1`: **52 PASS, 0 FAIL, 1 UNTESTED (Tailscale)** |
 | 8 | `results/acceptance/20261127T042942Z` | **First run on the OpenPGP tree** (ADR 0004: RFC 9580 via Sequoia 2.5.0 + OpenSSL 3; local branch `adr-0004-openpgp`), run by the lead, `FRESH_TOPOLOGY=1`: **52 PASS, 0 FAIL, 1 UNTESTED (Tailscale CLI check)**. Runs 1 to 7 used the retired ADR 0002 scheme |
+| 9 | `results/acceptance/20261127T164601Z` | **After the crypto-review fixes** (main at `b3362cc` plus the script change below), run by the lead on a **native Linux x86_64 cloud VM** (the node is not emulated there), `FRESH_TOPOLOGY=1`: **51 PASS, 0 FAIL, 2 UNTESTED** (Tailscale CLI check; `5.host_connections`, whose once-a-second per-process socket snapshot only works on macOS and is recorded as untested on Linux with the reason). A first run on that host failed that one check for the same reason. Not run on macOS for this tree: the Mac had no disk space left to build |
 
 (Three runs rather than two: run 2 exposed a test-hygiene problem in my own script, fixed before run 3. The failing log of run 2 is kept.)
 

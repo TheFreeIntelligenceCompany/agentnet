@@ -1,0 +1,21 @@
+$ /data/home/main/target/release/agentnet --json --data-dir /tmp/an-acc.YxIkRd/a contact add @/tmp/an-acc.YxIkRd/b.record --expect an2zutsuetgzbdg54sxu7zvki57xwwwpfok5esasrs263rtx6th23szulrurq --alias b
+{"address":"an2zutsuetgzbdg54sxu7zvki57xwwwpfok5esasrs263rtx6th23szulrurq","alias":"b","trust":"trusted","inbox_topic":"/agentnet/1/inbox-07/proto","added_at":1795797970142,"kem_expires_at":1827333969000,"updated":false,"revoked":false}
+[exit 0]
+$ /data/home/main/target/release/agentnet --json --data-dir /tmp/an-acc.YxIkRd/b contact add @/tmp/an-acc.YxIkRd/a.record --expect an2awqdofzne6dsx37qibbhq2i4pyp3h6e7a725than23uymhlkjelpcvo45m --alias a
+{"address":"an2awqdofzne6dsx37qibbhq2i4pyp3h6e7a725than23uymhlkjelpcvo45m","alias":"a","trust":"trusted","inbox_topic":"/agentnet/1/inbox-00/proto","added_at":1795797970153,"kem_expires_at":1827333969000,"updated":false,"revoked":false}
+[exit 0]
+$ /data/home/main/target/release/agentnet --json --data-dir /tmp/an-acc.YxIkRd/c contact add @/tmp/an-acc.YxIkRd/b.record --expect an2zutsuetgzbdg54sxu7zvki57xwwwpfok5esasrs263rtx6th23szulrurq --alias b
+{"address":"an2zutsuetgzbdg54sxu7zvki57xwwwpfok5esasrs263rtx6th23szulrurq","alias":"b","trust":"trusted","inbox_topic":"/agentnet/1/inbox-07/proto","added_at":1795798316699,"kem_expires_at":1827333969000,"updated":false,"revoked":false}
+[exit 0]
+$ /data/home/main/target/release/agentnet --json --data-dir /tmp/an-acc.YxIkRd/w contact add @/tmp/an-acc.YxIkRd/b.record --expect an2zutsuetgzbdg54sxu7zvki57xwwwpfok5esasrs263rtx6th23szulrurq --alias b
+{"address":"an2zutsuetgzbdg54sxu7zvki57xwwwpfok5esasrs263rtx6th23szulrurq","alias":"b","trust":"trusted","inbox_topic":"/agentnet/1/inbox-07/proto","added_at":1795798622272,"kem_expires_at":1827333969000,"updated":false,"revoked":false}
+[exit 0]
+$ /data/home/main/target/release/agentnet --json --data-dir /tmp/an-acc.YxIkRd/b contact add @/tmp/an-acc.YxIkRd/w.record --expect an24jjlbiabuooszmrtcyihz2hxdkhvxnl6zrtkh2p4nrmrltl3xopq7b7a5a --alias w
+{"address":"an24jjlbiabuooszmrtcyihz2hxdkhvxnl6zrtkh2p4nrmrltl3xopq7b7a5a","alias":"w","trust":"trusted","inbox_topic":"/agentnet/1/inbox-02/proto","added_at":1795798622287,"kem_expires_at":1827334597000,"updated":false,"revoked":false}
+[exit 0]
+$ /data/home/main/target/release/agentnet --json --data-dir /tmp/an-acc.YxIkRd/m contact add @/tmp/an-acc.YxIkRd/a.record --expect an2awqdofzne6dsx37qibbhq2i4pyp3h6e7a725than23uymhlkjelpcvo45m --alias a
+{"address":"an2awqdofzne6dsx37qibbhq2i4pyp3h6e7a725than23uymhlkjelpcvo45m","alias":"a","trust":"trusted","inbox_topic":"/agentnet/1/inbox-00/proto","added_at":1795798732548,"kem_expires_at":1827333969000,"updated":false,"revoked":false}
+[exit 0]
+$ /data/home/main/target/release/agentnet --json --data-dir /tmp/an-acc.YxIkRd/a contact add @/tmp/an-acc.YxIkRd/m.record --expect an2tpqyphhpe55eqlfih27jeerbj3clk4wjszjmx7mjnae6t4vfuxlal4t22q --alias m
+{"address":"an2tpqyphhpe55eqlfih27jeerbj3clk4wjszjmx7mjnae6t4vfuxlal4t22q","alias":"m","trust":"trusted","inbox_topic":"/agentnet/1/inbox-01/proto","added_at":1795798732566,"kem_expires_at":1827334732000,"updated":false,"revoked":false}
+[exit 0]
