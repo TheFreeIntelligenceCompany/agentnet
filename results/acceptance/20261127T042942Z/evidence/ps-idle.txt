@@ -1,0 +1,2 @@
+16944  11216   0.1 08:21 /Users/dennison/develop/FIC-elipsis/target/release/agentnet --data-dir /tmp/an-acc.hGa5xk/a serve
+22988  12240   0.1 05:26 /Users/dennison/develop/FIC-elipsis/target/release/agentnet --data-dir /tmp/an-acc.hGa5xk/b serve

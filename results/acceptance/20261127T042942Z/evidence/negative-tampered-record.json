@@ -1,0 +1,1 @@
+{"exit":4,"stdout":"{\"error\":{\"code\":\"invalid_argument\",\"message\":\"invalid contact certificate: the certificate has no valid self-signature under the policy\"}}","stderr":"error: invalid contact certificate: the certificate has no valid self-signature under the policy"}

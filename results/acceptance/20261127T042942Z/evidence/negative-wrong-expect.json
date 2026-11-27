@@ -1,0 +1,1 @@
+{"exit":4,"stdout":"{\"error\":{\"code\":\"invalid_argument\",\"message\":\"contact certificate is not for the expected address\"}}","stderr":"error: contact certificate is not for the expected address"}
