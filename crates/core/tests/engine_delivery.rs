@@ -641,7 +641,7 @@ async fn expired_recipient_kem_key_is_refused_with_clear_error() {
         })
         .await;
     assert_eq!(e.code, ErrorCode::InvalidArgument);
-    assert!(e.message.contains("fresh record"));
+    assert!(e.message.contains("fresh certificate"), "{}", e.message);
     // importing an already expired record is refused up front
     let e = a
         .node
@@ -940,7 +940,12 @@ async fn contact_management() {
         })
         .await
         .is_err());
-    let tampered = b.record.replacen("sig\":\"", "sig\":\"A", 1);
+    let tampered = {
+        let mut v = b.record.clone().into_bytes();
+        let n = v.len() / 2;
+        v[n] = if v[n] == b'A' { b'B' } else { b'A' };
+        String::from_utf8(v).unwrap()
+    };
     assert!(a
         .node
         .add_contact(AddContactRequest {
@@ -973,15 +978,16 @@ async fn contact_management() {
         .await
         .unwrap();
     assert!(up.updated);
-    let e = a
+    // the older certificate is merged, which changes nothing: no rollback, no error
+    let old = a
         .node
         .add_contact(AddContactRequest {
             contact_record: b.record.clone(),
             ..Default::default()
         })
         .await
-        .unwrap_err();
-    assert_eq!(e.code, ErrorCode::Conflict);
+        .unwrap();
+    assert!(!old.updated);
     assert_eq!(a.node.list_contacts().await.unwrap().len(), 1);
     assert_eq!(
         a.node

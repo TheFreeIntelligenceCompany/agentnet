@@ -71,11 +71,24 @@ impl World {
     }
 
     pub fn agent(&self, name: &str, config: NodeConfig) -> Agent {
-        self.agent_buckets(name, config, 16)
+        let id = Identity::generate(self.now_ms()).unwrap();
+        self.agent_with(name, config, id)
     }
 
-    pub fn agent_buckets(&self, name: &str, config: NodeConfig, buckets: u16) -> Agent {
-        let id = Identity::generate(buckets, self.now_ms()).unwrap();
+    /// An agent whose inbox topic equals `like`'s (the 16 buckets are a protocol
+    /// constant now, so identities are generated until the buckets collide:
+    /// about 16 attempts).
+    pub fn agent_sharing_topic(&self, name: &str, config: NodeConfig, like: &Agent) -> Agent {
+        let want = Identity::load(&like.id_path).unwrap().inbox_topic();
+        loop {
+            let id = Identity::generate(self.now_ms()).unwrap();
+            if id.inbox_topic() == want {
+                return self.agent_with(name, config, id);
+            }
+        }
+    }
+
+    pub fn agent_with(&self, name: &str, config: NodeConfig, id: Identity) -> Agent {
         let id_path = self.dir.path().join(format!("{name}.identity.json"));
         id.save(&id_path, false).unwrap();
         let transport = self.net.endpoint();
@@ -92,7 +105,7 @@ impl World {
 
     /// An agent whose next publish can be paused with the returned [`Gate`].
     pub fn agent_gated(&self, name: &str, config: NodeConfig) -> (Agent, Arc<Gate>) {
-        let id = Identity::generate(16, self.now_ms()).unwrap();
+        let id = Identity::generate(self.now_ms()).unwrap();
         let id_path = self.dir.path().join(format!("{name}.identity.json"));
         id.save(&id_path, false).unwrap();
         let transport = self.net.endpoint();
@@ -115,7 +128,7 @@ impl World {
     /// An agent whose history queries can be made to paginate in a loop
     /// (see [`HistoryLoop`]).
     pub fn agent_history_loop(&self, name: &str, config: NodeConfig) -> (Agent, Arc<HistoryLoop>) {
-        let id = Identity::generate(16, self.now_ms()).unwrap();
+        let id = Identity::generate(self.now_ms()).unwrap();
         let id_path = self.dir.path().join(format!("{name}.identity.json"));
         id.save(&id_path, false).unwrap();
         let transport = self.net.endpoint();

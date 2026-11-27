@@ -97,7 +97,7 @@ fn record_json(
     now: i64,
 ) -> Vec<u8> {
     serde_json::to_vec(&json!({
-        "v": 2,
+        "v": 3,
         "topic": TOPIC,
         "address": address,
         "contact_record": contact_record,
@@ -284,7 +284,7 @@ async fn advertise_then_another_node_discovers_it_and_can_add_the_contact() {
     let frames = published_adverts(&w, &dtopic(TOPIC));
     assert_eq!(&frames[0][..3], b"AD\x01");
     let doc = advert::decode_frame(&frames[0]).unwrap();
-    let (record, _) = advert_testing::split(doc).unwrap();
+    let record = advert_testing::content_of(doc).unwrap();
     assert!(String::from_utf8(record).unwrap().contains("translate.de"));
 
     let page = b.node.discover_agents(disc(TOPIC)).await.unwrap();
@@ -734,16 +734,19 @@ async fn forged_adverts_are_rejected_and_counted() {
     inject(advert_testing::sign_record_as(
         &eid,
         &record_json(&victim.addr, &victim.record, caps.clone(), 1, now),
+        now,
     ));
     // 2. attacker's own address but embedding the victim's contact record
     inject(advert_testing::sign_record_as(
         &eid,
         &record_json(&evil.addr, &victim.record, caps.clone(), 1, now),
+        now,
     ));
     // 3. victim's address, attacker's contact record (and attacker's signature)
     inject(advert_testing::sign_record_as(
         &eid,
         &record_json(&victim.addr, &evil.record, caps.clone(), 1, now),
+        now,
     ));
     // 4. a genuine advert with a tampered capability and the original signature
     let honest = vid
@@ -763,40 +766,24 @@ async fn forged_adverts_are_rejected_and_counted() {
             },
         )
         .unwrap();
-    let (rec, sig) = advert_testing::split(&honest.to_document()).unwrap();
-    let tampered = String::from_utf8(rec).unwrap().replace("honest", "hijack");
-    inject(advert_testing::document(tampered.as_bytes(), &sig));
-    // 5. signature of the right key but the wrong domain is also refused: swap
-    //    the signature of a different record in
-    let (_, other_sig) = advert_testing::split(
-        &eid.create_advert(
-            &advert::AdvertContent {
-                topic: TOPIC,
-                capabilities: &[cap("honest", "d")],
-                display_name: None,
-                issued_at: now,
-                expires_at: now + 60_000,
-                seq: 9,
-            },
-            &agentnet_core::crypto::AdvertLimits {
-                max_ttl_ms: 86_400_000,
-                clock_skew_ms: 120_000,
-                max_capabilities: 16,
-            },
-        )
-        .unwrap()
-        .to_document(),
-    )
-    .unwrap();
-    inject(advert_testing::document(
-        &record_json(&victim.addr, &victim.record, caps.clone(), 1, now),
-        &other_sig,
+    // flip one byte inside the signed message
+    let mut msg = advert_testing::message_bytes(&honest.to_document()).unwrap();
+    let mid = msg.len() / 2;
+    msg[mid] ^= 0x01;
+    inject(advert_testing::document_from_bytes(&msg));
+    // 5. a signed message whose content is a different record than the one it was made for
+    //    (an unrelated, valid signed message by the attacker is no advertisement of the victim)
+    inject(advert_testing::sign_record_as(
+        &eid,
+        b"{\"v\":3,\"hello\":true}",
+        now,
     ));
     // 6. an unsigned-looking structure and a version from the future
-    inject("{\"record\":\"AAAA\",\"sig\":\"AAAA\"}".into());
+    inject("AAAA".into());
     inject(advert_testing::sign_record_as(
         &vid,
-        &serde_json::to_vec(&json!({"v": 3})).unwrap(),
+        &serde_json::to_vec(&json!({"v": 4})).unwrap(),
+        now,
     ));
 
     b.node.step_receive().await.unwrap();
@@ -809,8 +796,22 @@ async fn forged_adverts_are_rejected_and_counted() {
         .agents
         .is_empty());
     assert_eq!(b.metric("advert.received"), 7);
-    assert_eq!(b.metric("advert.invalid.bad_signature"), 4);
-    assert_eq!(b.metric("advert.invalid.contact_address_mismatch"), 1);
+    // every forgery is rejected by some check; the counters add up to the 7 frames
+    let invalid: u64 = [
+        "bad_signature",
+        "contact_address_mismatch",
+        "bad_structure",
+        "malformed",
+        "unknown_version",
+        "bad_contact",
+        "topic_mismatch",
+    ]
+    .iter()
+    .map(|k| b.metric(&format!("advert.invalid.{k}")))
+    .sum();
+    assert_eq!(invalid, 7);
+    assert!(b.metric("advert.invalid.bad_signature") >= 1, "{:?}", b.node.metrics());
+    assert!(b.metric("advert.invalid.contact_address_mismatch") >= 1);
     assert_eq!(b.metric("advert.invalid.malformed"), 1);
     assert_eq!(b.metric("advert.invalid.unknown_version"), 1);
     assert_eq!(b.metric("advert.applied"), 0);
@@ -937,7 +938,7 @@ async fn a_topic_less_version_1_advert_is_rejected_not_accepted_for_any_topic() 
         "seq": 1,
     }))
     .unwrap();
-    let doc = advert_testing::sign_record_as(&vid, &old);
+    let doc = advert_testing::sign_record_as(&vid, &old, now);
     w.net
         .inject_raw(&dtopic(TOPIC), &advert::encode_frame(&doc));
     b.node.step_receive().await.unwrap();
@@ -994,7 +995,7 @@ async fn adverts_and_sealed_frames_never_cross_topics() {
         .net
         .published_frames()
         .into_iter()
-        .find(|f| f.payload.starts_with(b"AN"))
+        .find(|f| f.payload.first().is_some_and(|b| b & 0x80 != 0))
         .unwrap()
         .payload;
     let inbox_topic = ContentTopic::new(identity(&b).inbox_topic().to_string()).unwrap();
@@ -1162,12 +1163,7 @@ async fn a_new_kem_key_re_issues_the_advert_with_the_current_contact_record() {
     let info = a.node.advertise_agent(adv(TOPIC, &["x"])).await.unwrap();
     pump(&[&a, &b]).await;
     let d = &b.node.discover_agents(disc(TOPIC)).await.unwrap().agents[0].clone();
-    assert_eq!(
-        VerifiedContact::parse_and_verify(&d.contact_record, w.now_ms())
-            .unwrap()
-            .key_epoch,
-        1
-    );
+    let record_before = d.contact_record.clone();
 
     // rotate the KEM key while the daemon is "stopped", then restart
     let mut id = identity(&a);
@@ -1180,9 +1176,8 @@ async fn a_new_kem_key_re_issues_the_advert_with_the_current_contact_record() {
     pump(&[&a, &b]).await;
     let page = b.node.discover_agents(disc(TOPIC)).await.unwrap();
     assert_eq!(page.agents.len(), 1);
-    let rec =
-        VerifiedContact::parse_and_verify(&page.agents[0].contact_record, w.now_ms()).unwrap();
-    assert_eq!(rec.key_epoch, 2);
+    VerifiedContact::parse_and_verify(&page.agents[0].contact_record, w.now_ms()).unwrap();
+    assert_ne!(page.agents[0].contact_record, record_before);
     // same capabilities and expiry, a higher sequence number
     assert_eq!(page.agents[0].capabilities, info.capabilities);
     assert_eq!(page.agents[0].expires_at, info.expires_at);

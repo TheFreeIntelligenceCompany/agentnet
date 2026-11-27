@@ -239,7 +239,7 @@ mod tests {
         let mut seen = std::collections::HashSet::new();
         for i in 0..=255u8 {
             let mut f = fp(0);
-            f[0] = i;
+            f[1] = i;
             let t = Address::from_fingerprint(&f).inbox_topic();
             assert_eq!(t.as_str().len(), "/agentnet/1/inbox-00/proto".len());
             seen.insert(t.to_string());
