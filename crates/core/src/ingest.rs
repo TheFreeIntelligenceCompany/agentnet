@@ -636,6 +636,7 @@ impl Node {
                 hidden: false,
                 idempotency_key: None,
                 delay_ms,
+                kem_until: row.contact.kem_expires_at,
             },
             now,
         )?;

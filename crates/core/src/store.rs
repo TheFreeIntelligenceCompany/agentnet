@@ -19,7 +19,7 @@ use rusqlite::{Connection, OptionalExtension, Transaction, TransactionBehavior};
 use crate::api::ApiError;
 
 /// Current schema version (`PRAGMA user_version`).
-pub const SCHEMA_VERSION: i64 = 5;
+pub const SCHEMA_VERSION: i64 = 6;
 
 /// Failure of a store operation. `Display` never contains row contents.
 #[derive(Debug, thiserror::Error)]
@@ -218,6 +218,14 @@ const SCHEMA_V5: &str = "
 ALTER TABLE seen ADD COLUMN frame_digest BLOB;
 ";
 
+/// v5 -> v6 (review finding L6): until when the frame of an outbox row is sealed
+/// to a live encryption subkey of the recipient (the latest expiry among the
+/// subkeys it was sealed to; NULL: never expires). Past it the row is re-sealed
+/// or failed instead of being published again.
+const SCHEMA_V6: &str = "
+ALTER TABLE outbox ADD COLUMN kem_until INTEGER;
+";
+
 /// The SQLite store.
 pub struct Store {
     conn: Mutex<Option<Connection>>,
@@ -270,6 +278,12 @@ impl Store {
             let tx = conn.transaction()?;
             tx.execute_batch(SCHEMA_V5)?;
             tx.pragma_update(None, "user_version", 5)?;
+            tx.commit()?;
+        }
+        if v < 6 {
+            let tx = conn.transaction()?;
+            tx.execute_batch(SCHEMA_V6)?;
+            tx.pragma_update(None, "user_version", 6)?;
             tx.commit()?;
         }
         Ok(Self {

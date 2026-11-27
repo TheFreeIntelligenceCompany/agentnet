@@ -210,18 +210,24 @@ impl Node {
             params![env.sender.to_string(), merged.document(), now],
         )?;
         let revoked_now = merged.revocation(now).is_some();
+        if revoked_now {
+            // A primary-key revocation that arrives through a contact update takes
+            // the same path as `identity.revoked` (review finding L6): revocation
+            // row, adverts purged, pending sends to the contact failed.
+            if let Ok(rev) = VerifiedRevocation::parse_and_verify(merged.document(), now) {
+                let (_, failed) = self.apply_revocation(tx, &rev, "contact_update", now)?;
+                return Ok((true, failed, ""));
+            }
+            return Ok((true, 0, ""));
+        }
         let row = ContactRow {
             contact: merged,
             trust: stored.trust,
             alias: stored.alias,
             added_at: stored.added_at,
-            revoked: revoked_now,
+            revoked: false,
         };
-        let resealed = if revoked_now {
-            0
-        } else {
-            self.reseal_outbox(tx, &row, now)?
-        };
+        let resealed = self.reseal_outbox(tx, &row, now)?;
         Ok((true, resealed, ""))
     }
 
@@ -379,8 +385,8 @@ impl Node {
             {
                 Ok(frame) => {
                     tx.execute(
-                        "UPDATE outbox SET frame = ?2, next_attempt_at = ?3 WHERE message_id = ?1",
-                        params![message_id, frame, now],
+                        "UPDATE outbox SET frame = ?2, next_attempt_at = ?3, kem_until = ?4 WHERE message_id = ?1",
+                        params![message_id, frame, now, row.contact.kem_expires_at],
                     )?;
                     n += 1;
                 }
@@ -436,6 +442,7 @@ impl Node {
                 hidden: true,
                 idempotency_key: None,
                 delay_ms: 0,
+                kem_until: row.contact.kem_expires_at,
             },
             now,
         )?;

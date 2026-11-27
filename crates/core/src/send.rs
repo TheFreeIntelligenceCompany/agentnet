@@ -32,6 +32,8 @@ pub(crate) struct OutboxInsert<'a> {
     pub idempotency_key: Option<&'a str>,
     /// First attempt not before `now + delay_ms` (random delay of re-acks).
     pub delay_ms: i64,
+    /// Latest expiry among the recipient subkeys the frame is sealed to.
+    pub kem_until: Option<i64>,
 }
 
 type IdemRow = (String, String, String, String, Option<String>, String, i64);
@@ -52,12 +54,13 @@ impl Node {
             hidden,
             idempotency_key,
             delay_ms,
+            kem_until,
         } = *row;
         tx.execute(
             "INSERT INTO outbox (message_id, recipient, topic, type, conversation_id, correlation_id,
                                  body, frame, state, created_at, expires_at, next_attempt_at,
-                                 idempotency_key, is_ack, hidden)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 'queued', ?9, ?10, ?14, ?11, ?12, ?13)",
+                                 idempotency_key, is_ack, hidden, kem_until)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 'queued', ?9, ?10, ?14, ?11, ?12, ?13, ?15)",
             params![
                 env.message_id,
                 env.recipient.to_string(),
@@ -73,6 +76,7 @@ impl Node {
                 i64::from(is_ack),
                 i64::from(hidden),
                 now.saturating_add(delay_ms),
+                kem_until,
             ],
         )?;
         Ok(())
@@ -247,6 +251,7 @@ impl Node {
                     hidden: false,
                     idempotency_key: req.idempotency_key.as_deref(),
                     delay_ms: 0,
+                    kem_until: row.contact.kem_expires_at,
                 },
                 now,
             )?;
@@ -314,18 +319,18 @@ impl Node {
             // a tombstone or a key update (re-seal) may have changed this row
             // since. Re-read it and publish what is current, or nothing.
             let only_tombstone = i64::from(self.local_revocation.is_some());
-            let cur: Option<(String, Vec<u8>, i64, u32, u32)> = self.store.read(|c| {
+            let cur: Option<(String, Vec<u8>, i64, u32, u32, Option<i64>)> = self.store.read(|c| {
                 Ok(c.query_row(
-                    "SELECT topic, frame, expires_at, attempts, failures FROM outbox
+                    "SELECT topic, frame, expires_at, attempts, failures, kem_until FROM outbox
                      WHERE message_id = ?1 AND state IN ('queued','sent')
                        AND next_attempt_at IS NOT NULL AND next_attempt_at <= ?2
                        AND (?3 = 0 OR type = ?4)",
                     params![id, now, only_tombstone, MESSAGE_TYPE_IDENTITY_REVOKED],
-                    |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?)),
+                    |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?, r.get(5)?)),
                 )
                 .optional()?)
             })?;
-            let Some((topic, frame, expires_at, attempts, failures)) = cur else {
+            let Some((topic, frame, expires_at, attempts, failures, kem_until)) = cur else {
                 self.metrics.inc("publish.skipped_stale");
                 continue;
             };
@@ -344,6 +349,12 @@ impl Node {
                         self.hint(ChangeHint::Outbox);
                     }
                 }
+                continue;
+            }
+            // Review finding L6: a frame sealed to subkeys that have all expired
+            // since is not published again; it is re-sealed to a live subkey or failed.
+            if kem_until.is_some_and(|t| now >= t) {
+                self.refresh_stale_row(&id, now, quiet)?;
                 continue;
             }
             let Ok(topic) = ContentTopic::new(topic) else {
@@ -416,6 +427,48 @@ impl Node {
             }
         }
         Ok(rep)
+    }
+
+    /// The frame of row `id` is sealed only to expired subkeys: re-seal it to
+    /// the recipient's current live subkeys, or fail it when there are none.
+    fn refresh_stale_row(&self, id: &str, now: i64, quiet: bool) -> Result<(), StoreError> {
+        let failed = self.store.tx(|tx| {
+            let recipient: Option<String> = tx
+                .query_row(
+                    "SELECT recipient FROM outbox WHERE message_id = ?1 AND state IN ('queued','sent')",
+                    [id],
+                    |r| r.get(0),
+                )
+                .optional()?;
+            let Some(recipient) = recipient else {
+                return Ok(false);
+            };
+            if let Ok(addr) = recipient.parse::<crate::crypto::Address>() {
+                if let Some(row) = self.load_contact(tx, &addr)? {
+                    if !row.revoked && !row.contact.is_kem_expired(now) {
+                        self.reseal_outbox(tx, &row, now)?;
+                    }
+                }
+            }
+            // still sealed to expired subkeys (no live subkey, or the re-seal failed)
+            let n = tx.execute(
+                "UPDATE outbox SET state='failed', next_attempt_at=NULL,
+                   last_error='the recipient encryption subkey expired'
+                 WHERE message_id = ?1 AND state IN ('queued','sent')
+                   AND kem_until IS NOT NULL AND kem_until <= ?2",
+                params![id, now],
+            )?;
+            Ok(n > 0)
+        })?;
+        self.metrics.inc(if failed {
+            "publish.stale_kem_failed"
+        } else {
+            "publish.stale_kem_resealed"
+        });
+        if failed && !quiet {
+            self.hint(ChangeHint::Outbox);
+        }
+        Ok(())
     }
 
     /// Fail the row, unless it was re-sealed since `frame` was read.

@@ -3,6 +3,7 @@
 
 mod common;
 
+use agentnet_core::api::DeliveryState;
 use agentnet_core::config::UnknownSenders;
 use agentnet_core::crypto::envelope::{Envelope, MESSAGE_TYPE_IDENTITY_REVOKED};
 use agentnet_core::crypto::protection::seal;
@@ -227,4 +228,57 @@ async fn l5_a_directory_failure_fails_the_open_with_a_store_error() {
     assert_eq!(a.metric("open.directory_failed"), 1);
     assert_eq!(a.n("transport_seen"), seen_before, "not marked seen: it will be retried");
     assert_eq!(a.n("inbox"), 0);
+}
+
+// ------------------------------------------------------------------- L6
+
+/// L6 (a): a primary-key revocation that arrives inside a `contact.update` takes
+/// the same path as `identity.revoked`: revocation row, pending sends failed.
+#[tokio::test]
+async fn l6_a_revocation_through_contact_update_is_applied_like_identity_revoked() {
+    use agentnet_core::crypto::envelope::MESSAGE_TYPE_CONTACT_UPDATE;
+    let w = World::new();
+    let a = w.agent("a", cfg());
+    let b = w.agent("b", cfg());
+    a.node.step_receive().await.unwrap();
+    b.node.step_receive().await.unwrap();
+    exchange(&a, &b).await;
+    // a message to B is pending (not yet published)
+    let m = a.send(&b, "pending").await;
+    // B's revoked certificate arrives as a contact.update from B itself
+    let revoked = tombstone(&w, &b, "b stolen");
+    inject(&w, &a, &forge(&w, &b, &a, MESSAGE_TYPE_CONTACT_UPDATE, &revoked));
+    a.node.step_receive().await.unwrap();
+    assert_eq!(a.n("revocations"), 1);
+    assert_eq!(a.state(&m.message_id).await, DeliveryState::Failed);
+    // and nothing is published to B any more
+    let before = published_by(&w, &a).len();
+    a.node.step_send().await.unwrap();
+    assert_eq!(published_by(&w, &a).len(), before);
+}
+
+/// L6 (b): a frame sealed to a subkey that has since expired is not published
+/// again: it is re-sealed to a live subkey or, with none, failed.
+#[tokio::test]
+async fn l6_a_frame_sealed_to_an_expired_subkey_is_not_republished() {
+    use std::time::Duration;
+    let w = World::new();
+    let a = w.agent("a", cfg());
+    let idb = Identity::generate_with(w.now_ms(), Some(Duration::from_secs(600))).unwrap();
+    let b = w.agent_with("b", cfg(), idb);
+    a.node.step_receive().await.unwrap();
+    b.node.step_receive().await.unwrap();
+    exchange(&a, &b).await;
+    let m = a.send(&b, "hello").await;
+    a.node.step_send().await.unwrap();
+    assert_eq!(published_by(&w, &a).len(), 1);
+    // B stays offline past the subkey's expiry; A's retry comes due
+    w.advance(11 * 60_000);
+    a.node.step_send().await.unwrap();
+    assert_eq!(
+        published_by(&w, &a).len(),
+        1,
+        "nothing sealed to an expired subkey is published again"
+    );
+    assert_eq!(a.state(&m.message_id).await, DeliveryState::Failed);
 }
