@@ -319,7 +319,7 @@ impl Node {
             // a tombstone or a key update (re-seal) may have changed this row
             // since. Re-read it and publish what is current, or nothing.
             let only_tombstone = i64::from(self.local_revocation.is_some());
-            let cur: Option<(String, Vec<u8>, i64, u32, u32, Option<i64>)> =
+            let cur: Option<DueRow> =
                 self.store.read(|c| {
                     Ok(c.query_row(
                         "SELECT topic, frame, expires_at, attempts, failures, kem_until FROM outbox
@@ -497,3 +497,6 @@ impl Node {
         Ok(())
     }
 }
+
+/// topic, frame, expires_at, attempts, failures, kem_until of a due outbox row.
+type DueRow = (String, Vec<u8>, i64, u32, u32, Option<i64>);

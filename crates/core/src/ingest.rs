@@ -383,6 +383,7 @@ impl Node {
         FrameOutcome::StoreFailure
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn persist_message(
         &self,
         tx: &Transaction<'_>,
