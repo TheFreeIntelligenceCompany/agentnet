@@ -79,6 +79,7 @@ containers running. Exit status is 1 if any check FAILs (UNTESTED does not fail 
 | 5 | `results/acceptance/20261126T174121Z` | Final tree, `FRESH_TOPOLOGY=1`. 51 PASS, **1 FAIL (4.unknown)**, 1 UNTESTED. The failure was in the script: it parsed `quarantine list --json` as a bare array, and the review fix made that output a paged object (`records`, `next_cursor`). The product behaved correctly (not in the default inbox, harness not woken, no receipt for the sender) |
 | 6 | `results/acceptance/20261126T175828Z` | `STEPS="1 4"` after fixing the script: 17 PASS, 0 FAIL |
 | 7 | `results/acceptance/20261126T180008Z` | **Latest; run by the lead** on the final tree, `FRESH_TOPOLOGY=1`: **52 PASS, 0 FAIL, 1 UNTESTED (Tailscale)** |
+| 8 | `results/acceptance/20261127T042942Z` | **First run on the OpenPGP tree** (ADR 0004: RFC 9580 via Sequoia 2.5.0 + OpenSSL 3; local branch `adr-0004-openpgp`), run by the lead, `FRESH_TOPOLOGY=1`: **52 PASS, 0 FAIL, 1 UNTESTED (Tailscale CLI check)**. Runs 1 to 7 used the retired ADR 0002 scheme |
 
 (Three runs rather than two: run 2 exposed a test-hygiene problem in my own script, fixed before run 3. The failing log of run 2 is kept.)
 

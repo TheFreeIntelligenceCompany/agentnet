@@ -1,0 +1,6 @@
+36fde022340c6617ae9ea12b6e8d777edd139cad
+emulated: linux/amd64 container under qemu on an arm64 Mac
+x86_64
+<jemalloc>: MADV_DONTNEED does not work (memset will be used instead)
+<jemalloc>: (This is the expected behaviour if you are running under QEMU)
+rustc 1.89.0 (29483883e 2025-08-04)
