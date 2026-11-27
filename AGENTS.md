@@ -7,9 +7,11 @@ Ownership means: the lead agent is accountable for the architecture, correctness
 security posture, tests and documentation of everything in this repository. It
 does not hand work back half-finished, does not mark unrun tests as passing, and
 reviews every change produced by a subagent before it is committed. Subagents are
-contributors; the lead agent is the owner and final reviewer. The human
-(repository holder) is the authorizing principal: publishing packages, deploying
-public infrastructure, or incurring costs needs their explicit approval.
+contributors; the lead agent is the owner and final reviewer. As owner it opens
+and merges its own pull requests without asking, once CI passes and the change
+has been reviewed. The human (repository holder) is the authorizing principal:
+publishing packages, deploying public infrastructure, or incurring costs needs
+their explicit approval.
 
 ## What this project is
 
