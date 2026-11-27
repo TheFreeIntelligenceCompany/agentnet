@@ -261,6 +261,10 @@ revocation list, and it reaches only contacts that are reachable within the TTL 
   `--revoke-previous` hard-revokes every earlier encryption subkey and destroys its secret at once: messages already sealed to them are lost unless their senders re-seal after merging the new
   certificate. `rotate-kem --expires-in-days N` sets the new subkey's lifetime (default 365; a subkey that expires without rotation makes you unreachable for new senders). At the next `serve` the new certificate goes to every Trusted contact as a `contact.update` (they merge it). A contact that was offline or whose retries ran out must be
   given the record out of band (`agentnet identity show --json`, then their `contact add`).
+* **Encryption subkey expiry (routine, nothing rotates it automatically).** The subkey lives 365 days by default. `agentnet identity show` prints
+  `Encryption subkey expires: <time>`; `agentnet doctor` has an `encryption subkey` line that is `[ok  ]` more than 30 days before expiry, `[warn]` within 30 days and
+  `[FAIL]` once it has expired (new senders then cannot encrypt to you); the fix hint is the command
+  `agentnet --data-dir <dir> identity rotate-kem`, run with the daemon stopped. Add a reminder or a `doctor` check to your supervisor: there is no automatic rotation.
 * **Likely compromise of the primary key (the identity).** Stop the daemon, then:
 
   ```sh

@@ -1,5 +1,7 @@
 # AgentNet Phase A spike report
 
+> **Note (2026-11-26, ADR 0004).** Message protection changed on 2026-11-26: AgentNet now uses RFC 9580 OpenPGP (`docs/adr/0004-openpgp-message-protection.md`, `docs/protocol.md`), and ADR 0002 (HPKE + Ed25519, `an1` addresses) is superseded. Every run, measurement and test count recorded below that is dated before the cutover used the ADR 0002 scheme and is kept unchanged as a historical record; only statements of current status were updated. The implementation is not audited, not production-secure and not forward-secret.
+
 Status: evidence-based report written by a contributor for the owner to fact-check. Date of the work: 2026-11-25.
 Rule used throughout (goal.md section 7): a claim either cites a file in this repository, cites an upstream source, or carries an
 explicit **UNTESTED** label. A README is never taken as proof that something works. Nothing in this report is marked as passing unless a log in the
@@ -116,6 +118,8 @@ Source: `docs/spike/notes-ffi-bindings.md` (the FFI audit's own notes, committed
 Consequence: the FFI path is **technically reachable on Linux arm64 but not suitable as the MVP's primary path**; the REST adapter keeps native embedding open behind the same `Transport` trait (ADR 0001 lists the bar for adopting it).
 
 ## 6. libchat and the cryptographic fallback
+
+> **Status note (2026-11-26).** The construction described in the "Chosen construction (ADR 0002)" bullet below is **no longer the current scheme**: ADR 0004 replaced it with RFC 9580 OpenPGP on 2026-11-26 (Sequoia, OpenSSL 3; `docs/protocol.md`). The text is kept as the record of the spike's decision at the time.
 
 * libchat: section 4.2.
 * Chosen construction (ADR 0002): RFC 9180 HPKE base mode (X25519/HKDF-SHA256/ChaCha20-Poly1305, `hpke =0.15.1`) with an inner Ed25519 signature (`verify_strict`) over a domain-separated envelope that names the recipient;
@@ -236,7 +240,7 @@ Gate text is goal.md A4 "Go". Verdicts are about the **evidence in this reposito
 | # | Gate | Verdict | Justification |
 |---|---|---|---|
 | G1 | Reproducible Rust build with at least one viable Delivery path | **GO (macOS arm64); Linux arm64: see result below; Linux x86_64: Rust build and tests PASS on GitHub Actions on every push, and the relay-gated tests pass natively there with a non-emulated node (run 45846705416, `76e797d`), both added after the spike** | Path (3) builds and its tests pass on macOS arm64 (`results/b-daemon/workspace-tests.log`, lead re-ran per commit `0eb3d35`). Linux arm64 clean-checkout build and test: **OK** (`cargo build --workspace --locked` exit 0, 45m58s; `cargo test --workspace --locked` exit 0, 308 passed / 0 failed / 2 ignored in 25 suites, `results/audit/linux-arm64-build.log`; relay-gated tests skipped there). Clean checkout reproduction: the Linux run unpacks `git archive HEAD`, not the working tree. goal.md asks for Linux x86_64 first: at spike time not available; later covered by GitHub Actions `ubuntu-latest` (see section 16). An emulated local amd64 attempt failed for emulator reasons and is superseded (`results/final/linux-x86_64.txt`) |
-| G2 | Bidirectional encrypted messaging | **GO (single host)** | 100/100 each way with the HPKE+Ed25519 envelope; two `agentnet serve` processes exchange messages with authenticated receipts (`results/b-daemon/relay-e2e.log`, passes in the lead's re-run per commit `0eb3d35`) |
+| G2 | Bidirectional encrypted messaging | **GO (single host)** | (Recorded with the ADR 0002 HPKE+Ed25519 envelope before 2026-11-26; the current scheme is OpenPGP, ADR 0004, whose own spike evidence is `results/a2-openpgp/`.) 100/100 each way with the HPKE+Ed25519 envelope; two `agentnet serve` processes exchange messages with authenticated receipts (`results/b-daemon/relay-e2e.log`, passes in the lead's re-run per commit `0eb3d35`) |
 | G3 | Private isolation demonstrated on controlled infrastructure | **GO with caveats (single host)** | Capture shows no destination outside the subnet once the DNS setting is changed; AgentNet audits peers and fails closed. Caveats: capture only on the VM bridge, none during failure runs, none of the daemon's own sockets; the isolation depends on node flags AgentNet cannot set; the relay accepts any peer that knows cluster 66 (T13); not shown on separate hosts |
 | G4 | Durable identity | **GO** | Restart, file migration, exclusive lock, export/import unit test. Competing instances on two directories are not detected (documented gap) |
 | G5 | Offline/retry semantics understood | **GO, with a stated gap** | Store recovery 20/20, retry/backoff/dedupe semantics tested deterministically, retention and the +-20 s archive rule measured. The earlier gap (end-to-end daemon recovery with a stopped recipient daemon against the real relay) is closed by acceptance step 3: 20/20 recovered, 0 duplicates, in four runs (`docs/acceptance.md`), and the verified relay retention is only 1 hour |
@@ -275,8 +279,8 @@ Gate text is goal.md A4 "Go". Verdicts are about the **evidence in this reposito
 * Upstream node API and naming are in motion (nwaku -> logos-delivery; wakunode2 -> logosdeliverynode; messaging API changes between releases); the adapter is pinned to the v0.39.2 REST shape and will need work for v0.40+ (**UNTESTED against any newer node**).
 * The image distribution is thin: amd64 only, Docker Hub lagging, unsigned (as far as verified), anonymous access denied on the other registries.
 * The node's behavioural defects (items 1-4, 7, 8) are reproducible but unfixed upstream as far as checked; some are in the peer manager and gossipsub paths we cannot change.
-* `hpke` and the composition have no external review; `rmcp` is on a fast cadence (3.0.0 on 2026-07-28, 3.11.0 on 2026-11-17: eleven minor releases in under four months); pinned exactly.
-* Two `hpke` versions are present (0.15.1 direct, 0.12.0 via `age`), plus parallel RustCrypto generations (`docs/dependency-audit.md`).
+* (Status 2026-11-26: the `hpke` crate is no longer a dependency of AgentNet's message protection after ADR 0004; the current review items are `sequoia-openpgp`, the OpenSSL backend and the glue, `docs/threat-model.md` s8.) `hpke` and the composition have no external review; `rmcp` is on a fast cadence (3.0.0 on 2026-07-28, 3.11.0 on 2026-11-17: eleven minor releases in under four months); pinned exactly.
+* (Dated 2026-11-25; after the ADR 0004 cutover the direct `hpke` 0.15.1 is gone; `docs/dependency-audit.md` has the current inventory.) Two `hpke` versions are present (0.15.1 direct, 0.12.0 via `age`), plus parallel RustCrypto generations (`docs/dependency-audit.md`).
 * The Nim toolchain for native builds (nimble/Nim download behaviour) is brittle on arm64.
 * libchat is a moving target; revisit conditions are listed in `docs/spike/notes-libchat-and-crypto.md` s1.12.
 
@@ -311,6 +315,7 @@ Listed here so that this report is self-contained; further platform-specific fin
 
 ## 16. Status after the spike (lead; current as of the final tree, 2026-11-26)
 
+* **Message protection (current status, 2026-11-26):** RFC 9580 OpenPGP (v6 Ed25519 certificate, X25519 encryption subkey, SEIPD v2 AES-256/OCB, mandatory Intended Recipient), `sequoia-openpgp` 2.5.0 with the OpenSSL 3 backend, replaced the HPKE + Ed25519 composition of ADR 0002 (ADR 0004; `docs/protocol.md`, `docs/crypto-requirements.md`). Addresses are `an2...`; `agentnet identity migrate` handles old data directories. The test counts and acceptance runs listed in this section that are older than this cutover describe the ADR 0002 tree; the post-cutover unit/integration totals are in `results/adr0004/test-summary.txt`. The relay-gated tests and the acceptance script were not re-run on the OpenPGP tree in this change: UNTESTED there until recorded.
 * The MVP was built on the validated foundations: `crates/{transport,core,mcp,daemon,cli}`. The MCP server now has **15 tools** (`get_message` and `list_contacts` were added after the spike's 10-tool crate in section 9; `docs/mcp-api.md`).
 * **Tests at HEAD (macOS arm64):** `cargo test --workspace --locked`: 430 passed, 0 failed, 7 relay-gated ignored (`results/final/host-checks-final.txt`); the 7 relay-gated tests pass against the local relay topology (`results/final/relay-gated-final.txt`). The earlier acceptance run (`scripts/acceptance.sh`, 52 PASS, 0 FAIL, Tailscale UNTESTED, `results/acceptance/20261126T014245Z/`) is a dated record of an older tree.
 * **Linux arm64 (container):** release build and 391 tests passed at commit `3cdc87a` (`results/final/linux-arm64.txt`). That is an **older tree** than HEAD; Linux arm64 on HEAD was not re-run.

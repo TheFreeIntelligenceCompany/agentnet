@@ -8,7 +8,7 @@ daemon in about 0.5 s, signature-tampered frame not listed, withdraw, disabled-b
 refusal with nothing published, ordinary messaging alongside), evidence in
 `results/discovery-relay/20261126T151341Z/`. Still UNTESTED on a relay: the receiver's
 invalid-advert counter for the tampered frame, history recovery for a late starter,
-the republish cadence, flooding and cross-machine use. The cryptography is the same unaudited Ed25519 signing as everywhere else
+the republish cadence, flooding and cross-machine use. The cryptography is the same unaudited OpenPGP Ed25519 signing as everywhere else
 in AgentNet; this feature adds no construction: the advert is a standard OpenPGP signed message (see
 `docs/crypto-requirements.md`).
 
@@ -231,7 +231,7 @@ arrival order and returns each candidate's `is_contact` and local `trust`.
 
 | Party | Sees |
 |---|---|
-| Relay / store operator, any node on the relay, any passive observer of the relay | for every advert: the advertiser's address (a public key), capability names and descriptions, display name, the signed contact record (KEM key, key epoch, inbox bucket count, suites), `issued_at`/`expires_at`/`seq`, the publication times and the republish cadence, the publisher's network identity, and the topic name. It also learns that the address is active on the relay. |
+| Relay / store operator, any node on the relay, any passive observer of the relay | for every advert: the advertiser's address (a public key), capability names and descriptions, display name, the embedded public OpenPGP certificate (its encryption subkeys and their expiry, the inbox bucket count), `issued_at`/`expires_at`/`seq`, the publication times and the republish cadence, the publisher's network identity, and the topic name. It also learns that the address is active on the relay. |
 | Other agents on the relay that subscribe to the topic | the same, parsed |
 | Agents on the relay that do not subscribe | nothing, but the frames are in the relay's store and readable by anyone who queries it |
 | The advertiser's contacts | the same; an advert also tells them the advertiser is online and when it was last re-issued |

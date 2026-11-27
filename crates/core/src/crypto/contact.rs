@@ -32,8 +32,15 @@ use crate::error::ContactError;
 /// Largest accepted document string (base64url of the largest binary certificate,
 /// or an ASCII-armored certificate).
 pub const MAX_CONTACT_DOCUMENT_LEN: usize = pgp::MAX_CERT_LEN * 2 + 512;
-/// Tolerance for a certificate whose signatures lie in the future of the local clock.
-pub const MAX_CREATED_AT_FUTURE_MS: i64 = 24 * 60 * 60 * 1000;
+/// Tolerance for a certificate whose signatures lie in the future of the local
+/// clock: the default `clock_skew_s` (120 s), the same tolerance the frame
+/// freshness check applies. A peer whose clock runs ahead by no more than the
+/// permitted skew still gets its fresh certificates (and rotations) accepted; a
+/// certificate dated further ahead is refused. It is a constant, not the
+/// configured `clock_skew_s`, because the certificate parsers have no access to
+/// the node configuration (they are called from the crypto layer, the API and
+/// the system-message handlers); raising `clock_skew_s` does not widen it.
+pub const MAX_CREATED_AT_FUTURE_MS: i64 = 120 * 1000;
 
 /// The local identity's shareable record (its public certificate).
 #[derive(Clone, Debug, PartialEq, Eq)]

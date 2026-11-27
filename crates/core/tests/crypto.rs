@@ -1063,3 +1063,15 @@ fn constants_match_spec() {
     assert_eq!(agentnet_core::address::INBOX_BUCKETS, 16);
     assert!(id.inbox_topic().as_str().starts_with("/agentnet/1/inbox-"));
 }
+
+#[test]
+fn a_certificate_dated_ahead_of_the_clock_is_accepted_only_within_the_skew() {
+    use agentnet_core::crypto::contact::MAX_CREATED_AT_FUTURE_MS;
+    assert_eq!(MAX_CREATED_AT_FUTURE_MS, 120_000);
+    // a peer whose clock runs 60 s ahead: its fresh certificate is accepted
+    let near = Identity::generate_default(NOW + 60_000).unwrap();
+    assert!(VerifiedContact::parse_and_verify(&near.contact_record().to_document(), NOW).is_ok());
+    // 10 minutes ahead: refused
+    let far = Identity::generate_default(NOW + 600_000).unwrap();
+    assert!(VerifiedContact::parse_and_verify(&far.contact_record().to_document(), NOW).is_err());
+}
