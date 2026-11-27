@@ -282,6 +282,10 @@ MIT ([LICENSE](LICENSE)), as declared in `Cargo.toml`. The owner chose MIT and o
 Name availability facts (crates.io and GitHub) are in [docs/spike-report.md](docs/spike-report.md) section 14; no legal conclusion is drawn there.
 Third-party licences: [docs/dependency-audit.md](docs/dependency-audit.md).
 
+### Licensing
+
+The OpenPGP library `sequoia-openpgp` (and `buffered-reader`) is **LGPL-2.0-or-later** and is linked into the `agentnet` binary; it needs OpenSSL 3 (Apache-2.0, a system library) at build and run time. How a distributed binary satisfies the LGPL, what a release must ship, and the maintainers' caveats (not legal advice): [docs/licensing.md](docs/licensing.md) and [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+
 ## Quickstart verification
 
 `scripts/demo.sh` (the first quickstart path) was run three times against the already-running local relay topology on 2026-11-26 (macOS arm64, single host, node image amd64 under qemu, heavily loaded machine): all three exited 0 in 6 to 9 s with readiness in 0 to 2 s and each delivery in 2 to 3 s; the nodes were already warm, so these are not cold-start numbers. A forced readiness timeout exercised the failure path (non-zero exit, daemons stopped, temp directory removed, relay untouched). Starting the relay from cold through the script, and the missing-prerequisite messages, were **not exercised**. Evidence: `results/demo/20261126T152305Z/`.

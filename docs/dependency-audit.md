@@ -1,59 +1,63 @@
 # Dependency audit
 
-Status: facts from `cargo metadata`, `cargo tree` and `cargo deny` at the committed tree (`git archive HEAD`, commit `0eb3d35`, `Cargo.lock` of 439 packages) on 2026-11-25. Nothing here is a security review of the dependencies; it is an inventory plus the
-output of the automated checks. Raw files: `results/audit/cargo-deny.log`, `cargo-tree-*.txt`, `crates-io-versions.txt`. Note: the working tree later gained a sixth workspace member (`tests/acceptance`, written by another contributor); this document describes the committed five-crate workspace.
+Status: facts from `cargo metadata`, `cargo tree` and `cargo deny` for the tree after ADR 0004 (OpenPGP cutover; `Cargo.lock` of
+474 packages), run on 2026-11-26 on a macOS arm64 host. Nothing here is a security review of the dependencies; it is an inventory plus
+the output of the automated checks. Raw files: `results/adr0004/cargo-deny.txt`, `results/adr0004/msrv-1.89-build.txt`,
+`results/adr0004/interop-rpgp.txt`; older evidence in `results/audit/` describes the HPKE-era tree and is kept only as history.
+Licence obligations of the new set (LGPL, OpenSSL) are in `docs/licensing.md`.
 
-## 0. Update for ADR 0004 (OpenPGP cutover): the dependency set changed
+**UNTESTED on GitHub:** `.github/workflows/ci.yml` (native-package install step, the new `interop` job, the `--locked` flags and the
+`deny` job) and `deny.toml` under the GitHub cargo-deny action have never run on GitHub Actions. They were validated locally only
+(YAML parsed with Ruby `YAML.load_file`; `cargo-deny 0.22.1` run locally; the interop crate and the MSRV build run on macOS arm64). Linux
+x86_64/arm64 builds with OpenSSL 3 are UNTESTED in this document.
 
-Facts below are from `cargo metadata --filter-platform aarch64-apple-darwin --offline` and a diff of `Cargo.lock` between
-commit `968e100` (HPKE) and this tree (macOS arm64 host, 2026-11-26). `cargo deny` was NOT run for this change
-(not installed here); `deny.toml` and `.github/workflows` were deliberately not edited (the dependency-policy contributor owns them).
-Sections 1 to 6 below describe the earlier tree and are stale where they mention `hpke`, `ed25519-dalek` or "No OpenSSL".
+## 0. What changed with ADR 0004, and how the policy files follow
 
-* **Direct change in `crates/core/Cargo.toml`:** removed `hpke =0.15.1` and `ed25519-dalek =3.0.0`; added
-  `sequoia-openpgp =2.5.0` with `default-features = false, features = ["crypto-openssl"]` (no Nettle, not the
-  experimental pure-Rust backend, no compression). The lock file still contains `hpke 0.12.0` as a transitive
-  dependency of `age 0.12.1`/`age-core` (post-quantum and plugin recipients); AgentNet code does not use it.
-* **Native prerequisite:** OpenSSL 3 headers and libraries (`OPENSSL_DIR`, for example `$(brew --prefix openssl@3)` on macOS;
-  `libssl-dev` on Debian/Ubuntu), a C toolchain, and `libclang` (the build scripts of `bindgen`/`clang-sys` are in the
-  graph). The release binary links `libssl`/`libcrypto` dynamically unless built with the `openssl-src` vendoring (UNTESTED).
-* **Licence of the library:** `sequoia-openpgp 2.5.0` and `buffered-reader 1.4.1` are **LGPL-2.0-or-later** (as declared); the owner accepted the packaging obligations.
-* 51 packages added, 17 removed (`aead 0.6`, `chacha20poly1305 0.11`, `cipher 0.5`, `cmov`, `ctutils`, `curve25519-dalek 5`, `ed25519 3`,
-  `ed25519-dalek 3`, `fiat-crypto 0.3`, `hkdf 0.13`, `hmac 0.13`, `hpke 0.15.1`, `inout 0.2`, `poly1305 0.9`, `signature 3`,
-  `universal-hash 0.6`, `x25519-dalek 3`).
+* `crates/core/Cargo.toml`: removed `hpke =0.15.1` and `ed25519-dalek =3.0.0`; added `sequoia-openpgp =2.5.0` with
+  `default-features = false, features = ["crypto-openssl"]` (no Nettle, not the experimental pure-Rust backend, no compression).
+  `hpke 0.12.0` remains only as a transitive dependency of `age 0.12.1` (post-quantum and plugin recipients); AgentNet code does not use it.
+* **Native prerequisites** (build): OpenSSL 3 headers and libraries (`OPENSSL_DIR`; Homebrew `openssl@3`; Debian/Ubuntu `libssl-dev`),
+  `pkg-config`, a C toolchain and **libclang**: `openssl-sys 0.9.118` has its `bindgen` feature enabled by `ossl 1.5.5`
+  (`cargo tree -i bindgen -e all`: `bindgen` is a build-dependency of `openssl-sys` and `ossl`), and `sequoia-openpgp` has `lalrpop 0.23.2` as
+  a build-dependency. Run time: the OpenSSL 3 shared libraries (macOS check: `otool -L target/debug/agentnet` lists
+  `/opt/homebrew/opt/openssl@3/lib/libssl.3.dylib` and `libcrypto.3.dylib`). Vendored/static OpenSSL (`openssl-src`) is UNTESTED.
+* **What the policy changes are** (all in `deny.toml`, each narrow; verified by running `cargo-deny 0.22.1`):
 
-**For the dependency-policy contributor** (nothing here was changed in `deny.toml`):
+| Change | Why | Scope |
+|---|---|---|
+| `[[licenses.exceptions]] crate = "sequoia-openpgp@2.5.0", allow = ["LGPL-2.0-or-later"]` | declared licence is LGPL-2.0-or-later, not in the allow list | that crate at that exact version |
+| `[[licenses.exceptions]] crate = "buffered-reader@1.4.1", allow = ["LGPL-2.0-or-later"]` | same; it is Sequoia's dependency | that crate at that exact version |
+| `{ crate = "openssl-sys", wrappers = ["ossl", "sequoia-openpgp"] }` instead of an unconditional ban | the OpenSSL backend of Sequoia requires it; the first run reported `openssl-sys v0.9.118 <- ossl v1.5.5 <- sequoia-openpgp` and `openssl-sys <- sequoia-openpgp` as its direct dependents | allowed only if the direct dependent is `ossl` or `sequoia-openpgp`; `openssl` and `native-tls` stay banned |
+| comment of the `RUSTSEC-2026-0387` ignore | referred to `hpke =0.15.1`, which AgentNet no longer uses | text only; the ignore itself is unchanged |
 
-1. Crates whose declared licence is **not in the current allow list**: `sequoia-openpgp 2.5.0` (LGPL-2.0-or-later),
-   `buffered-reader 1.4.1` (LGPL-2.0-or-later), `ossl 1.5.5` is Apache-2.0 (allowed). `jiff 1.0.3`, `jiff-core 1.0.2`,
-   `jiff-static 1.0.3`, `portable-atomic 1.15.0`, `portable-atomic-util 0.2.8` have **no `license` field in `cargo metadata`**
-   (upstream states Unlicense OR MIT / Apache-2.0 OR MIT: UNVERIFIED, read the crate files before allowing). All other added crates
-   are MIT, Apache-2.0, BSD-3-Clause (`bindgen`), ISC (`libloading`), Zlib (`foldhash`), BSL-1.0 (`xxhash-rust`) or a dual of those, all in the allow list.
-2. Crates that pull in **`openssl-sys`** (banned by `deny.toml` today): `openssl-sys 0.9.118` itself (MIT) is reached through
-   **`ossl 1.5.5`** (the OpenSSL wrapper used by Sequoia 2.5.0) and `sequoia-openpgp` itself. `libsqlite3-sys` lists it only as an
-   optional (`sqlcipher`) dependency, which is not enabled. `openssl` (the crate) is not in the graph.
-3. Build-time only (not in the shipped code): `bindgen`, `clang-sys`, `libloading`, `cexpr`, `shlex`, `prettyplease`, `lalrpop`, `lalrpop-util`,
-   `ena`, `petgraph`, `fixedbitset`, `ascii-canvas`, `term`, `string_cache`, `phf_shared`, `new_debug_unreachable`, `precomputed-hash`, `siphasher`,
-   `annotate-snippets`, `unicode-width`, `unicode-xid`, `nom 7.1.3`, `minimal-lexical`, `itertools 0.13/0.15`, `either`, `glob`, `hashbrown 0.15.5`, `foldhash`.
-4. Runtime additions: `sequoia-openpgp`, `buffered-reader`, `ossl`, `openssl-sys`, `argon2 0.5.3`, `blake2 0.10.6`, `base64ct`, `password-hash`,
-   `sha3 0.12`, `keccak`, `sha1collisiondetection 0.3.4`, `memsec 0.7.0`, `xxhash-rust`, `ctor`, `link-section`, `linktime-proc-macro`, `sponge-cursor`.
-5. `RUSTSEC-2026-0387` ignore in `deny.toml` mentions `hpke =0.15.1`; that sentence is stale (only `age`'s `hpke 0.12.0` remains).
-6. Advisory monitoring: `sequoia-openpgp 2.5.0` (released 2026-11-25) and OpenSSL both shipped security fixes in November 2026 (`docs/spike/notes-openpgp.md` 2.5); the pin must be reviewed on every advisory.
+* **Corrections to the cutover hand-off list.** It said `jiff`, `jiff-core`, `jiff-static`, `portable-atomic` and `portable-atomic-util`
+  have no licence field. In this lock file they do: `jiff 1.0.3`, `jiff-core 1.0.2`, `jiff-static 1.0.3` are `Unlicense OR MIT`
+  (files `COPYING`, `LICENSE-MIT`, `UNLICENSE` present in the registry sources), `portable-atomic 1.15.0` and
+  `portable-atomic-util 0.2.8` are `Apache-2.0 OR MIT` (`LICENSE-APACHE`, `LICENSE-MIT` present). `cargo deny` accepted them without a
+  `[[licenses.clarify]]`. No clarification was needed. The build-time crates (`bindgen 0.72.1` BSD-3-Clause, `clang-sys 1.9.1` Apache-2.0,
+  `lalrpop 0.23.2` Apache-2.0 OR MIT, `libloading 0.8.9` ISC, `foldhash` Zlib, `xxhash-rust 0.8.21` BSL-1.0, `memsec 0.7.0` MIT,
+  `sha1collisiondetection 0.3.4` MIT, `ossl 1.5.5` Apache-2.0, `openssl-sys 0.9.118` MIT) are all already in the allow list.
+* Crates added at run time by Sequoia: `sequoia-openpgp`, `buffered-reader`, `ossl`, `openssl-sys`, `argon2 0.5.3`, `blake2 0.10.6`, `base64ct`,
+  `password-hash`, `sha3`, `keccak`, `sha1collisiondetection`, `memsec`, `xxhash-rust`, `ctor`, `link-section`, `linktime-proc-macro`, `sponge-cursor`.
+  Build-time only: `bindgen`, `clang-sys`, `libloading`, `cexpr`, `shlex`, `prettyplease`, `lalrpop`, `lalrpop-util`, `ena`, `petgraph`, `fixedbitset`,
+  `ascii-canvas`, `term`, `string_cache`, `phf_shared`, `new_debug_unreachable`, `precomputed-hash`, `siphasher`, `annotate-snippets`, `unicode-width`,
+  `unicode-xid`, `nom 7.1.3`, `minimal-lexical`, `itertools`, `either`, `glob` (from the cutover hand-off list; not re-derived here).
 
 ## 1. Counts
 
 | Measure | Value | How obtained |
 |---|---|---|
-| Packages in `Cargo.lock` | **439** = 5 workspace crates + **434** external crates (all targets, including Windows, wasm, Android-only crates) | `cargo metadata --locked`; `grep -c '^\[\[package\]\]' Cargo.lock` |
-| External crates in the build graph of the macOS arm64 host, normal + build dependencies | **301** name+version pairs (273 distinct names) | `cargo tree --workspace --locked -e normal,build --prefix none`, de-duplicated (`results/audit/cargo-tree-normal-build-unique.txt`) |
-| ... including dev-dependencies (test builds) | **358** (327 distinct names) | `-e normal,build,dev` (`cargo-tree-all-unique.txt`) |
-| Crates with more than one version in the host graph (normal + build) | 28 | section 4 |
+| Packages in `Cargo.lock` | **474** | `grep -c '^\[\[package\]\]' Cargo.lock` |
+| External crates in the resolved graph for `aarch64-apple-darwin` (all dependency kinds) | **399** (405 packages with the 6 workspace members) | `cargo metadata --locked --filter-platform aarch64-apple-darwin` |
+| Name+version pairs, normal + build dependencies, all workspace members | **340** | `cargo tree --locked -e normal,build --prefix none --workspace`, de-duplicated |
+| Crate names with more than one version (`cargo deny`, three targets, all features) | 25 | section 4 |
 | Direct external dependencies of the workspace crates | 33 name+version pairs | section 2 |
-| Licence expressions | 30 distinct strings across the 434 external crates (section 3) | `cargo metadata` |
+| Licence expressions | 30 distinct strings across the 399 external crates | section 3 |
+
 
 ## 2. Direct dependencies
 
-MSRV note: the highest declared MSRV among the locked crates is **1.89.0** (`rusqlite 0.42.0`, `uuid 1.29.3`; most others 1.88 or lower). The workspace `rust-version` was 1.88 and is now **1.89** (fixed in working tree; evidence `results/audit/msrv-1.88-check.log` for the failure and `results/fixups/msrv-1.89-build.log` for the 1.89.0 build; CI builds with 1.89.0 in its `msrv` job).
+MSRV note: the highest declared `rust-version` among the 405 packages of the resolved graph is **1.89.0** (`rusqlite 0.42.0`, `uuid 1.29.3`); the workspace `rust-version` is **1.89**. `sequoia-openpgp 2.5.0` and `buffered-reader 1.4.1` declare 1.85, `openssl-sys 0.9.118` 1.80, `lalrpop 0.23.2` 1.86, `bindgen 0.72.1` 1.70 (`cargo metadata`). 95 packages declare no `rust-version`, so the declaration alone proves nothing for them: a real `cargo build --workspace --locked` with rustc **1.89.0** succeeded (exit 0, 345 crates compiled; `results/adr0004/msrv-1.89-build.txt`; built, not run). **The MSRV of 1.89 still holds with the new dependency set.**
 
 Resolved version, licence as declared in the crate's metadata (SPDX-like strings are as the crates wrote them, e.g. `MIT/Apache-2.0`), declared MSRV, and which workspace crate uses it. "dev" = dev-dependency only.
 
@@ -93,103 +97,112 @@ Resolved version, licence as declared in the crate's metadata (SPDX-like strings
 | `zeroize` | 1.9.2 | Apache-2.0 OR MIT | 1.85 | core (normal) |
 
 Workspace crates themselves: `agentnet-core`, `agentnet-transport`, `agentnet-mcp`, `agentnet-daemon`, `agentnet-cli`, all `0.1.0`, licence `MIT`, `publish = false`, `unsafe_code = "forbid"` (`Cargo.toml` `workspace.lints.rust`).
-Cryptography in the workspace: `hpke =0.15.1` (features `alloc, getrandom, x25519, chacha` only), `ed25519-dalek 3.0.0`, `sha2 0.10.9`, `hmac 0.12.1` (webhook), `subtle 2.6.1`, `age 0.12.1` (export file), `zeroize 1.9.2`, `getrandom 0.4.3`. No OpenSSL: `openssl`, `openssl-sys` and `native-tls` are **absent** from the dependency graph (`cargo tree -i` answers "did not match any packages"; `results/audit/cargo-tree-inverse.txt`), and `deny.toml` bans them.
+Cryptography in the workspace: `sequoia-openpgp =2.5.0` (OpenPGP, RFC 9580; backend `crypto-openssl`: OpenSSL 3 through `ossl 1.5.5`/`openssl-sys 0.9.118`), `sha2 0.10.9`, `hmac 0.12.1` (webhook), `subtle 2.6.1`, `age 0.12.1` (identity export file), `zeroize 1.9.2`, `getrandom 0.4.3`. TLS to the local node and the optional webhook uses rustls (`ring`), not OpenSSL. `openssl-sys` is present (via Sequoia only; `cargo tree -i openssl-sys` lists `ossl` and `sequoia-openpgp` as its dependents); the `openssl` and `native-tls` crates are **absent** and still banned by `deny.toml`.
 
 ## 3. Licences
 
-Counts of licence expressions over the 434 external crates in `Cargo.lock` (all targets; `cargo metadata`):
+Licence expressions over the 399 external crates of the `aarch64-apple-darwin` resolved graph (`cargo metadata`, as declared):
 
 | Licence expression (as declared) | Crates |
 |---|---|
-| `MIT OR Apache-2.0` | 220 |
-| `MIT` | 73 |
+| `MIT OR Apache-2.0` | 190 |
+| `MIT` | 74 |
 | `Apache-2.0 OR MIT` | 53 |
-| `MIT/Apache-2.0` | 18 |
 | `Unicode-3.0` | 18 |
-| `Apache-2.0` | 7 |
-| `BSD-3-Clause` | 6 |
-| `Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT` | 5 |
-| `Apache-2.0 OR ISC OR MIT` | 3 |
-| `Unlicense OR MIT` | 3 |
-| `(MIT OR Apache-2.0) AND Unicode-3.0` | 2 |
-| `Apache-2.0/MIT` | 2 |
-| `BSD-2-Clause OR Apache-2.0 OR MIT` | 2 |
-| `CDLA-Permissive-2.0` | 2 |
-| `ISC` | 2 |
-| `MIT OR Apache-2.0 OR BSD-1-Clause` | 2 |
-| `MIT OR Apache-2.0 OR LGPL-2.1-or-later` | 2 |
-| `Unlicense/MIT` | 2 |
-| `Apache-2.0 / MIT` | 1 |
-| `Apache-2.0 AND ISC` | 1 |
-| `Apache-2.0 OR BSL-1.0` | 1 |
-| `Apache-2.0 OR GPL-2.0-only` | 1 |
-| `CC0-1.0 OR MIT-0 OR Apache-2.0` | 1 |
-| `ISC AND (Apache-2.0 OR ISC)` | 1 |
-| `ISC AND (Apache-2.0 OR ISC) AND Apache-2.0 AND MIT AND BSD-3-Clause AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR ISC OR MIT-0)` | 1 |
-| `MIT AND BSD-3-Clause` | 1 |
-| `MIT OR Apache-2.0 OR Zlib` | 1 |
-| `MIT-0` | 1 |
-| `Zlib` | 1 |
-| `Zlib OR Apache-2.0 OR MIT` | 1 |
+| `MIT/Apache-2.0` | 17 |
+| `Apache-2.0` | 9 |
+| `Apache-2.0/MIT` | 4 |
+| `BSD-3-Clause` | 4 |
+| `ISC` | 3 |
+| **`LGPL-2.0-or-later`** | **2** (`sequoia-openpgp 2.5.0`, `buffered-reader 1.4.1`) |
+| `Unlicense OR MIT`, `Unlicense/MIT`, `Zlib`, `Apache-2.0 OR ISC OR MIT`, `(MIT OR Apache-2.0) AND Unicode-3.0` | 2 each |
+| 15 other expressions (`MIT-0`, `BSL-1.0`, `CDLA-Permissive-2.0`, `Apache-2.0 OR GPL-2.0-only`, `Apache-2.0 AND ISC`, ...) | 1 each |
 
-`cargo deny` evaluates only the three Unix targets listed in `deny.toml` (`aarch64-apple-darwin`, `aarch64-unknown-linux-gnu`, `x86_64-unknown-linux-gnu`), so Windows-only and wasm-only crates in the lockfile are not part of the verdict.
+Command: `cargo metadata --format-version 1 --locked --filter-platform aarch64-apple-darwin`, counting `license` of packages with a registry `source`.
 
-**`cargo deny check licenses` result: ok** (cargo-deny 0.22.1, `deny.toml` allow list: MIT, Apache-2.0, Apache-2.0 WITH LLVM-exception, BSD-2-Clause, BSD-3-Clause, ISC, Unicode-3.0, Zlib, CDLA-Permissive-2.0, Unlicense, MIT-0, CC0-1.0, BSL-1.0; confidence threshold 0.9). **No licence exceptions were needed.** Every crate offers at least one permissive alternative in its expression, including the ones with a copyleft alternative: `MIT OR Apache-2.0 OR LGPL-2.1-or-later` (2 crates) and `Apache-2.0 OR GPL-2.0-only` (1 crate) are satisfied by the MIT/Apache option; `CDLA-Permissive-2.0` (2 crates, root-certificate data) is permissive but is a data licence, listed in the allow list on purpose. The workspace `MIT OR Apache-2.0` declaration is not contradicted by any dependency licence found; that is not a legal conclusion.
+**`cargo deny check licenses`: ok** with cargo-deny 0.22.1, `deny.toml` allow list (MIT, Apache-2.0, Apache-2.0 WITH LLVM-exception,
+BSD-2-Clause, BSD-3-Clause, ISC, Unicode-3.0, Zlib, CDLA-Permissive-2.0, Unlicense, MIT-0, CC0-1.0, BSL-1.0; confidence threshold 0.9) plus
+**exactly two exceptions**, `sequoia-openpgp@2.5.0` and `buffered-reader@1.4.1` for `LGPL-2.0-or-later`. Without them the check failed on
+exactly those two crates (first run, exit 6). Dual-licensed crates with a copyleft alternative (`... OR LGPL-2.1-or-later`,
+`Apache-2.0 OR GPL-2.0-only`) are satisfied by their permissive option; `CDLA-Permissive-2.0` (root-certificate data) is a data licence
+allowed on purpose. What the LGPL means for a distributed binary: `docs/licensing.md` (maintainers' reading, not legal advice).
 
-## 4. Duplicate versions (host build graph, normal + build dependencies)
+The workspace is MIT. The interoperability crate `tests/interop-rpgp` (rPGP `pgp 0.21.1`, `rpgpie 0.12.1`, both `MIT OR Apache-2.0`) is
+excluded from the workspace, has its own `Cargo.lock` and is not linked into any shipped binary; `cargo deny` does not check it.
 
-28 crate names appear in more than one version (`results/audit/cargo-tree-duplicates.txt`). The ones that matter:
+## 4. Duplicate versions
 
-| Duplicate | Versions | Why |
-|---|---|---|
-| **`hpke`** | **0.12.0** and **0.15.1** | 0.15.1 is the direct, pinned (`=0.15.1`) dependency used for message encryption. 0.12.0 comes in through **`age 0.12.1` and `age-core 0.12.0`** (age uses HPKE for its post-quantum and plugin recipient types). The workspace only uses age's scrypt passphrase recipient for the identity export file; the 0.12.0 code is compiled in anyway. Two independent HPKE implementations of different ages sit in the binary. |
-| RustCrypto generations | `aead` 0.5.2/0.6.1, `chacha20poly1305` 0.10.1/0.11.0, `chacha20` 0.9.1/0.10.2, `poly1305` 0.8.0/0.9.1, `cipher` 0.4.4/0.5.2, `digest` 0.10.7/0.11.3, `crypto-common` 0.1.7/0.2.2, `block-buffer`, `hkdf` 0.12.4/0.13.0, `hmac` 0.12.1/0.13.0, `sha2` 0.10.9/0.11.2, `curve25519-dalek` 4.1.3/5.0.0, `x25519-dalek` 2.0.1/3.0.0, `hybrid-array`, `const-oid`, `universal-hash` | `age`/`hpke 0.12.0` still use the older (0.10/0.12 generation) crates; `hpke 0.15.1`, `ed25519-dalek 3`, `rmcp` use the newer ones. Both generations of the primitive crates are linked into one binary. |
-| `rand` | 0.8.8 (via `age`) and 0.10.4 (via `rmcp`) | and `rand_core` 0.6.4 / 0.10.1, `getrandom` 0.2.17 / 0.4.3 |
-| `thiserror` | 1.0.69 (via `i18n-embed` <- `age`) and 2.0.21 | |
-| `toml` | 0.5.11 (via `find-crate` <- `i18n-embed-*` <- `age`) and 0.9.12 | |
-| `syn` | 2.0.119 and 3.0.10 | proc-macro build-time only |
-| `base64` | 0.22.1 and 0.23.1 (via `hyper-util`/`rmcp`) | |
-| `reqwest` | 0.12.28 (workspace, `rustls-tls`) and 0.13.5 (dev-only: `agentnet-mcp` tests, and `rmcp`'s client features) | not in the release binary's graph |
-| `winnow`, `cpufeatures`, `getrandom`, `r-efi`, `windows-sys` ... | various | platform/parser plumbing |
+`cargo deny` reports 25 crate names with more than one version (warnings only, three targets, all features; list in
+`results/adr0004/cargo-deny.txt`): `base64`, `block-buffer`, `chacha20`, `const-oid`, `cpufeatures`, `crypto-common`, `digest`, `foldhash`, `getrandom`,
+`hashbrown`, `hybrid-array`, `itertools`, `keccak`, `nom`, `rand`, `rand_core`, `reqwest`, `sha2`, `sha3`, `shlex`, `syn`, `thiserror`,
+`thiserror-impl`, `toml`, `winnow`. Causes known from the earlier tree and still applicable: `age 0.12.1` pulls older RustCrypto generations
+(`digest 0.10`, `sha2 0.10`), `rand 0.8`, `thiserror 1`, `toml 0.5` and its own `hpke 0.12.0`; `rmcp` pulls the newer ones; `reqwest 0.12.28`
+(workspace, rustls) versus `reqwest 0.13.5` (dev-only, MCP tests). There is no longer a second HPKE: only `age`'s `hpke 0.12.0` remains.
+`age` is a heavy dependency for one feature (passphrase export); an alternative export format would shrink the graph (owner's decision).
 
-Observation: **`age` is a heavy dependency for one feature** (passphrase export): it drags in `i18n-embed`/`fluent`/`rust-embed`, older RustCrypto generations, `rand 0.8`, `thiserror 1`, `toml 0.5` and a second `hpke`. An alternative export format would shrink the graph; that is a decision for the owner, not a finding of a defect.
+## 5. Native / C code and `unsafe`
 
-## 5. Native / C code
-
-From `cargo metadata` (`links` and build-script `cc`/`cmake`/`bindgen`/`pkg-config` build-dependencies) and `cargo tree -i`:
-
-| Crate | Native code | In the release `agentnet` binary graph (host, normal + build)? | Evidence |
+| Crate | Native code | In the release `agentnet` binary graph (normal + build)? | Evidence |
 |---|---|---|---|
-| `libsqlite3-sys 0.40.0` via `rusqlite 0.42.0` (feature `bundled`) | **Bundled SQLite C source compiled by `cc`** (`links = "sqlite3"`) | **Yes**: `agentnet-core` and `agentnet-daemon` | `results/audit/cargo-tree-inverse.txt` |
-| `ring 0.17.14` | C and assembly (`links = ring_core_0_17_14_`), via `rustls 0.23.46` <- `reqwest 0.12.28` (`rustls-tls`) | **Yes**: `agentnet-cli`, `agentnet-daemon`, `agentnet-transport` | same |
-| `aws-lc-sys 0.47.0` / `aws-lc-rs 1.19.0` | C (`cmake`, `bindgen`, `cc` as build-dependencies) | **No**: reachable only through dev-dependencies (`reqwest 0.13.5` with `rustls` in `agentnet-mcp` tests; feature unification then enables `aws-lc-rs` on the shared `rustls 0.23.46` in **test builds**) (`cargo tree -i aws-lc-sys -e normal,build` prints "nothing to print"; with `-e normal,build,dev` it is reachable). A Linux arm64 container **without cmake** compiled it fine during `cargo test` (`results/audit/linux-arm64-build.log`) | `cargo-tree-inverse.txt` |
-| `iana-time-zone-haiku`, `sqlite-wasm-rs`, `wasm-bindgen-shared` | build-script C or link names for Haiku/wasm | No (other targets) | `cargo metadata` |
+| **OpenSSL 3** (system library) via `openssl-sys 0.9.118` and `ossl 1.5.5` (FFI bindings generated by `bindgen` at build time) | C library (`libssl`, `libcrypto`), **dynamically linked** | **Yes**, through `sequoia-openpgp`; all OpenPGP primitives (Ed25519, X25519, AES-OCB, SHA-2/3) run in OpenSSL | `otool -L` (section 0); `cargo tree -i openssl-sys` |
+| `libsqlite3-sys 0.40.0` via `rusqlite 0.42.0` (feature `bundled`) | bundled SQLite 3.54.1 C source compiled by `cc` | Yes | `results/audit/cargo-tree-inverse.txt` (HPKE-era, unchanged by ADR 0004) |
+| `ring 0.17.14` | C and assembly, via `rustls 0.23.46` <- `reqwest 0.12.28` | Yes | `cargo tree -i ring -e normal` |
+| `aws-lc-sys` / `aws-lc-rs` | C | **No** in normal+build (`cargo tree -i aws-lc-sys -e normal,build`: "nothing to print"); dev-dependency graphs only | as before |
+| `sequoia-openpgp 2.5.0`, `buffered-reader`, `memsec 0.7.0` | Rust with `unsafe` (memory locking/zeroing, FFI to OpenSSL); not audited here | Yes | not reviewed |
 
-`unsafe_code = "forbid"` applies to the workspace crates only; the dependency tree contains `unsafe` as usual (not audited here). TLS is used only by the REST client to the **local** node and the optional webhook client; root certificates come from `webpki-roots` (Mozilla bundle, licence CDLA-Permissive-2.0) and `rustls-native-certs`/`rustls-platform-verifier` appear in the lockfile (dev/other-feature graphs).
+`unsafe_code = "forbid"` applies to the workspace crates only. Dependencies contain `unsafe` as usual, and the OpenSSL backend adds FFI `unsafe` and
+non-Rust memory to the process. The pure-Rust Sequoia backend (`crypto-rust`) was rejected by ADR 0004 because Sequoia flags it not production-ready and not
+constant-time (`docs/spike/notes-openpgp.md` 2.3). TLS root certificates come from `webpki-roots` (CDLA-Permissive-2.0).
 
 ## 6. Advisories
 
-`cargo deny check advisories` (RustSec database fetched at run time inside the container, 2026-11-25):
+`cargo-deny 0.22.1 --locked check` on 2026-11-26 (RustSec database fetched at run time; macOS arm64): **`advisories ok, bans ok, licenses ok, sources ok`**, exit 0
+(`results/adr0004/cargo-deny.txt`). The tool and its build directory were installed in a throwaway `--root` outside the repository (not on the host's global
+cargo path); cargo-deny 0.22.1 needs rustc 1.95, so a temporary rustup home was used for that build only.
 
-| Advisory | Crate | Result | Path | Treatment |
-|---|---|---|---|---|
-| **RUSTSEC-2026-0387** "Multiple timing variability issues in operations intended to be constant-time" | `crypto-bigint 0.5.5` | **error** (first run: `advisories FAILED`, exit 1; `results/audit/cargo-deny-run1-before-ignore.log`) | `crypto-bigint` <- `elliptic-curve 0.13.8` <- `p256 0.13.2` <- `age 0.12.1` and `hpke 0.12.0` (the HPKE pulled in by age). Upstream says upgrade to crypto-bigint 0.7.6; `elliptic-curve 0.13.8` requires `^0.5`, so **no semver-compatible fix is reachable** from this workspace | **Ignored in `deny.toml` with a written reason.** Justification: reachable only through `age`; AgentNet uses age only for the scrypt-passphrase identity export, and its message encryption uses `hpke =0.15.1` with X25519 (no P-256, no crypto-bigint). That the P-256 code is not reachable from the scrypt export path was **read, not tested**; the advisory is about secret-dependent timing on secret integers, which matters for a local attacker able to time the export. Revisit when `age` moves to newer RustCrypto crates |
+* **Ignored (1):** `RUSTSEC-2026-0387` "Multiple timing variability issues in operations intended to be constant-time", `crypto-bigint 0.5.5`, path
+  `crypto-bigint <- elliptic-curve 0.13.8 <- p256 0.13.2 <- age 0.12.1 and hpke 0.12.0 (via age)`. No semver-compatible fix is reachable
+  (`elliptic-curve 0.13.8` requires `crypto-bigint ^0.5`). Justification: reachable only through `age`, which AgentNet uses for the scrypt-passphrase identity
+  export; message protection no longer uses HPKE or P-256. That the P-256 code is unreachable from the scrypt path was **read, not tested**. Revisit when `age` updates.
+* **New advisories against Sequoia and its dependencies in this run: none reported.** The RustSec database does contain advisories for the crates involved; none
+  applies to the locked versions (each is patched at or below the locked version, per the database entries read in
+  `~/.cargo/advisory-dbs`): `sequoia-openpgp` RUSTSEC-2023-0038 (out-of-bounds array index panic; patched >= 1.16.0), RUSTSEC-2024-0345 (low-severity DoS; patched >= 1.21.0),
+  RUSTSEC-2025-0136 ("Underflow in aes_key_unwrap function"; patched >= 2.1.0); `buffered-reader` RUSTSEC-2023-0039 (same out-of-bounds panic; patched >= 1.2.0);
+  `pgp` (rPGP) RUSTSEC-2024-0447 ("Panics on Malformed Untrusted Input"; patched >= 0.14.1). The `openssl` *crate* has eight 2026 advisories (RUSTSEC-2026-0463, 0473 to 0479;
+  patched >= 0.10.78 to 0.10.80); that crate is not in the graph (only `openssl-sys`). Advisories that exist only as GitHub advisories (for example rPGP's, listed in
+  `docs/spike/notes-openpgp.md` 2.5) are not covered by `cargo deny` and were not re-checked. The OpenSSL C library itself has its own advisories (a system
+  package, not tracked by `cargo deny`); the deployed OpenSSL 3 version must be kept patched.
+* `sequoia-openpgp 2.5.0` was released 2026-11-25 with seven CVE-labelled fixes (`docs/spike/notes-openpgp.md` 2.5): review the pin on every advisory.
 
-No other advisory (vulnerability, unmaintained, unsound, notice) and no yanked crate was reported. After adding the ignore: `advisories ok, bans ok, licenses ok, sources ok`, exit 0 (`results/audit/cargo-deny.log`). Note for the spike notes: `docs/spike/notes-mcp.md` s5 item 10 mentions RUSTSEC-2026-0543 (`chrono`) from upstream's issue tracker; cargo-deny did **not** report it for this workspace (the lockfile contains `chrono 0.4.45`, only in non-targeted or dev graphs, or the advisory is not in the database snapshot used: not investigated).
+**Audit facts (no audit of the shipped versions is claimed).** Sequoia: no third-party audit was found (searched; absence of evidence is UNVERIFIED); the 2.5.0 `NEWS` lists
+seven CVE-labelled fixes in validation paths. rPGP (used only in the interoperability test): Radically Open Security "NLnet Security Evaluation rPGP" report v1.0
+(December 2024), limited review and fuzzing, 3 days testing, on code at about v0.14.x; the version used here is 0.21.1 and was **not** audited; ten GitHub advisories
+exist, four published 2026-11-11. Sources and details: `docs/spike/notes-openpgp.md` 2.5. OpenSSL: this document makes no claim about its audits. The AgentNet
+composition has had no independent review (README).
 
 ## 7. Bans and sources
 
-* `deny.toml` `[bans]`: `openssl`, `openssl-sys`, `native-tls` denied (absent from the graph), wildcards denied (path dependencies allowed), duplicate versions warn only.
-* `[sources]`: crates.io registry only; no git dependencies in `Cargo.lock` (`grep -c 'source = "git' Cargo.lock` = 0). `unknown-git = "deny"`.
-* Result: `bans ok`; 29 `duplicate` warnings (as section 4, for all features and the three targets; warnings only). `sources ok`.
-* Unused licence-allow entries and the exact `cargo-deny` output are in `results/audit/cargo-deny.log`. Tool versions: cargo-deny 0.22.1 installed with `cargo install cargo-deny --locked` in `rust:bookworm` (rustc 1.100.0, the stable current at the time) with a named Docker volume as `CARGO_HOME`; nothing was installed on the host.
+* `deny.toml` `[bans]`: `openssl` and `native-tls` denied; `openssl-sys` denied unless its direct dependent is `ossl` or `sequoia-openpgp` (section 0); wildcards denied
+  (path dependencies allowed); duplicate versions warn only.
+* `[sources]`: crates.io only; `grep -c 'source = "git' Cargo.lock` should be 0 (not re-run here; `cargo deny` reports `sources ok`). `unknown-git = "deny"`.
+* Result: `bans ok` (25 duplicate warnings), `sources ok`.
 
-## 8. How to reproduce
+## 8. Interoperability check (independent implementation)
+
+`tests/interop-rpgp` (workspace-excluded, own lock file; `pgp =0.21.1` + `rpgpie =0.12.1`) opens AgentNet-sealed frames with rPGP, makes messages with rPGP that
+AgentNet opens, and checks negatives; 4 tests passed on macOS arm64 (`results/adr0004/interop-rpgp.txt`). CI job `interop` runs it (UNTESTED on GitHub).
+
+## 9. How to reproduce
 
 ```sh
-# cargo-deny is not installed on the host. Run it in a container with a named volume for CARGO_HOME:
-git archive HEAD | docker run -i --rm -v agentnet-audit-cargohome:/cargohome \
-   -v "$PWD/results/audit/cargo-deny.sh:/cargo-deny.sh:ro" -v "$PWD/deny.toml:/deny.toml:ro" rust:bookworm bash /cargo-deny.sh
+# cargo-deny 0.22.1 needs rustc >= 1.95. Install it outside the repository and outside the global cargo path:
+cargo install --locked --root /some/scratch/dir/cargo-deny cargo-deny@0.22.1     # with a rustc >= 1.95 toolchain
+/some/scratch/dir/cargo-deny/bin/cargo-deny --locked check                          # from the repository root
+# MSRV check, interop check:
+export OPENSSL_DIR=$(brew --prefix openssl@3)                                       # macOS; Debian/Ubuntu: apt install libssl-dev libclang-dev pkg-config
+cargo +1.89.0 build --workspace --locked
+cargo test --locked --manifest-path tests/interop-rpgp/Cargo.toml -- --nocapture --test-threads=1
 ```
 
-(`results/audit/cargo-deny.sh` installs `cargo-deny` with `cargo install cargo-deny --locked` inside the container, then runs `cargo deny check` and per-check runs.) In CI the official action is used (`.github/workflows/ci.yml`; it ran and passed on GitHub Actions for commit `76e797d`, run 45845088419).
+In CI the same checks are jobs `msrv`, `deny` and `interop` (`.github/workflows/ci.yml`; UNTESTED on GitHub since the ADR 0004 edits; an earlier version of the
+`deny` job ran on GitHub Actions for the HPKE-era commit `76e797d`, run 45845088419).

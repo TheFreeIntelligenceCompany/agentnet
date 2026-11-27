@@ -1,8 +1,8 @@
 # cargo-deny configuration for the AgentNet workspace.
-# Run: `cargo deny check` (CI uses EmbarkStudios/cargo-deny-action; UNTESTED on GitHub, run locally
-# in a container, see results/audit/cargo-deny.log and docs/dependency-audit.md).
+# Run: `cargo deny check` (CI uses EmbarkStudios/cargo-deny-action; UNTESTED on GitHub). Verified locally with
+# cargo-deny 0.22.1, output in results/adr0004/cargo-deny.txt.
 #
-# Every allowance below is justified in docs/dependency-audit.md. Keep the two in sync.
+# Every allowance below is justified in docs/dependency-audit.md and docs/licensing.md. Keep them in sync.
 
 [graph]
 # The project is Unix only (README "Limitations"). Restricting the targets keeps Windows-only and
@@ -20,7 +20,8 @@ version = 2
 #  RUSTSEC-2026-0387 (crypto-bigint 0.5.5, timing variability in constant-time integer operations).
 #  Path: crypto-bigint <- elliptic-curve <- p256 <- {age 0.12.1, hpke 0.12.0}. These are pulled in only through
 #  the `age` crate (used for the passphrase-encrypted identity export, scrypt recipient only) and age's own
-#  `hpke 0.12.0`. AgentNet's message encryption uses `hpke =0.15.1` (X25519 only, no P-256, no crypto-bigint).
+#  `hpke 0.12.0`. AgentNet's message protection is OpenPGP (Sequoia, OpenSSL backend); it does not use
+#  hpke, P-256 or crypto-bigint.
 #  Whether the P-256 code in age is reachable from the scrypt-only export path was read from the code, not tested.
 #  No fixed version is reachable: elliptic-curve 0.13.8 requires crypto-bigint ^0.5. Revisit when age updates.
 ignore = [
@@ -30,8 +31,9 @@ ignore = [
 [licenses]
 version = 2
 confidence-threshold = 0.9
-# Allow list is the set of licences actually present in the dependency graph for the targets above,
-# all permissive. Anything else fails the check.
+# Allow list is the set of permissive licences present in the dependency graph for the targets above.
+# Anything else fails the check. Copyleft is NOT in this list: the two LGPL crates required by Sequoia are
+# admitted one by one in the exceptions below (docs/licensing.md, ADR 0004).
 allow = [
     "MIT",
     "Apache-2.0",
@@ -48,14 +50,28 @@ allow = [
     "BSL-1.0",
 ]
 
+# ADR 0004 (owner decision): sequoia-openpgp 2.5.0 and its dependency buffered-reader 1.4.1 are
+# LGPL-2.0-or-later. The exceptions are pinned to exact versions so that a version bump re-opens the review.
+# Licence text read from the crates' LICENSE.txt; the obligations are in docs/licensing.md.
+[[licenses.exceptions]]
+crate = "sequoia-openpgp@2.5.0"
+allow = ["LGPL-2.0-or-later"]
+
+[[licenses.exceptions]]
+crate = "buffered-reader@1.4.1"
+allow = ["LGPL-2.0-or-later"]
+
 [bans]
 multiple-versions = "warn"
 wildcards = "deny"
 allow-wildcard-paths = true
-# This project uses rustls (via reqwest) and bundled SQLite; it must not link OpenSSL.
+# TLS is rustls (via reqwest) and SQLite is bundled; OpenSSL is not used for TLS.
+# ADR 0004: Sequoia's `crypto-openssl` backend links OpenSSL 3 (through `ossl` -> `openssl-sys`), so `openssl-sys`
+# is allowed ONLY when its direct dependents are `ossl` and `sequoia-openpgp`. Any other dependent, and the
+# `openssl` and `native-tls` crates at all, still fail the check.
 deny = [
     { crate = "openssl" },
-    { crate = "openssl-sys" },
+    { crate = "openssl-sys", wrappers = ["ossl", "sequoia-openpgp"] },
     { crate = "native-tls" },
 ]
 
