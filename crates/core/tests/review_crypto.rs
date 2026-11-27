@@ -468,3 +468,40 @@ fn l4_every_inner_length_has_an_exactly_encodable_padding_target() {
     }
 }
 
+
+// ------------------------------------------------------------------- M3
+
+/// M3 (a): an ack is not distinguishable by size from the smallest ordinary
+/// message of the same sender, whatever the size of the sender's certificate.
+#[test]
+fn m3_an_ack_has_the_size_of_the_smallest_ordinary_message() {
+    use agentnet_core::envelope::MESSAGE_TYPE_ACK_RECEIVED;
+    let a = ident();
+    let mut b = ident();
+    let mut t = NOW;
+    for round in 0..8 {
+        if round > 0 {
+            t += 10_000;
+            b.rotate_kem_with(t, t, None, true).unwrap();
+        }
+        let cb = contact_at(&b, t);
+        let smallest = OpenPgpProtection
+            .seal(&b, &contact_at(&a, t), &env(&b, &a, "x", t), t, MAX_FRAME)
+            .unwrap();
+        let mut ack = env(&b, &a, "", t);
+        ack.message_type = MESSAGE_TYPE_ACK_RECEIVED.to_owned();
+        ack.correlation_id = Some("9d3c1a52-0f5e-4b7e-8a41-6a0d7a9c2b11".into());
+        ack.conversation_id = Some("0c7bb2d4-5d11-4a5f-9b5b-1f0f6d2e3a77".into());
+        let ackf = OpenPgpProtection
+            .seal(&b, &contact_at(&a, t), &ack, t, MAX_FRAME)
+            .unwrap();
+        eprintln!(
+            "M3 round {round}: sender certificate {} B, smallest message {} B, ack {} B",
+            b.contact_record().as_bytes().len(),
+            smallest.len(),
+            ackf.len()
+        );
+        assert_eq!(ackf.len(), smallest.len(), "round {round}");
+        let _ = cb;
+    }
+}

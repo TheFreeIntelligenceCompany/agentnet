@@ -114,6 +114,9 @@ fn open_error_kind(e: &OpenError) -> &'static str {
     }
 }
 
+/// Longest random delay before a re-ack is first published (ms).
+const REACK_DELAY_MAX_MS: i64 = 5_000;
+
 enum MsgTx {
     Duplicate {
         reacked: bool,
@@ -210,6 +213,7 @@ impl Node {
                     return FrameOutcome::Invalid;
                 }
             };
+        let digest = crate::crypto::frame_digest(&frame.payload);
         // 3. trust
         let mut sender_is_contact = false;
         let trust = match self.store.read(|c| self.load_contact(c, &env.sender)) {
@@ -265,10 +269,10 @@ impl Node {
                     }
                 }
             }
-            return self.ingest_identity_revoked(frame, &env);
+            return self.ingest_identity_revoked(frame, &env, &digest);
         }
         if env.message_type == MESSAGE_TYPE_CONTACT_UPDATE && trust == Trust::Trusted {
-            return self.ingest_contact_update(frame, &env);
+            return self.ingest_contact_update(frame, &env, &digest);
         }
         let policy = self.config.policy.unknown_senders;
         if trust != Trust::Trusted && policy == UnknownSenders::Reject {
@@ -289,7 +293,7 @@ impl Node {
         // 5. one transaction
         let res = self
             .store
-            .tx(|tx| self.persist_message(tx, &env, trust, quarantine, hold, now));
+            .tx(|tx| self.persist_message(tx, &env, trust, quarantine, hold, now, &digest));
         let res = match res {
             Ok(r) => r,
             Err(_) => return self.store_failure(),
@@ -358,6 +362,7 @@ impl Node {
         quarantine: bool,
         hold: bool,
         now: i64,
+        digest: &[u8; 32],
     ) -> Result<MsgTx, StoreError> {
         let quarantine_slot = quarantine || hold;
         let sender = env.sender.to_string();
@@ -379,7 +384,7 @@ impl Node {
                 .optional()?;
             let mut reacked = false;
             if stored_q == Some(0) {
-                reacked = self.reack_if_due(tx, env, last, now)?;
+                reacked = self.reack_if_due(tx, env, last, now, digest)?;
             }
             return Ok(MsgTx::Duplicate { reacked });
         }
@@ -403,8 +408,8 @@ impl Node {
             }
         }
         tx.execute(
-            "INSERT INTO seen (sender, message_id, expires_at) VALUES (?1, ?2, ?3)",
-            params![sender, env.message_id, env.expires_at],
+            "INSERT INTO seen (sender, message_id, expires_at, frame_digest) VALUES (?1, ?2, ?3, ?4)",
+            params![sender, env.message_id, env.expires_at, digest.as_slice()],
         )?;
         guard::bump_generation(tx)?;
         tx.execute(
@@ -470,7 +475,38 @@ impl Node {
         env: &Envelope,
         last: Option<i64>,
         now: i64,
+        digest: &[u8; 32],
     ) -> Result<bool, StoreError> {
+        // Review finding M3: only a copy that is byte-identical to the first one
+        // seen is a sender retry (the sender re-publishes the stored frame). A
+        // byte-different copy (an extra PKESK, ...) is what a relay participant
+        // can make from a captured frame to watch for the ack. It is not re-acked
+        // while the first ack is still stored. Trade-off: after a key update the
+        // sender re-seals (new bytes) and its retry is not re-acked until the
+        // stored ack has been pruned; the sender retries until the message expires.
+        let stored: Option<Vec<u8>> = tx
+            .query_row(
+                "SELECT frame_digest FROM seen WHERE sender = ?1 AND message_id = ?2",
+                params![env.sender.to_string(), env.message_id],
+                |r| r.get(0),
+            )
+            .optional()?
+            .flatten();
+        let identical = stored.as_deref().is_none_or(|d| d == digest.as_slice());
+        if !identical {
+            let ack_stored = tx
+                .query_row(
+                    "SELECT 1 FROM outbox WHERE is_ack = 1 AND recipient = ?1 AND correlation_id = ?2",
+                    params![env.sender.to_string(), env.message_id],
+                    |_| Ok(()),
+                )
+                .optional()?
+                .is_some();
+            if ack_stored {
+                self.metrics.inc("ack.reack_suppressed_mutated");
+                return Ok(false);
+            }
+        }
         let min = i64::try_from(
             self.config
                 .delivery
@@ -479,7 +515,7 @@ impl Node {
         )
         .unwrap_or(i64::MAX);
         if last.is_none_or(|l| now.saturating_sub(l) >= min) {
-            if self.queue_ack(tx, env, now)? {
+            if self.queue_ack_delayed(tx, env, now, self.reack_delay_ms())? {
                 tx.execute(
                     "UPDATE seen SET last_reack_at = ?3 WHERE sender = ?1 AND message_id = ?2",
                     params![env.sender.to_string(), env.message_id, now],
@@ -500,6 +536,27 @@ impl Node {
         tx: &Transaction<'_>,
         orig: &Envelope,
         now: i64,
+    ) -> Result<bool, StoreError> {
+        self.queue_ack_delayed(tx, orig, now, 0)
+    }
+
+    /// A random delay in `1..=REACK_DELAY_MAX_MS` for re-acks, so the time of a
+    /// re-ack does not follow the triggering frame exactly (review finding M3).
+    pub(crate) fn reack_delay_ms(&self) -> i64 {
+        let r = {
+            let mut g = self.rng.lock().unwrap_or_else(|e| e.into_inner());
+            crate::node::splitmix(&mut g)
+        };
+        1 + i64::try_from(r % REACK_DELAY_MAX_MS as u64).unwrap_or(0)
+    }
+
+    /// [`Self::queue_ack`] with the first attempt delayed by `delay_ms`.
+    pub(crate) fn queue_ack_delayed(
+        &self,
+        tx: &Transaction<'_>,
+        orig: &Envelope,
+        now: i64,
+        delay_ms: i64,
     ) -> Result<bool, StoreError> {
         if self.local_revocation.is_some() {
             // A revoked identity sends nothing except its tombstone.
@@ -548,6 +605,7 @@ impl Node {
                 is_ack: true,
                 hidden: false,
                 idempotency_key: None,
+                delay_ms,
             },
             now,
         )?;

@@ -19,7 +19,7 @@ use rusqlite::{Connection, OptionalExtension, Transaction, TransactionBehavior};
 use crate::api::ApiError;
 
 /// Current schema version (`PRAGMA user_version`).
-pub const SCHEMA_VERSION: i64 = 4;
+pub const SCHEMA_VERSION: i64 = 5;
 
 /// Failure of a store operation. `Display` never contains row contents.
 #[derive(Debug, thiserror::Error)]
@@ -212,6 +212,12 @@ CREATE TABLE legacy_contacts (
 ) WITHOUT ROWID;
 ";
 
+/// v4 -> v5 (review finding M3): the digest of the first frame seen for a
+/// message, so a byte-different copy of it is not re-acked like a sender retry.
+const SCHEMA_V5: &str = "
+ALTER TABLE seen ADD COLUMN frame_digest BLOB;
+";
+
 /// The SQLite store.
 pub struct Store {
     conn: Mutex<Option<Connection>>,
@@ -258,6 +264,12 @@ impl Store {
             let tx = conn.transaction()?;
             tx.execute_batch(SCHEMA_V4)?;
             tx.pragma_update(None, "user_version", 4)?;
+            tx.commit()?;
+        }
+        if v < 5 {
+            let tx = conn.transaction()?;
+            tx.execute_batch(SCHEMA_V5)?;
+            tx.pragma_update(None, "user_version", 5)?;
             tx.commit()?;
         }
         Ok(Self {

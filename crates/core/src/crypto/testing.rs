@@ -58,7 +58,7 @@ pub fn seal_payload(
     let signer = sender
         .signer()
         .ok_or(SealError::SenderNotUsable("no signing key"))?;
-    pgp::seal_message(signer, recipient.cert(), payload, now_ms, &opts)
+    pgp::seal_message(signer, recipient.cert(), payload, now_ms, &opts, 0)
 }
 
 fn recipients_of<'a>(vc: &'a ValidCert<'a>) -> Vec<Recipient<'a>> {
@@ -421,6 +421,7 @@ pub fn prepend_foreign_pkesks(frame: &[u8], n: usize) -> Vec<u8> {
         b"x",
         1_700_000_000_000,
         &BuildOpts::default(),
+        0,
     )
     .expect("seal");
     let pkesk = match PacketParser::from_bytes(&sealed).expect("parse") {

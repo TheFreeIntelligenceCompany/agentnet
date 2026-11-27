@@ -37,6 +37,7 @@ use super::address::Address;
 use super::contact::VerifiedContact;
 use super::envelope::{
     Envelope, OpenLimits, OpenedEnvelope, SenderAuth, ENVELOPE_VERSION, MESSAGE_TYPE_ACK_RECEIVED,
+    MESSAGE_TYPE_MESSAGE,
 };
 use super::identity::Identity;
 use super::pgp::{self, BuildOpts};
@@ -204,7 +205,27 @@ impl OpenPgpProtection {
         let signer = sender
             .signer()
             .ok_or(SealError::SenderNotUsable("no usable signing key"))?;
-        let frame = pgp::seal_message(signer, recipient.cert(), &payload, now_ms, &opts)?;
+        // An ack carries no certificate, so it would be much smaller than any
+        // ordinary message and recognisable by size (review finding M3): pad it as if
+        // it carried the payload of the smallest ordinary message (body "x") of the
+        // same sender, conversation and certificate.
+        let pad_floor = if envelope.message_type == MESSAGE_TYPE_ACK_RECEIVED {
+            let mut reference = envelope.clone();
+            reference.message_type = MESSAGE_TYPE_MESSAGE.to_owned();
+            reference.body = "x".to_owned();
+            let reference_len = payload_bytes(sender, &reference)?.len();
+            reference_len.saturating_sub(payload.len()) as u64
+        } else {
+            0
+        };
+        let frame = pgp::seal_message(
+            signer,
+            recipient.cert(),
+            &payload,
+            now_ms,
+            &opts,
+            pad_floor,
+        )?;
         if frame.len() <= max_frame_len {
             return Ok(frame);
         }
@@ -214,7 +235,14 @@ impl OpenPgpProtection {
                 .signer()
                 .ok_or(SealError::SenderNotUsable("no usable signing key"))?;
             let plain = BuildOpts { pad: false, ..opts };
-            let frame = pgp::seal_message(signer, recipient.cert(), &payload, now_ms, &plain)?;
+            let frame = pgp::seal_message(
+                signer,
+                recipient.cert(),
+                &payload,
+                now_ms,
+                &plain,
+                pad_floor,
+            )?;
             if frame.len() <= max_frame_len {
                 return Ok(frame);
             }
@@ -360,6 +388,14 @@ impl MessageProtection for OpenPgpProtection {
             .saturating_sub(FRAME_OVERHEAD_ESTIMATE + SENDER_CERT_ESTIMATE + chunks)
             .saturating_sub(base)
     }
+}
+
+/// SHA-256 of a frame, used only to tell a byte-identical retry from a
+/// byte-different copy of the same message (review finding M3). Not a
+/// security mechanism of the message protection.
+pub fn frame_digest(frame: &[u8]) -> [u8; 32] {
+    use sha2::{Digest, Sha256};
+    Sha256::digest(frame).into()
 }
 
 /// Seal with the default protection (convenience for tests and tools).

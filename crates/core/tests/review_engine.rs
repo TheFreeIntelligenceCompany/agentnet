@@ -96,3 +96,65 @@ async fn m2_a_contacts_own_revocation_is_still_applied_and_counted_per_contact()
     a.node.step_receive().await.unwrap();
     assert_eq!(a.n("revocations"), 1);
 }
+
+// ------------------------------------------------------------------- M3
+
+fn published_by(w: &World, from: &Agent) -> Vec<agentnet_transport::mock::PublishedFrame> {
+    w.net
+        .published_frames()
+        .into_iter()
+        .filter(|f| f.publisher == Some(from.transport.index()))
+        .collect()
+}
+
+async fn delivered_pair(w: &World) -> (Agent, Agent, Vec<u8>) {
+    let a = w.agent("a", cfg());
+    let b = w.agent("b", cfg());
+    a.node.step_receive().await.unwrap();
+    b.node.step_receive().await.unwrap();
+    exchange(&a, &b).await;
+    a.send(&b, "hello").await;
+    a.node.step_send().await.unwrap();
+    let frame = published_by(w, &a)[0].payload.clone();
+    b.node.step_receive().await.unwrap();
+    assert_eq!(b.inbox().await.len(), 1);
+    // the first ack is published and lost
+    b.transport.drop_next_publishes(1);
+    b.node.step_send().await.unwrap();
+    (a, b, frame)
+}
+
+/// M3 (b): a byte-different copy of an already seen frame (an extra PKESK, the
+/// kind of mutation a relay participant can make) does not make B publish
+/// another ack while the first ack row still exists.
+#[tokio::test]
+async fn m3_a_mutated_duplicate_is_not_re_acked_but_a_byte_identical_retry_is() {
+    let w = World::new();
+    let (a, b, frame) = delivered_pair(&w).await;
+    let acks_before = b.n("outbox");
+    w.advance(40_000); // past the 30 s re-ack interval
+
+    let mutated = agentnet_core::crypto::testing::prepend_foreign_pkesks(&frame, 1);
+    assert_ne!(mutated, frame);
+    inject(&w, &b, &mutated);
+    b.node.step_receive().await.unwrap();
+    assert_eq!(b.metric("ack.reack_suppressed_mutated"), 1);
+    assert_eq!(b.metric("ack.requeued"), 0);
+    assert_eq!(b.n("outbox"), acks_before, "no new ack row");
+
+    // the sender's own retry is byte-identical: it is re-acked, after a random delay
+    inject(&w, &b, &frame);
+    b.node.step_receive().await.unwrap();
+    assert_eq!(b.metric("ack.requeued"), 1);
+    let before = published_by(&w, &b).len();
+    b.node.step_send().await.unwrap();
+    assert_eq!(
+        published_by(&w, &b).len(),
+        before,
+        "the re-ack is not published immediately (random delay)"
+    );
+    w.advance(6_000);
+    b.node.step_send().await.unwrap();
+    assert_eq!(published_by(&w, &b).len(), before + 1);
+    a.node.step_receive().await.unwrap();
+}

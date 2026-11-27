@@ -49,6 +49,7 @@ impl Node {
         &self,
         frame: &InboundFrame,
         env: &Envelope,
+        digest: &[u8; 32],
     ) -> FrameOutcome {
         let now = self.now();
         let sender = env.sender.to_string();
@@ -61,12 +62,12 @@ impl Node {
                 )
                 .optional()?;
             if let Some(last) = seen {
-                let reacked = self.reack_if_due(tx, env, last, now)?;
+                let reacked = self.reack_if_due(tx, env, last, now, digest)?;
                 return Ok(SysTx::Duplicate { reacked });
             }
             tx.execute(
-                "INSERT INTO seen (sender, message_id, expires_at) VALUES (?1, ?2, ?3)",
-                params![sender, env.message_id, env.expires_at],
+                "INSERT INTO seen (sender, message_id, expires_at, frame_digest) VALUES (?1, ?2, ?3, ?4)",
+                params![sender, env.message_id, env.expires_at, digest.as_slice()],
             )?;
             guard::bump_generation(tx)?;
             let (applied, resealed, why) = self.apply_contact_update(tx, env, now)?;
@@ -91,6 +92,7 @@ impl Node {
         &self,
         frame: &InboundFrame,
         env: &Envelope,
+        digest: &[u8; 32],
     ) -> FrameOutcome {
         let now = self.now();
         let sender = env.sender.to_string();
@@ -106,13 +108,13 @@ impl Node {
                 let reacked = if Self::is_revoked(tx, &env.sender)? {
                     false
                 } else {
-                    self.reack_if_due(tx, env, last, now)?
+                    self.reack_if_due(tx, env, last, now, digest)?
                 };
                 return Ok(SysTx::Duplicate { reacked });
             }
             tx.execute(
-                "INSERT INTO seen (sender, message_id, expires_at) VALUES (?1, ?2, ?3)",
-                params![sender, env.message_id, env.expires_at],
+                "INSERT INTO seen (sender, message_id, expires_at, frame_digest) VALUES (?1, ?2, ?3, ?4)",
+                params![sender, env.message_id, env.expires_at, digest.as_slice()],
             )?;
             guard::bump_generation(tx)?;
             let (applied, failed, why) = self.apply_received_revocation(tx, env, now)?;
@@ -433,6 +435,7 @@ impl Node {
                 is_ack: false,
                 hidden: true,
                 idempotency_key: None,
+                delay_ms: 0,
             },
             now,
         )?;

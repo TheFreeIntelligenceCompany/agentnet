@@ -493,9 +493,16 @@ fn padding_body_for_total(want: u64) -> Option<u64> {
 /// exactly (review finding L4: for a few deficits no padding packet has exactly
 /// that size; those messages move to the next class instead of leaving theirs).
 pub fn padded_total(n: u64) -> u64 {
+    padded_total_with_floor(n, 0)
+}
+
+/// [`padded_total`] for an inner sequence of `n` bytes that must not land in a
+/// smaller class than one of `n + floor` bytes would (acks are padded as if
+/// they carried the payload of the smallest ordinary message; review finding M3).
+pub fn padded_total_with_floor(n: u64, floor: u64) -> u64 {
     let mut t = MIN_PAD_BUCKET;
     loop {
-        if t >= n + 2 && padding_body_for_total(t - n).is_some() {
+        if t >= n + floor + 2 && padding_body_for_total(t - n).is_some() {
             return t;
         }
         t *= 2;
@@ -513,6 +520,7 @@ pub(crate) fn seal_message(
     payload: &[u8],
     now_ms: i64,
     opts: &BuildOpts,
+    pad_floor: u64,
 ) -> Result<Vec<u8>, SealError> {
     let live = live_encryption_subkeys(recipient_cert, now_ms)?;
     let p = policy();
@@ -541,7 +549,7 @@ pub(crate) fn seal_message(
         let message = if opts.pad {
             Padder::new(message)
                 .with_policy(|n: u64| {
-                    let total = padded_total(n);
+                    let total = padded_total_with_floor(n, pad_floor);
                     n + padding_body_for_total(total - n).unwrap_or(0)
                 })
                 .build()

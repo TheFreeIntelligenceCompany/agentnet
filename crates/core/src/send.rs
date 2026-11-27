@@ -30,6 +30,8 @@ pub(crate) struct OutboxInsert<'a> {
     /// acked like a user message but hidden from the user-facing outbox.
     pub hidden: bool,
     pub idempotency_key: Option<&'a str>,
+    /// First attempt not before `now + delay_ms` (random delay of re-acks).
+    pub delay_ms: i64,
 }
 
 type IdemRow = (String, String, String, String, Option<String>, String, i64);
@@ -49,12 +51,13 @@ impl Node {
             is_ack,
             hidden,
             idempotency_key,
+            delay_ms,
         } = *row;
         tx.execute(
             "INSERT INTO outbox (message_id, recipient, topic, type, conversation_id, correlation_id,
                                  body, frame, state, created_at, expires_at, next_attempt_at,
                                  idempotency_key, is_ack, hidden)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 'queued', ?9, ?10, ?9, ?11, ?12, ?13)",
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 'queued', ?9, ?10, ?14, ?11, ?12, ?13)",
             params![
                 env.message_id,
                 env.recipient.to_string(),
@@ -69,6 +72,7 @@ impl Node {
                 idempotency_key,
                 i64::from(is_ack),
                 i64::from(hidden),
+                now.saturating_add(delay_ms),
             ],
         )?;
         Ok(())
@@ -242,6 +246,7 @@ impl Node {
                     is_ack: false,
                     hidden: false,
                     idempotency_key: req.idempotency_key.as_deref(),
+                    delay_ms: 0,
                 },
                 now,
             )?;
