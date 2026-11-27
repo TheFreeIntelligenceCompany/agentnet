@@ -46,7 +46,7 @@ connection. A connection whose reader stalls for 30 s on a write is closed.
 
 ```
 -> {"id":1,"method":"get_identity"}
-<- {"id":1,"result":{"agent_id":"an2...","contact_record":"{...}","inbox_topic":"/agentnet/1/inbox-07/proto","created_at":1795644042997,"kem_expires_at":null}}
+<- {"id":1,"result":{"agent_id":"an2...","contact_record":"<base64url OpenPGP certificate>","inbox_topic":"/agentnet/1/inbox-07/proto","created_at":1795644042997,"kem_expires_at":null}}
 
 -> {"id":2,"method":"send_message","params":{"recipient":"an2...","body":"hello","idempotency_key":"k1"}}
 <- {"id":2,"result":{"message_id":"...","status":"queued","conversation_id":"...","expires_at":1795730742499,"deduplicated":false}}
