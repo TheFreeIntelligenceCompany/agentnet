@@ -302,21 +302,48 @@ impl Identity {
         };
         let (cert, retired) =
             pgp::rotate_cert(&self.cert, now_ms, validity, reason, text).map_err(crypto_err)?;
+        let mut retained: Vec<Retained> = Vec::new();
         let cert = if revoke_previous {
-            self.retained.clear();
-            pgp::strip_subkey_secrets(&cert, &retired).map_err(crypto_err)?
+            // every earlier encryption subkey loses its secret now
+            let mut gone: Vec<Fingerprint> = self.retained.iter().map(|r| r.fp.clone()).collect();
+            gone.extend(retired);
+            pgp::strip_subkey_secrets(&cert, &gone).map_err(crypto_err)?
         } else {
+            for r in &self.retained {
+                retained.push(Retained {
+                    fp: r.fp.clone(),
+                    retire_at: r.retire_at,
+                });
+            }
             for fp in retired {
-                self.retained.push(Retained {
+                retained.push(Retained {
                     fp,
                     retire_at: keep_previous_until_ms,
                 });
             }
-            while self.retained.len() > MAX_PREVIOUS_KEMS {
-                self.retained.remove(0);
+            // Evicting an entry destroys its secret key as well (finding L7):
+            // an entry that is no longer tracked would otherwise stay usable for
+            // decryption forever.
+            let mut evicted: Vec<Fingerprint> = Vec::new();
+            while retained.len() > MAX_PREVIOUS_KEMS {
+                evicted.push(retained.remove(0).fp);
             }
-            cert
+            if evicted.is_empty() {
+                cert
+            } else {
+                pgp::strip_subkey_secrets(&cert, &evicted).map_err(crypto_err)?
+            }
         };
+        // The published record must still fit: revoked, unexpired subkeys are
+        // never trimmed (finding M1), so fail instead of publishing a record that
+        // receivers refuse. Nothing has been changed yet.
+        let public = cert.clone().strip_secret_key_material();
+        if pgp::normalize(public, now_ms).is_err() {
+            return Err(IdentityError::CertificateTooLarge {
+                limit: pgp::MAX_CERT_LEN,
+            });
+        }
+        self.retained = retained;
         self.cert = cert;
         self.kem_expires_at = new_expiry;
         Ok(())

@@ -41,8 +41,18 @@ use openpgp::{Cert, Fingerprint, KeyHandle, Packet, Profile};
 use super::address::Address;
 use crate::error::{ContactError, OpenError, SealError};
 
-/// Largest accepted binary certificate (ADR 0004, lead decision 6).
-pub const MAX_CERT_LEN: usize = 4096;
+/// Largest accepted binary certificate (ADR 0004 decision 6, raised from 4096
+/// by the review of 2026-11-27, finding M1).
+///
+/// Arithmetic (measured, `results/review-fixes/`): a fresh certificate is 419
+/// bytes; every rotation with `--revoke-previous` adds 369 bytes (new subkey
+/// and binding plus the revocation of the old one). Revoked subkeys that have
+/// not expired are never dropped, so the cap bounds the number of rotations
+/// within one subkey validity period (default 365 days): (8192 - 419) / 369 =
+/// 21 rotations, about one every 17 days. Every message embeds the sender
+/// certificate (base64url, so up to 10.9 KiB); a maximal certificate plus a
+/// 64 KiB body still pads to 128 KiB, below the 150 KiB frame limit.
+pub const MAX_CERT_LEN: usize = 8192;
 /// Smallest padded size of the inner packet sequence (bytes).
 pub const MIN_PAD_BUCKET: u64 = 1024;
 /// Most PKESKs a message may carry (bound on trial decryptions per frame).
@@ -276,8 +286,16 @@ pub(crate) fn parse_public(bytes: &[u8]) -> Result<Cert, ContactError> {
 }
 
 /// Sanitize, require a valid self-signature at `now_ms`, drop subkeys without
-/// a valid binding, and fit the size limit by dropping the oldest retired
-/// (revoked or expired) subkeys.
+/// a valid binding, and fit the size limit by dropping the oldest subkeys whose
+/// authenticated expiry has passed.
+///
+/// A subkey that is revoked but has not expired is NEVER dropped (review
+/// finding M1): dropping it together with its revocation would let a stale copy
+/// of the certificate, merged back in, make it usable for sealing again. An
+/// expired subkey that comes back through a stale certificate is still expired
+/// (its own binding signature carries the expiry and time only moves forward),
+/// so dropping it is safe. If the certificate still exceeds
+/// [`MAX_CERT_LEN`] the result is [`ContactError::TooLarge`].
 pub(crate) fn normalize(cert: Cert, now_ms: i64) -> Result<Cert, ContactError> {
     let p = policy();
     let cert = sanitize(cert)?;
@@ -307,10 +325,7 @@ pub(crate) fn normalize(cert: Cert, now_ms: i64) -> Result<Cert, ContactError> {
                 .map_err(|_| ContactError::NotValid)?;
             vc.keys()
                 .subkeys()
-                .filter(|ka| {
-                    matches!(ka.revocation_status(), RevocationStatus::Revoked(_))
-                        || ka.alive().is_err()
-                })
+                .filter(|ka| ka.key_expiration_time().is_some_and(|e| e <= t))
                 .min_by_key(|ka| ka.key().creation_time())
                 .map(|ka| ka.key().fingerprint())
         };
