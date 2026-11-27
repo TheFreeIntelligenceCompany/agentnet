@@ -39,8 +39,8 @@ use crate::{
     TransportError, TransportStatus,
 };
 use wire::{
-    encode_component, evaluate_peers, hex, map_publish_failure, max_payload_for, parse_peers,
-    max_relay_response_bytes, parse_store_page, snippet, RelayStream, StoreParseError,
+    encode_component, evaluate_peers, hex, map_publish_failure, max_payload_for,
+    max_relay_response_bytes, parse_peers, parse_store_page, snippet, RelayStream, StoreParseError,
 };
 
 /// Store queries may cover at most 24 hours.
@@ -239,7 +239,10 @@ impl LogosRestTransport {
         path: &str,
     ) -> Result<Result<Vec<InboundFrame>, Resp>, TransportError> {
         let unavailable = |e: NetErr| TransportError::Unavailable(format!("poll failed: {}", e.0));
-        let mut resp = self.send(Method::GET, path, None).await.map_err(unavailable)?;
+        let mut resp = self
+            .send(Method::GET, path, None)
+            .await
+            .map_err(unavailable)?;
         let status = resp.status().as_u16();
         if status != 200 {
             let body = Self::read_body(&mut resp).await.map_err(unavailable)?;

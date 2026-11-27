@@ -303,8 +303,7 @@ async fn a_failed_parking_insert_does_not_advance_the_cursor_and_the_event_is_re
     .await;
     tokio::time::sleep(Duration::from_millis(300)).await;
     // Events the webhook does not want may legitimately be passed; the failing one must not be.
-    let failing: EventRecord =
-        serde_json::from_slice(&rx.calls.lock().unwrap()[0].body).unwrap();
+    let failing: EventRecord = serde_json::from_slice(&rx.calls.lock().unwrap()[0].body).unwrap();
     assert_ne!(
         stored_cursor(&b.path).as_deref(),
         Some(failing.cursor.as_str()),
