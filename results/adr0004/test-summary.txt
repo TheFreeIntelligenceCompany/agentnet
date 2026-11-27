@@ -35,3 +35,5 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 TOTAL passed 433 failed 0 ignored 7 (cargo test --workspace --locked --no-fail-fast, macOS arm64, OPENSSL_DIR=/opt/homebrew/opt/openssl@3; 7 ignored = relay-gated)
+
+Note (lead, 2026-11-27): this file is the implementer run before the legacy fixture was restored and the follow-up tests were added (433 passed). The current totals are 436 passed, 0 failed, 7 ignored: results/final/host-checks-adr0004.txt, results/final/linux-arm64-adr0004.txt, results/final/linux-x86_64-adr0004.txt.

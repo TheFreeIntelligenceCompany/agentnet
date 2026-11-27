@@ -120,6 +120,10 @@ results/           raw evidence; every claim in docs points here
 - Before committing Rust: `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`,
   `cargo test --locked`.
 - Pin upstream commits/tags and crate versions (lockfile is committed).
+- Builds link OpenSSL 3 (Sequoia backend). macOS: `export OPENSSL_DIR=$(brew --prefix openssl@3)`.
+  Linux: `libssl-dev`, `pkg-config`, `clang`, `libclang-dev`. Local OpenPGP-tree results: 436 tests
+  passed, 0 failed, 7 relay-gated ignored on macOS arm64, Linux arm64 and Linux x86_64
+  (`results/final/*-adr0004.txt`); GitHub CI has not run on this unpublished branch.
 - Shell: do not pipe command output through `head`/`tail`/`less`/`more`; use
   command-native limits (e.g. `git log -n 10`) or read files directly.
 - Local containers run under colima (`docker` context `colima`, linux/arm64;
