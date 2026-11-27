@@ -192,31 +192,206 @@ fn decode_message(m: &WireMessage, max_bytes: usize) -> Option<Decoded> {
     Some(Decoded { payload, meta })
 }
 
-/// Parses the body of `GET /relay/v1/auto/messages/{topic}`. Malformed entries
-/// are skipped and counted. A body that is not a JSON array is a protocol error.
-pub(crate) fn parse_relay_messages(
-    body: &[u8],
-    topic: &ContentTopic,
-    pubsub_topic: &str,
+/// Entries the node's REST relay cache can hold at the recommended setting
+/// (`--rest-relay-cache-capacity=1000`, docs/relay-setup.md). One poll can return all of them.
+pub(crate) const NODE_RELAY_CACHE_ENTRIES: usize = 1000;
+
+/// Largest JSON object we accept as ONE relay message, for a node limit of `max_bytes`.
+/// A payload of `max_bytes` is `4 * ceil(max_bytes / 3)` Base64 characters; add a 64-byte `meta`
+/// (88 characters) and 1 KiB for the envelope (field names, topic, timestamp). Anything larger
+/// cannot be a valid message and is skipped without being buffered.
+pub(crate) fn max_relay_element_bytes(max_bytes: usize) -> usize {
+    max_bytes
+        .div_ceil(3)
+        .saturating_mul(4)
+        .saturating_add(88 + 1024)
+}
+
+/// Upper bound on the bytes of one poll response that we will read: the node's whole cache full of
+/// maximum-size messages. With the defaults (153,600-byte messages, 1000 entries):
+/// 1000 x (204,800 + 1,112 + 1) = about 196 MiB on the wire. That is NOT buffered: elements are
+/// parsed as they arrive ([`RelayStream`]), so resident memory is one element (at most about
+/// 201 KiB) plus the decoded frames returned (at most 1000 x 150 KiB = 146 MiB, the same bound the
+/// node itself holds in its cache).
+pub(crate) fn max_relay_response_bytes(max_bytes: usize) -> usize {
+    max_relay_element_bytes(max_bytes)
+        .saturating_add(1) // separating comma
+        .saturating_mul(NODE_RELAY_CACHE_ENTRIES)
+        .saturating_add(1024) // brackets and whitespace
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum StreamState {
+    /// Before the opening `[`.
+    Start,
+    /// Between array elements.
+    Between,
+    /// Inside an element.
+    Element,
+    /// After the closing `]`.
+    Done,
+    /// The body is not an array; everything else is ignored.
+    Failed,
+}
+
+/// Incremental parser for the body of `GET /relay/v1/auto/messages/{topic}`.
+///
+/// The node drains its cache when it answers, so a frame we fail to hand on is gone from the live
+/// path. This parser therefore never rejects a batch as a whole: it splits the JSON array into
+/// elements as bytes arrive, buffers at most one element, skips (and counts) an element that is
+/// oversized or malformed, and keeps every complete valid frame even if the body later turns out
+/// truncated or the connection fails (see [`RelayStream::finish`]).
+pub(crate) struct RelayStream<'a> {
+    topic: &'a ContentTopic,
+    pubsub_topic: &'a str,
     max_bytes: usize,
-) -> Result<(Vec<InboundFrame>, ParseCounts), TransportError> {
-    let items: Vec<Value> = serde_json::from_slice(body)
-        .map_err(|_| TransportError::Protocol("relay poll response is not a JSON array".into()))?;
-    let mut counts = ParseCounts::default();
-    let mut frames = Vec::with_capacity(items.len());
-    for v in items {
-        let parsed = serde_json::from_value::<WireMessage>(v)
+    max_element: usize,
+    state: StreamState,
+    buf: Vec<u8>,
+    depth: usize,
+    in_string: bool,
+    escaped: bool,
+    scalar: bool,
+    overflow: bool,
+    frames: Vec<InboundFrame>,
+    counts: ParseCounts,
+    error: Option<String>,
+}
+
+/// Result of [`RelayStream::finish`].
+pub(crate) struct RelayParsed {
+    pub frames: Vec<InboundFrame>,
+    pub counts: ParseCounts,
+    /// Set when the body was not a complete JSON array; `frames` still holds every complete
+    /// valid frame that preceded the problem.
+    pub error: Option<String>,
+}
+
+impl<'a> RelayStream<'a> {
+    pub(crate) fn new(topic: &'a ContentTopic, pubsub_topic: &'a str, max_bytes: usize) -> Self {
+        Self {
+            topic,
+            pubsub_topic,
+            max_bytes,
+            max_element: max_relay_element_bytes(max_bytes),
+            state: StreamState::Start,
+            buf: Vec::new(),
+            depth: 0,
+            in_string: false,
+            escaped: false,
+            scalar: false,
+            overflow: false,
+            frames: Vec::new(),
+            counts: ParseCounts::default(),
+            error: None,
+        }
+    }
+
+    /// Bytes currently buffered for the element being parsed (never above the element limit).
+    #[cfg(test)]
+    pub(crate) fn buffered(&self) -> usize {
+        self.buf.len()
+    }
+
+    /// Consumes the next chunk of the response body.
+    pub(crate) fn feed(&mut self, chunk: &[u8]) {
+        for &b in chunk {
+            match self.state {
+                StreamState::Failed | StreamState::Done => return,
+                StreamState::Start => {
+                    if b == b'[' {
+                        self.state = StreamState::Between;
+                    } else if !b.is_ascii_whitespace() {
+                        self.state = StreamState::Failed;
+                        self.error = Some("relay poll response is not a JSON array".into());
+                    }
+                }
+                StreamState::Between => match b {
+                    b',' => {}
+                    b']' => self.state = StreamState::Done,
+                    _ if b.is_ascii_whitespace() => {}
+                    _ => self.begin_element(b),
+                },
+                StreamState::Element => self.element_byte(b),
+            }
+        }
+    }
+
+    fn begin_element(&mut self, b: u8) {
+        self.state = StreamState::Element;
+        self.buf.clear();
+        self.depth = 0;
+        self.in_string = false;
+        self.escaped = false;
+        self.overflow = false;
+        self.scalar = !matches!(b, b'{' | b'[' | b'"');
+        self.element_byte(b);
+    }
+
+    fn element_byte(&mut self, b: u8) {
+        if self.scalar && (b == b',' || b == b']' || b.is_ascii_whitespace()) {
+            // A bare scalar (number, `null`, ...) ends before its delimiter.
+            self.finish_element();
+            self.state = if b == b']' {
+                StreamState::Done
+            } else {
+                StreamState::Between
+            };
+            return;
+        }
+        let mut end = false;
+        if self.in_string {
+            if self.escaped {
+                self.escaped = false;
+            } else if b == b'\\' {
+                self.escaped = true;
+            } else if b == b'"' {
+                self.in_string = false;
+                end = self.depth == 0;
+            }
+        } else {
+            match b {
+                b'"' => self.in_string = true,
+                b'{' | b'[' => self.depth += 1,
+                b'}' | b']' => {
+                    self.depth = self.depth.saturating_sub(1);
+                    end = self.depth == 0;
+                }
+                _ => {}
+            }
+        }
+        if !self.overflow {
+            if self.buf.len() >= self.max_element {
+                self.overflow = true;
+                self.buf = Vec::new();
+            } else {
+                self.buf.push(b);
+            }
+        }
+        if end {
+            self.finish_element();
+            self.state = StreamState::Between;
+        }
+    }
+
+    fn finish_element(&mut self) {
+        let raw = std::mem::take(&mut self.buf);
+        if self.overflow {
+            self.counts.malformed += 1;
+            return;
+        }
+        let parsed = serde_json::from_slice::<WireMessage>(&raw)
             .ok()
-            .filter(|m| m.content_topic == topic.as_str())
-            .and_then(|m| decode_message(&m, max_bytes).map(|d| (m, d)));
+            .filter(|m| m.content_topic == self.topic.as_str())
+            .and_then(|m| decode_message(&m, self.max_bytes).map(|d| (m, d)));
         let Some((m, d)) = parsed else {
-            counts.malformed += 1;
-            continue;
+            self.counts.malformed += 1;
+            return;
         };
-        frames.push(InboundFrame {
-            topic: topic.clone(),
+        self.frames.push(InboundFrame {
+            topic: self.topic.clone(),
             transport_id: waku_message_hash(
-                pubsub_topic,
+                self.pubsub_topic,
                 &d.payload,
                 &m.content_topic,
                 &d.meta,
@@ -227,7 +402,40 @@ pub(crate) fn parse_relay_messages(
             source: FrameSource::Live,
         });
     }
-    Ok((frames, counts))
+
+    /// Ends the body. A body that stops before the closing `]` is reported in `error`; frames
+    /// completed before that point are kept.
+    pub(crate) fn finish(mut self) -> RelayParsed {
+        if self.error.is_none() && self.state != StreamState::Done {
+            self.error = Some(match self.state {
+                StreamState::Start => "relay poll response is empty".into(),
+                _ => "relay poll response is truncated (no closing bracket)".into(),
+            });
+        }
+        RelayParsed {
+            frames: self.frames,
+            counts: self.counts,
+            error: self.error,
+        }
+    }
+}
+
+/// Parses a whole `GET /relay/v1/auto/messages/{topic}` body held in memory (tests; the adapter
+/// itself uses [`RelayStream`]). Any structural error is an `Err`.
+#[cfg(test)]
+pub(crate) fn parse_relay_messages(
+    body: &[u8],
+    topic: &ContentTopic,
+    pubsub_topic: &str,
+    max_bytes: usize,
+) -> Result<(Vec<InboundFrame>, ParseCounts), TransportError> {
+    let mut s = RelayStream::new(topic, pubsub_topic, max_bytes);
+    s.feed(body);
+    let r = s.finish();
+    match r.error {
+        Some(e) => Err(TransportError::Protocol(e)),
+        None => Ok((r.frames, r.counts)),
+    }
 }
 
 #[derive(Deserialize)]
@@ -790,5 +998,54 @@ mod tests {
         )
         .unwrap();
         assert!(p.frames.is_empty() && p.next_cursor.is_none());
+    }
+
+    fn entry(len: usize, ts: i64) -> String {
+        format!(
+            r#"{{"payload":"{}","contentTopic":"{CT}","version":0,"timestamp":{ts}}}"#,
+            B64.encode(vec![1u8; len])
+        )
+    }
+
+    #[test]
+    fn relay_stream_bounds_memory_and_survives_odd_chunking() {
+        let max = 4096;
+        let mut items: Vec<String> = (0..20).map(|i| entry(max, i)).collect();
+        items.insert(7, entry(max * 50, 99)); // oversized, ~270 KB
+        items.insert(9, r#"{"payload":"\"}]","x":"}"}"#.into()); // braces inside strings
+        items.insert(10, "17".into()); // bare scalar
+        let body = format!(" [ {} ] ", items.join(" , "));
+        let t = topic();
+        let mut s = RelayStream::new(&t, PUBSUB, max);
+        let mut peak = 0;
+        for chunk in body.as_bytes().chunks(7) {
+            s.feed(chunk);
+            peak = peak.max(s.buffered());
+        }
+        assert!(peak <= max_relay_element_bytes(max), "peak {peak}");
+        let r = s.finish();
+        assert!(r.error.is_none(), "{:?}", r.error);
+        assert_eq!(r.frames.len(), 20);
+        assert_eq!(r.counts.malformed, 3);
+    }
+
+    #[test]
+    fn relay_stream_truncation_keeps_complete_frames() {
+        let body = format!("[{},{},{}", entry(10, 1), entry(10, 2), entry(10, 3));
+        let t = topic();
+        let mut s = RelayStream::new(&t, PUBSUB, 4096);
+        s.feed(&body.as_bytes()[..body.len() - 5]);
+        let r = s.finish();
+        assert_eq!(r.frames.len(), 2);
+        assert!(r.error.unwrap().contains("truncated"));
+    }
+
+    #[test]
+    fn relay_response_bound_covers_a_full_node_cache() {
+        // 1000 maximum-size entries, comma-separated, plus brackets, must fit.
+        let max = 153_600;
+        let one = max_relay_element_bytes(max);
+        assert_eq!(one, 204_800 + 1_112);
+        assert!(1000 * (entry(max, 1).len() + 1) + 2 <= max_relay_response_bytes(max));
     }
 }

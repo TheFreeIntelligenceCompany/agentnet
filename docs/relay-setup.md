@@ -101,6 +101,12 @@ The measurements are in `results/fixups/burst-latency.md` (single host, amd64 no
   The cache is volatile, destructive on read and silently evicts the oldest entries when full. Measured on the client node without AgentNet:
   100 messages published back to back reached a single poll as only 30 to 50 entries with the default capacity
   (`results/fixups/node-cache-probe-cap50.txt`). Memory worst case is capacity x `--max-msg-size` (1000 x 150 KiB = 150 MiB), typical use is far less.
+  **Poll response bound (the node drains the cache when it answers, so the adapter must never discard a pulled batch).** One poll can return the whole cache. Worst case on the wire:
+  1000 entries x (4 x ceil(153,600 / 3) = 204,800 Base64 characters + 1,112 envelope and `meta` allowance + 1 separator) = about 196 MiB, more than the former 32 MiB whole-body cap
+  (192 maximum-size messages are already about 39 MB), which rejected the entire batch. The adapter now parses the array incrementally: it buffers one element (at most 205,912 bytes),
+  skips and counts (`malformed_skipped`) an oversized or malformed element, delivers every complete frame before a truncated or broken tail (counted in `partial_polls`; an error is returned only when
+  no frame was complete), and stops reading past 1000 x 205,913 + 1 KiB bytes. Resident memory is one element plus the decoded frames returned (at most 1000 x 150 KiB, the node's own bound).
+  Tested against a stub node (192 maximum-body frames in one response, `crates/transport/src/logos_rest/tests.rs`); UNTESTED against a real node's 192-frame response.
   This is cheap insurance for the moments a daemon cannot poll (restart, stall, a long SQLite transaction), not the main cause of slow bursts.
 * **The dominant cause of a slow burst on the test topology was not the cache: it was a cold relay mesh.** After a client node is (re)created, live relay between
   two client nodes did not work until about **62 s** after the node reported itself connected to the service node, 3 of 3 trials

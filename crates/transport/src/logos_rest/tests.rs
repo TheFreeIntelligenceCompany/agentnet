@@ -1133,3 +1133,76 @@ async fn plain_public_publish_issues_no_audit_get() {
     assert_eq!(stub.count("/admin/v1/peers"), 0);
     assert_eq!(stub.count("/relay/v1/auto/messages"), 2);
 }
+
+// ----- destructive-poll burst handling (the node drained its cache before answering) -----
+
+/// One relay-cache entry whose decoded payload is `len` bytes.
+fn relay_entry(len: usize, ts: i64) -> String {
+    use base64::Engine as _;
+    let payload = base64::engine::general_purpose::STANDARD.encode(vec![7u8; len]);
+    format!(
+        r#"{{"payload":"{payload}","contentTopic":"{}","version":0,"timestamp":{ts}}}"#,
+        topic().as_str()
+    )
+}
+
+/// Stub node whose first poll answers `body` and later polls answer `[]`.
+async fn spawn_poll_once(body: String) -> Stub {
+    let served = Arc::new(Mutex::new(false));
+    spawn_stub(move |req| match req.path.as_str() {
+        "/admin/v1/peers" => ok(PEERS_OK),
+        "/relay/v1/auto/subscriptions" => ok("OK"),
+        p if p.starts_with("/relay/v1/auto/messages/") => {
+            let mut s = served.lock().unwrap();
+            if *s {
+                ok("[]")
+            } else {
+                *s = true;
+                ok(&body)
+            }
+        }
+        _ => status(404, ""),
+    })
+    .await
+}
+
+#[tokio::test]
+async fn poll_delivers_192_maximum_size_frames_in_one_response() {
+    // 192 x 153,600-byte payloads = 192 x ~205 KB of Base64 JSON = ~39 MB > the old 32 MiB cap.
+    let max = LogosRestConfig::default().max_message_bytes;
+    let items: Vec<String> = (0..192).map(|i| relay_entry(max, 1_000 + i)).collect();
+    let body = format!("[{}]", items.join(","));
+    assert!(body.len() > 32 * 1024 * 1024);
+    let stub = spawn_poll_once(body).await;
+    let mut c = cfg(&stub.url);
+    c.request_timeout = Duration::from_secs(30);
+    let t = LogosRestTransport::new(c).unwrap();
+    let frames = t.poll(&topic()).await.unwrap();
+    assert_eq!(frames.len(), 192);
+    assert!(frames.iter().all(|f| f.payload.len() == max));
+    assert_eq!(t.metrics().malformed_skipped, 0);
+}
+
+#[tokio::test]
+async fn poll_skips_and_counts_an_oversized_frame_in_the_middle() {
+    let max = LogosRestConfig::default().max_message_bytes;
+    let mut items: Vec<String> = (0..10).map(|i| relay_entry(1024, 1_000 + i)).collect();
+    items.insert(5, relay_entry(max * 2, 5_000));
+    let stub = spawn_poll_once(format!("[{}]", items.join(","))).await;
+    let t = LogosRestTransport::new(cfg(&stub.url)).unwrap();
+    let frames = t.poll(&topic()).await.unwrap();
+    assert_eq!(frames.len(), 10);
+    assert_eq!(t.metrics().malformed_skipped, 1);
+}
+
+#[tokio::test]
+async fn poll_truncated_tail_delivers_complete_frames_and_reports() {
+    let items: Vec<String> = (0..4).map(|i| relay_entry(1024, 1_000 + i)).collect();
+    let mut body = format!("[{}", items.join(","));
+    body.truncate(body.len() - 40); // cut the last frame in half
+    let stub = spawn_poll_once(body).await;
+    let t = LogosRestTransport::new(cfg(&stub.url)).unwrap();
+    let frames = t.poll(&topic()).await.unwrap();
+    assert_eq!(frames.len(), 3);
+    assert_eq!(t.metrics().partial_polls, 1);
+}

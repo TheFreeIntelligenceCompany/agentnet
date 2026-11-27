@@ -132,7 +132,9 @@ unknown recipient key), `expired` (TTL passed without ack).
 * Retry: while not delivered and not expired, re-publish with exponential backoff
   (base 2 s, factor 2, cap 5 min, equal jitter: uniform in [c/2, c]), fresh Waku timestamp each time.
   Bounded by `expires_at` and `max_attempts`.
-* Receive: live poll of the node's relay cache every `poll_interval_ms`, plus a
+* Receive: live poll of the node's relay cache every `poll_interval_ms` (the response is parsed
+  incrementally, a bad or oversized frame is skipped and counted, complete frames before a broken
+  tail are kept: the node drains the cache on read; bounds in `docs/relay-setup.md`), plus a
   Store catch-up at start, after reconnect and every `store_sync_interval_s`,
   covering `[last_sync - overlap, now]` in <= 24 h windows back to
   `retention_hours`. Both paths feed one bounded channel; a transport-hash cache
