@@ -36,7 +36,16 @@ pub(crate) struct OutboxInsert<'a> {
     pub kem_until: Option<i64>,
 }
 
-type IdemRow = (String, String, String, String, Option<String>, String, i64);
+type IdemRow = (
+    String,
+    String,
+    String,
+    String,
+    Option<String>,
+    Option<String>,
+    String,
+    i64,
+);
 
 impl Node {
     /// Insert a sealed frame into the outbox in state `queued`, due now.
@@ -156,7 +165,7 @@ impl Node {
             if let Some(k) = &req.idempotency_key {
                 let old: Option<IdemRow> = tx
                     .query_row(
-                        "SELECT message_id, recipient, type, body, conversation_id, state, expires_at
+                        "SELECT message_id, recipient, type, body, conversation_id, correlation_id, state, expires_at
                          FROM outbox WHERE idempotency_key = ?1",
                         [k],
                         |r| {
@@ -168,12 +177,18 @@ impl Node {
                                 r.get(4)?,
                                 r.get(5)?,
                                 r.get(6)?,
+                                r.get(7)?,
                             ))
                         },
                     )
                     .optional()?;
-                if let Some((id, rcpt, ty, body, conv, state, exp)) = old {
-                    if rcpt != req.recipient || ty != mtype || body != req.body {
+                if let Some((id, rcpt, ty, body, conv, corr, state, exp)) = old {
+                    if rcpt != req.recipient
+                        || ty != mtype
+                        || body != req.body
+                        || corr != req.correlation_id
+                        || (req.conversation_id.is_some() && req.conversation_id != conv)
+                    {
                         return Err(ApiError::new(
                             ErrorCode::Conflict,
                             "idempotency_key was already used for a different message",
@@ -454,7 +469,10 @@ impl Node {
             };
             if let Ok(addr) = recipient.parse::<crate::crypto::Address>() {
                 if let Some(row) = self.load_contact(tx, &addr)? {
-                    if !row.revoked && !row.contact.is_kem_expired(now) {
+                    if !row.revoked
+                        && row.trust != Trust::Blocked
+                        && !row.contact.is_kem_expired(now)
+                    {
                         self.reseal_outbox(tx, &row, now)?;
                     }
                 }

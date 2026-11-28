@@ -107,7 +107,7 @@ pub fn verify_signature(
     // `verify_slice` compares in constant time.
     mac.verify_slice(&sig)
         .map_err(|_| SignatureError::Mismatch)?;
-    if (now_unix - ts).abs() > tolerance_s {
+    if tolerance_s < 0 || now_unix.abs_diff(ts) > tolerance_s as u64 {
         return Err(SignatureError::Stale);
     }
     Ok(())
@@ -116,8 +116,13 @@ pub fn verify_signature(
 // ----------------------------------------------------------------------------
 // SSRF policy
 
+const AWS_IPV6_IMDS: std::net::Ipv6Addr =
+    std::net::Ipv6Addr::new(0xfd00, 0x0ec2, 0, 0, 0, 0, 0, 0x0254);
+const ALIBABA_IPV4_IMDS: Ipv4Addr = Ipv4Addr::new(100, 100, 100, 200);
+
 fn is_blocked_v4(ip: Ipv4Addr) -> bool {
     ip.is_link_local()  // 169.254.0.0/16, includes cloud metadata 169.254.169.254
+        || ip == ALIBABA_IPV4_IMDS
         || ip.is_multicast()
         || ip.is_unspecified()
         || ip.is_broadcast()
@@ -125,7 +130,8 @@ fn is_blocked_v4(ip: Ipv4Addr) -> bool {
 }
 
 /// Addresses that are never acceptable destinations (link-local/metadata,
-/// multicast, unspecified), even with `allow_remote`.
+/// multicast, unspecified, deprecated IPv4-compatible/NAT64-blocked/site-local),
+/// even with `allow_remote`.
 pub fn is_blocked_ip(ip: IpAddr) -> bool {
     match ip {
         IpAddr::V4(v4) => is_blocked_v4(v4),
@@ -133,7 +139,28 @@ pub fn is_blocked_ip(ip: IpAddr) -> bool {
             if let Some(v4) = v6.to_ipv4_mapped() {
                 return is_blocked_v4(v4);
             }
-            v6.is_unspecified() || v6.is_multicast() || (v6.segments()[0] & 0xffc0) == 0xfe80
+            let segs = v6.segments();
+            // Deprecated IPv4-compatible IPv6 (::w.x.y.z, excluding :: and ::1)
+            if segs[0..6] == [0; 6] && !v6.is_unspecified() && !v6.is_loopback() {
+                return true;
+            }
+            // NAT64 well-known prefix (64:ff9b::/96, RFC 6052): check embedded IPv4
+            if segs[0..6] == [0x0064, 0xff9b, 0, 0, 0, 0] {
+                let embedded = Ipv4Addr::new(
+                    (segs[6] >> 8) as u8,
+                    (segs[6] & 0xff) as u8,
+                    (segs[7] >> 8) as u8,
+                    (segs[7] & 0xff) as u8,
+                );
+                if is_blocked_v4(embedded) {
+                    return true;
+                }
+            }
+            v6 == AWS_IPV6_IMDS
+                || v6.is_unspecified()
+                || v6.is_multicast()
+                || (segs[0] & 0xffc0) == 0xfe80 // link-local fe80::/10
+                || (segs[0] & 0xffc0) == 0xfec0 // deprecated site-local fec0::/10
         }
     }
 }
@@ -212,16 +239,23 @@ impl WebhookTarget {
         &self.url
     }
 
-    /// Resolve a hostname and re-check every address; returns the address to
-    /// pin the connection to (`None` for literal IPs, which need no lookup).
+    /// Resolve a hostname and re-check every address; returns the first address
+    /// to pin the connection to (`None` for literal IPs, which need no lookup).
     pub async fn resolve_checked(&self) -> Result<Option<SocketAddr>, String> {
+        let addrs = self.resolve_checked_addrs(Duration::from_secs(10)).await?;
+        Ok(addrs.first().copied())
+    }
+
+    async fn resolve_checked_addrs(&self, timeout: Duration) -> Result<Vec<SocketAddr>, String> {
         let TargetHost::Name(name) = &self.host else {
-            return Ok(None);
+            return Ok(Vec::new());
         };
-        let addrs: Vec<SocketAddr> = tokio::net::lookup_host((name.as_str(), self.port))
-            .await
-            .map_err(|_| "webhook host did not resolve".to_owned())?
-            .collect();
+        let addrs: Vec<SocketAddr> =
+            tokio::time::timeout(timeout, tokio::net::lookup_host((name.as_str(), self.port)))
+                .await
+                .map_err(|_| "webhook DNS lookup timed out".to_owned())?
+                .map_err(|_| "webhook host did not resolve".to_owned())?
+                .collect();
         if addrs.is_empty() {
             return Err("webhook host did not resolve".into());
         }
@@ -230,11 +264,22 @@ impl WebhookTarget {
             if is_blocked_ip(ip) {
                 return Err("webhook host resolves to a blocked address".into());
             }
-            if !(self.allow_remote || ip.is_loopback() || is_local_ip(ip)) {
+            if name == "localhost" {
+                if !ip.is_loopback() {
+                    return Err("localhost resolved to a non-loopback address".into());
+                }
+            } else if self.allow_remote {
+                // External DNS names must not rebind to loopback or private networks.
+                if ip.is_loopback() || is_local_ip(ip) {
+                    return Err(
+                        "remote webhook hostname resolves to a loopback or private address".into(),
+                    );
+                }
+            } else if !(ip.is_loopback() || is_local_ip(ip)) {
                 return Err("webhook host resolves to a public address".into());
             }
         }
-        Ok(addrs.first().copied())
+        Ok(addrs)
     }
 }
 
@@ -320,10 +365,6 @@ impl Webhook {
         }
         let path = dir.webhook_db();
         let db = Connection::open(&path).map_err(sql_err)?;
-        {
-            use std::os::unix::fs::PermissionsExt;
-            let _ = std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600));
-        }
         db.execute_batch(
             "PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;
              CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT NOT NULL);
@@ -332,6 +373,17 @@ impl Webhook {
                 attempts INTEGER NOT NULL, last_error TEXT);",
         )
         .map_err(sql_err)?;
+        {
+            use std::os::unix::fs::PermissionsExt;
+            for suffix in ["", "-wal", "-shm"] {
+                let mut p = path.clone().into_os_string();
+                p.push(suffix);
+                let p = std::path::PathBuf::from(p);
+                if p.exists() {
+                    let _ = std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o600));
+                }
+            }
+        }
         let parked: i64 = db
             .query_row("SELECT COUNT(*) FROM parked", [], |r| r.get(0))
             .map_err(sql_err)?;
@@ -396,6 +448,13 @@ impl Webhook {
                 params![ev.event_id, ev.cursor, now, attempts, last_error],
             )
             .map_err(sql_err)?;
+            // Cap parked table size so prolonged outages cannot grow webhook.db unboundedly.
+            tx.execute(
+                "DELETE FROM parked WHERE event_id IN
+                 (SELECT event_id FROM parked ORDER BY parked_at DESC LIMIT -1 OFFSET 10000)",
+                [],
+            )
+            .map_err(sql_err)?;
             tx.execute(
                 "INSERT INTO kv(k,v) VALUES('cursor',?1) ON CONFLICT(k) DO UPDATE SET v=excluded.v",
                 [&ev.cursor],
@@ -448,16 +507,18 @@ impl Webhook {
     }
 
     async fn attempt(&self, ev: &EventRecord, body: &str) -> Result<(), String> {
-        let pinned = self.target.resolve_checked().await?;
         let timeout = Duration::from_millis(self.cfg.timeout_ms);
+        let pinned = self.target.resolve_checked_addrs(timeout).await?;
         let mut b = reqwest::Client::builder()
             .redirect(reqwest::redirect::Policy::none())
             .no_proxy()
             .timeout(timeout)
             .connect_timeout(timeout)
             .user_agent("agentnet-webhook/1");
-        if let (Some(addr), Some(host)) = (pinned, self.target.url.host_str()) {
-            b = b.resolve(host, addr);
+        if !pinned.is_empty() {
+            if let Some(host) = self.target.url.host_str() {
+                b = b.resolve_to_addrs(host, &pinned);
+            }
         }
         let client = b
             .build()
@@ -510,7 +571,11 @@ impl Webhook {
             if stop.is_cancelled() {
                 return Err(());
             }
-            match self.attempt(ev, &body).await {
+            let res = tokio::select! {
+                _ = stop.cancelled() => return Err(()),
+                r = self.attempt(ev, &body) => r,
+            };
+            match res {
                 Ok(()) => {
                     let mut s = self.stats.lock().unwrap_or_else(|e| e.into_inner());
                     s.delivered += 1;
@@ -547,7 +612,18 @@ impl Webhook {
     /// Run until `stop` is cancelled.
     pub async fn run(self: Arc<Self>, node: Arc<Node>, stop: CancellationToken) {
         let mut hints = node.changes();
-        let mut cursor = self.cursor().ok().flatten();
+        let mut cursor = loop {
+            match self.cursor() {
+                Ok(c) => break c,
+                Err(e) => {
+                    tracing::error!(error = %e, "webhook: cannot read cursor; retrying");
+                    tokio::select! {
+                        _ = stop.cancelled() => return,
+                        _ = tokio::time::sleep(EVENT_POLL) => {}
+                    }
+                }
+            }
+        };
         loop {
             if stop.is_cancelled() {
                 return;
@@ -573,7 +649,10 @@ impl Webhook {
                                     {
                                         tracing::error!(error = %e, event_id = %ev.event_id,
                                             "webhook: cannot park event; it will be retried");
-                                        tokio::time::sleep(EVENT_POLL).await;
+                                        tokio::select! {
+                                            _ = stop.cancelled() => return,
+                                            _ = tokio::time::sleep(EVENT_POLL) => {}
+                                        }
                                         break;
                                     }
                                     tracing::warn!(event_id = %ev.event_id,
@@ -586,7 +665,10 @@ impl Webhook {
                         }
                         if let Err(e) = self.set_cursor(&ev.cursor) {
                             tracing::error!(error = %e, "webhook: cannot persist cursor");
-                            tokio::time::sleep(EVENT_POLL).await;
+                            tokio::select! {
+                                _ = stop.cancelled() => return,
+                                _ = tokio::time::sleep(EVENT_POLL) => {}
+                            }
                             break;
                         }
                         cursor = Some(ev.cursor.clone());
@@ -679,16 +761,28 @@ mod tests {
         for ip in [
             "169.254.169.254",
             "169.254.0.1",
+            "100.100.100.200",
             "224.0.0.1",
             "0.0.0.0",
             "255.255.255.255",
             "fe80::1",
+            "fec0::1",
+            "fd00:ec2::254",
+            "::169.254.169.254",
+            "64:ff9b::169.254.169.254",
             "ff02::1",
             "::",
             "::ffff:169.254.169.254",
         ] {
             assert!(is_blocked_ip(ip.parse().unwrap()), "{ip}");
         }
+        // Extreme timestamps must not overflow verify_signature.
+        let extreme_ts = i64::MIN.to_string();
+        let extreme_sig = sign(SECRET, &extreme_ts, b"{}");
+        assert_eq!(
+            verify_signature(SECRET, &extreme_ts, b"{}", &extreme_sig, 0, 300),
+            Err(SignatureError::Stale)
+        );
         for ip in [
             "127.0.0.1",
             "10.0.0.1",

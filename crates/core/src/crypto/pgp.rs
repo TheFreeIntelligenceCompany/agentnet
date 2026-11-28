@@ -36,7 +36,7 @@ use openpgp::serialize::stream::{Encryptor, LiteralWriter, Message, Recipient, S
 use openpgp::serialize::MarshalInto;
 use openpgp::types::{
     AEADAlgorithm, KeyFlags, PublicKeyAlgorithm, ReasonForRevocation, RevocationStatus,
-    SignatureType, SymmetricAlgorithm,
+    RevocationType, SignatureType, SymmetricAlgorithm,
 };
 use openpgp::{Cert, Fingerprint, KeyHandle, Packet, Profile};
 
@@ -59,6 +59,9 @@ pub const MAX_CERT_LEN: usize = 8192;
 pub const MIN_PAD_BUCKET: u64 = 1024;
 /// Most PKESKs a message may carry (bound on trial decryptions per frame).
 const MAX_PKESKS: usize = 8;
+/// Maximum distance into the future (ms) a cryptographically valid signature
+/// may be deferred as `FromFuture` rather than rejected immediately.
+const MAX_FUTURE_DEFER_MS: i64 = 24 * 60 * 60 * 1000;
 
 /// The one policy object (Sequoia's standard policy; the stricter ADR 0004 rules
 /// are enforced explicitly in [`open_message`]).
@@ -153,9 +156,17 @@ pub(crate) fn rotate_cert(
     let mut packets: Vec<Packet> = Vec::new();
     let mut retired = Vec::new();
     let vc = cert.with_policy(&p, st(now_ms))?;
+    let hard_upgrade = reason.revocation_type() == RevocationType::Hard;
     for ka in vc.keys().subkeys().for_transport_encryption() {
-        if matches!(ka.revocation_status(), RevocationStatus::Revoked(_)) {
-            continue;
+        if let RevocationStatus::Revoked(sigs) = ka.revocation_status() {
+            let already_hard = sigs.iter().any(|s| {
+                s.reason_for_revocation()
+                    .map(|(r, _)| r.revocation_type() == RevocationType::Hard)
+                    .unwrap_or(true)
+            });
+            if !hard_upgrade || already_hard {
+                continue;
+            }
         }
         let sig = SubkeyRevocationBuilder::new()
             .set_reason_for_revocation(reason, reason_text)?
@@ -180,7 +191,8 @@ pub(crate) fn rotate_cert(
 }
 
 /// A hard primary-key revocation of `cert` effective at `now_ms`; returns the
-/// public certificate carrying the revocation signature.
+/// public certificate carrying the revocation signature (stripping subkeys if
+/// needed so revoking an identity near [`MAX_CERT_LEN`] always fits).
 pub(crate) fn revoke_primary(cert: &Cert, now_ms: i64, reason: &str) -> openpgp::Result<Cert> {
     let mut kp =
         primary_keypair(cert).ok_or_else(|| anyhow::anyhow!("no usable primary secret"))?;
@@ -192,6 +204,9 @@ pub(crate) fn revoke_primary(cert: &Cert, now_ms: i64, reason: &str) -> openpgp:
         .clone()
         .strip_secret_key_material()
         .insert_packets(sig)?;
+    if c.to_vec()?.len() > MAX_CERT_LEN {
+        return Ok(c.retain_subkeys(|_| false));
+    }
     Ok(c)
 }
 
@@ -316,17 +331,44 @@ pub(crate) fn parse_public(bytes: &[u8]) -> Result<Cert, ContactError> {
 /// so dropping it is safe. If the certificate still exceeds
 /// [`MAX_CERT_LEN`] the result is [`ContactError::TooLarge`].
 pub(crate) fn normalize(cert: Cert, now_ms: i64) -> Result<Cert, ContactError> {
+    normalize_at(cert, now_ms, now_ms)
+}
+
+/// Like [`normalize`], validating bindings at `validate_ms` (allowing bounded
+/// clock skew) while only treating subkeys as expired for size-trimming at
+/// `expire_ms` (so unexpired revoked subkeys are never trimmed early).
+///
+/// If the primary key carries a hard revocation, subkeys are stripped: a hard
+/// primary revocation is permanent and overrides every subkey, so dropping
+/// subkeys cannot resurrect any key on a stale merge and ensures revocation
+/// certificates always fit within [`MAX_CERT_LEN`].
+pub(crate) fn normalize_at(
+    cert: Cert,
+    validate_ms: i64,
+    expire_ms: i64,
+) -> Result<Cert, ContactError> {
     let p = policy();
     let cert = sanitize(cert)?;
-    let t = st(now_ms);
-    let valid: Vec<Fingerprint> = {
+    let t_val = st(validate_ms);
+    let t_exp = st(expire_ms);
+    let (hard_revoked, valid): (bool, Vec<Fingerprint>) = {
         let vc = cert
-            .with_policy(&p, t)
+            .with_policy(&p, t_val)
             .map_err(|_| ContactError::NotValid)?;
-        vc.keys()
+        let hard = match vc.revocation_status() {
+            RevocationStatus::Revoked(sigs) => sigs.iter().any(|s| {
+                s.reason_for_revocation()
+                    .map(|(r, _)| r.revocation_type() == RevocationType::Hard)
+                    .unwrap_or(true)
+            }),
+            _ => false,
+        };
+        let subkeys = vc
+            .keys()
             .subkeys()
             .map(|ka| ka.key().fingerprint())
-            .collect()
+            .collect();
+        (hard, subkeys)
     };
     let mut cert = cert.retain_subkeys(|sk| valid.contains(&sk.key().fingerprint()));
     // Fit the size limit.
@@ -338,13 +380,22 @@ pub(crate) fn normalize(cert: Cert, now_ms: i64) -> Result<Cert, ContactError> {
         if len <= MAX_CERT_LEN {
             return Ok(cert);
         }
+        // If the primary key carries a hard revocation and the cert exceeds
+        // `MAX_CERT_LEN` (e.g. revoking an identity after 21 rotations or
+        // merging a revocation into an 8 KiB contact cert), drop all subkeys
+        // so the revocation always fits. Safe against M1 because a hard
+        // primary revocation is permanent and overrides every subkey.
+        if hard_revoked && cert.keys().subkeys().next().is_some() {
+            cert = cert.retain_subkeys(|_| false);
+            continue;
+        }
         let victim: Option<Fingerprint> = {
             let vc = cert
-                .with_policy(&p, t)
+                .with_policy(&p, t_val)
                 .map_err(|_| ContactError::NotValid)?;
             vc.keys()
                 .subkeys()
-                .filter(|ka| ka.key_expiration_time().is_some_and(|e| e <= t))
+                .filter(|ka| ka.key_expiration_time().is_some_and(|e| e <= t_exp))
                 .min_by_key(|ka| ka.key().creation_time())
                 .map(|ka| ka.key().fingerprint())
         };
@@ -358,7 +409,12 @@ pub(crate) fn normalize(cert: Cert, now_ms: i64) -> Result<Cert, ContactError> {
 /// Merge `incoming` into `existing`: same primary key only; the union of
 /// signatures (revocations accumulate and are never dropped); invalid or
 /// unbound subkeys do not survive normalization.
-pub(crate) fn merge(existing: &Cert, incoming: &Cert, now_ms: i64) -> Result<Cert, ContactError> {
+pub(crate) fn merge_at(
+    existing: &Cert,
+    incoming: &Cert,
+    validate_ms: i64,
+    expire_ms: i64,
+) -> Result<Cert, ContactError> {
     if existing.fingerprint() != incoming.fingerprint() {
         return Err(ContactError::PrimaryMismatch);
     }
@@ -366,7 +422,25 @@ pub(crate) fn merge(existing: &Cert, incoming: &Cert, now_ms: i64) -> Result<Cer
         .clone()
         .merge_public(incoming.clone())
         .map_err(|_| ContactError::PrimaryMismatch)?;
-    normalize(merged, now_ms)
+    normalize_at(merged, validate_ms, expire_ms)
+}
+
+/// Skew-adjusted evaluation time for a certificate whose primary key or newest
+/// subkey was created slightly ahead of `now_ms` (within `max_future_ms`).
+pub(crate) fn skew_eval_time(cert: &Cert, now_ms: i64, max_future_ms: i64) -> i64 {
+    let cap = now_ms.saturating_add(max_future_ms);
+    let mut latest = ms_of(cert.primary_key().key().creation_time());
+    for sk in cert.keys().subkeys() {
+        let ct = ms_of(sk.key().creation_time());
+        if ct <= cap && ct > latest {
+            latest = ct;
+        }
+    }
+    if latest > now_ms {
+        latest.saturating_add(2_000).min(cap)
+    } else {
+        now_ms
+    }
 }
 
 /// Certificate-level status at `now_ms`: `(revoked_at_ms, reason)` when the
@@ -445,6 +519,7 @@ pub(crate) fn kem_expiry_ms(cert: &Cert, now_ms: i64) -> Option<i64> {
         .alive()
         .revoked(false)
         .for_transport_encryption()
+        .filter(|ka| ka.key().pk_algo() == PublicKeyAlgorithm::X25519 && ka.key().version() == 6)
     {
         let e = ka.key_expiration_time().map(ms_of);
         best = Some(match (best, e) {
@@ -518,20 +593,24 @@ pub fn padded_total(n: u64) -> u64 {
 /// smaller class than one of `n + floor` bytes would (acks are padded as if
 /// they carried the payload of the smallest ordinary message; review finding M3).
 pub fn padded_total_with_floor(n: u64, floor: u64) -> u64 {
+    let min_total = n.saturating_add(floor).saturating_add(2);
     let mut t = MIN_PAD_BUCKET;
     loop {
-        if t >= n + floor + 2 && padding_body_for_total(t - n).is_some() {
+        if t >= min_total && padding_body_for_total(t.saturating_sub(n)).is_some() {
             return t;
         }
-        t *= 2;
+        match t.checked_mul(2) {
+            Some(next) => t = next,
+            None => return u64::MAX,
+        }
     }
 }
 
 /// Build one OpenPGP message: PKESK v6 (anonymous) to every live encryption
-/// subkey of `recipient_cert`, SEIPD v2 (AES-256, OCB), a one-pass signed
-/// Literal Data packet carrying `payload`, a v6 signature with the Intended
-/// Recipient Fingerprint of the recipient's primary key, and a trailing
-/// Padding packet.
+/// subkey of `recipient_cert` (capped at [`MAX_PKESKS`], newest first), SEIPD v2
+/// (AES-256, OCB), a one-pass signed Literal Data packet carrying `payload`, a v6
+/// signature with the Intended Recipient Fingerprint of the recipient's primary
+/// key, and a trailing Padding packet.
 pub(crate) fn seal_message(
     signer: KeyPair,
     recipient_cert: &Cert,
@@ -546,10 +625,15 @@ pub(crate) fn seal_message(
         .with_policy(&p, st(now_ms))
         .map_err(|_| SealError::Crypto("recipient certificate is not valid"))?;
     let features = vc.features();
-    let recipients: Vec<Recipient> = vc
+    let mut live_keys: Vec<_> = vc
         .keys()
         .subkeys()
         .filter(|ka| live.contains(&ka.key().fingerprint()))
+        .collect();
+    live_keys.sort_by_key(|ka| std::cmp::Reverse(ka.key().creation_time()));
+    live_keys.truncate(MAX_PKESKS);
+    let recipients: Vec<Recipient> = live_keys
+        .into_iter()
         .map(|ka| Recipient::new(features.clone(), None, ka.key()))
         .collect();
     if recipients.is_empty() {
@@ -612,6 +696,10 @@ struct State {
     /// The session key the frame was decrypted with (for the inner packet check).
     session: Option<(Option<SymmetricAlgorithm>, SessionKey)>,
     reject: Option<OpenError>,
+    /// Signature creation time (ms) when Sequoia reported `NotYetLive`, so
+    /// `open_message` can verify the signature cryptographically before
+    /// returning `FromFuture` (preventing forged-timestamp defer DoS).
+    not_yet_live_ms: Option<i64>,
     signer: Option<Address>,
     issuers: Vec<Address>,
     unverified: bool,
@@ -766,13 +854,19 @@ impl VerificationHelper for Helper<'_> {
             // A signature made after the verification time (a sender whose clock
             // is ahead by more than the permitted skew) is "from the future",
             // which the engine defers and re-evaluates, not a bad signature
-            // (review finding L1).
-            Err(VerificationError::BadSignature { error, .. })
+            // (review finding L1). Sequoia checks `NotYetLive` before verifying
+            // the signature cryptographically, so we record the claimed creation
+            // time and `open_message` verifies it at that time (within
+            // `MAX_FUTURE_DEFER_MS`) before returning `FromFuture`.
+            Err(VerificationError::BadSignature { sig, error, .. })
                 if matches!(
                     error.downcast_ref::<openpgp::Error>(),
                     Some(openpgp::Error::NotYetLive(_))
                 ) =>
             {
+                let mut s = self.st.borrow_mut();
+                s.not_yet_live_ms = sig.signature_creation_time().map(ms_of);
+                drop(s);
                 Err(self.reject(OpenError::FromFuture))
             }
             Err(_) => Err(self.reject(OpenError::BadSignature)),
@@ -936,11 +1030,60 @@ pub(crate) fn open_message(
     allow_unverified: bool,
 ) -> Result<Opened, OpenError> {
     check_outer(frame)?;
+    let mut me = me;
+    let (res, not_yet_live_ms) = open_message_at(
+        frame,
+        &mut me,
+        my_primary,
+        now_ms,
+        max_plaintext,
+        pinned,
+        extra,
+        allow_unverified,
+    );
+    if matches!(res, Err(OpenError::FromFuture)) {
+        // Verify that the signature is genuinely valid at its claimed creation
+        // time and within the bounded defer horizon; otherwise a forged frame
+        // dated in the far future would bypass `transport_seen` forever.
+        let Some(ct) = not_yet_live_ms else {
+            return Err(OpenError::BadSignature);
+        };
+        if ct <= now_ms || ct > now_ms.saturating_add(MAX_FUTURE_DEFER_MS) {
+            return Err(OpenError::BadSignature);
+        }
+        let (check_res, _) = open_message_at(
+            frame,
+            &mut me,
+            my_primary,
+            ct,
+            max_plaintext,
+            pinned,
+            extra,
+            false,
+        );
+        return match check_res {
+            Ok(_) => Err(OpenError::FromFuture),
+            Err(e) => Err(e),
+        };
+    }
+    res
+}
+
+#[allow(clippy::too_many_arguments)]
+fn open_message_at(
+    frame: &[u8],
+    me: &mut Vec<KeyPair>,
+    my_primary: &Fingerprint,
+    now_ms: i64,
+    max_plaintext: usize,
+    pinned: &dyn Fn(&Address) -> Option<Cert>,
+    extra: Option<&Cert>,
+    allow_unverified: bool,
+) -> (Result<Opened, OpenError>, Option<i64>) {
     let p = policy();
     let state = Rc::new(RefCell::new(State::default()));
-    let mut me = me;
     let helper = Helper {
-        me: &mut me,
+        me,
         my_fp: my_primary.clone(),
         vt: st(now_ms),
         pinned,
@@ -948,45 +1091,79 @@ pub(crate) fn open_message(
         allow_unverified,
         st: state.clone(),
     };
-    let fail = |state: &Rc<RefCell<State>>| state.borrow().reject.unwrap_or(OpenError::Malformed);
-    let builder = DecryptorBuilder::from_bytes(frame).map_err(|_| OpenError::Malformed)?;
-    let mut d = builder
-        .with_policy(&p, Some(st(now_ms)), helper)
-        .map_err(|_| fail(&state))?;
+    let fail = |state: &Rc<RefCell<State>>| {
+        let s = state.borrow();
+        (
+            Err(s.reject.unwrap_or(OpenError::Malformed)),
+            s.not_yet_live_ms,
+        )
+    };
+    let builder = match DecryptorBuilder::from_bytes(frame) {
+        Ok(b) => b,
+        Err(_) => return (Err(OpenError::Malformed), None),
+    };
+    let mut d = match builder.with_policy(&p, Some(st(now_ms)), helper) {
+        Ok(d) => d,
+        Err(_) => return fail(&state),
+    };
     let mut plaintext = Vec::new();
     let r = (&mut d)
         .take(max_plaintext as u64 + 1)
         .read_to_end(&mut plaintext);
     if r.is_err() {
-        return Err(fail(&state));
+        return fail(&state);
     }
     if plaintext.len() > max_plaintext {
-        return Err(OpenError::Malformed);
+        return (Err(OpenError::Malformed), None);
     }
     let s = state.borrow();
     if let Some(e) = s.reject {
-        return Err(e);
+        return (Err(e), s.not_yet_live_ms);
     }
-    check_inner(frame, &s.session)?;
-    Ok(Opened {
-        plaintext,
-        signer: s.signer,
-        issuers: s.issuers.clone(),
-    })
+    if let Err(e) = check_inner(frame, &s.session) {
+        return (Err(e), None);
+    }
+    (
+        Ok(Opened {
+            plaintext,
+            signer: s.signer,
+            issuers: s.issuers.clone(),
+        }),
+        None,
+    )
 }
 
 // ------------------------------------------------------------ signed (not encrypted)
 
+pub(crate) enum VerifySignedError {
+    Bad,
+    FromFuture,
+}
+
 struct SigHelper {
     certs: Vec<Cert>,
+    vt: SystemTime,
     good: Rc<RefCell<Option<Address>>>,
     structure_ok: Rc<RefCell<bool>>,
+    not_yet_live_ms: Rc<RefCell<Option<i64>>>,
     allow_missing: bool,
 }
 
 impl VerificationHelper for SigHelper {
     fn get_certs(&mut self, _ids: &[KeyHandle]) -> openpgp::Result<Vec<Cert>> {
-        Ok(self.certs.clone())
+        let p = policy();
+        let mut out = Vec::new();
+        for c in &self.certs {
+            let Ok(vc) = c.with_policy(&p, self.vt) else {
+                continue;
+            };
+            if matches!(vc.revocation_status(), RevocationStatus::Revoked(_)) || vc.alive().is_err()
+            {
+                continue;
+            }
+            out.push(c.clone());
+        }
+        Ok(out)
     }
     fn check(&mut self, structure: MessageStructure) -> openpgp::Result<()> {
         let layers: Vec<MessageLayer> = structure.into_iter().collect();
@@ -1013,6 +1190,15 @@ impl VerificationHelper for SigHelper {
                 Ok(())
             }
             Err(VerificationError::MissingKey { .. }) if self.allow_missing => Ok(()),
+            Err(VerificationError::BadSignature { sig, error, .. })
+                if matches!(
+                    error.downcast_ref::<openpgp::Error>(),
+                    Some(openpgp::Error::NotYetLive(_))
+                ) =>
+            {
+                *self.not_yet_live_ms.borrow_mut() = sig.signature_creation_time().map(ms_of);
+                Err(anyhow::anyhow!("signature from the future"))
+            }
             Err(_) => Err(anyhow::anyhow!("bad signature")),
         }
     }
@@ -1043,28 +1229,36 @@ pub(crate) fn sign_message(
 /// Read the content of a signed message WITHOUT trusting it (no certificates
 /// supplied). Returns the content only if the structure is one signature.
 pub(crate) fn read_signed_unverified(msg: &[u8], max: usize) -> Option<Vec<u8>> {
-    verify_signed(msg, vec![], true, max).map(|(c, _)| c)
+    verify_signed_at(msg, vec![], true, max, ms_of(SystemTime::now()))
+        .0
+        .map(|(c, _)| c)
 }
 
-/// Verify a signed message against `certs`; returns the content and the signer.
+/// Verify a signed message against `certs`; returns the content and the signer,
+/// or `VerifySignedError::FromFuture` if the signature is cryptographically
+/// valid at a future creation time within the defer horizon.
 pub(crate) fn verify_signed_message(
     msg: &[u8],
     certs: Vec<Cert>,
     max: usize,
     now_ms: i64,
-) -> Option<(Vec<u8>, Address)> {
-    let (c, s) = verify_signed_at(msg, certs, false, max, now_ms)?;
-    Some((c, s?))
+) -> Result<(Vec<u8>, Address), VerifySignedError> {
+    let (res, not_yet_live_ms) = verify_signed_at(msg, certs.clone(), false, max, now_ms);
+    if let Some((c, Some(s))) = res {
+        return Ok((c, s));
+    }
+    if let Some(ct) = not_yet_live_ms {
+        if ct > now_ms && ct <= now_ms.saturating_add(MAX_FUTURE_DEFER_MS) {
+            let (check, _) = verify_signed_at(msg, certs, false, max, ct);
+            if matches!(check, Some((_, Some(_)))) {
+                return Err(VerifySignedError::FromFuture);
+            }
+        }
+    }
+    Err(VerifySignedError::Bad)
 }
 
-fn verify_signed(
-    msg: &[u8],
-    certs: Vec<Cert>,
-    allow_missing: bool,
-    max: usize,
-) -> Option<(Vec<u8>, Option<Address>)> {
-    verify_signed_at(msg, certs, allow_missing, max, ms_of(SystemTime::now()))
-}
+type SignedVerifyAt = (Option<(Vec<u8>, Option<Address>)>, Option<i64>);
 
 fn verify_signed_at(
     msg: &[u8],
@@ -1072,31 +1266,39 @@ fn verify_signed_at(
     allow_missing: bool,
     max: usize,
     now_ms: i64,
-) -> Option<(Vec<u8>, Option<Address>)> {
+) -> SignedVerifyAt {
     if !signed_message_is_canonical(msg) {
-        return None;
+        return (None, None);
     }
     let p = policy();
     let good = Rc::new(RefCell::new(None));
     let ok = Rc::new(RefCell::new(false));
+    let nyl = Rc::new(RefCell::new(None));
     let h = SigHelper {
         certs,
+        vt: st(now_ms),
         good: good.clone(),
         structure_ok: ok.clone(),
+        not_yet_live_ms: nyl.clone(),
         allow_missing,
     };
-    let mut v = VerifierBuilder::from_bytes(msg)
-        .ok()?
-        .with_policy(&p, Some(st(now_ms)), h)
-        .ok()?;
+    let mut v = match VerifierBuilder::from_bytes(msg)
+        .ok()
+        .and_then(|b| b.with_policy(&p, Some(st(now_ms)), h).ok())
+    {
+        Some(v) => v,
+        None => return (None, *nyl.borrow()),
+    };
     let mut out = Vec::new();
-    (&mut v).take(max as u64 + 1).read_to_end(&mut out).ok()?;
+    if (&mut v).take(max as u64 + 1).read_to_end(&mut out).is_err() {
+        return (None, *nyl.borrow());
+    }
     if out.len() > max || !*ok.borrow() {
-        return None;
+        return (None, *nyl.borrow());
     }
     let signer = *good.borrow();
     if signer.is_none() && !allow_missing {
-        return None;
+        return (None, *nyl.borrow());
     }
-    Some((out, signer))
+    (Some((out, signer)), None)
 }

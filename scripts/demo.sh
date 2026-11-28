@@ -125,7 +125,7 @@ wait_for() {
 ag() { local dir=$1; shift; "$BIN" --data-dir "$dir" "$@"; }
 
 ready() { ag "$1" --json network status 2>/dev/null | jq -e '.network.ready == true' >/dev/null; }
-health() { curl -s -m 2 "$1/health" >/dev/null; }
+health() { [ "$(curl -s -m 2 -o /dev/null -w '%{http_code}' "$1/health")" = 200 ]; }
 inbox_has() { ag "$1" --json inbox 2>/dev/null | jq -e --arg id "$2" '.records[] | select(.message_id == $id)' >/dev/null; }
 is_delivered() { ag "$1" --json status "$2" 2>/dev/null | jq -e '.state == "delivered"' >/dev/null; }
 
@@ -234,6 +234,7 @@ log "A -> B delivered in $((SECONDS - T0)) s"
 STAGE="sending the reply B -> A"
 T1=$SECONDS
 MID2=$(ag "$B" send "$A_ADDR" 'reply from B' --json | jq -r .message_id) || die "reply send failed"
+[ -n "$MID2" ] && [ "$MID2" != null ] || die "reply send returned no message id"
 log "B sent $MID2"
 STAGE="waiting for A to receive the reply"
 wait_for "reply visible in A's inbox" "$DELIVERY_TIMEOUT" inbox_has "$A" "$MID2" ||

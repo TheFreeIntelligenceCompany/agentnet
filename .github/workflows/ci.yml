@@ -1,19 +1,17 @@
 # AgentNet CI.
 #
 # NATIVE PREREQUISITES (ADR 0004): every job that compiles the workspace needs OpenSSL 3 headers (libssl-dev), pkg-config and
-# libclang (openssl-sys runs bindgen); the apt-get step is repeated in those jobs. The package list is UNTESTED on a GitHub runner.
+# libclang (openssl-sys runs bindgen); the apt-get step is repeated in those jobs.
 #
-# STATUS: UNTESTED ON GITHUB. This workflow has never run on GitHub Actions (no runner was available when it was
-# written). Its YAML syntax was validated locally and each shell command in it was run locally where possible;
-# see results/audit/ci-local-validation.log for what was and was not run. Treat the first GitHub run as the real test.
+# STATUS: Green on GitHub Actions `main` for check, msrv, deny, and interop (see AGENTS.md). The manual `relay-tests` job
+# runs on workflow_dispatch only.
 #
 # Jobs
 #   check       ubuntu-latest: fmt, clippy -D warnings, tests (relay-gated tests are #[ignore]d and show as "ignored").
 #   msrv        ubuntu-latest: `cargo build --workspace --locked` with the declared rust-version (1.89.0).
-#   deny        cargo-deny (licences, bans, advisories, sources) using deny.toml. The same deny.toml passed locally with
-#               cargo-deny 0.22.1 (results/adr0004/cargo-deny.txt); the GitHub action's own cargo-deny version is not pinned here.
+#   deny        cargo-deny (licences, bans, advisories, sources) using deny.toml.
 #   interop     ubuntu-latest: tests/interop-rpgp, a workspace-excluded crate (own Cargo.lock) that checks AgentNet's OpenPGP frames
-#               against the independent pure-Rust rPGP implementation in both directions (ADR 0004). Passed locally on macOS only.
+#               against the independent pure-Rust rPGP implementation in both directions (ADR 0004).
 #   relay-tests MANUAL DISPATCH ONLY: starts the local relay topology (spike/relay) with docker-compose and runs the
 #               relay-gated tests with `-- --ignored` (AGENTNET_RELAY_TESTS=1). The node image is linux/amd64; GitHub's ubuntu-latest runners are amd64, so the
 #               image runs natively there (no qemu).

@@ -92,8 +92,12 @@ impl VerifiedRevocation {
         })?;
         let cert = pgp::parse_public(&bytes)
             .map_err(|_| RevocationError::Malformed("not a public OpenPGP certificate"))?;
-        let cert = pgp::normalize(cert, now_ms.saturating_add(MAX_REVOKED_AT_FUTURE_MS))
-            .map_err(|_| RevocationError::Malformed("certificate is not valid"))?;
+        let cert = pgp::normalize_at(
+            cert,
+            now_ms.saturating_add(MAX_REVOKED_AT_FUTURE_MS),
+            now_ms,
+        )
+        .map_err(|_| RevocationError::Malformed("certificate is not valid"))?;
         let address = pgp::cert_address(&cert)
             .map_err(|_| RevocationError::Malformed("not a v6 Ed25519 certificate"))?;
         let (revoked_at, reason) =

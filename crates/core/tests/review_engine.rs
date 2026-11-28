@@ -439,3 +439,103 @@ async fn l9_first_contact_without_expected_address_is_untrusted() {
         .unwrap();
     assert_eq!(again.trust, Trust::Trusted);
 }
+
+#[tokio::test]
+async fn review_add_contact_with_revoked_unknown_cert_persists_revocation() {
+    use agentnet_core::api::{AddContactRequest, AgentApi, ErrorCode};
+    let w = World::new();
+    let a = w.agent("a", cfg());
+    let b = w.agent("b", cfg());
+    let unrevoked = b.record.clone();
+    let rev_doc = tombstone(&w, &b, "stolen");
+    // Adding a revoked cert for an unknown address returns Conflict AND persists the revocation.
+    let e = a
+        .node
+        .add_contact(AddContactRequest {
+            contact_record: rev_doc,
+            ..Default::default()
+        })
+        .await
+        .unwrap_err();
+    assert_eq!(e.code, ErrorCode::Conflict);
+    assert_eq!(a.n("revocations"), 1);
+    // A subsequent attempt to add the older unrevoked cert must now be refused.
+    let e2 = a
+        .node
+        .add_contact(AddContactRequest {
+            contact_record: unrevoked,
+            expected_address: Some(b.addr.clone()),
+            ..Default::default()
+        })
+        .await
+        .unwrap_err();
+    assert_eq!(e2.code, ErrorCode::Conflict);
+}
+
+#[tokio::test]
+async fn review_backward_clock_step_does_not_wedge_history_sync() {
+    let w = World::new();
+    let a = w.agent("a", cfg());
+    let b = w.agent("b", cfg());
+    exchange(&a, &b).await;
+    a.node.step_history_sync().await.unwrap();
+    // Step the clock backward by 1 hour (larger than overlap + skew).
+    w.advance(-3_600_000);
+    let rep = a.node.step_history_sync().await.unwrap();
+    assert!(
+        rep.completed && rep.error.is_none(),
+        "history sync must survive backward clock step: {rep:?}"
+    );
+}
+
+#[tokio::test]
+async fn review_rollback_refreshes_existing_old_guard_row() {
+    use agentnet_core::api::AgentApi;
+    let w = World::new();
+    let a = w.agent("a", cfg());
+    let b = w.agent("b", cfg());
+    exchange(&a, &b).await;
+    // Plant an old guard row and snapshot the DB at generation 0.
+    let t0 = w.now_ms();
+    let snap = a.store_path.with_extension("snap");
+    let sp = agentnet_core::guard::sidecar_path(&a.store_path);
+    agentnet_core::guard::mark_imported(&a.store_path).unwrap();
+    let a = w.reopen(a, cfg());
+    assert!(a
+        .node
+        .network_status(false)
+        .await
+        .unwrap()
+        .replay_guard
+        .is_some());
+    // Save DB snapshot containing the t0 guard.
+    let store_path = a.store_path.clone();
+    std::fs::copy(&store_path, &snap).unwrap();
+    // Advance 2 days and advance the sidecar generation to 50.
+    w.advance(2 * 86_400_000);
+    let t2 = w.now_ms();
+    agentnet_core::guard::write_sidecar(
+        &sp,
+        &agentnet_core::guard::Sidecar {
+            generation: 50,
+            guard: None,
+        },
+    )
+    .unwrap();
+    // Restore the older snapshot (generation < 50, old guard from t0) and reopen.
+    std::fs::copy(&snap, &store_path).unwrap();
+    let a = w.reopen(a, cfg());
+    let g = a
+        .node
+        .network_status(false)
+        .await
+        .unwrap()
+        .replay_guard
+        .expect("fresh rollback guard must be active");
+    assert_eq!(g.reason, agentnet_core::guard::REASON_ROLLBACK);
+    assert!(
+        g.since >= t2 && g.since > t0,
+        "guard.since must advance to t2 ({t2}), got {}",
+        g.since
+    );
+}

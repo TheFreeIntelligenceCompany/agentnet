@@ -274,6 +274,7 @@ cleanup() {
   log "cleanup (exit status of script body: $rc)"
   for n in $(ls "$WORK/pids" 2>/dev/null); do stop_daemon "$n"; done
   [ -f "$WORK/harness.pid" ] && kill "$(cat "$WORK/harness.pid")" 2>/dev/null
+  [ -f "$WORK/sampler.pid" ] && kill "$(cat "$WORK/sampler.pid")" 2>/dev/null
   docker rm -f "$CAP" >/dev/null 2>&1
   # tcpdump runs as root in the container: if the host cannot remove its files, remove them from inside a container
   capd="$ROOT/results/acceptance/.cap.$$"
@@ -294,7 +295,7 @@ cleanup() {
   write_summary
   rm -rf "$WORK"
   if jq -e -s 'any(.[]; .status=="FAIL")' "$RES/checks.jsonl" >/dev/null 2>&1; then exit 1; fi
-  exit 0
+  exit "$rc"
 }
 trap cleanup EXIT
 trap 'log "interrupted"; exit 130' INT TERM
@@ -933,7 +934,7 @@ step5() {
   if [ "$(uname -s)" = Linux ] && [ "${nsamples:-0}" -le 20 ]; then
     # The daemon's REST connections are short-lived (the node answers `Connection: close`). macOS `netstat -anv`
     # keeps showing them long enough to sample once a second; Linux `ss` does not, so there is nothing to judge.
-    untested "5.host_connections" "Linux: 1 s `ss` snapshots caught only $nsamples socket lines of the daemons' short-lived loopback connections (0 non-loopback among them); the per-process socket snapshot is only meaningful on macOS. Zero public egress is covered by the bridge capture checks of this step" "ss -H -tunap | grep pid=<pid>" true
+    untested "5.host_connections" "Linux: 1 s \`ss\` snapshots caught only $nsamples socket lines of the daemons' short-lived loopback connections (0 non-loopback among them); the per-process socket snapshot is only meaningful on macOS. Zero public egress is covered by the bridge capture checks of this step" "ss -H -tunap | grep pid=<pid>" true
   elif [ "$nonlocal" = 0 ] && [ "${nsamples:-0}" -gt 20 ] && grep -q '127\.0\.0\.1\.1864' "$RES/net/netstat-a.txt"; then
     pass "5.host_connections" "netstat -anv snapshots (every ~1 s for 125 s, TCP+UDP, filtered to the two 'agentnet serve' pids): $nsamples socket lines, every remote endpoint is 127.0.0.1 (node REST $NA / $NB), 0 non-loopback; remote hosts: $remotes (net/netstat-*.txt; lsof cross-check in net/lsof-*.txt saw no sockets because the connections are short-lived)" "netstat -anv -p tcp | grep agentnet:<pid>   (sampled every second); lsof -nP -i -a -p <pid>"
   else fail "5.host_connections" "non-loopback connections seen: $nonlocal, samples=$nsamples (see net/netstat-*.txt)" "netstat -anv | grep agentnet:<pid>"; fi
@@ -996,7 +997,13 @@ step5() {
     name="${v%%|*}"; rest="${v#*|}"; sec="${rest%%|*}"; rest="${rest#*|}"; key="${rest%%|*}"; val="${rest#*|}"
     "$BIN" --data-dir "$WORK/bad-$name" init --node-url "$NA" --peer "$R1_MADDR" >/dev/null 2>&1 || true
     set_toml "$WORK/bad-$name/agentnet.toml" "$sec" "$key" "$val"
-    q "step5-badconfig" timeout 30 "$BIN" --data-dir "$WORK/bad-$name" serve
+    if command -v timeout >/dev/null 2>&1; then
+      q "step5-badconfig" timeout 30 "$BIN" --data-dir "$WORK/bad-$name" serve
+    elif command -v gtimeout >/dev/null 2>&1; then
+      q "step5-badconfig" gtimeout 30 "$BIN" --data-dir "$WORK/bad-$name" serve
+    else
+      q "step5-badconfig" perl -e 'alarm 30; exec @ARGV' "$BIN" --data-dir "$WORK/bad-$name" serve
+    fi
     rc=$RC
     printf '{"case":"%s","setting":"[%s] %s = %s","exit_code":%s,"stderr":%s}\n' "$name" "$sec" "$key" "$(printf '%s' "$val" | sed 's/"/\\"/g')" "$rc" "$(printf '%s' "$ERR" | jq -Rs .)" > "$RES/evidence/step5-rejected-$name.json"
     if [ "$rc" = 4 ] && [ -n "$ERR" ]; then pass "5.reject.$name" "startup refused, exit 4: $(printf '%s' "$ERR" | cut -c1-300)" "agentnet --data-dir <dir with [$sec] $key = $val> serve"
@@ -1064,8 +1071,10 @@ stepX() {
   local bench_pid_stats="$WORK/ps-bench.txt"; : > "$bench_pid_stats"
   ( while true; do ps -o pid=,rss=,pcpu= -p "$(daemon_pid a)" "$(daemon_pid b)" >> "$bench_pid_stats" 2>/dev/null; echo "--" >> "$bench_pid_stats"; sleep 2; done ) &
   local sampler=$!
+  echo "$sampler" > "$WORK/sampler.pid"
   q stepX-bench "$DRV" bench --a "$WORK/a" --b "$WORK/b" --a-addr "$(addr_of a)" --b-addr "$(addr_of b)" --n 100 --timeout 600 --pace-ms 25 --out "$RES/evidence/bench-100.json"
   kill "$sampler" 2>/dev/null || true; wait "$sampler" 2>/dev/null || true
+  rm -f "$WORK/sampler.pid"
   cp "$bench_pid_stats" "$RES/evidence/ps-during-bench.txt"
   ps -o pid=,rss=,pcpu=,etime=,command= -p "$(daemon_pid a)" "$(daemon_pid b)" > "$RES/evidence/ps-after-bench.txt" 2>&1 || true
   sleep 5

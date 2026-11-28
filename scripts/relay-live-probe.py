@@ -11,10 +11,12 @@ max_s = float(sys.argv[1]) if len(sys.argv) > 1 else 20
 na = sys.argv[2] if len(sys.argv) > 2 else "http://127.0.0.1:18641"
 nb = sys.argv[3] if len(sys.argv) > 3 else "http://127.0.0.1:18642"
 
+_OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+
 def req(url, method="GET", body=None):
     data = json.dumps(body).encode() if body is not None else None
     r = urllib.request.Request(url, data=data, method=method, headers={"content-type": "application/json"})
-    with urllib.request.urlopen(r, timeout=10) as f:
+    with _OPENER.open(r, timeout=10) as f:
         return f.status, f.read()
 
 def one(src, dst):

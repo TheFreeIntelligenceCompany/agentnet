@@ -61,6 +61,7 @@ pub struct ServerCtx {
 /// the connection tasks to end.
 pub async fn serve(listener: UnixListener, ctx: ServerCtx) {
     let permits = Arc::new(Semaphore::new(MAX_CONNECTIONS));
+    let refuse_permits = Arc::new(Semaphore::new(16));
     let mut conns: JoinSet<()> = JoinSet::new();
     loop {
         tokio::select! {
@@ -84,7 +85,15 @@ pub async fn serve(listener: UnixListener, ctx: ServerCtx) {
                         });
                     }
                     Err(_) => {
-                        conns.spawn(async move { refuse(stream).await });
+                        if let Ok(rp) = refuse_permits.clone().try_acquire_owned() {
+                            conns.spawn(async move {
+                                refuse(stream).await;
+                                drop(rp);
+                            });
+                        } else {
+                            // Saturated refusal queue: drop immediately to avoid FD exhaustion.
+                            drop(stream);
+                        }
                     }
                 }
             }
@@ -94,6 +103,7 @@ pub async fn serve(listener: UnixListener, ctx: ServerCtx) {
     let drain = async { while conns.join_next().await.is_some() {} };
     if timeout(Duration::from_secs(3), drain).await.is_err() {
         conns.abort_all();
+        while conns.join_next().await.is_some() {}
     }
 }
 
@@ -106,26 +116,36 @@ async fn refuse(mut stream: UnixStream) {
     .await;
 }
 
+async fn send_out(out_tx: &mpsc::Sender<String>, conn: &CancellationToken, line: String) -> bool {
+    tokio::select! {
+        _ = conn.cancelled() => false,
+        r = out_tx.send(line) => r.is_ok(),
+    }
+}
+
 async fn handle_conn(stream: UnixStream, ctx: ServerCtx) {
     let (rd, mut wr) = stream.into_split();
     let mut rd = BufReader::new(rd);
 
     // ---- hello
-    let first = timeout(ctx.hello_timeout, read_line(&mut rd, MAX_HELLO_LINE)).await;
+    let first = tokio::select! {
+        _ = ctx.stop.cancelled() => return,
+        r = timeout(ctx.hello_timeout, read_line(&mut rd, MAX_HELLO_LINE)) => r,
+    };
     let denied = |m: &str| ApiError::policy(m.to_owned());
     let bytes = match first {
         Ok(Ok(Line::Line(b))) => b,
         Ok(Ok(Line::TooLong)) => {
             tracing::debug!("control: oversize hello");
             let line = err_line(None, &denied("hello line too long"));
-            let _ = wr.write_all(format!("{line}\n").as_bytes()).await;
+            let _ = timeout(WRITE_TIMEOUT, wr.write_all(format!("{line}\n").as_bytes())).await;
             return;
         }
         Ok(_) => return,
         Err(_) => {
             tracing::debug!("control: hello timeout");
             let line = err_line(None, &denied("hello timeout"));
-            let _ = wr.write_all(format!("{line}\n").as_bytes()).await;
+            let _ = timeout(WRITE_TIMEOUT, wr.write_all(format!("{line}\n").as_bytes())).await;
             return;
         }
     };
@@ -140,15 +160,18 @@ async fn handle_conn(stream: UnixStream, ctx: ServerCtx) {
     if !authed {
         tracing::warn!("control: connection rejected (bad or missing hello token)");
         let line = err_line(None, &denied("authentication failed"));
-        let _ = wr.write_all(format!("{line}\n").as_bytes()).await;
+        let _ = timeout(WRITE_TIMEOUT, wr.write_all(format!("{line}\n").as_bytes())).await;
         return;
     }
     let hello_ok = json!({"hello": {"ok": true, "protocol": PROTOCOL_VERSION, "agent_id": ctx.node.address()}});
-    if wr
-        .write_all(format!("{hello_ok}\n").as_bytes())
-        .await
-        .is_err()
-    {
+    if !matches!(
+        timeout(
+            WRITE_TIMEOUT,
+            wr.write_all(format!("{hello_ok}\n").as_bytes())
+        )
+        .await,
+        Ok(Ok(()))
+    ) {
         return;
     }
 
@@ -156,7 +179,7 @@ async fn handle_conn(stream: UnixStream, ctx: ServerCtx) {
     let conn = ctx.stop.child_token();
     let (out_tx, mut out_rx) = mpsc::channel::<String>(256);
     let writer_conn = conn.clone();
-    let writer = tokio::spawn(async move {
+    let mut writer = tokio::spawn(async move {
         while let Some(mut line) = out_rx.recv().await {
             line.push('\n');
             match timeout(WRITE_TIMEOUT, wr.write_all(line.as_bytes())).await {
@@ -167,11 +190,13 @@ async fn handle_conn(stream: UnixStream, ctx: ServerCtx) {
         writer_conn.cancel();
     });
 
-    // ---- request loop
+    // ---- request loop (every spawned child task is tracked and cleaned up on exit)
     let inflight = Arc::new(Semaphore::new(MAX_INFLIGHT_PER_CONN));
+    let mut children: JoinSet<()> = JoinSet::new();
     let mut events_started = false;
     let mut changes_started = false;
     loop {
+        while children.try_join_next().is_some() {}
         let line = tokio::select! {
             _ = conn.cancelled() => break,
             l = read_line(&mut rd, MAX_REQUEST_LINE) => l,
@@ -180,72 +205,109 @@ async fn handle_conn(stream: UnixStream, ctx: ServerCtx) {
             Ok(Line::Line(b)) => b,
             Ok(Line::Eof) | Err(_) => break,
             Ok(Line::TooLong) => {
-                let _ = out_tx
-                    .send(err_line(
+                let _ = send_out(
+                    &out_tx,
+                    &conn,
+                    err_line(
                         None,
                         &ApiError::new(ErrorCode::TooLarge, "request line too long"),
-                    ))
-                    .await;
+                    ),
+                )
+                .await;
                 break;
             }
         };
         let req: Request = match serde_json::from_slice(&bytes) {
             Ok(r) => r,
             Err(_) => {
-                let _ = out_tx
-                    .send(err_line(None, &ApiError::invalid("malformed request")))
-                    .await;
+                let _ = send_out(
+                    &out_tx,
+                    &conn,
+                    err_line(None, &ApiError::invalid("malformed request")),
+                )
+                .await;
                 break;
             }
         };
         match req.method.as_str() {
             "events.subscribe" => {
-                let resp = if events_started {
-                    err_line(
+                if events_started {
+                    let resp = err_line(
                         Some(req.id),
                         &ApiError::new(
                             ErrorCode::Conflict,
                             "already subscribed on this connection",
                         ),
-                    )
-                } else {
-                    match start_events(&ctx.node, req.params, out_tx.clone(), conn.clone()).await {
-                        Ok(()) => {
-                            events_started = true;
-                            ok_line(req.id, json!({"subscribed": true}))
-                        }
-                        Err(e) => err_line(Some(req.id), &e),
+                    );
+                    if !send_out(&out_tx, &conn, resp).await {
+                        break;
                     }
-                };
-                if out_tx.send(resp).await.is_err() {
-                    break;
+                } else {
+                    match prepare_events(&ctx.node, req.params).await {
+                        Ok((since_cursor, hints)) => {
+                            // Confirm subscription BEFORE spawning replay so
+                            // `{"id": ..., "result": {"subscribed": true}}` always
+                            // precedes streamed `{"event": ...}` lines.
+                            if !send_out(
+                                &out_tx,
+                                &conn,
+                                ok_line(req.id, json!({"subscribed": true})),
+                            )
+                            .await
+                            {
+                                break;
+                            }
+                            events_started = true;
+                            children.spawn(stream_events(
+                                ctx.node.clone(),
+                                since_cursor,
+                                hints,
+                                out_tx.clone(),
+                                conn.clone(),
+                            ));
+                        }
+                        Err(e) => {
+                            if !send_out(&out_tx, &conn, err_line(Some(req.id), &e)).await {
+                                break;
+                            }
+                        }
+                    }
                 }
             }
             "changes.subscribe" => {
-                let resp = if changes_started {
-                    err_line(
+                if changes_started {
+                    let resp = err_line(
                         Some(req.id),
                         &ApiError::new(
                             ErrorCode::Conflict,
                             "already subscribed on this connection",
                         ),
-                    )
+                    );
+                    if !send_out(&out_tx, &conn, resp).await {
+                        break;
+                    }
                 } else {
+                    let rx = ctx.node.changes();
+                    if !send_out(&out_tx, &conn, ok_line(req.id, json!({"subscribed": true}))).await
+                    {
+                        break;
+                    }
                     changes_started = true;
-                    start_changes(ctx.node.clone(), out_tx.clone(), conn.clone());
-                    ok_line(req.id, json!({"subscribed": true}))
-                };
-                if out_tx.send(resp).await.is_err() {
-                    break;
+                    children.spawn(stream_changes(rx, out_tx.clone(), conn.clone()));
                 }
             }
             _ => {
-                let Ok(permit) = inflight.clone().acquire_owned().await else {
-                    break;
+                let permit = tokio::select! {
+                    _ = conn.cancelled() => break,
+                    p = inflight.clone().acquire_owned() => match p {
+                        Ok(p) => p,
+                        Err(_) => break,
+                    },
                 };
                 let ctx = ctx.clone();
                 let out = out_tx.clone();
-                tokio::spawn(async move {
+                let task_conn = conn.clone();
+                children.spawn(async move {
                     let line = match dispatch(&ctx, &req.method, req.params).await {
                         Ok(v) => ok_line(req.id, v),
                         Err(e) => err_line(Some(req.id), &e),
@@ -263,17 +325,26 @@ async fn handle_conn(stream: UnixStream, ctx: ServerCtx) {
                     } else {
                         line
                     };
-                    let _ = out.send(line).await;
+                    let _ = send_out(&out, &task_conn, line).await;
                     drop(permit);
                 });
             }
         }
     }
     conn.cancel();
+    // Wait briefly for in-flight RPC/stream tasks to finish, then abort any stragglers
+    // so no detached task holds `Arc<Node>` after shutdown.
+    let child_drain = async { while children.join_next().await.is_some() {} };
+    if timeout(Duration::from_secs(1), child_drain).await.is_err() {
+        children.abort_all();
+        while children.join_next().await.is_some() {}
+    }
     drop(out_tx);
-    // Let queued responses flush briefly, then make sure the writer ends.
-    if timeout(Duration::from_secs(1), writer).await.is_err() {
-        tracing::debug!("control: writer did not finish in time");
+    // Let queued responses flush briefly, then abort the writer if stuck.
+    if timeout(Duration::from_secs(1), &mut writer).await.is_err() {
+        tracing::debug!("control: writer did not finish in time; aborting");
+        writer.abort();
+        let _ = writer.await;
     }
 }
 
@@ -426,13 +497,12 @@ async fn dispatch(ctx: &ServerCtx, method: &str, p: Value) -> Result<Value, ApiE
     }
 }
 
-/// Validate the cursor, then spawn the replay-then-live stream.
-async fn start_events(
+/// Validate the cursor and subscribe to change hints before the caller confirms
+/// the subscription and spawns `stream_events`.
+async fn prepare_events(
     node: &Arc<Node>,
     p: Value,
-    out: mpsc::Sender<String>,
-    conn: CancellationToken,
-) -> Result<(), ApiError> {
+) -> Result<(Option<String>, tokio::sync::broadcast::Receiver<ChangeHint>), ApiError> {
     let a: SubscribeParams = params(p)?;
     // Subscribe to hints before the first read so nothing slips between the
     // replay and the live phase; reading is always by cursor anyway.
@@ -442,9 +512,7 @@ async fn start_events(
         limit: Some(1),
     })
     .await?;
-    let node = node.clone();
-    tokio::spawn(stream_events(node, a.since_cursor, hints, out, conn));
-    Ok(())
+    Ok((a.since_cursor, hints))
 }
 
 async fn stream_events(
@@ -464,14 +532,13 @@ async fn stream_events(
         {
             Ok(p) => p,
             Err(e) => {
-                let _ = out.send(err_line(None, &e)).await;
+                let _ = send_out(&out, &conn, err_line(None, &e)).await;
                 return;
             }
         };
         for ev in &page.events {
-            tokio::select! {
-                _ = conn.cancelled() => return,
-                r = out.send(event_line(ev)) => if r.is_err() { return },
+            if !send_out(&out, &conn, event_line(ev)).await {
+                return;
             }
         }
         if let Some(c) = page.next_cursor {
@@ -495,26 +562,26 @@ async fn stream_events(
     }
 }
 
-fn start_changes(node: Arc<Node>, out: mpsc::Sender<String>, conn: CancellationToken) {
-    let mut rx = node.changes();
-    tokio::spawn(async move {
-        loop {
-            let lines: Vec<String> = tokio::select! {
-                _ = conn.cancelled() => return,
-                r = rx.recv() => match r {
-                    Ok(h) => vec![change_line(&h)],
-                    Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => {
-                        all_hints().iter().map(change_line).collect()
-                    }
-                    Err(tokio::sync::broadcast::error::RecvError::Closed) => return,
-                },
-            };
-            for l in lines {
-                tokio::select! {
-                    _ = conn.cancelled() => return,
-                    r = out.send(l) => if r.is_err() { return },
+async fn stream_changes(
+    mut rx: tokio::sync::broadcast::Receiver<ChangeHint>,
+    out: mpsc::Sender<String>,
+    conn: CancellationToken,
+) {
+    loop {
+        let lines: Vec<String> = tokio::select! {
+            _ = conn.cancelled() => return,
+            r = rx.recv() => match r {
+                Ok(h) => vec![change_line(&h)],
+                Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => {
+                    all_hints().iter().map(change_line).collect()
                 }
+                Err(tokio::sync::broadcast::error::RecvError::Closed) => return,
+            },
+        };
+        for l in lines {
+            if !send_out(&out, &conn, l).await {
+                return;
             }
         }
-    });
+    }
 }

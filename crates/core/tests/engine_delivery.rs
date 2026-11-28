@@ -1064,7 +1064,11 @@ async fn published_acks_and_reacks_are_pruned_after_retention() {
     b.node.step_receive().await.unwrap();
     b.node.step_send().await.unwrap();
     assert!(b.metric("ack.requeued") >= 1);
-    assert_eq!(b.n("outbox"), 2, "ack and re-ack rows exist");
+    assert_eq!(
+        b.n("outbox"),
+        1,
+        "re-ack replaces prior sent ack row instead of accumulating unboundedly"
+    );
 
     // well past the retention window (and every TTL)
     w.advance(200 * 3_600_000);

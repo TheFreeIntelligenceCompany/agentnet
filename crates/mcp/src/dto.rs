@@ -11,7 +11,8 @@ use serde::{Deserialize, Serialize};
 use crate::limits::{
     ADDRESS_PATTERN, CAPABILITY_NAME_PATTERN, ID_PATTERN, MAX_ADDRESS_LEN, MAX_ALIAS_CHARS,
     MAX_BODY_BYTES, MAX_CONTACT_RECORD_BYTES, MAX_CURSOR_LEN, MAX_ID_LEN, MAX_LIMIT, MAX_SECONDS,
-    MAX_SESSION_LEN, MIN_ADDRESS_LEN, MIN_LIMIT, SESSION_PATTERN, TOPIC_PATTERN,
+    MAX_SESSION_LEN, MESSAGE_TYPE_PATTERN, MIN_ADDRESS_LEN, MIN_LIMIT, SESSION_PATTERN,
+    TOPIC_PATTERN,
 };
 
 // ------------------------------------------------------------------ enums
@@ -266,7 +267,7 @@ pub struct CreateTriggerInput {
     pub sender: Option<String>,
     /// Match only this message type (for example `message`, `task.request`, `task.result`).
     #[serde(default)]
-    #[schemars(length(min = 1, max = 64))]
+    #[schemars(length(min = 1, max = 64), regex(pattern = MESSAGE_TYPE_PATTERN))]
     pub message_type: Option<String>,
     /// Match only this conversation.
     #[serde(default)]

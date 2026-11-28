@@ -15,10 +15,12 @@ nb = sys.argv[4] if len(sys.argv) > 4 else "http://127.0.0.1:18642"
 topic = f"/burst/1/probe{int(time.time())}/proto"
 enc = urllib.parse.quote(topic, safe="")
 
+_OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+
 def req(url, method="GET", body=None):
     data = json.dumps(body).encode() if body is not None else None
     r = urllib.request.Request(url, data=data, method=method, headers={"content-type": "application/json"})
-    with urllib.request.urlopen(r, timeout=20) as f:
+    with _OPENER.open(r, timeout=20) as f:
         return f.status, f.read()
 
 req(nb + "/relay/v1/auto/subscriptions", "POST", [topic])

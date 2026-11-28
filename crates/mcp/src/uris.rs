@@ -57,7 +57,7 @@ pub fn conversation_uri(id: &str) -> String {
 
 /// Parse a resource URI (with optional query).
 pub fn parse(uri: &str) -> Result<ResourceRef, UriError> {
-    if uri.contains('#') || !uri.is_ascii() {
+    if uri.contains('#') || !uri.bytes().all(|b| (0x21..=0x7e).contains(&b)) {
         return Err(UriError::NotFound);
     }
     let (base, query) = match uri.split_once('?') {
@@ -100,7 +100,13 @@ fn parse_query(query: Option<&str>) -> Result<PageParams, UriError> {
     let Some(query) = query else {
         return Ok(page);
     };
-    for pair in query.split('&').filter(|p| !p.is_empty()) {
+    if query.is_empty() {
+        return Err(UriError::Invalid("empty query string".into()));
+    }
+    for pair in query.split('&') {
+        if pair.is_empty() {
+            return Err(UriError::Invalid("empty query parameter".into()));
+        }
         let (key, raw) = pair.split_once('=').unwrap_or((pair, ""));
         let value = percent_decode(raw)
             .ok_or_else(|| UriError::Invalid(format!("invalid percent-encoding in `{key}`")))?;

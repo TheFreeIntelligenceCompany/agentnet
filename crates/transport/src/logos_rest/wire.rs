@@ -7,7 +7,7 @@ use serde::Deserialize;
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 
-use super::config::peer_id_of_multiaddr;
+use super::config::{is_private_ipv4, is_private_ipv6, peer_id_of_multiaddr, valid_peer_id};
 use crate::{ContentTopic, FrameSource, HistoryPage, InboundFrame, PeerInfo, TransportError};
 
 /// Lower-case hex.
@@ -21,7 +21,7 @@ pub(crate) fn parse_hash(s: &str) -> Option<[u8; 32]> {
         .strip_prefix("0x")
         .or_else(|| s.strip_prefix("0X"))
         .unwrap_or(s);
-    if s.len() != 64 || !s.is_ascii() {
+    if s.len() != 64 || !s.bytes().all(|b| b.is_ascii_hexdigit()) {
         return None;
     }
     let mut out = [0u8; 32];
@@ -66,14 +66,15 @@ pub(crate) fn varint_len(mut v: u64) -> usize {
 /// worst-case (10-byte varint) timestamp, a worst-case `ephemeral` field, plus
 /// [`UNMODELED_RESERVE`] and [`SAFETY_MARGIN`].
 pub(crate) fn framing_overhead(payload_len: usize, topic_len: usize) -> usize {
-    1 + varint_len(payload_len as u64)
-        + 1
-        + varint_len(topic_len as u64)
-        + topic_len
-        + (1 + 10)
-        + 3
-        + UNMODELED_RESERVE
-        + SAFETY_MARGIN
+    1usize
+        .saturating_add(varint_len(payload_len as u64))
+        .saturating_add(1)
+        .saturating_add(varint_len(topic_len as u64))
+        .saturating_add(topic_len)
+        .saturating_add(1 + 10)
+        .saturating_add(3)
+        .saturating_add(UNMODELED_RESERVE)
+        .saturating_add(SAFETY_MARGIN)
 }
 
 /// Bytes the node counts that we cannot attribute to a WakuMessage field. With
@@ -88,7 +89,7 @@ pub(crate) const SAFETY_MARGIN: usize = 8;
 /// topic of `topic_len` bytes, given its `--max-msg-size`.
 pub(crate) fn max_payload_for(max_message_bytes: usize, topic_len: usize) -> usize {
     let mut p = max_message_bytes.saturating_sub(topic_len);
-    while p > 0 && p + framing_overhead(p, topic_len) > max_message_bytes {
+    while p > 0 && p.saturating_add(framing_overhead(p, topic_len)) > max_message_bytes {
         p -= 1;
     }
     p
@@ -143,6 +144,12 @@ pub(crate) fn map_publish_failure(
             max,
         };
     }
+    if text.contains("while initializing") {
+        return TransportError::Unavailable(format!(
+            "node is still initializing (HTTP {status}): {}",
+            snippet(body)
+        ));
+    }
     match status {
         503 | 408 | 429 | 500..=599 => {
             TransportError::Unavailable(format!("node answered HTTP {status}: {}", snippet(body)))
@@ -187,6 +194,7 @@ fn decode_message(m: &WireMessage, max_bytes: usize) -> Option<Decoded> {
     }
     let meta = match m.meta.as_deref() {
         None | Some("") => Vec::new(),
+        Some(s) if s.len() > 88 => return None,
         Some(s) => B64.decode(s).ok().filter(|v| v.len() <= 64)?,
     };
     Some(Decoded { payload, meta })
@@ -195,6 +203,11 @@ fn decode_message(m: &WireMessage, max_bytes: usize) -> Option<Decoded> {
 /// Entries the node's REST relay cache can hold at the recommended setting
 /// (`--rest-relay-cache-capacity=1000`, docs/relay-setup.md). One poll can return all of them.
 pub(crate) const NODE_RELAY_CACHE_ENTRIES: usize = 1000;
+/// Maximum number of decoded frames accepted from a single relay poll response
+/// (guards against OOM amplification from millions of tiny frames within the byte limit).
+pub(crate) const MAX_RELAY_POLL_FRAMES: usize = 4096;
+/// Maximum accepted length of a Store pagination cursor (bytes).
+const MAX_STORE_CURSOR_LEN: usize = 256;
 
 /// Largest JSON object we accept as ONE relay message, for a node limit of `max_bytes`.
 /// A payload of `max_bytes` is `4 * ceil(max_bytes / 3)` Base64 characters; add a 64-byte `meta`
@@ -388,6 +401,13 @@ impl<'a> RelayStream<'a> {
             self.counts.malformed += 1;
             return;
         };
+        if self.frames.len() >= MAX_RELAY_POLL_FRAMES {
+            self.state = StreamState::Failed;
+            self.error = Some(format!(
+                "relay poll response exceeds {MAX_RELAY_POLL_FRAMES} frames"
+            ));
+            return;
+        }
         self.frames.push(InboundFrame {
             topic: self.topic.clone(),
             transport_id: waku_message_hash(
@@ -451,7 +471,8 @@ struct StoreEntry {
 struct StoreResponse {
     status_code: u32,
     status_desc: Option<String>,
-    messages: Vec<Value>,
+    #[serde(default)]
+    messages: Option<Vec<Value>>,
     pagination_cursor: Option<String>,
 }
 
@@ -475,8 +496,8 @@ pub(crate) fn parse_store_page(
     let resp: StoreResponse = serde_json::from_slice(body).map_err(|_| {
         StoreParseError::Malformed("store response is not the expected JSON".into())
     })?;
-    // `statusCode` and `messages` are mandatory in the node's envelope; a body
-    // without them (`{}`, `{"error":..}`) is not an empty page.
+    // Check `statusCode` before requiring `messages`, since non-200 Store
+    // responses may omit `messages` or return `"messages": null`.
     if resp.status_code != 200 {
         return Err(StoreParseError::Status(format!(
             "store statusCode {}: {}",
@@ -484,9 +505,14 @@ pub(crate) fn parse_store_page(
             snippet(resp.status_desc.unwrap_or_default().as_bytes())
         )));
     }
+    let Some(messages) = resp.messages else {
+        return Err(StoreParseError::Malformed(
+            "store response is missing messages array".into(),
+        ));
+    };
     let mut counts = ParseCounts::default();
-    let mut frames = Vec::with_capacity(resp.messages.len());
-    for v in resp.messages {
+    let mut frames = Vec::with_capacity(messages.len());
+    for v in messages {
         let Ok(entry) = serde_json::from_value::<StoreEntry>(v) else {
             counts.malformed += 1;
             continue;
@@ -528,10 +554,18 @@ pub(crate) fn parse_store_page(
             source: FrameSource::History,
         });
     }
+    let next_cursor = match resp.pagination_cursor.filter(|c| !c.is_empty()) {
+        Some(c) if c.len() > MAX_STORE_CURSOR_LEN => {
+            return Err(StoreParseError::Malformed(
+                "store paginationCursor is too large".into(),
+            ));
+        }
+        other => other,
+    };
     Ok((
         HistoryPage {
             frames,
-            next_cursor: resp.pagination_cursor.filter(|c| !c.is_empty()),
+            next_cursor,
         },
         counts,
     ))
@@ -541,6 +575,7 @@ pub(crate) fn parse_store_page(
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct RawPeer {
     pub peer_id: Option<String>,
+    pub multiaddr: String,
     pub connected: bool,
     pub shards: Vec<u16>,
 }
@@ -556,24 +591,31 @@ pub(crate) fn parse_peers(body: &[u8]) -> Result<Vec<RawPeer>, String> {
         serde_json::from_slice(body).map_err(|_| "admin peers response is not a JSON array")?;
     let mut out = Vec::with_capacity(items.len());
     for v in items {
-        if !v.get("multiaddr").is_some_and(Value::is_string) {
+        let Some(multiaddr) = v.get("multiaddr").and_then(Value::as_str) else {
             return Err("admin peers entry has no string multiaddr".into());
-        }
+        };
         let connected = match v.get("connected").and_then(Value::as_str) {
             Some("Connected") => true,
             Some("NotConnected" | "CannotConnect" | "CanConnect") => false,
             _ => return Err("admin peers entry has a missing or unknown connected state".into()),
         };
-        let peer_id = v
-            .get("peerId")
-            .and_then(Value::as_str)
-            .map(str::to_string)
-            .or_else(|| {
-                v.get("multiaddr")
-                    .and_then(Value::as_str)
-                    .and_then(peer_id_of_multiaddr)
-                    .map(str::to_string)
-            });
+        let from_addr = peer_id_of_multiaddr(multiaddr).map(str::to_string);
+        let peer_id = match v.get("peerId").and_then(Value::as_str) {
+            Some(explicit) => {
+                if !valid_peer_id(explicit) {
+                    return Err("admin peers entry has an invalid peerId".into());
+                }
+                if let Some(ref ma_id) = from_addr {
+                    if ma_id != explicit {
+                        return Err(
+                            "admin peers entry peerId disagrees with multiaddr /p2p/ id".into()
+                        );
+                    }
+                }
+                Some(explicit.to_string())
+            }
+            None => from_addr,
+        };
         let shards = v
             .get("shards")
             .and_then(Value::as_array)
@@ -585,11 +627,61 @@ pub(crate) fn parse_peers(body: &[u8]) -> Result<Vec<RawPeer>, String> {
             .unwrap_or_default();
         out.push(RawPeer {
             peer_id,
+            multiaddr: multiaddr.to_string(),
             connected,
             shards,
         });
     }
     Ok(out)
+}
+
+/// Checks whether a connected peer's multiaddr violates circuit-relay or
+/// private-mode address rules.
+fn connected_multiaddr_violation(
+    multiaddr: &str,
+    require_private_ip: bool,
+) -> Option<&'static str> {
+    let comps: Vec<&str> = multiaddr.split('/').collect();
+    if comps.contains(&"p2p-circuit") {
+        return Some("circuit-relayed (/p2p-circuit)");
+    }
+    if !require_private_ip {
+        return None;
+    }
+    let mut it = comps.into_iter().skip(1);
+    let mut saw_ip = false;
+    while let Some(seg) = it.next() {
+        match seg {
+            "dns" | "dns4" | "dns6" | "dnsaddr" => {
+                return Some("DNS-addressed in private mode");
+            }
+            "ip4" => {
+                saw_ip = true;
+                let ok = it
+                    .next()
+                    .and_then(|a| a.parse::<std::net::Ipv4Addr>().ok())
+                    .is_some_and(is_private_ipv4);
+                if !ok {
+                    return Some("non-private IPv4 in private mode");
+                }
+            }
+            "ip6" => {
+                saw_ip = true;
+                let ok = it
+                    .next()
+                    .and_then(|a| a.parse::<std::net::Ipv6Addr>().ok())
+                    .is_some_and(is_private_ipv6);
+                if !ok {
+                    return Some("non-private IPv6 in private mode");
+                }
+            }
+            _ => {}
+        }
+    }
+    if !saw_ip {
+        return Some("missing literal private IP in private mode");
+    }
+    None
 }
 
 /// Result of evaluating a peer list against the allowlist.
@@ -599,20 +691,39 @@ pub(crate) struct AuditReport {
     pub violation: Option<String>,
 }
 
-/// Private-mode audit: any connected peer outside `allowed` is a violation, as
-/// is a connected peer whose id cannot be determined, and a connected allowed
-/// peer that advertises shards but not `shard`.
-pub(crate) fn evaluate_peers(raw: &[RawPeer], allowed: &[String], shard: u16) -> AuditReport {
+/// Audited-mode check: any connected peer outside `allowed` is a violation, as
+/// is a connected peer whose id cannot be determined, a connected peer over
+/// `/p2p-circuit` (or non-private address when `require_private_ip` is true),
+/// and a connected allowed peer that advertises shards but not `shard`.
+pub(crate) fn evaluate_peers(
+    raw: &[RawPeer],
+    allowed: &[String],
+    shard: u16,
+    require_private_ip: bool,
+) -> AuditReport {
     let mut peers = Vec::new();
     let mut foreign = Vec::new();
+    let mut bad_addr = Vec::new();
     let mut unknown = 0usize;
     let mut wrong_shard = 0usize;
     for p in raw {
         match &p.peer_id {
             Some(id) => {
-                let ok = allowed.iter().any(|a| a == id);
-                if p.connected && !ok {
-                    foreign.push(id.chars().take(64).collect::<String>());
+                let id_ok = allowed.iter().any(|a| a == id);
+                let addr_err = if p.connected {
+                    connected_multiaddr_violation(&p.multiaddr, require_private_ip)
+                } else {
+                    None
+                };
+                let ok = id_ok && addr_err.is_none();
+                if p.connected && !id_ok {
+                    foreign.push(snippet(id.as_bytes()).chars().take(64).collect::<String>());
+                }
+                if let Some(why) = addr_err {
+                    bad_addr.push(format!(
+                        "{} ({why})",
+                        snippet(id.as_bytes()).chars().take(64).collect::<String>()
+                    ));
                 }
                 if p.connected && ok && !p.shards.is_empty() && !p.shards.contains(&shard) {
                     wrong_shard += 1;
@@ -633,6 +744,14 @@ pub(crate) fn evaluate_peers(raw: &[RawPeer], allowed: &[String], shard: u16) ->
         reasons.push(format!(
             "node is connected to {} peer(s) not in the allowlist (e.g. {})",
             foreign.len(),
+            shown.join(", ")
+        ));
+    }
+    if !bad_addr.is_empty() {
+        let shown: Vec<_> = bad_addr.iter().take(3).cloned().collect();
+        reasons.push(format!(
+            "node is connected to {} peer(s) over a disallowed transport/address (e.g. {})",
+            bad_addr.len(),
             shown.join(", ")
         ));
     }
@@ -920,27 +1039,28 @@ mod tests {
 
         let allowed = vec!["RelayOne".to_string()];
         // unidentifiable connected peer => violation
-        let r = evaluate_peers(&raw, &allowed, 0);
+        let r = evaluate_peers(&raw, &allowed, 0, true);
         assert!(r.violation.as_deref().unwrap().contains("unidentifiable"));
         // a merely known-but-disconnected stranger is not a violation
-        let r = evaluate_peers(&raw[..2], &allowed, 0);
+        let r = evaluate_peers(&raw[..2], &allowed, 0, true);
         assert!(r.violation.is_none(), "{:?}", r.violation);
         assert_eq!(r.peers.len(), 2);
         assert!(r.peers[0].allowed && r.peers[0].connected);
         assert!(!r.peers[1].allowed && !r.peers[1].connected);
         // wrong allowlist => the connected relay is foreign
-        let r = evaluate_peers(&raw[..1], &["Other".to_string()], 0);
+        let r = evaluate_peers(&raw[..1], &["Other".to_string()], 0, true);
         assert!(r.violation.as_deref().unwrap().contains("RelayOne"));
         // shard mismatch
-        let r = evaluate_peers(&raw[..1], &allowed, 3);
+        let r = evaluate_peers(&raw[..1], &allowed, 3, true);
         assert!(r.violation.as_deref().unwrap().contains("shard"));
         // peers without shard info are not penalised
         let p = [RawPeer {
             peer_id: Some("RelayOne".into()),
+            multiaddr: "/ip4/172.28.66.10/tcp/60000/p2p/RelayOne".into(),
             connected: true,
             shards: vec![],
         }];
-        assert!(evaluate_peers(&p, &allowed, 0).violation.is_none());
+        assert!(evaluate_peers(&p, &allowed, 0, true).violation.is_none());
         // boolean `connected` is not a state of the pinned node
         assert!(parse_peers(
             br#"[{"multiaddr":"/ip4/1.2.3.4/tcp/1/p2p/RelayOne","connected":true}]"#

@@ -661,3 +661,75 @@ fn frame_sizes_with_a_fresh_and_a_maximal_sender_certificate_fit_the_transport_l
         );
     }
 }
+
+#[test]
+fn review_negative_created_at_cannot_overflow_or_bypass_max_ttl() {
+    let (a, b) = (ident(), ident());
+    let dir = Pinned(vec![contact_at(&a, NOW)]);
+    let mut e = env(&a, &b, "overflow", NOW);
+    e.created_at = -5_000_000_000_000_000_000;
+    e.expires_at = 5_000_000_000_000_000_000;
+    let f = OpenPgpProtection
+        .seal(&a, &contact_at(&b, NOW), &e, NOW, MAX_FRAME)
+        .unwrap();
+    let err = OpenPgpProtection
+        .open(&b, &f, NOW, &lim(), &dir)
+        .unwrap_err();
+    assert_eq!(err, OpenError::InvalidField("created_at"));
+}
+
+#[test]
+fn review_primary_revocation_succeeds_and_merges_at_rotation_cap() {
+    use agentnet_core::crypto::VerifiedRevocation;
+    let mut id = ident();
+    let mut t = NOW;
+    loop {
+        t += 10_000;
+        if id.rotate_kem_with(t, t, None, true).is_err() {
+            break;
+        }
+    }
+    let stored = VerifiedContact::parse_and_verify(&id.contact_record().to_document(), t).unwrap();
+    let rev = id
+        .create_revocation("compromised at cap", t + 1_000)
+        .unwrap();
+    let vrev = VerifiedRevocation::parse_and_verify(&rev.to_document(), t + 1_000).unwrap();
+    assert_eq!(vrev.address, id.address());
+    let rev_contact =
+        VerifiedContact::parse_and_verify_allow_expired(vrev.document(), t + 1_000).unwrap();
+    let merged = stored.merge(&rev_contact, t + 1_000).unwrap();
+    assert!(merged.revocation(t + 1_000).is_some());
+}
+
+#[test]
+fn review_accept_rollback_on_healthy_store_does_not_disarm_future_guard() {
+    let dir = tempfile::tempdir().unwrap();
+    let db = dir.path().join("agentnet.db");
+    let sp = agentnet_core::guard::sidecar_path(&db);
+    let store = agentnet_core::store::Store::open(&db).unwrap();
+    store
+        .tx(|tx| {
+            agentnet_core::store::kv_set(tx, "own_address", "an2test")?;
+            agentnet_core::store::kv_set(tx, "store_generation", "5")
+        })
+        .unwrap();
+    store.close();
+    agentnet_core::guard::write_sidecar(
+        &sp,
+        &agentnet_core::guard::Sidecar {
+            generation: 5,
+            guard: None,
+        },
+    )
+    .unwrap();
+    assert!(!agentnet_core::guard::accept_rollback(&db).unwrap());
+    let store = agentnet_core::store::Store::open(&db).unwrap();
+    let clear = store
+        .read(|c| agentnet_core::store::kv_get(c, "replay_guard_clear_request"))
+        .unwrap();
+    store.close();
+    assert!(
+        clear.is_none(),
+        "accept_rollback on healthy store must not plant replay_guard_clear_request"
+    );
+}

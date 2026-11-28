@@ -67,9 +67,14 @@ pub struct McpStats {
     pub active_legacy_tasks: usize,
 }
 
+/// Maximum concurrent `subscriptions/listen` streams allowed per server instance.
+const MAX_ACTIVE_LISTENERS: usize = 64;
+
 /// Per-session state for legacy `resources/subscribe`.
 struct LegacyState {
     uris: Arc<Mutex<HashSet<String>>>,
+    /// Serializes `subscribe`/`unsubscribe` mutations with pump start/stop to
+    /// eliminate TOCTOU races between updating `uris` and spawning/aborting the task.
     task: Mutex<Option<JoinHandle<()>>>,
 }
 
@@ -978,8 +983,14 @@ impl ServerHandler for AgentNetMcp {
     async fn listen(&self, context: SubscriptionContext) -> Result<(), McpError> {
         tracing::debug!("listen: started");
         let counters = &self.shared.counters;
-        counters.total_listeners.fetch_add(1, Ordering::SeqCst);
         let _active = CountGuard::new(&counters.active_listeners);
+        if counters.active_listeners.load(Ordering::SeqCst) > MAX_ACTIVE_LISTENERS {
+            return Err(McpError::invalid_request(
+                "too many concurrent subscription listeners",
+                None,
+            ));
+        }
+        counters.total_listeners.fetch_add(1, Ordering::SeqCst);
         let interest: HashSet<String> = context
             .accepted()
             .resource_subscriptions
@@ -1028,6 +1039,9 @@ impl ServerHandler for AgentNetMcp {
                 context.protocol_version().as_ref(),
             ));
         }
+        // Hold `legacy.task` across both the set update and task spawn so
+        // concurrent `subscribe`/`unsubscribe` calls cannot race.
+        let mut task = lock(&self.legacy.task);
         {
             let mut set = lock(&self.legacy.uris);
             if !set.contains(&request.uri) && set.len() >= MAX_SUBSCRIPTION_URIS {
@@ -1038,7 +1052,6 @@ impl ServerHandler for AgentNetMcp {
             }
             set.insert(request.uri);
         }
-        let mut task = lock(&self.legacy.task);
         if task.as_ref().is_none_or(JoinHandle::is_finished) {
             // Subscribe to hints before replying so nothing after the reply is missed.
             let rx = self.shared.api.changes();
@@ -1058,13 +1071,16 @@ impl ServerHandler for AgentNetMcp {
         request: UnsubscribeRequestParams,
         _context: RequestContext<RoleServer>,
     ) -> Result<(), McpError> {
+        let mut task = lock(&self.legacy.task);
         let now_empty = {
             let mut set = lock(&self.legacy.uris);
             set.remove(&request.uri);
             set.is_empty()
         };
         if now_empty {
-            self.legacy.abort();
+            if let Some(t) = task.take() {
+                t.abort();
+            }
         }
         Ok(())
     }

@@ -132,15 +132,15 @@ impl Node {
         drop(st);
         let mut fired = Fired::default();
         let budget = i64::from(self.config.triggers.max_matches_per_minute);
+        let mut used: i64 = tx.query_row(
+            "SELECT COUNT(*) FROM events WHERE type = 'trigger.matched' AND timestamp > ?1",
+            [now.saturating_sub(60_000)],
+            |r| r.get(0),
+        )?;
         for (id, session, once) in hits {
-            let used: i64 = tx.query_row(
-                "SELECT COUNT(*) FROM events WHERE type = 'trigger.matched' AND timestamp > ?1",
-                [now.saturating_sub(60_000)],
-                |r| r.get(0),
-            )?;
             if used >= budget {
                 self.metrics.inc("trigger.budget_exceeded");
-                continue;
+                break;
             }
             let n = tx.execute(
                 "UPDATE triggers SET match_count = match_count + 1,
@@ -157,6 +157,7 @@ impl Node {
                     Some(&session),
                     now,
                 )?;
+                used += 1;
                 fired.events += 1;
                 if once {
                     fired.consumed += 1;
@@ -258,13 +259,14 @@ impl Node {
                     return Err(ApiError::policy("too many active triggers").into());
                 }
                 let id = new_uuid()?;
+                let sender_str = sender.map(|a| a.to_string());
                 tx.execute(
                     "INSERT INTO triggers (id, sender, type, conversation_id, correlation_id,
                         target_session, once, state, created_at, expires_at)
                      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'active', ?8, ?9)",
                     params![
                         id,
-                        sender.map(|a| a.to_string()),
+                        sender_str,
                         req.message_type,
                         req.conversation_id,
                         req.correlation_id,
@@ -278,15 +280,33 @@ impl Node {
                 let mut consumed = 0u32;
                 if let Some(after) = since {
                     type Msg = (String, String, String, Option<String>, Option<String>);
+                    let limit = if once {
+                        1i64
+                    } else {
+                        i64::from(tcfg.max_matches_per_minute).saturating_add(1)
+                    };
                     let mut st = tx.prepare(
                         "SELECT message_id, sender, type, conversation_id, correlation_id FROM inbox
                          WHERE seq > ?1 AND quarantined = 0 AND sender_trust = 'trusted'
-                         ORDER BY seq",
+                           AND (?2 IS NULL OR sender = ?2)
+                           AND (?3 IS NULL OR type = ?3)
+                           AND (?4 IS NULL OR conversation_id = ?4)
+                           AND (?5 IS NULL OR correlation_id = ?5)
+                         ORDER BY seq
+                         LIMIT ?6",
                     )?;
                     let msgs: Vec<Msg> = st
-                        .query_map([after], |r| {
-                            Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?))
-                        })?
+                        .query_map(
+                            params![
+                                after,
+                                sender_str,
+                                req.message_type,
+                                req.conversation_id,
+                                req.correlation_id,
+                                limit,
+                            ],
+                            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?)),
+                        )?
                         .collect::<Result<_, _>>()?;
                     drop(st);
                     for (mid, snd, ty, conv, corr) in msgs {
@@ -300,7 +320,7 @@ impl Node {
                         let f = self.fire_triggers(tx, &cand, now, Some(&id))?;
                         events += f.events;
                         consumed += f.consumed;
-                        if consumed > 0 {
+                        if consumed > 0 || f.events == 0 {
                             break;
                         }
                     }

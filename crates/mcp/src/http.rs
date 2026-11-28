@@ -62,12 +62,16 @@ impl HttpOptions {
         }
     }
 
+    fn token_usable(token: &str) -> bool {
+        token.len() >= MIN_TOKEN_LEN && token.bytes().all(|b| (0x21..=0x7e).contains(&b))
+    }
+
     /// Check the options are usable. [`serve_http`] calls this; [`http_router`]
     /// instead fails closed (rejects every request) on an invalid token.
     pub fn validate(&self) -> Result<(), ServeError> {
-        if self.bearer_token.len() < MIN_TOKEN_LEN {
+        if !Self::token_usable(&self.bearer_token) {
             return Err(ServeError::Refused(format!(
-                "bearer token must be at least {MIN_TOKEN_LEN} bytes"
+                "bearer token must be at least {MIN_TOKEN_LEN} visible ASCII bytes (no spaces or control characters)"
             )));
         }
         Ok(())
@@ -93,15 +97,20 @@ struct AuthState {
 async fn require_bearer(State(auth): State<AuthState>, req: Request, next: Next) -> Response {
     let authorized = match &auth.token {
         None => false,
-        Some(expected) => req
-            .headers()
-            .get(header::AUTHORIZATION)
-            .and_then(|v| v.to_str().ok())
-            .and_then(|v| {
-                let (scheme, rest) = v.split_once(' ')?;
-                scheme.eq_ignore_ascii_case("bearer").then_some(rest)
-            })
-            .is_some_and(|presented| bool::from(presented.as_bytes().ct_eq(expected))),
+        Some(expected) => {
+            let mut hdrs = req.headers().get_all(header::AUTHORIZATION).iter();
+            match (hdrs.next(), hdrs.next()) {
+                (Some(v), None) => v
+                    .to_str()
+                    .ok()
+                    .and_then(|v| {
+                        let (scheme, rest) = v.split_once(' ')?;
+                        scheme.eq_ignore_ascii_case("bearer").then_some(rest)
+                    })
+                    .is_some_and(|presented| bool::from(presented.as_bytes().ct_eq(expected))),
+                _ => false,
+            }
+        }
     };
     if authorized {
         return next.run(req).await;
@@ -121,10 +130,10 @@ pub fn http_router_with_shutdown(
     shutdown: CancellationToken,
 ) -> Router {
     let handler = AgentNetMcp::with_shutdown(api, shutdown.clone());
-    let token_ok = options.bearer_token.len() >= MIN_TOKEN_LEN;
+    let token_ok = HttpOptions::token_usable(&options.bearer_token);
     if !token_ok {
         tracing::error!(
-            "http bearer token is shorter than {MIN_TOKEN_LEN} bytes: refusing all requests"
+            "http bearer token is invalid or shorter than {MIN_TOKEN_LEN} bytes: refusing all requests"
         );
     }
     let hosts = if options.allowed_hosts.is_empty() {
@@ -146,7 +155,7 @@ pub fn http_router_with_shutdown(
         token: token_ok.then(|| Arc::from(options.bearer_token.into_bytes())),
     };
     Router::new()
-        .nest_service(MCP_PATH, service)
+        .route_service(MCP_PATH, service)
         .layer(middleware::from_fn_with_state(auth, require_bearer))
 }
 

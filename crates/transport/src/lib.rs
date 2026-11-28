@@ -27,14 +27,31 @@ pub mod mock;
 #[cfg(feature = "logos-rest")]
 pub mod logos_rest;
 
+/// Maximum accepted length of a content topic string (bytes).
+pub const MAX_CONTENT_TOPIC_LEN: usize = 256;
+
 /// A validated Waku content topic: `/<application>/<version>/<name>/<encoding>`.
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(try_from = "String")]
 pub struct ContentTopic(String);
+
+impl TryFrom<String> for ContentTopic {
+    type Error = TransportError;
+
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        Self::new(s)
+    }
+}
 
 impl ContentTopic {
     /// Validates the four-segment form accepted by Logos Delivery autosharding.
     pub fn new(s: impl Into<String>) -> Result<Self, TransportError> {
         let s = s.into();
+        if s.len() > MAX_CONTENT_TOPIC_LEN {
+            return Err(TransportError::Protocol(format!(
+                "content topic exceeds {MAX_CONTENT_TOPIC_LEN} bytes"
+            )));
+        }
         let parts: Vec<&str> = s.split('/').collect();
         let ok = parts.len() == 5
             && parts[0].is_empty()

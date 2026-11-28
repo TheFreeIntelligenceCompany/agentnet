@@ -1,6 +1,6 @@
 # cargo-deny configuration for the AgentNet workspace.
-# Run: `cargo deny check` (CI uses EmbarkStudios/cargo-deny-action; UNTESTED on GitHub). Verified locally with
-# cargo-deny 0.22.1, output in results/adr0004/cargo-deny.txt.
+# Run: `cargo deny check` (runs in GitHub CI via EmbarkStudios/cargo-deny-action, green on `main`).
+# Local evidence: results/adr0004/cargo-deny.txt.
 #
 # Every allowance below is justified in docs/dependency-audit.md and docs/licensing.md. Keep them in sync.
 
