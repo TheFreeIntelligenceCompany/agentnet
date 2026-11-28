@@ -123,10 +123,10 @@ pub fn contact_line(c: &ContactInfo) -> String {
 pub fn inbox_record(r: &InboxRecord) -> String {
     format!(
         "{} from {} [{}] {}{}{}\n    {}",
-        r.message_id,
-        r.sender,
+        clean(&r.message_id),
+        clean(&r.sender),
         trust(r.sender_trust),
-        r.message_type,
+        clean(&r.message_type),
         if r.acknowledged { " (acked)" } else { "" },
         if r.quarantined { " (QUARANTINED)" } else { "" },
         clean(&r.body).replace('\n', "\n    ")
@@ -249,7 +249,7 @@ pub fn network(st: &NetworkStatus, daemon: Option<&Value>) -> String {
                 w["parked"],
                 w["last_error"]
                     .as_str()
-                    .map(|e| format!(" last_error={e}"))
+                    .map(|e| format!(" last_error={}", clean(e)))
                     .unwrap_or_default()
             ));
         } else {
@@ -298,11 +298,14 @@ pub fn discovered(a: &DiscoveredAgent) -> String {
     for c in &a.capabilities {
         out.push_str(&format!(
             "\n    claims capability {}{}",
-            truncate(&clean(&c.name), 64),
+            truncate(&clean(&c.name), 64).replace(['\n', '\r'], " "),
             if c.description.is_empty() {
                 String::new()
             } else {
-                format!(": {}", truncate(&clean(&c.description), 256))
+                format!(
+                    ": {}",
+                    truncate(&clean(&c.description), 256).replace(['\n', '\r'], " ")
+                )
             }
         ));
     }

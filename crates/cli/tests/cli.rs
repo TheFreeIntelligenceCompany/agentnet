@@ -449,7 +449,7 @@ fn doctor_exit_zero_with_the_daemon_down_but_ready_mode_fails_and_says_why() {
     assert!(e.contains("NOT READY"), "{e}");
     assert!(e.contains("daemon socket: warning"), "{e}");
     assert!(e.contains("isolation: skipped"), "{e}");
-    assert!(e.contains("transport ready: not run"), "{e}");
+    assert!(e.contains("transport ready: skipped"), "{e}");
 }
 
 #[tokio::test]

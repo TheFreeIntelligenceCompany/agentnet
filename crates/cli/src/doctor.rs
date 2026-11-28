@@ -54,6 +54,9 @@ pub fn parse_http_date(s: &str) -> Option<i64> {
         return None;
     }
     let day: i64 = parts[1].parse().ok()?;
+    if !(1..=31).contains(&day) {
+        return None;
+    }
     let month = [
         "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
     ]
@@ -61,8 +64,15 @@ pub fn parse_http_date(s: &str) -> Option<i64> {
     .position(|m| *m == parts[2])? as i64
         + 1;
     let year: i64 = parts[3].parse().ok()?;
+    if !(1970..=9999).contains(&year) {
+        return None;
+    }
     let hms: Vec<i64> = parts[4].split(':').filter_map(|x| x.parse().ok()).collect();
-    if hms.len() != 3 {
+    if hms.len() != 3
+        || !(0..=23).contains(&hms[0])
+        || !(0..=59).contains(&hms[1])
+        || !(0..=60).contains(&hms[2])
+    {
         return None;
     }
     // days from civil (Howard Hinnant)
@@ -348,7 +358,9 @@ pub fn readiness_failures(dir: &Path, checks: &[Check]) -> Vec<String> {
         }
     }
     for c in checks {
-        if c.level == Level::Fail && !REQUIRED.contains(&c.name) {
+        if (c.level == Level::Fail && !REQUIRED.contains(&c.name))
+            || (c.name == "identity revoked" && c.level != Level::Ok)
+        {
             out.push(format!("{}: FAILED: {}", c.name, c.detail));
         }
     }
@@ -382,15 +394,28 @@ pub async fn run(dir: &Path) -> Vec<Check> {
                     mode_of(dir).unwrap_or(0)
                 ));
             }
-            for p in [
+            let mut files = vec![
                 dd.identity(),
                 dd.config(),
                 dd.db(),
+                dd.socket(),
+                dd.revocation(),
+                agentnet_core::guard::sidecar_path(&dd.db()),
                 dd.control_token(),
                 dd.mcp_token(),
                 dd.lock(),
                 dd.webhook_db(),
-            ] {
+                dd.root().join("identity.json.legacy-v1"),
+                dd.root().join("revocation.json.legacy-v1"),
+            ];
+            for base in [dd.db(), dd.webhook_db()] {
+                for suffix in ["-wal", "-shm"] {
+                    let mut p = base.clone().into_os_string();
+                    p.push(suffix);
+                    files.push(std::path::PathBuf::from(p));
+                }
+            }
+            for p in files {
                 if let Some(m) = mode_of(&p) {
                     if m & 0o077 != 0 {
                         bad.push(format!("{} is {m:03o} (want 600)", p.display()));
@@ -410,6 +435,28 @@ pub async fn run(dir: &Path) -> Vec<Check> {
                     Level::Fail,
                     bad.join("; "),
                     "chmod 700 the directory and chmod 600 the files listed",
+                ));
+            }
+            if dd.root().join("identity.json.legacy-v1").exists() {
+                out.push(check(
+                    "legacy identity file",
+                    Level::Warn,
+                    "identity.json.legacy-v1 is still in the data directory (it holds retired secret keys)",
+                    "remove it once you are sure you do not need to roll back",
+                ));
+            }
+            let sock = dd.socket();
+            if sock.as_os_str().len() > agentnet_daemon::datadir::MAX_SOCKET_PATH {
+                out.push(check(
+                    "socket path length",
+                    Level::Fail,
+                    format!(
+                        "{} is {} bytes ({} max for a Unix socket)",
+                        sock.display(),
+                        sock.as_os_str().len(),
+                        agentnet_daemon::datadir::MAX_SOCKET_PATH
+                    ),
+                    "use a shorter --data-dir path",
                 ));
             }
         }
@@ -618,8 +665,28 @@ pub async fn run(dir: &Path) -> Vec<Check> {
         if daemon_up {
             match remote.network_status(true).await {
                 Ok(st) => {
-                    let audited = cfg.network.mode == agentnet_daemon::Mode::Private
+                    let disk_audited = cfg.network.mode == agentnet_daemon::Mode::Private
                         || cfg.network.enforce_peer_allowlist;
+                    // Use the live daemon's reported audit posture, never the on-disk file
+                    // (which may have been edited without restarting `agentnet serve`).
+                    let audited = st.isolation_audited;
+                    if audited != disk_audited || st.mode != cfg.network.mode.as_str() {
+                        out.push(check(
+                            "config drift",
+                            Level::Warn,
+                            format!(
+                                "running daemon is in {} mode (isolation_audited={}) but agentnet.toml specifies {} mode (isolation_audited={})",
+                                st.mode,
+                                audited,
+                                cfg.network.mode.as_str(),
+                                disk_audited
+                            ),
+                            format!(
+                                "restart `{}` so config changes take effect",
+                                agentnet_command(dir, "serve")
+                            ),
+                        ));
+                    }
                     out.push(isolation_check(audited, st.isolation_violation.as_deref()));
                     if audited {
                         out.push(peers_check(
@@ -679,6 +746,7 @@ pub async fn run(dir: &Path) -> Vec<Check> {
                 "isolation",
                 "peers == allowlist",
                 "history sync",
+                "transport ready",
                 "local inbox database",
             ] {
                 out.push(check(

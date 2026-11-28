@@ -289,10 +289,17 @@ impl Identity {
         revoke_previous: bool,
     ) -> Result<(), IdentityError> {
         let validity = match new_expiry {
-            Some(e) if e > now_ms => Some(Duration::from_millis(
-                u64::try_from(e - now_ms).unwrap_or(u64::MAX),
-            )),
-            Some(_) => return Err(IdentityError::Malformed("new expiry is not in the future")),
+            Some(e) => {
+                let delta = e.saturating_sub(now_ms);
+                if delta < 1000 {
+                    return Err(IdentityError::Malformed(
+                        "new expiry must be at least 1 second in the future",
+                    ));
+                }
+                Some(Duration::from_millis(
+                    u64::try_from(delta).unwrap_or(u64::MAX),
+                ))
+            }
             None => None,
         };
         let (reason, text): (_, &[u8]) = if revoke_previous {
@@ -338,10 +345,13 @@ impl Identity {
         // never trimmed (finding M1), so fail instead of publishing a record that
         // receivers refuse. Nothing has been changed yet.
         let public = cert.clone().strip_secret_key_material();
-        if pgp::normalize(public, now_ms).is_err() {
-            return Err(IdentityError::CertificateTooLarge {
-                limit: pgp::MAX_CERT_LEN,
-            });
+        if let Err(e) = pgp::normalize(public, now_ms) {
+            return match e {
+                crate::error::ContactError::TooLarge => Err(IdentityError::CertificateTooLarge {
+                    limit: pgp::MAX_CERT_LEN,
+                }),
+                _ => Err(IdentityError::Malformed("rotated certificate is not valid")),
+            };
         }
         self.retained = retained;
         self.cert = cert;
@@ -362,8 +372,8 @@ impl Identity {
         }
         if let Ok(c) = pgp::strip_subkey_secrets(&self.cert, &gone) {
             self.cert = c;
+            self.retained.retain(|r| r.retire_at > now_ms);
         }
-        self.retained.retain(|r| r.retire_at > now_ms);
     }
 
     // ------------------------------------------------------------ persistence
@@ -504,7 +514,9 @@ impl Identity {
     /// Import an identity produced by [`Self::export_encrypted`]. Wrong
     /// passphrase and corrupted input are indistinguishable (`Decrypt`).
     pub fn import_encrypted(bytes: &[u8], passphrase: &str) -> Result<Self, IdentityError> {
-        if bytes.len() > MAX_IDENTITY_FILE_LEN {
+        // ASCII-armored age expands plaintext by ~37%; plaintext is still
+        // bounded by `MAX_IDENTITY_FILE_LEN` inside `from_file_bytes`.
+        if bytes.len() > MAX_IDENTITY_FILE_LEN * 2 {
             return Err(IdentityError::TooLarge);
         }
         if passphrase.is_empty() {

@@ -195,16 +195,26 @@ impl DaemonConfig {
 
     /// Read `path` (size-limited, regular file), parse and validate.
     pub fn load(path: &std::path::Path) -> Result<Self, DaemonError> {
-        let md = std::fs::metadata(path)
-            .map_err(|e| DaemonError::io(format!("reading {}", path.display()), e))?;
+        use std::io::Read;
+        let io = |e| DaemonError::io(format!("reading {}", path.display()), e);
+        let mut f = std::fs::File::open(path).map_err(io)?;
+        let md = f.metadata().map_err(io)?;
         if !md.is_file() {
             return Err(cfg_err(format!("{} is not a regular file", path.display())));
         }
         if md.len() > MAX_CONFIG_BYTES {
             return Err(cfg_err(format!("{} is too large", path.display())));
         }
-        let text = std::fs::read_to_string(path)
-            .map_err(|e| DaemonError::io(format!("reading {}", path.display()), e))?;
+        let mut buf = Vec::new();
+        (&mut f)
+            .take(MAX_CONFIG_BYTES + 1)
+            .read_to_end(&mut buf)
+            .map_err(io)?;
+        if buf.len() as u64 > MAX_CONFIG_BYTES {
+            return Err(cfg_err(format!("{} is too large", path.display())));
+        }
+        let text = String::from_utf8(buf)
+            .map_err(|_| cfg_err(format!("{} is not valid UTF-8", path.display())))?;
         Self::parse_validated(&text)
     }
 
@@ -276,6 +286,11 @@ impl DaemonConfig {
                         "network.mode = \"public\" requires network.i_understand_public = true",
                     ));
                 }
+                if n.enforce_peer_allowlist && n.public_discovery {
+                    return Err(cfg_err(
+                        "network.public_discovery = true is not allowed with enforce_peer_allowlist = true",
+                    ));
+                }
                 if n.enforce_peer_allowlist && n.peers.is_empty() {
                     return Err(cfg_err(
                         "network.enforce_peer_allowlist = true needs network.peers: the \
@@ -327,9 +342,11 @@ impl DaemonConfig {
         if w.max_attempts == 0 || w.max_attempts > 20 {
             return Err(cfg_err("webhook.max_attempts must be 1..=20"));
         }
-        if w.retry_base_ms == 0 || w.retry_max_ms < w.retry_base_ms {
+        const MAX_RETRY_MS: u64 = 3_600_000;
+        if w.retry_base_ms == 0 || w.retry_max_ms < w.retry_base_ms || w.retry_max_ms > MAX_RETRY_MS
+        {
             return Err(cfg_err(
-                "webhook.retry_base_ms must be > 0 and <= retry_max_ms",
+                "webhook.retry_base_ms must be > 0 and <= retry_max_ms <= 3600000",
             ));
         }
         if w.events.is_empty()
@@ -358,18 +375,34 @@ pub fn sample_private_config() -> String {
     )
 }
 
-/// Render the private-mode sample with the given node URL and peers. With no
-/// peers the file is written with `peers = []` and `serve` refuses to start
-/// until one is added (fail closed).
-pub fn render_private_config(node_url: &str, peers: &[String]) -> String {
+fn toml_str(s: &str) -> String {
+    toml::Value::String(s.to_owned()).to_string()
+}
+
+fn render_config_body(node_url: &str, peers: &[String], public_relay: bool) -> String {
+    let header = if public_relay {
+        "# agentnet.toml -- PUBLIC mode with the peer allowlist audit kept (own relay on a\n\
+         # public address or wss edge). See docs/configuration.md and docs/relay-setup.md.\n\
+         # The audit is detective, not preventive; the relay's firewall or edge is the access control."
+    } else {
+        "# agentnet.toml -- PRIVATE mode (the default). See docs/configuration.md."
+    };
+    let mode = if public_relay { "public" } else { "private" };
+    let public_flags = if public_relay {
+        "i_understand_public = true     # you chose public mode (init --public-relay)\n\
+         enforce_peer_allowlist = true  # audit the node's peers against the ids in `peers`"
+    } else {
+        "i_understand_public = false"
+    };
+    let node_url_toml = toml_str(node_url);
     let peers_line = if peers.is_empty() {
         "peers = []   # REQUIRED in private mode: add your relay's multiaddr, e.g. \"/ip4/10.0.0.5/tcp/60000/p2p/16Uiu2HAm...\"".to_owned()
     } else {
-        let items: Vec<String> = peers.iter().map(|p| format!("{p:?}")).collect();
+        let items: Vec<String> = peers.iter().map(|p| toml_str(p)).collect();
         format!("peers = [{}]", items.join(", "))
     };
     format!(
-        r#"# agentnet.toml -- PRIVATE mode (the default). See docs/configuration.md.
+        r#"{header}
 #
 # Private mode fails closed: the Logos Delivery node must be on a loopback or
 # private address, connected only to the peers listed here, and on a private
@@ -378,16 +411,16 @@ pub fn render_private_config(node_url: &str, peers: &[String]) -> String {
 # adverts on YOUR relay, off by default.)
 
 [network]
-mode = "private"
+mode = "{mode}"
 # REST endpoint of YOUR local Logos Delivery node (loopback / RFC1918 / 100.64.0.0/10 only).
-node_url = {node_url:?}
+node_url = {node_url_toml}
 # Static peers: multiaddrs of your own relay/store node(s), ending in /p2p/<peerId>.
 {peers_line}
 # Cluster ids 1, 2, 3 and 16 select public presets and are rejected.
 cluster_id = 66
 public_discovery = false   # true is a config error in private mode
 public_fallback = false    # true is always a config error
-i_understand_public = false
+{public_flags}
 
 [storage]
 retention_hours = 168
@@ -432,32 +465,25 @@ events = ["trigger.matched"]
     )
 }
 
+/// Render the private-mode sample with the given node URL and peers. With no
+/// peers the file is written with `peers = []` and `serve` refuses to start
+/// until one is added (fail closed).
+pub fn render_private_config(node_url: &str, peers: &[String]) -> String {
+    render_config_body(node_url, peers, false)
+}
+
 /// Render the audited public-mode config for your own relay on a public address
 /// or a wss/TLS edge (`agentnet init --public-relay`): `mode = "public"`,
 /// `i_understand_public = true`, `enforce_peer_allowlist = true`.
 pub fn render_public_relay_config(node_url: &str, peers: &[String]) -> String {
-    render_private_config(node_url, peers)
-        .replacen(
-            "# agentnet.toml -- PRIVATE mode (the default). See docs/configuration.md.",
-            "# agentnet.toml -- PUBLIC mode with the peer allowlist audit kept (own relay on a\n# public address or wss edge). See docs/configuration.md and docs/relay-setup.md.\n# The audit is detective, not preventive; the relay's firewall or edge is the access control.",
-            1,
-        )
-        .replacen(
-            "mode = \"private\"",
-            "mode = \"public\"",
-            1,
-        )
-        .replacen(
-            "i_understand_public = false",
-            "i_understand_public = true     # you chose public mode (init --public-relay)\nenforce_peer_allowlist = true  # audit the node's peers against the ids in `peers`",
-            1,
-        )
+    render_config_body(node_url, peers, true)
 }
 
 /// Render and validate the config `agentnet init` is about to write. With no
-/// peers the (intentionally incomplete) private file is returned unvalidated.
-/// A peer that private mode rejects fails here, before anything is written,
-/// naming both ways forward; the mode is never switched silently.
+/// peers the `node_url` is still validated against private mode, while the
+/// intentionally incomplete `peers = []` file is written for the operator to
+/// fill in. A peer that private mode rejects fails here, before anything is
+/// written, naming both ways forward; the mode is never switched silently.
 pub fn render_init_config(
     node_url: &str,
     peers: &[String],
@@ -475,18 +501,26 @@ pub fn render_init_config(
         return Ok(text);
     }
     let text = render_private_config(node_url, peers);
-    if !peers.is_empty() {
-        if let Err(DaemonError::Config(why)) = DaemonConfig::parse_validated(&text) {
-            return Err(cfg_err(format!(
-                "this configuration is not acceptable in private mode ({why}). Choose one: \
-                 (1) use a relay on a private address (loopback, RFC 1918, 100.64.0.0/10, e.g. \
-                 --peer /ip4/10.0.0.5/tcp/60000/p2p/<peerId>), or (2) your relay is reached \
-                 over a public IP or DNS name: re-run with --public-relay to write the audited \
-                 public mode (mode = \"public\", i_understand_public = true, \
-                 enforce_peer_allowlist = true; docs/relay-setup.md, \"Your own relay on a \
-                 public address\")"
-            )));
-        }
+    if peers.is_empty() {
+        // Still validate `node_url` in private mode using a dummy private peer.
+        let probe = render_private_config(
+            node_url,
+            &[
+                "/ip4/127.0.0.1/tcp/60000/p2p/16Uiu2HAmPlaceholderPeerId1111111111111111111111"
+                    .to_owned(),
+            ],
+        );
+        DaemonConfig::parse_validated(&probe)?;
+    } else if let Err(DaemonError::Config(why)) = DaemonConfig::parse_validated(&text) {
+        return Err(cfg_err(format!(
+            "this configuration is not acceptable in private mode ({why}). Choose one: \
+             (1) use a relay on a private address (loopback, RFC 1918, 100.64.0.0/10, e.g. \
+             --peer /ip4/10.0.0.5/tcp/60000/p2p/<peerId>), or (2) your relay is reached \
+             over a public IP or DNS name: re-run with --public-relay to write the audited \
+             public mode (mode = \"public\", i_understand_public = true, \
+             enforce_peer_allowlist = true; docs/relay-setup.md, \"Your own relay on a \
+             public address\")"
+        )));
     }
     Ok(text)
 }

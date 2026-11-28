@@ -320,6 +320,9 @@ impl VerifiedAdvert {
         let address: Address = r.address.parse().map_err(AdvertError::InvalidAddress)?;
         let contact = VerifiedContact::parse_and_verify(&r.contact_record, now_ms)
             .map_err(AdvertError::BadContact)?;
+        if contact.revocation(now_ms).is_some() {
+            return Err(AdvertError::BadContact(crate::error::ContactError::Revoked));
+        }
         if contact.address != address {
             return Err(AdvertError::ContactAddressMismatch);
         }
@@ -330,7 +333,10 @@ impl VerifiedAdvert {
             MAX_ADVERT_RECORD_LEN,
             now_ms.saturating_add(limits.clock_skew_ms),
         )
-        .ok_or(AdvertError::BadSignature)?;
+        .map_err(|e| match e {
+            pgp::VerifySignedError::FromFuture => AdvertError::FromFuture,
+            pgp::VerifySignedError::Bad => AdvertError::BadSignature,
+        })?;
         if signer != address || content != record {
             return Err(AdvertError::BadSignature);
         }

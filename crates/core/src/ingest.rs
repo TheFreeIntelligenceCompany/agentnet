@@ -90,6 +90,7 @@ fn open_error_kind(e: &OpenError) -> &'static str {
 const REACK_DELAY_MAX_MS: i64 = 5_000;
 
 enum MsgTx {
+    Blocked,
     Duplicate {
         reacked: bool,
     },
@@ -247,28 +248,58 @@ impl Node {
         // from a Trusted contact (other senders' copies are stored like any
         // other message, under the quarantine policy, and never applied).
         if env.message_type == MESSAGE_TYPE_IDENTITY_REVOKED {
-            if !sender_is_contact {
-                // Review finding M2: a stranger's frame must not grow any table.
-                // The unknown-sender policy runs first; then only a revocation
-                // that names an existing contact is considered at all.
+            if trust != Trust::Trusted {
+                // Review finding M2: a stranger or untrusted contact must not
+                // grow `seen` or `outbox` (no acks). Apply the unknown-sender
+                // policy first, then accept only a brand-new verified revocation
+                // naming an existing unrevoked contact (never self).
                 if self.config.policy.unknown_senders == UnknownSenders::Reject {
                     self.metrics.inc("drop.rejected_unknown_sender");
                     self.mark_transport_seen(frame);
                     return FrameOutcome::Rejected;
                 }
-                let names_a_contact = VerifiedRevocation::parse_and_verify(&env.body, now)
-                    .ok()
-                    .map(|rev| self.store.read(|c| self.load_contact(c, &rev.address)))
-                    .transpose();
-                match names_a_contact {
-                    Err(_) => return self.store_failure(),
-                    Ok(Some(Some(_))) => {}
-                    Ok(_) => {
-                        self.metrics.inc("identity_revoked.dropped_non_contact");
-                        self.mark_transport_seen(frame);
-                        return FrameOutcome::SystemHandled { applied: false };
-                    }
+                let Ok(rev) = VerifiedRevocation::parse_and_verify(&env.body, now) else {
+                    self.metrics.inc("identity_revoked.dropped_non_contact");
+                    self.mark_transport_seen(frame);
+                    return FrameOutcome::SystemHandled { applied: false };
+                };
+                if rev.address == self.own {
+                    self.metrics.inc("identity_revoked.dropped_non_contact");
+                    self.mark_transport_seen(frame);
+                    return FrameOutcome::SystemHandled { applied: false };
                 }
+                let contact = match self.store.read(|c| self.load_contact(c, &rev.address)) {
+                    Ok(c) => c,
+                    Err(_) => return self.store_failure(),
+                };
+                if !matches!(contact, Some(ref row) if !row.revoked) {
+                    self.metrics.inc("identity_revoked.dropped_non_contact");
+                    self.mark_transport_seen(frame);
+                    return FrameOutcome::SystemHandled { applied: false };
+                }
+                let applied = match self.store.tx(|tx| {
+                    if self
+                        .load_contact(tx, &rev.address)?
+                        .is_none_or(|r| r.revoked)
+                    {
+                        return Ok((false, 0usize));
+                    }
+                    self.apply_revocation(tx, &rev, "received", now)
+                }) {
+                    Ok(r) => r,
+                    Err(_) => return self.store_failure(),
+                };
+                self.mark_transport_seen(frame);
+                if applied.0 {
+                    self.metrics.inc("identity_revoked.applied");
+                    tracing::info!(kind = "identity_revoked", "system message applied");
+                } else {
+                    self.metrics.inc("identity_revoked.dropped_non_contact");
+                }
+                if applied.1 > 0 {
+                    self.hint(ChangeHint::Outbox);
+                }
+                return FrameOutcome::SystemHandled { applied: applied.0 };
             }
             return self.ingest_identity_revoked(frame, &env, &digest);
         }
@@ -281,26 +312,24 @@ impl Node {
             self.mark_transport_seen(frame);
             return FrameOutcome::Rejected;
         }
-        let quarantine = trust != Trust::Trusted && policy == UnknownSenders::Quarantine;
-        // Replay guard: after a store rollback / import, messages created up to
-        // the guard start plus the permitted clock skew are held instead of
-        // delivered (a message accepted before the rollback may have been
-        // created that far ahead of the local clock; the bound is inclusive).
-        let skew = self.open_limits.clock_skew_ms;
-        let hold = !quarantine
-            && self
-                .guard_state()
-                .is_some_and(|g| env.created_at <= g.since.saturating_add(skew));
+        // Lapse an expired replay guard before persisting (the hold decision
+        // itself is evaluated atomically inside the `persist_message` tx).
+        let _ = self.guard_state();
         // 5. one transaction
         let res = self
             .store
-            .tx(|tx| self.persist_message(tx, &env, trust, quarantine, hold, now, &digest));
+            .tx(|tx| self.persist_message(tx, &env, trust, now, &digest));
         let res = match res {
             Ok(r) => r,
             Err(_) => return self.store_failure(),
         };
         self.publish_generation();
         match res {
+            MsgTx::Blocked => {
+                self.metrics.inc("drop.blocked");
+                self.mark_transport_seen(frame);
+                FrameOutcome::Blocked
+            }
             MsgTx::InboxFull => {
                 self.metrics.inc("inbox.full_refused");
                 FrameOutcome::InboxFull
@@ -360,12 +389,26 @@ impl Node {
         &self,
         tx: &Transaction<'_>,
         env: &Envelope,
-        trust: Trust,
-        quarantine: bool,
-        hold: bool,
+        initial_trust: Trust,
         now: i64,
         digest: &[u8; 32],
     ) -> Result<MsgTx, StoreError> {
+        // Re-check current trust/revocation inside the write transaction to
+        // eliminate TOCTOU against concurrent block/revocation operations.
+        let trust = match self.load_contact(tx, &env.sender)? {
+            Some(row) => row.trust,
+            None if Self::is_revoked(tx, &env.sender)? => Trust::Blocked,
+            None => initial_trust,
+        };
+        if trust == Trust::Blocked {
+            return Ok(MsgTx::Blocked);
+        }
+        let policy = self.config.policy.unknown_senders;
+        let quarantine = trust != Trust::Trusted && policy == UnknownSenders::Quarantine;
+        let skew = self.open_limits.clock_skew_ms;
+        let hold = !quarantine
+            && guard::load_guard(tx)?
+                .is_some_and(|g| now < g.until && env.created_at <= g.since.saturating_add(skew));
         let quarantine_slot = quarantine || hold;
         let sender = env.sender.to_string();
         let seen: Option<Option<i64>> = tx
@@ -569,6 +612,10 @@ impl Node {
             self.metrics.inc("ack.no_contact");
             return Ok(false);
         };
+        if row.trust == Trust::Blocked || row.revoked {
+            self.metrics.inc("ack.suppressed_blocked");
+            return Ok(false);
+        }
         let default_ttl = i64::try_from(self.config.delivery.default_ttl_s.saturating_mul(1000))
             .unwrap_or(i64::MAX);
         let ttl = orig.expires_at.saturating_sub(now).min(default_ttl);
@@ -587,6 +634,13 @@ impl Node {
         };
         env.conversation_id = orig.conversation_id.clone();
         env.correlation_id = Some(orig.message_id.clone());
+        // Replace any prior already-sent ack row for this `(recipient, correlation_id)`
+        // so repeated re-acks cannot grow `outbox` without bound while preserving
+        // both queued (not-yet-sent) acks and the M3 `ack_stored` invariant.
+        tx.execute(
+            "DELETE FROM outbox WHERE is_ack = 1 AND state = 'sent' AND recipient = ?1 AND correlation_id = ?2",
+            params![orig.sender.to_string(), orig.message_id],
+        )?;
         let frame =
             match self
                 .protection

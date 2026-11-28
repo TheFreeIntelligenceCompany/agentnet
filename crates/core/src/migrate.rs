@@ -82,10 +82,13 @@ pub fn migrate_store(
             old_address: kv_get(tx, "own_address")?,
             ..Default::default()
         };
-        // 1. contacts -> legacy entries
+        // 1. legacy (`an1`) contacts -> legacy entries (leave any already-`an2`
+        // contacts intact so re-running migration on a converted store is safe).
         {
-            let mut st =
-                tx.prepare("SELECT address, document, alias, trust, added_at FROM contacts")?;
+            let mut st = tx.prepare(
+                "SELECT address, document, alias, trust, added_at FROM contacts
+                 WHERE address LIKE 'an1%'",
+            )?;
             let rows: Vec<(String, String, Option<String>, String, i64)> = st
                 .query_map([], |r| {
                     Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?))
@@ -104,13 +107,13 @@ pub fn migrate_store(
                     added_at,
                 });
             }
-            tx.execute("DELETE FROM contacts", [])?;
+            tx.execute("DELETE FROM contacts WHERE address LIKE 'an1%'", [])?;
         }
-        // 2. pending outbox rows -> failed, listed
+        // 2. pending legacy (`an1`) outbox rows -> failed, listed
         {
             let mut st = tx.prepare(
                 "SELECT message_id, recipient, type, state, created_at, is_ack, hidden
-                 FROM outbox WHERE state IN ('queued','sent') ORDER BY seq",
+                 FROM outbox WHERE state IN ('queued','sent') AND recipient LIKE 'an1%' ORDER BY seq",
             )?;
             let rows: Vec<(String, String, String, String, i64, i64, i64)> = st
                 .query_map([], |r| {
@@ -140,11 +143,12 @@ pub fn migrate_store(
             }
             tx.execute(
                 "UPDATE outbox SET state='failed', next_attempt_at=NULL, last_error=?1
-                 WHERE state IN ('queued','sent')",
+                 WHERE state IN ('queued','sent') AND recipient LIKE 'an1%'",
                 [MIGRATION_FAILED_REASON],
             )?;
         }
         // 3. things that only make sense for the old identity
+        tx.execute("DELETE FROM revocations WHERE address LIKE 'an1%'", [])?;
         tx.execute("DELETE FROM adverts", [])?;
         tx.execute("DELETE FROM kv WHERE key LIKE 'advert.%'", [])?;
         for k in [
@@ -175,23 +179,37 @@ pub fn migrate_store(
 
 /// The legacy contacts of the store at `path` (read-only).
 pub fn legacy_contacts(path: &Path) -> Result<Vec<LegacyContact>, StoreError> {
-    let store = Store::open(path)?;
-    let r = store.read(|c| {
-        let mut st = c.prepare(
-            "SELECT address, alias, trust, added_at FROM legacy_contacts ORDER BY added_at, address",
-        )?;
-        let v = st
-            .query_map([], |r| {
-                Ok(LegacyContact {
-                    address: r.get(0)?,
-                    alias: r.get(1)?,
-                    trust: r.get(2)?,
-                    added_at: r.get(3)?,
-                })
-            })?
-            .collect::<Result<Vec<_>, _>>()?;
-        Ok(v)
-    });
-    store.close();
-    r
+    if !path.exists() {
+        return Ok(Vec::new());
+    }
+    let conn = rusqlite::Connection::open_with_flags(
+        path,
+        rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY | rusqlite::OpenFlags::SQLITE_OPEN_NO_MUTEX,
+    )?;
+    conn.busy_timeout(std::time::Duration::from_secs(5))?;
+    let has_table: bool = conn
+        .query_row(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='legacy_contacts'",
+            [],
+            |r| r.get::<_, i64>(0),
+        )
+        .map(|n| n > 0)
+        .unwrap_or(false);
+    if !has_table {
+        return Ok(Vec::new());
+    }
+    let mut st = conn.prepare(
+        "SELECT address, alias, trust, added_at FROM legacy_contacts ORDER BY added_at, address",
+    )?;
+    let v = st
+        .query_map([], |r| {
+            Ok(LegacyContact {
+                address: r.get(0)?,
+                alias: r.get(1)?,
+                trust: r.get(2)?,
+                added_at: r.get(3)?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(v)
 }

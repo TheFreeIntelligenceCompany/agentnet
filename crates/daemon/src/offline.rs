@@ -9,8 +9,8 @@ use agentnet_core::crypto::VerifiedRevocation;
 use agentnet_core::identity::Identity;
 use agentnet_core::{guard, Clock, SystemClock};
 
-use crate::config::{render_init_config, render_private_config, DaemonConfig};
-use crate::datadir::{create_secret_file, ensure_token, DataDir};
+use crate::config::{render_init_config, DaemonConfig};
+use crate::datadir::{create_secret_file, ensure_token, DataDir, MAX_SOCKET_PATH};
 use crate::error::DaemonError;
 
 fn ident_err(e: impl std::fmt::Display) -> DaemonError {
@@ -69,6 +69,18 @@ fn write_support_files(
     Ok(peers_missing)
 }
 
+fn check_socket_path_len(dir: &DataDir) -> Result<(), DaemonError> {
+    let sock = dir.socket();
+    if sock.as_os_str().len() > MAX_SOCKET_PATH {
+        return Err(DaemonError::DataDir(format!(
+            "socket path {} is too long for a Unix socket ({} bytes max); use a shorter --data-dir",
+            sock.display(),
+            MAX_SOCKET_PATH
+        )));
+    }
+    Ok(())
+}
+
 /// Create a data directory with a fresh identity, a private-mode config and
 /// tokens. Refuses to touch an existing agent.
 pub fn init_data_dir(
@@ -77,9 +89,10 @@ pub fn init_data_dir(
     peers: &[String],
     public_relay: bool,
 ) -> Result<InitReport, DaemonError> {
-    // Validate before anything is created: a rejected peer writes nothing.
-    let config_text = render_init_config(node_url, peers, public_relay)?;
+    // Validate before anything is created: a rejected peer or overlong path writes nothing.
     let dir = DataDir::new(root);
+    check_socket_path_len(&dir)?;
+    let config_text = render_init_config(node_url, peers, public_relay)?;
     dir.create_private()?;
     let _lock = dir.acquire_lock()?;
     refuse_existing(&dir)?;
@@ -134,21 +147,57 @@ pub fn import_identity(
     peers: &[String],
     replay_guard: bool,
 ) -> Result<InitReport, DaemonError> {
+    import_identity_with_mode(
+        root,
+        encrypted,
+        passphrase,
+        node_url,
+        peers,
+        false,
+        replay_guard,
+    )
+}
+
+/// Like [`import_identity`], also supporting `--public-relay` (audited public mode).
+pub fn import_identity_with_mode(
+    root: &Path,
+    encrypted: &[u8],
+    passphrase: &str,
+    node_url: &str,
+    peers: &[String],
+    public_relay: bool,
+    replay_guard: bool,
+) -> Result<InitReport, DaemonError> {
+    // Decrypt and validate everything before creating the directory or writing files.
     let dir = DataDir::new(root);
+    check_socket_path_len(&dir)?;
+    let config_text = render_init_config(node_url, peers, public_relay)?;
+    let id = Identity::import_encrypted(encrypted, passphrase).map_err(ident_err)?;
     dir.create_private()?;
     let _lock = dir.acquire_lock()?;
     refuse_existing(&dir)?;
-    let id = Identity::import_encrypted(encrypted, passphrase).map_err(ident_err)?;
-    id.save(&dir.identity(), false).map_err(ident_err)?;
-    let peers_missing = write_support_files(
-        &dir,
-        &render_private_config(node_url, peers),
-        peers.is_empty(),
-    )?;
+    // Write the replay-guard sidecar BEFORE `identity.json` so a partial failure
+    // can never leave a usable imported identity without replay protection.
     if replay_guard {
         guard::mark_imported(&dir.db())
             .map_err(|e| DaemonError::io("writing the generation sidecar", e))?;
     }
+    if let Err(e) = id.save(&dir.identity(), false).map_err(ident_err) {
+        if replay_guard {
+            let _ = std::fs::remove_file(guard::sidecar_path(&dir.db()));
+        }
+        return Err(e);
+    }
+    let peers_missing = match write_support_files(&dir, &config_text, peers.is_empty()) {
+        Ok(m) => m,
+        Err(e) => {
+            let _ = std::fs::remove_file(dir.identity());
+            if replay_guard {
+                let _ = std::fs::remove_file(guard::sidecar_path(&dir.db()));
+            }
+            return Err(e);
+        }
+    };
     Ok(InitReport {
         identity: identity_info(&id),
         peers_missing,
@@ -176,9 +225,11 @@ pub fn rotate_kem(
     let _lock = dir.acquire_lock()?;
     let hours = match keep_hours {
         Some(h) => h,
-        None => DaemonConfig::load(&dir.config())
-            .map(|c| c.storage.retention_hours)
-            .unwrap_or(168),
+        None => match std::fs::read_to_string(dir.config()) {
+            Ok(text) => DaemonConfig::parse(&text)?.storage.retention_hours,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => 168,
+            Err(e) => return Err(DaemonError::io("reading agentnet.toml", e)),
+        },
     };
     let mut id = Identity::load(&dir.identity()).map_err(ident_err)?;
     let now = SystemClock.now_ms();
@@ -308,28 +359,42 @@ pub fn migrate_data_dir(root: &Path) -> Result<MigrateReport, DaemonError> {
             legacy.display()
         )));
     }
+    let rev_legacy = dir.root().join("revocation.json.legacy-v1");
+    if dir.revocation().exists() && rev_legacy.exists() {
+        return Err(DaemonError::DataDir(format!(
+            "{} already exists; move it away before migrating",
+            rev_legacy.display()
+        )));
+    }
     let now = SystemClock.now_ms();
     let id = Identity::generate(now).map_err(ident_err)?;
     let tmp = dir.root().join("identity.json.new");
     let _ = std::fs::remove_file(&tmp);
     id.save(&tmp, false).map_err(ident_err)?;
     let store = if dir.db().exists() {
-        Some(
-            agentnet_core::migrate::migrate_store(&dir.db(), &id.address().to_string(), now)
-                .map_err(|e| DaemonError::Identity(format!("migrating the store: {e}")))?,
-        )
+        match agentnet_core::migrate::migrate_store(&dir.db(), &id.address().to_string(), now) {
+            Ok(rep) => Some(rep),
+            Err(e) => {
+                let _ = std::fs::remove_file(&tmp);
+                return Err(DaemonError::Identity(format!("migrating the store: {e}")));
+            }
+        }
     } else {
         None
     };
-    std::fs::rename(dir.identity(), &legacy)
-        .map_err(|e| DaemonError::io("moving the old identity aside", e))?;
+    if let Err(e) = std::fs::rename(dir.identity(), &legacy) {
+        let _ = std::fs::remove_file(&tmp);
+        return Err(DaemonError::io("moving the old identity aside", e));
+    }
     if dir.revocation().exists() {
-        let rev_legacy = dir.root().join("revocation.json.legacy-v1");
-        std::fs::rename(dir.revocation(), rev_legacy)
+        std::fs::rename(dir.revocation(), &rev_legacy)
             .map_err(|e| DaemonError::io("moving the old revocation aside", e))?;
     }
     std::fs::rename(&tmp, dir.identity())
         .map_err(|e| DaemonError::io("installing the new identity", e))?;
+    if let Ok(d) = std::fs::File::open(dir.root()) {
+        let _ = d.sync_all();
+    }
     Ok(MigrateReport {
         identity: identity_info(&id),
         store,

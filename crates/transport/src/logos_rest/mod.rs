@@ -134,7 +134,7 @@ impl LogosRestTransport {
         let url = cfg.validate()?;
         let mut cfg = cfg;
         cfg.allowed_peer_ids = cfg.effective_allowed_peer_ids();
-        let http = reqwest::Client::builder()
+        let mut builder = reqwest::Client::builder()
             .redirect(reqwest::redirect::Policy::none())
             .no_proxy()
             .timeout(cfg.request_timeout)
@@ -146,7 +146,22 @@ impl LogosRestTransport {
             // and cost a failed request, so pooling is disabled. Consequence: roughly one
             // short-lived loopback connection per poll/publish (about 4 per second per topic at the
             // default 250 ms poll interval), visible as many TIME_WAIT sockets on 127.0.0.1.
-            .pool_max_idle_per_host(0)
+            .pool_max_idle_per_host(0);
+        // Never query OS DNS for `localhost` (breaks zero public egress in
+        // minimal containers or misconfigured NSS setups): pin directly to loopback.
+        if let Some(url::Host::Domain(d)) = url.host() {
+            if d.eq_ignore_ascii_case("localhost") {
+                let port = url.port_or_known_default().unwrap_or(80);
+                builder = builder.resolve_to_addrs(
+                    d,
+                    &[
+                        std::net::SocketAddr::from(([127, 0, 0, 1], port)),
+                        std::net::SocketAddr::from(([0, 0, 0, 0, 0, 0, 0, 1], port)),
+                    ],
+                );
+            }
+        }
+        let http = builder
             .build()
             .map_err(|_| TransportError::Protocol("could not initialise HTTP client".into()))?;
         let base = url.as_str().trim_end_matches('/').to_string();
@@ -212,12 +227,15 @@ impl LogosRestTransport {
         req.send().await.map_err(describe_reqwest_error)
     }
 
-    async fn read_body(resp: &mut reqwest::Response) -> Result<Vec<u8>, NetErr> {
+    async fn read_body_limited(
+        resp: &mut reqwest::Response,
+        max_bytes: usize,
+    ) -> Result<Vec<u8>, NetErr> {
         let mut body = Vec::new();
         loop {
             match resp.chunk().await {
                 Ok(Some(c)) => {
-                    if body.len() + c.len() > MAX_RESPONSE_BYTES {
+                    if body.len().saturating_add(c.len()) > max_bytes {
                         return Err(NetErr("response body too large".into()));
                     }
                     body.extend_from_slice(&c);
@@ -226,6 +244,10 @@ impl LogosRestTransport {
                 Err(e) => return Err(describe_reqwest_error(e)),
             }
         }
+    }
+
+    async fn read_body(resp: &mut reqwest::Response) -> Result<Vec<u8>, NetErr> {
+        Self::read_body_limited(resp, MAX_RESPONSE_BYTES).await
     }
 
     /// `GET` of the relay cache. The node has already DRAINED its cache when it answers, so a
@@ -245,19 +267,22 @@ impl LogosRestTransport {
             .map_err(unavailable)?;
         let status = resp.status().as_u16();
         if status != 200 {
-            let body = Self::read_body(&mut resp).await.map_err(unavailable)?;
+            let body = Self::read_body_limited(&mut resp, 64 * 1024)
+                .await
+                .map_err(unavailable)?;
             return Ok(Err(Resp { status, body }));
         }
         let limit = max_relay_response_bytes(self.cfg.max_message_bytes);
         let mut parser = RelayStream::new(topic, &self.pubsub, self.cfg.max_message_bytes);
         let mut read = 0usize;
         let mut net_err: Option<String> = None;
+        let mut limit_err: Option<String> = None;
         loop {
             match resp.chunk().await {
                 Ok(Some(c)) => {
                     read = read.saturating_add(c.len());
                     if read > limit {
-                        net_err = Some(format!("relay poll response exceeds {limit} bytes"));
+                        limit_err = Some(format!("relay poll response exceeds {limit} bytes"));
                         break;
                     }
                     parser.feed(&c);
@@ -273,15 +298,19 @@ impl LogosRestTransport {
         self.counters
             .malformed
             .fetch_add(parsed.counts.malformed, Ordering::Relaxed);
-        let problem = net_err.or(parsed.error);
-        match problem {
-            None => Ok(Ok(parsed.frames)),
-            Some(_) if !parsed.frames.is_empty() => {
+        if !parsed.frames.is_empty() {
+            if net_err.is_some() || limit_err.is_some() || parsed.error.is_some() {
                 self.counters.partial_polls.fetch_add(1, Ordering::Relaxed);
-                Ok(Ok(parsed.frames))
             }
-            Some(why) => Err(TransportError::Protocol(why)),
+            return Ok(Ok(parsed.frames));
         }
+        if let Some(why) = net_err {
+            return Err(TransportError::Unavailable(format!("poll failed: {why}")));
+        }
+        if let Some(why) = limit_err.or(parsed.error) {
+            return Err(TransportError::Protocol(why));
+        }
+        Ok(Ok(parsed.frames))
     }
 
     // ----- isolation audit -----------------------------------------------
@@ -306,17 +335,40 @@ impl LogosRestTransport {
             )));
         }
         let raw = parse_peers(&r.body).map_err(fail)?;
-        let rep = evaluate_peers(&raw, &self.cfg.allowed_peer_ids, self.cfg.shard);
+        let require_private_ip = self.cfg.mode == NetworkMode::Private;
+        let rep = evaluate_peers(
+            &raw,
+            &self.cfg.allowed_peer_ids,
+            self.cfg.shard,
+            require_private_ip,
+        );
         Ok((rep.peers, rep.violation))
     }
 
-    async fn refresh_audit(&self, st: &mut AuditState) -> Result<(), TransportError> {
-        let r = self.refresh_audit_once(st).await;
-        if r.is_ok() && self.redial_wanted(st) && self.redial(st).await {
-            // The dial is synchronous on the node; look again.
-            return self.refresh_audit_once(st).await;
+    async fn refresh_audit_and_redial(
+        &self,
+    ) -> Result<(Vec<PeerInfo>, Option<String>), TransportError> {
+        let should_redial = {
+            let mut st = self.audit.lock().await;
+            self.refresh_audit_once(&mut st).await?;
+            if self.redial_wanted(&st) {
+                // Record redial attempt and invalidate cache before dropping the
+                // lock so concurrent callers don't starve behind a slow dial and
+                // cancellation cannot leave a stale fresh timestamp.
+                st.last_redial = Some(Instant::now());
+                st.checked_at = None;
+                true
+            } else {
+                return Ok((st.peers.clone(), st.violation.clone()));
+            }
+        };
+        if should_redial && self.send_redial().await {
+            let mut st = self.audit.lock().await;
+            self.refresh_audit_once(&mut st).await?;
+            return Ok((st.peers.clone(), st.violation.clone()));
         }
-        r
+        let st = self.audit.lock().await;
+        Ok((st.peers.clone(), st.violation.clone()))
     }
 
     async fn refresh_audit_once(&self, st: &mut AuditState) -> Result<(), TransportError> {
@@ -334,11 +386,13 @@ impl LogosRestTransport {
         }
     }
 
-    /// True when static peers are configured, no allowlisted peer is connected
-    /// and the redial rate limit allows another attempt.
+    /// True when static peers are configured, no isolation violation is active,
+    /// no allowlisted peer is connected, and the redial rate limit allows
+    /// another attempt.
     fn redial_wanted(&self, st: &AuditState) -> bool {
         !self.cfg.static_peers.is_empty()
             && st.checked_at.is_some()
+            && st.violation.is_none()
             && !st.peers.iter().any(|p| p.connected && p.allowed)
             && st
                 .last_redial
@@ -347,8 +401,7 @@ impl LogosRestTransport {
 
     /// Asks the node to dial exactly the configured static peers. Failures are
     /// not fatal (the next audit decides); returns whether the node said OK.
-    async fn redial(&self, st: &mut AuditState) -> bool {
-        st.last_redial = Some(Instant::now());
+    async fn send_redial(&self) -> bool {
         self.counters.redials.fetch_add(1, Ordering::Relaxed);
         let Ok(body) = serde_json::to_vec(&self.cfg.static_peers) else {
             return false;
@@ -370,32 +423,54 @@ impl LogosRestTransport {
         if !self.cfg.audits_peers() {
             return Ok(());
         }
-        let mut st = self.audit.lock().await;
-        self.refresh_audit(&mut st).await?;
-        match &st.violation {
-            Some(v) => Err(TransportError::Isolation(v.clone())),
+        let (_, violation) = self.refresh_audit_and_redial().await?;
+        match violation {
+            Some(v) => Err(TransportError::Isolation(v)),
             None => Ok(()),
         }
     }
 
     /// Runs the audit if never done or older than `audit_interval`. Used by
-    /// subscribe, poll and history; `publish` audits uncached (see there).
+    /// `poll`; `publish`, `subscribe`, and `history` audit uncached.
     async fn ensure_audit(&self) -> Result<(), TransportError> {
         if !self.cfg.audits_peers() {
             return Ok(());
         }
-        let mut st = self.audit.lock().await;
-        let fresh = st
-            .checked_at
-            .is_some_and(|t| t.elapsed() < self.cfg.audit_interval);
-        if !fresh {
-            self.refresh_audit(&mut st).await?;
-        } else if self.redial_wanted(&st) && self.redial(&mut st).await {
-            // Cached audit says nobody is connected: dial, then re-audit.
-            self.refresh_audit_once(&mut st).await?;
+        enum Action {
+            Done(Option<String>),
+            Refresh,
+            RedialOnly,
         }
-        match &st.violation {
-            Some(v) => Err(TransportError::Isolation(v.clone())),
+        let action = {
+            let mut st = self.audit.lock().await;
+            let fresh = st
+                .checked_at
+                .is_some_and(|t| t.elapsed() < self.cfg.audit_interval);
+            if !fresh {
+                Action::Refresh
+            } else if self.redial_wanted(&st) {
+                st.last_redial = Some(Instant::now());
+                st.checked_at = None;
+                Action::RedialOnly
+            } else {
+                Action::Done(st.violation.clone())
+            }
+        };
+        let violation = match action {
+            Action::Done(v) => v,
+            Action::Refresh => self.refresh_audit_and_redial().await?.1,
+            Action::RedialOnly => {
+                if self.send_redial().await {
+                    let mut st = self.audit.lock().await;
+                    self.refresh_audit_once(&mut st).await?;
+                    st.violation.clone()
+                } else {
+                    self.audit.lock().await.violation.clone()
+                }
+            }
+        };
+        match violation {
+            Some(v) => Err(TransportError::Isolation(v)),
             None => Ok(()),
         }
     }
@@ -412,7 +487,9 @@ impl LogosRestTransport {
         if (200..300).contains(&r.status) {
             lock(&self.subscribed).insert(topic.clone());
             Ok(())
-        } else if r.status >= 500 {
+        } else if matches!(r.status, 408 | 429 | 500..=599)
+            || (r.status == 404 && String::from_utf8_lossy(&r.body).contains("while initializing"))
+        {
             Err(TransportError::Unavailable(format!(
                 "subscribe: node answered HTTP {}: {}",
                 r.status,
@@ -442,7 +519,7 @@ fn describe_reqwest_error(e: reqwest::Error) -> NetErr {
 #[async_trait]
 impl Transport for LogosRestTransport {
     async fn subscribe(&self, topic: &ContentTopic) -> Result<(), TransportError> {
-        self.ensure_audit().await?;
+        self.audit().await?;
         self.post_subscribe(topic).await
     }
 
@@ -503,13 +580,20 @@ impl Transport for LogosRestTransport {
             Err(r) => r,
         };
         match r.status {
-            404 => {
-                // The node lost its subscriptions (restart): re-subscribe once.
+            404 if known => {
+                // The node lost its subscriptions (restart): re-audit and re-subscribe once.
+                self.audit().await?;
                 self.post_subscribe(topic).await?;
                 self.counters.resubscribes.fetch_add(1, Ordering::Relaxed);
                 Ok(Vec::new())
             }
-            s if s >= 500 => Err(TransportError::Unavailable(format!(
+            404 if String::from_utf8_lossy(&r.body).contains("while initializing") => {
+                Err(TransportError::Unavailable(format!(
+                    "poll: node is still initializing (HTTP 404): {}",
+                    snippet(&r.body)
+                )))
+            }
+            s if matches!(s, 408 | 429 | 500..=599) => Err(TransportError::Unavailable(format!(
                 "poll: node answered HTTP {s}: {}",
                 snippet(&r.body)
             ))),
@@ -536,7 +620,7 @@ impl Transport for LogosRestTransport {
                 "history limit must be positive".into(),
             ));
         }
-        self.ensure_audit().await.map_err(|e| match e {
+        self.audit().await.map_err(|e| match e {
             TransportError::Unavailable(m) => TransportError::HistoryUnavailable(m),
             other => other,
         })?;
@@ -593,31 +677,39 @@ impl Transport for LogosRestTransport {
     }
 
     async fn status(&self) -> TransportStatus {
-        let health_ok = matches!(
-            self.call(Method::GET, "/health", None).await,
+        let health_ok = match self.call(Method::GET, "/health", None).await {
             Ok(Resp {
                 status: 200..=299,
-                ..
-            })
-        );
+                body,
+            }) => {
+                // If `/health` returns a JSON object with `nodeHealth`, require
+                // `READY` (nwaku returns HTTP 200 while still `INITIALIZING`).
+                match serde_json::from_slice::<serde_json::Value>(&body) {
+                    Ok(v) => v
+                        .get("nodeHealth")
+                        .and_then(|s| s.as_str())
+                        .is_none_or(|s| s.eq_ignore_ascii_case("READY")),
+                    Err(_) => true,
+                }
+            }
+            _ => false,
+        };
         let private = self.cfg.audits_peers();
-        let (peers, violation, audit_err) = if private {
-            let mut st = self.audit.lock().await;
-            match self.refresh_audit(&mut st).await {
-                Ok(()) => (st.peers.clone(), st.violation.clone(), None),
-                Err(e) => (Vec::new(), None, Some(e)),
+        let (peers_opt, violation, audit_err) = if private {
+            match self.refresh_audit_and_redial().await {
+                Ok((peers, violation)) => (Some(peers), violation, None),
+                Err(e) => (None, None, Some(e)),
             }
         } else {
-            match self.fetch_audit_public().await {
-                Some(p) => (p, None, None),
-                None => (Vec::new(), None, None),
-            }
+            (self.fetch_audit_public().await, None, None)
         };
+        let peers_known = peers_opt.is_some();
+        let peers = peers_opt.unwrap_or_default();
         let connected_allowed = peers.iter().filter(|p| p.connected && p.allowed).count();
         let ready = health_ok
             && violation.is_none()
             && audit_err.is_none()
-            && if private || !peers.is_empty() {
+            && if private || peers_known {
                 connected_allowed >= 1
             } else {
                 true

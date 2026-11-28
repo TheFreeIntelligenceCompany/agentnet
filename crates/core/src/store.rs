@@ -19,7 +19,7 @@ use rusqlite::{Connection, OptionalExtension, Transaction, TransactionBehavior};
 use crate::api::ApiError;
 
 /// Current schema version (`PRAGMA user_version`).
-pub const SCHEMA_VERSION: i64 = 6;
+pub const SCHEMA_VERSION: i64 = 7;
 
 /// Failure of a store operation. `Display` never contains row contents.
 #[derive(Debug, thiserror::Error)]
@@ -226,6 +226,14 @@ const SCHEMA_V6: &str = "
 ALTER TABLE outbox ADD COLUMN kem_until INTEGER;
 ";
 
+/// v6 -> v7: partial indexes to avoid full-table scans on re-ack dedupe,
+/// recipient outbox re-sealing/revocation, and active trigger evaluation.
+const SCHEMA_V7: &str = "
+CREATE INDEX IF NOT EXISTS outbox_ack_corr ON outbox (recipient, correlation_id) WHERE is_ack = 1;
+CREATE INDEX IF NOT EXISTS outbox_rcpt_pending ON outbox (recipient) WHERE state IN ('queued','sent');
+CREATE INDEX IF NOT EXISTS triggers_active ON triggers (expires_at) WHERE state = 'active';
+";
+
 /// The SQLite store.
 pub struct Store {
     conn: Mutex<Option<Connection>>,
@@ -284,6 +292,12 @@ impl Store {
             let tx = conn.transaction()?;
             tx.execute_batch(SCHEMA_V6)?;
             tx.pragma_update(None, "user_version", 6)?;
+            tx.commit()?;
+        }
+        if v < 7 {
+            let tx = conn.transaction()?;
+            tx.execute_batch(SCHEMA_V7)?;
+            tx.pragma_update(None, "user_version", 7)?;
             tx.commit()?;
         }
         Ok(Self {

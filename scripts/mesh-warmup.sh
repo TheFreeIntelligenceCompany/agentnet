@@ -16,6 +16,10 @@ for t in $(seq 1 "$TRIALS"); do
   R1_PEER_ID="$(grep '^R1_PEER_ID=' "$ROOT/spike/relay/.env" | cut -d= -f2)"
   n=0
   until ok $NA && ok $NB; do
+    if [ "$n" -ge 360 ]; then
+      echo "client nodes did not connect to R1 within 180 s" >&2
+      exit 1
+    fi
     if [ $((n % 20)) = 19 ]; then
       for u in $NA $NB; do ok $u || curl -s -m 10 -X POST -H 'content-type: application/json' \
         -d "[\"/ip4/172.28.66.10/tcp/60000/p2p/$R1_PEER_ID\"]" $u/admin/v1/peers >/dev/null || true; done
@@ -24,8 +28,8 @@ for t in $(seq 1 "$TRIALS"); do
   done
   t0=$(now); first=null
   while :; do
-    r=$(python3 "$ROOT/scripts/relay-live-probe.py" 2 "$NA" "$NB")
-    if [ "$(echo "$r" | jq .na_to_nb_ms)" != null ]; then first=$(perl -e "printf '%.1f', $(now) - $t0"); break; fi
+    r=$(python3 "$ROOT/scripts/relay-live-probe.py" 2 "$NA" "$NB" 2>/dev/null || echo '{"na_to_nb_ms":null}')
+    if [ "$(echo "$r" | jq .na_to_nb_ms 2>/dev/null || echo null)" != null ]; then first=$(perl -e "printf '%.1f', $(now) - $t0"); break; fi
     [ "$(perl -e "print $(now) - $t0 > 300 ? 1 : 0")" = 1 ] && break
   done
   echo "{\"trial\":$t,\"seconds_from_connected_to_first_live_frame\":$first}"

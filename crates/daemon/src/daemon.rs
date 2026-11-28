@@ -121,11 +121,14 @@ fn prepare_socket(path: &Path) -> Result<UnixListener, DaemonError> {
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
         Err(e) => return Err(DaemonError::io(format!("checking {}", path.display()), e)),
     }
-    // Bind under a temporary name, restrict it, then rename it into place, so
-    // that `agentnet.sock` never exists with the umask-derived mode.
-    let mut tmp = path.as_os_str().to_owned();
-    tmp.push(format!(".{}.tmp", std::process::id()));
-    let tmp = PathBuf::from(tmp);
+    // Bind under a short sibling temporary name (shorter than `agentnet.sock`
+    // so paths near `MAX_SOCKET_PATH` never overflow `sun_path`), restrict it,
+    // then rename it into place so `agentnet.sock` never exists with the
+    // umask-derived mode. Safe without a PID suffix because we hold `DataDirLock`.
+    let tmp = path
+        .parent()
+        .map(|p| p.join(".s.tmp"))
+        .unwrap_or_else(|| PathBuf::from(".s.tmp"));
     let _ = std::fs::remove_file(&tmp);
     let listener = UnixListener::bind(&tmp)
         .map_err(|e| DaemonError::io(format!("binding {}", tmp.display()), e))?;
@@ -193,7 +196,6 @@ async fn start_locked(
     } else {
         None
     };
-    let listener = prepare_socket(&dir.socket())?;
     let mut http = None;
     if config.mcp_http.enabled {
         let addr: SocketAddr = config
@@ -210,6 +212,7 @@ async fn start_locked(
             .map_err(|e| DaemonError::io("mcp_http local_addr", e))?;
         http = Some((l, local, bearer));
     }
+    let listener = prepare_socket(&dir.socket())?;
 
     let stop = CancellationToken::new();
     let node_cancel = CancellationToken::new();
@@ -339,20 +342,24 @@ impl RunningDaemon {
     /// Bounded by [`SHUTDOWN_TIMEOUT`]; stragglers are aborted.
     pub async fn shutdown(mut self) {
         self.stop.cancel();
-        let deadline = tokio::time::Instant::now() + SHUTDOWN_TIMEOUT;
-        for t in std::mem::take(&mut self.tasks) {
-            let abort = t.abort_handle();
-            if tokio::time::timeout_at(deadline, t).await.is_err() {
+        let half = SHUTDOWN_TIMEOUT / 2;
+        let tasks_deadline = tokio::time::Instant::now() + half;
+        for mut t in std::mem::take(&mut self.tasks) {
+            if tokio::time::timeout_at(tasks_deadline, &mut t)
+                .await
+                .is_err()
+            {
                 tracing::warn!("a daemon task did not stop in time; aborting it");
-                abort.abort();
+                t.abort();
+                let _ = tokio::time::timeout(Duration::from_millis(200), t).await;
             }
         }
         self.node_cancel.cancel();
-        if let Some(t) = self.node_task.take() {
-            let abort = t.abort_handle();
-            if tokio::time::timeout_at(deadline, t).await.is_err() {
+        if let Some(mut t) = self.node_task.take() {
+            if tokio::time::timeout(half, &mut t).await.is_err() {
                 tracing::warn!("the engine did not stop in time; aborting it");
-                abort.abort();
+                t.abort();
+                let _ = tokio::time::timeout(Duration::from_millis(200), t).await;
             }
         }
         self.node.close();

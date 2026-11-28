@@ -209,7 +209,8 @@ pub fn random_bytes(n: usize) -> Result<Vec<u8>, DaemonError> {
     Ok(v)
 }
 
-/// Create `path` with mode 0600, failing if it already exists.
+/// Create `path` with mode 0600, failing if it already exists. Removes a
+/// partially written file if writing or syncing fails.
 pub fn create_secret_file(path: &Path, contents: &[u8]) -> Result<(), DaemonError> {
     let mut f = OpenOptions::new()
         .write(true)
@@ -217,9 +218,12 @@ pub fn create_secret_file(path: &Path, contents: &[u8]) -> Result<(), DaemonErro
         .mode(0o600)
         .open(path)
         .map_err(|e| DaemonError::io(format!("creating {}", path.display()), e))?;
-    f.write_all(contents)
-        .and_then(|()| f.sync_all())
-        .map_err(|e| DaemonError::io(format!("writing {}", path.display()), e))
+    if let Err(e) = f.write_all(contents).and_then(|()| f.sync_all()) {
+        drop(f);
+        let _ = std::fs::remove_file(path);
+        return Err(DaemonError::io(format!("writing {}", path.display()), e));
+    }
+    Ok(())
 }
 
 /// Read a small secret file. Refuses non-regular files, files readable by
@@ -252,6 +256,12 @@ pub fn read_secret_file(path: &Path) -> Result<Vec<u8>, DaemonError> {
         .take(MAX_SECRET_FILE + 1)
         .read_to_end(&mut buf)
         .map_err(io)?;
+    if buf.len() as u64 > MAX_SECRET_FILE {
+        return Err(DaemonError::DataDir(format!(
+            "{} is too large",
+            path.display()
+        )));
+    }
     Ok(buf)
 }
 

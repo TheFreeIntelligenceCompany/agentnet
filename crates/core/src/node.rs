@@ -411,18 +411,22 @@ impl Node {
             let state = if clear {
                 guard::delete_guard(tx)?;
                 None
-            } else if let Some(g) = existing {
-                Some(g)
             } else if let Some(r) = reason {
+                // A newly detected rollback/unknown-history/import must always
+                // establish a fresh guard starting at `now` (taking precedence
+                // over any stale guard row restored from an older DB snapshot).
+                let until = now
+                    .saturating_add(guard_ttl_ms)
+                    .max(existing.as_ref().map_or(0, |g| g.until));
                 let g = GuardState {
                     reason: r.to_owned(),
                     since: now,
-                    until: now.saturating_add(guard_ttl_ms),
+                    until,
                 };
                 guard::save_guard(tx, &g)?;
                 Some(g)
             } else {
-                None
+                existing
             };
             Ok((
                 state,
@@ -473,11 +477,17 @@ impl Node {
         Some(g)
     }
 
-    /// Drop the guard and release (or discard, when expired) held messages.
+    /// Drop the guard and release (or discard, when expired) held messages
+    /// atomically in one transaction (avoiding any window where an inbound
+    /// frame can be inserted as `replay_guard` after the guard is cleared).
     pub(crate) fn clear_guard(&self) -> Result<(), StoreError> {
-        self.store.tx(|tx| guard::delete_guard(tx))?;
+        let now = self.now();
+        let (released, convs) = self.store.tx(|tx| {
+            guard::delete_guard(tx)?;
+            self.release_held_in_tx(tx, now)
+        })?;
         *self.guard.lock().unwrap_or_else(|e| e.into_inner()) = None;
-        self.release_held(self.now())?;
+        self.finish_release_held(released, convs);
         self.metrics.inc("guard.cleared");
         Ok(())
     }
@@ -802,7 +812,7 @@ impl Node {
             .and_then(|s| s.parse().ok());
         let floor = now.saturating_sub(retention_ms);
         let start_ms = match wm {
-            Some(w) => w.saturating_sub(overlap_ms).max(floor),
+            Some(w) => w.min(now).saturating_sub(overlap_ms).max(floor),
             None => floor,
         };
         let start_ns = start_ms.saturating_mul(1_000_000);
@@ -932,11 +942,15 @@ impl Node {
                 [now.saturating_sub(skew_ms)],
             )?;
             pruned += tx.execute("DELETE FROM transport_seen WHERE first_seen < ?1", [ts_ttl])?;
-            pruned += tx.execute(
-                "DELETE FROM transport_seen WHERE transport_id NOT IN
-                 (SELECT transport_id FROM transport_seen ORDER BY first_seen DESC LIMIT ?1)",
-                [TRANSPORT_SEEN_CAP],
-            )?;
+            let ts_count: i64 =
+                tx.query_row("SELECT COUNT(*) FROM transport_seen", [], |r| r.get(0))?;
+            if ts_count > TRANSPORT_SEEN_CAP {
+                pruned += tx.execute(
+                    "DELETE FROM transport_seen WHERE transport_id IN
+                     (SELECT transport_id FROM transport_seen ORDER BY first_seen DESC LIMIT -1 OFFSET ?1)",
+                    [TRANSPORT_SEEN_CAP],
+                )?;
+            }
             pruned += tx.execute(
                 "DELETE FROM events WHERE (acked=1 AND timestamp < ?1) OR (acked=0 AND timestamp < ?2)",
                 [ev_ret, ev_max],
@@ -1017,9 +1031,12 @@ impl Node {
                     _ = shutdown.cancelled() => return,
                     _ = tick.tick() => {}
                 }
-                let frames = match self.poll_frames().await {
-                    Ok(f) => f,
-                    Err(_) => continue,
+                let frames = tokio::select! {
+                    _ = shutdown.cancelled() => return,
+                    res = self.poll_frames() => match res {
+                        Ok(f) => f,
+                        Err(_) => continue,
+                    },
                 };
                 for f in frames {
                     tokio::select! {

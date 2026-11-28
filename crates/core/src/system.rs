@@ -395,7 +395,35 @@ impl Node {
                     )?;
                     n += 1;
                 }
-                Err(_) => self.metrics.inc("reseal.failed"),
+                Err(e) => {
+                    self.metrics.inc("reseal.failed");
+                    // Never keep re-publishing a frame sealed to a revoked or
+                    // otherwise unusable encryption subkey when re-sealing
+                    // fails permanently.
+                    let fail_reason = match e {
+                        crate::error::SealError::RecipientKemExpired => {
+                            Some("the recipient has no usable encryption subkey after key update")
+                        }
+                        crate::error::SealError::RecipientExpired => {
+                            Some("the recipient certificate has expired")
+                        }
+                        crate::error::SealError::RecipientRevoked => {
+                            Some("recipient identity revoked")
+                        }
+                        crate::error::SealError::TooLarge { .. } => {
+                            Some("message no longer fits in one frame after key update")
+                        }
+                        _ => None,
+                    };
+                    if let Some(reason) = fail_reason {
+                        tx.execute(
+                            "UPDATE outbox SET state='failed', next_attempt_at=NULL, last_error=?2
+                             WHERE message_id = ?1 AND state IN ('queued','sent')",
+                            params![message_id, reason],
+                        )?;
+                        n += 1;
+                    }
+                }
             }
         }
         if n > 0 {
@@ -548,90 +576,126 @@ impl Node {
         if any == 0 {
             return Ok(());
         }
-        let (released, convs) = self.store.tx(|tx| {
-            type Q = (i64, String, String, String, Option<String>, Option<String>, String, i64, i64);
-            let rows: Vec<Q> = {
-                let mut st = tx.prepare(
-                    "SELECT seq, message_id, sender, type, conversation_id, correlation_id, body, created_at, expires_at
-                     FROM inbox WHERE hold_reason IS NOT NULL ORDER BY seq",
-                )?;
-                let it = st.query_map([], |r| {
-                    Ok((
-                        r.get(0)?,
-                        r.get(1)?,
-                        r.get(2)?,
-                        r.get(3)?,
-                        r.get(4)?,
-                        r.get(5)?,
-                        r.get(6)?,
-                        r.get(7)?,
-                        r.get(8)?,
-                    ))
-                })?;
-                it.collect::<Result<_, _>>()?
+        let (released, convs) = self.store.tx(|tx| self.release_held_in_tx(tx, now))?;
+        self.finish_release_held(released, convs);
+        Ok(())
+    }
+
+    pub(crate) fn release_held_in_tx(
+        &self,
+        tx: &Transaction<'_>,
+        now: i64,
+    ) -> Result<(usize, Vec<String>), StoreError> {
+        type Q = (
+            i64,
+            String,
+            String,
+            String,
+            Option<String>,
+            Option<String>,
+            String,
+            i64,
+            i64,
+        );
+        let rows: Vec<Q> = {
+            let mut st = tx.prepare(
+                "SELECT seq, message_id, sender, type, conversation_id, correlation_id, body, created_at, expires_at
+                 FROM inbox WHERE hold_reason IS NOT NULL ORDER BY seq",
+            )?;
+            let it = st.query_map([], |r| {
+                Ok((
+                    r.get(0)?,
+                    r.get(1)?,
+                    r.get(2)?,
+                    r.get(3)?,
+                    r.get(4)?,
+                    r.get(5)?,
+                    r.get(6)?,
+                    r.get(7)?,
+                    r.get(8)?,
+                ))
+            })?;
+            it.collect::<Result<_, _>>()?
+        };
+        let mut live_count: u64 = u64::try_from(tx.query_row(
+            "SELECT COUNT(*) FROM inbox WHERE quarantined = 0",
+            [],
+            |r| r.get::<_, i64>(0),
+        )?)
+        .unwrap_or(u64::MAX);
+        let mut released = 0usize;
+        let mut convs = Vec::new();
+        for (seq, message_id, sender, ty, conv, corr, body, created, expires) in rows {
+            if expires <= now {
+                tx.execute("DELETE FROM inbox WHERE seq = ?1", [seq])?;
+                continue;
+            }
+            let Ok(addr) = sender.parse::<Address>() else {
+                continue;
             };
-            let mut released = 0usize;
-            let mut convs = Vec::new();
-            for (seq, message_id, sender, ty, conv, corr, body, created, expires) in rows {
-                if expires <= now {
-                    tx.execute("DELETE FROM inbox WHERE seq = ?1", [seq])?;
-                    continue;
-                }
-                let Ok(addr) = sender.parse::<Address>() else {
-                    continue;
-                };
-                // Re-apply the sender's *current* standing, as ingest would for a
-                // new frame: the sender may have been blocked, revoked or
-                // distrusted while the message was held.
-                let trust = match self.load_contact(tx, &addr)? {
-                    Some(r) => r.trust,
-                    None if Self::is_revoked(tx, &addr)? => Trust::Blocked,
-                    None => Trust::Unknown,
-                };
-                let policy = self.config.policy.unknown_senders;
-                if trust == Trust::Blocked
-                    || (trust != Trust::Trusted && policy == UnknownSenders::Reject)
-                {
-                    tx.execute("DELETE FROM inbox WHERE seq = ?1", [seq])?;
-                    self.metrics.inc("guard.release_dropped");
-                    continue;
-                }
-                if trust != Trust::Trusted && policy == UnknownSenders::Quarantine {
-                    tx.execute(
-                        "UPDATE inbox SET hold_reason = NULL, sender_trust = ?2 WHERE seq = ?1",
-                        params![seq, trust_to_db(trust)],
-                    )?;
-                    self.metrics.inc("guard.release_quarantined");
-                    continue;
-                }
+            // Re-apply the sender's *current* standing, as ingest would for a
+            // new frame: the sender may have been blocked, revoked or
+            // distrusted while the message was held.
+            let trust = match self.load_contact(tx, &addr)? {
+                Some(r) => r.trust,
+                None if Self::is_revoked(tx, &addr)? => Trust::Blocked,
+                None => Trust::Unknown,
+            };
+            let policy = self.config.policy.unknown_senders;
+            if trust == Trust::Blocked
+                || (trust != Trust::Trusted && policy == UnknownSenders::Reject)
+            {
+                tx.execute("DELETE FROM inbox WHERE seq = ?1", [seq])?;
+                self.metrics.inc("guard.release_dropped");
+                continue;
+            }
+            if trust != Trust::Trusted && policy == UnknownSenders::Quarantine {
                 tx.execute(
-                    "UPDATE inbox SET quarantined = 0, hold_reason = NULL, sender_trust = ?2 WHERE seq = ?1",
+                    "UPDATE inbox SET hold_reason = NULL, sender_trust = ?2 WHERE seq = ?1",
                     params![seq, trust_to_db(trust)],
                 )?;
-                self.insert_event(tx, "message.received", &message_id, None, None, now)?;
-                let orig = Envelope {
-                    v: ENVELOPE_VERSION,
-                    message_id: message_id.clone(),
-                    sender: addr,
-                    recipient: self.own,
-                    message_type: ty,
-                    conversation_id: conv.clone(),
-                    correlation_id: corr,
-                    created_at: created,
-                    expires_at: expires,
-                    body,
-                };
-                if self.queue_ack(tx, &orig, now)? {
-                    tx.execute(
-                        "UPDATE seen SET last_reack_at = ?3 WHERE sender = ?1 AND message_id = ?2",
-                        params![sender, message_id, now],
-                    )?;
-                }
-                convs.extend(conv);
-                released += 1;
+                self.metrics.inc("guard.release_quarantined");
+                continue;
             }
-            Ok((released, convs))
-        })?;
+            if live_count >= self.config.storage.max_inbox_records {
+                tx.execute(
+                    "UPDATE inbox SET hold_reason = NULL, sender_trust = ?2 WHERE seq = ?1",
+                    params![seq, trust_to_db(trust)],
+                )?;
+                self.metrics.inc("inbox.full_refused");
+                continue;
+            }
+            tx.execute(
+                "UPDATE inbox SET quarantined = 0, hold_reason = NULL, sender_trust = ?2 WHERE seq = ?1",
+                params![seq, trust_to_db(trust)],
+            )?;
+            live_count = live_count.saturating_add(1);
+            self.insert_event(tx, "message.received", &message_id, None, None, now)?;
+            let orig = Envelope {
+                v: ENVELOPE_VERSION,
+                message_id: message_id.clone(),
+                sender: addr,
+                recipient: self.own,
+                message_type: ty,
+                conversation_id: conv.clone(),
+                correlation_id: corr,
+                created_at: created,
+                expires_at: expires,
+                body,
+            };
+            if self.queue_ack(tx, &orig, now)? {
+                tx.execute(
+                    "UPDATE seen SET last_reack_at = ?3 WHERE sender = ?1 AND message_id = ?2",
+                    params![sender, message_id, now],
+                )?;
+            }
+            convs.extend(conv);
+            released += 1;
+        }
+        Ok((released, convs))
+    }
+
+    pub(crate) fn finish_release_held(&self, released: usize, convs: Vec<String>) {
         if released > 0 {
             self.metrics.add("guard.released", released as u64);
             self.hint(ChangeHint::Inbox);
@@ -641,6 +705,5 @@ impl Node {
             }
             self.send_nudge.notify_one();
         }
-        Ok(())
     }
 }

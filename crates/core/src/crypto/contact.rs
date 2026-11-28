@@ -115,10 +115,9 @@ impl VerifiedContact {
     pub fn parse_and_verify(doc: &str, now_ms: i64) -> Result<Self, ContactError> {
         let c = Self::parse_and_verify_allow_expired(doc, now_ms)?;
         if c.revocation(now_ms).is_none() {
-            // a certificate made by a peer whose clock runs a little ahead is not "not yet valid"
-            let t = now_ms
-                .max(c.created_at.saturating_add(2_000))
-                .min(now_ms.saturating_add(MAX_CREATED_AT_FUTURE_MS));
+            // A certificate (or rotated subkey) made by a peer whose clock runs
+            // a little ahead is not "not yet valid".
+            let t = pgp::skew_eval_time(&c.cert, now_ms, MAX_CREATED_AT_FUTURE_MS);
             pgp::check_primary_usable(&c.cert, t)?;
             if !pgp::has_live_kem(&c.cert, t) {
                 return Err(ContactError::NoEncryptionKey);
@@ -137,16 +136,21 @@ impl VerifiedContact {
     }
 
     pub(crate) fn from_cert(cert: Cert, now_ms: i64) -> Result<Self, ContactError> {
-        let cert = pgp::normalize(cert, now_ms.saturating_add(MAX_CREATED_AT_FUTURE_MS))?;
+        let cert = pgp::normalize_at(
+            cert,
+            now_ms.saturating_add(MAX_CREATED_AT_FUTURE_MS),
+            now_ms,
+        )?;
         let address = pgp::cert_address(&cert)?;
         let bin = cert
             .to_vec()
             .map_err(|_| ContactError::Malformed("serialization"))?;
         let created_at = pgp::ms_of(cert.primary_key().key().creation_time());
+        let eval_t = pgp::skew_eval_time(&cert, now_ms, MAX_CREATED_AT_FUTURE_MS);
         Ok(Self {
             address,
             created_at,
-            kem_expires_at: pgp::kem_expiry_ms(&cert, now_ms),
+            kem_expires_at: pgp::kem_expiry_ms(&cert, eval_t),
             cert,
             document: B64.encode(bin),
         })
@@ -157,10 +161,11 @@ impl VerifiedContact {
     /// a different primary key is refused with [`ContactError::PrimaryMismatch`],
     /// and invalid or unbound subkeys do not survive.
     pub fn merge(&self, incoming: &VerifiedContact, now_ms: i64) -> Result<Self, ContactError> {
-        let merged = pgp::merge(
+        let merged = pgp::merge_at(
             &self.cert,
             &incoming.cert,
             now_ms.saturating_add(MAX_CREATED_AT_FUTURE_MS),
+            now_ms,
         )?;
         Self::from_cert(merged, now_ms)
     }

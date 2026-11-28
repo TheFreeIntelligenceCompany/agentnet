@@ -148,12 +148,27 @@ impl RawConn {
         let id = self.next_id;
         self.next_id += 1;
         let line = json!({"id": id, "method": method, "params": params}).to_string();
-        self.wr
-            .write_all(format!("{line}\n").as_bytes())
-            .await
-            .map_err(|_| lost())?;
+        if line.len() > crate::proto::MAX_REQUEST_LINE {
+            return Err(ApiError::new(
+                agentnet_core::api::ErrorCode::TooLarge,
+                "request exceeds maximum control-socket line length",
+            ));
+        }
+        timeout(
+            REQUEST_TIMEOUT,
+            self.wr.write_all(format!("{line}\n").as_bytes()),
+        )
+        .await
+        .map_err(|_| ApiError::unavailable("timed out writing request to the AgentNet daemon"))?
+        .map_err(|_| lost())?;
+        let deadline = tokio::time::Instant::now() + REQUEST_TIMEOUT;
         loop {
-            let Some(v) = self.recv_wire().await? else {
+            let Some(v) = tokio::time::timeout_at(deadline, self.recv_wire())
+                .await
+                .map_err(|_| {
+                    ApiError::unavailable("the AgentNet daemon did not answer in time")
+                })??
+            else {
                 return Err(lost());
             };
             if v.get("id") == Some(&json!(id)) {
@@ -161,6 +176,11 @@ impl RawConn {
             }
             if v.get("id").is_some_and(Value::is_null) && v.get("error").is_some() {
                 return response_to_result(v);
+            }
+            if self.side.len() >= 10_000 {
+                return Err(ApiError::internal(
+                    "too many unsolicited daemon frames buffered while awaiting reply",
+                ));
             }
             self.side.push_back(v);
         }
@@ -179,19 +199,25 @@ fn response_to_result(mut v: Value) -> ApiResult<Value> {
 // --------------------------------------------------------------------------
 // multiplexed request connection
 
-type Pending = Arc<StdMutex<HashMap<u64, oneshot::Sender<ApiResult<Value>>>>>;
+struct PendingState {
+    alive: bool,
+    waiters: HashMap<u64, oneshot::Sender<ApiResult<Value>>>,
+}
+
+type Pending = Arc<StdMutex<PendingState>>;
 
 struct Conn {
-    writer: Mutex<OwnedWriteHalf>,
+    write_tx: tokio::sync::mpsc::Sender<(u64, String)>,
     pending: Pending,
     next_id: AtomicU64,
-    alive: Arc<AtomicBool>,
     reader: JoinHandle<()>,
+    writer: JoinHandle<()>,
 }
 
 impl Drop for Conn {
     fn drop(&mut self) {
         self.reader.abort();
+        self.writer.abort();
     }
 }
 
@@ -203,70 +229,108 @@ enum ReqErr {
 
 impl Conn {
     fn new(raw: RawConn) -> Self {
-        let RawConn { rd, wr, .. } = raw;
-        let pending: Pending = Arc::default();
-        let alive = Arc::new(AtomicBool::new(true));
-        let (p, a) = (pending.clone(), alive.clone());
+        let RawConn { rd, mut wr, .. } = raw;
+        let pending: Pending = Arc::new(StdMutex::new(PendingState {
+            alive: true,
+            waiters: HashMap::new(),
+        }));
+        let (write_tx, mut write_rx) = tokio::sync::mpsc::channel::<(u64, String)>(64);
+        let p_wr = pending.clone();
+        let writer = tokio::spawn(async move {
+            while let Some((id, line)) = write_rx.recv().await {
+                let ok = matches!(
+                    timeout(REQUEST_TIMEOUT, wr.write_all(line.as_bytes())).await,
+                    Ok(Ok(()))
+                );
+                if !ok {
+                    let drained: Vec<_> = {
+                        let mut st = p_wr.lock().unwrap_or_else(|e| e.into_inner());
+                        st.alive = false;
+                        st.waiters.remove(&id);
+                        st.waiters.drain().map(|(_, tx)| tx).collect()
+                    };
+                    for tx in drained {
+                        let _ = tx.send(Err(lost()));
+                    }
+                    break;
+                }
+            }
+        });
+        let p = pending.clone();
         let reader = tokio::spawn(async move {
             let mut rd = rd;
+            let mut fatal_err: Option<ApiError> = None;
             loop {
                 let line = read_line(&mut rd, MAX_RESPONSE_LINE).await;
                 let Ok(Line::Line(b)) = line else { break };
                 let Ok(v) = serde_json::from_slice::<Value>(&b) else {
                     break;
                 };
+                if v.get("id").is_some_and(Value::is_null) && v.get("error").is_some() {
+                    if let Err(e) = response_to_result(v) {
+                        fatal_err = Some(e);
+                    }
+                    break;
+                }
                 let Some(id) = v.get("id").and_then(Value::as_u64) else {
                     continue;
                 };
-                let tx = p.lock().unwrap_or_else(|e| e.into_inner()).remove(&id);
+                let tx = p
+                    .lock()
+                    .unwrap_or_else(|e| e.into_inner())
+                    .waiters
+                    .remove(&id);
                 if let Some(tx) = tx {
                     let _ = tx.send(response_to_result(v));
                 }
             }
-            a.store(false, Ordering::SeqCst);
-            let drained: Vec<_> = p
-                .lock()
-                .unwrap_or_else(|e| e.into_inner())
-                .drain()
-                .map(|(_, tx)| tx)
-                .collect();
+            let drained: Vec<_> = {
+                let mut st = p.lock().unwrap_or_else(|e| e.into_inner());
+                st.alive = false;
+                st.waiters.drain().map(|(_, tx)| tx).collect()
+            };
             for tx in drained {
-                let _ = tx.send(Err(lost()));
+                let _ = tx.send(Err(fatal_err.clone().unwrap_or_else(lost)));
             }
         });
         Self {
-            writer: Mutex::new(wr),
+            write_tx,
             pending,
             next_id: AtomicU64::new(1),
-            alive,
             reader,
+            writer,
         }
     }
 
+    fn is_alive(&self) -> bool {
+        self.pending.lock().unwrap_or_else(|e| e.into_inner()).alive
+    }
+
     async fn request(&self, method: &str, params: Value, limit: Duration) -> Result<Value, ReqErr> {
-        if !self.alive.load(Ordering::SeqCst) {
-            return Err(ReqErr::NotSent);
-        }
         let id = self.next_id.fetch_add(1, Ordering::SeqCst);
-        let (tx, rx) = oneshot::channel();
-        self.pending
-            .lock()
-            .unwrap_or_else(|e| e.into_inner())
-            .insert(id, tx);
         let line = format!(
             "{}\n",
             json!({"id": id, "method": method, "params": params})
         );
-        let wrote = {
-            let mut w = self.writer.lock().await;
-            w.write_all(line.as_bytes()).await
-        };
-        if wrote.is_err() {
-            self.pending
-                .lock()
-                .unwrap_or_else(|e| e.into_inner())
-                .remove(&id);
-            self.alive.store(false, Ordering::SeqCst);
+        if line.len() > crate::proto::MAX_REQUEST_LINE + 1 {
+            return Err(ReqErr::Failed(ApiError::new(
+                agentnet_core::api::ErrorCode::TooLarge,
+                "request exceeds maximum control-socket line length",
+            )));
+        }
+        let (tx, rx) = oneshot::channel();
+        {
+            let mut st = self.pending.lock().unwrap_or_else(|e| e.into_inner());
+            if !st.alive {
+                return Err(ReqErr::NotSent);
+            }
+            st.waiters.insert(id, tx);
+        }
+        let sent = timeout(limit, self.write_tx.send((id, line))).await;
+        if !matches!(sent, Ok(Ok(()))) {
+            let mut st = self.pending.lock().unwrap_or_else(|e| e.into_inner());
+            st.waiters.remove(&id);
+            st.alive = false;
             return Err(ReqErr::NotSent);
         }
         match timeout(limit, rx).await {
@@ -276,6 +340,7 @@ impl Conn {
                 self.pending
                     .lock()
                     .unwrap_or_else(|e| e.into_inner())
+                    .waiters
                     .remove(&id);
                 Err(ReqErr::Failed(ApiError::unavailable(
                     "the AgentNet daemon did not answer in time",
@@ -347,7 +412,7 @@ impl RemoteAgent {
     async fn get_conn(&self) -> ApiResult<Arc<Conn>> {
         let mut g = self.inner.conn.lock().await;
         if let Some(c) = g.as_ref() {
-            if c.alive.load(Ordering::SeqCst) {
+            if c.is_alive() {
                 return Ok(c.clone());
             }
         }

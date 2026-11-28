@@ -153,6 +153,7 @@ fn healthy(req: &Req) -> Reply {
     match (req.method.as_str(), req.path.as_str()) {
         ("GET", "/admin/v1/peers") => ok(PEERS_OK),
         ("GET", "/health") => ok(r#"{"nodeHealth":"READY"}"#),
+        ("GET", p) if p.starts_with("/relay/v1/auto/messages/") => ok("[]"),
         ("POST", "/relay/v1/auto/subscriptions") => ok("OK"),
         ("POST", "/relay/v1/auto/messages") => ok("OK"),
         _ => status(404, ""),
@@ -1205,4 +1206,95 @@ async fn poll_truncated_tail_delivers_complete_frames_and_reports() {
     let frames = t.poll(&topic()).await.unwrap();
     assert_eq!(frames.len(), 3);
     assert_eq!(t.metrics().partial_polls, 1);
+}
+
+#[tokio::test]
+async fn redial_is_suppressed_during_isolation_violation() {
+    let stub = spawn_stub(|req| match (req.method.as_str(), req.path.as_str()) {
+        ("GET", "/admin/v1/peers") => ok(
+            r#"[{"multiaddr":"/ip4/8.8.8.8/tcp/60000/p2p/16Uiu2HAmStranger","shards":[0],"connected":"Connected"}]"#,
+        ),
+        ("POST", "/admin/v1/peers") => ok("OK"),
+        _ => ok("OK"),
+    })
+    .await;
+    let mut c = cfg(&stub.url);
+    c.static_peers = vec![format!("/ip4/172.28.66.10/tcp/60000/p2p/{RELAY}")];
+    let t = LogosRestTransport::new(c).unwrap();
+    assert!(matches!(t.audit().await, Err(TransportError::Isolation(_))));
+    assert_eq!(
+        t.metrics().redials,
+        0,
+        "must not dial private relays while a foreign peer is connected"
+    );
+}
+
+#[test]
+fn review_config_and_wire_hardening() {
+    // 1. Duration deserialization overflow returns error instead of panicking.
+    let overflow = r#"{"request_timeout":{"secs":18446744073709551615,"nanos":1000000000}}"#;
+    assert!(serde_json::from_str::<LogosRestConfig>(overflow).is_err());
+
+    // 2. Private peer multiaddr strict allowlist rejects /ipfs/, /sni/, port 0, trailing segs.
+    for bad in [
+        format!("/ip4/10.0.0.1/tcp/60000/ipfs/16Uiu2HAmEvil/p2p/{RELAY}"),
+        format!("/ip4/10.0.0.1/tcp/60000/sni/leak.example/tls/ws/p2p/{RELAY}"),
+        format!("/ip4/10.0.0.1/tcp/0/p2p/{RELAY}"),
+        format!("/ip4/10.0.0.1/tcp/60000/p2p/{RELAY}/extra"),
+    ] {
+        let mut c = cfg("http://127.0.0.1:8645");
+        c.store_peer = Some(bad.clone());
+        assert!(c.validate().is_err(), "store_peer should fail: {bad}");
+    }
+
+    // 3. Public mode without enforce_peer_allowlist rejects non-empty allowed_peer_ids.
+    let mut pub_cfg = LogosRestConfig {
+        mode: NetworkMode::Public,
+        allowed_peer_ids: vec![RELAY.into()],
+        enforce_peer_allowlist: false,
+        ..Default::default()
+    };
+    assert!(pub_cfg.validate().is_err());
+    pub_cfg.allowed_peer_ids.clear();
+    assert!(pub_cfg.validate().is_ok());
+
+    // 4. Runtime peer audit rejects /p2p-circuit and public IPs in private mode.
+    let raw = parse_peers(
+        format!(
+            r#"[{{"multiaddr":"/ip4/203.0.113.5/tcp/60000/p2p/{RELAY}","connected":"Connected"}}]"#
+        )
+        .as_bytes(),
+    )
+    .unwrap();
+    assert!(evaluate_peers(&raw, &[RELAY.into()], 0, true)
+        .violation
+        .is_some());
+    assert!(evaluate_peers(&raw, &[RELAY.into()], 0, false)
+        .violation
+        .is_none());
+
+    let circuit = parse_peers(
+        format!(
+            r#"[{{"multiaddr":"/ip4/10.0.0.1/tcp/60000/p2p/16Uiu2HAmOther/p2p-circuit/p2p/{RELAY}","connected":"Connected"}}]"#
+        )
+        .as_bytes(),
+    )
+    .unwrap();
+    assert!(evaluate_peers(&circuit, &[RELAY.into()], 0, false)
+        .violation
+        .is_some());
+
+    // 5. Non-200 Store response without `messages` maps to Status (retryable), not Malformed.
+    let e = parse_store_page(
+        br#"{"statusCode":503,"statusDesc":"busy"}"#,
+        &topic(),
+        "/waku/2/rs/66/0",
+        153_600,
+    )
+    .unwrap_err();
+    assert!(matches!(e, StoreParseError::Status(_)));
+
+    // 6. ContentTopic deserialization validates syntax and length.
+    assert!(serde_json::from_str::<ContentTopic>(r#""/../../bad?x=1""#).is_err());
+    assert!(ContentTopic::new(format!("/a/1/{}/proto", "x".repeat(300))).is_err());
 }

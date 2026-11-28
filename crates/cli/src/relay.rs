@@ -147,10 +147,12 @@ pub fn build(ip: &str, peer_id: &str, client_ip: &str) -> RelayConfig {
         }
         if !host_network {
             let list: Vec<String> = ports.iter().map(|p| format!("\"{p}\"")).collect();
-            s.push_str(&format!(
-                "    ports: [{}]   # REST: host loopback only (\"127.0.0.1:...\"); tcp/60000 binds all host interfaces, firewall it\n",
-                list.join(", ")
-            ));
+            let comment = if ports.iter().any(|p| p.contains("60000")) {
+                "REST: host loopback only (\"127.0.0.1:...\"); tcp/60000 binds all host interfaces, firewall it"
+            } else {
+                "REST: host loopback only (\"127.0.0.1:...\")"
+            };
+            s.push_str(&format!("    ports: [{}]   # {comment}\n", list.join(", ")));
         }
         s.push_str(&format!("    volumes: [\"{name}data:/data\"]\n"));
         s.push_str(&format!("volumes:\n  {name}data: {{}}\n"));

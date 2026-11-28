@@ -56,6 +56,8 @@ pub const SESSION_PATTERN: &str = "^[!-~]{1,128}$";
 pub const TOPIC_PATTERN: &str = "^[a-z0-9-]{1,32}$";
 /// JSON Schema `pattern` for capability names.
 pub const CAPABILITY_NAME_PATTERN: &str = "^[a-z0-9._-]{1,64}$";
+/// JSON Schema `pattern` for message types (`[A-Za-z0-9._-]{1,64}`).
+pub const MESSAGE_TYPE_PATTERN: &str = "^[A-Za-z0-9._-]{1,64}$";
 /// JSON Schema `pattern` for agent addresses (loose; the engine validates the checksum).
 pub const ADDRESS_PATTERN: &str = "^an2[a-z2-7]{1,125}$";
 

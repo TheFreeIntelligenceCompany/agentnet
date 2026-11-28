@@ -539,7 +539,7 @@ impl MockTransport {
 fn parse_cursor(c: &str) -> Option<(i64, [u8; 32])> {
     let (ts, id) = c.split_once(':')?;
     let ts: i64 = ts.parse().ok()?;
-    if id.len() != 64 || !id.is_ascii() {
+    if id.len() != 64 || !id.bytes().all(|b| b.is_ascii_hexdigit()) {
         return None;
     }
     let mut out = [0u8; 32];

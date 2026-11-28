@@ -37,7 +37,13 @@ fn de_duration<'de, D: Deserializer<'de>>(d: D) -> Result<Duration, D::Error> {
     }
     match Repr::deserialize(d)? {
         Repr::Secs(s) => Duration::try_from_secs_f64(s).map_err(serde::de::Error::custom),
-        Repr::Parts { secs, nanos } => Ok(Duration::new(secs, nanos)),
+        Repr::Parts { secs, nanos } => {
+            let extra = u64::from(nanos / 1_000_000_000);
+            let total_secs = secs
+                .checked_add(extra)
+                .ok_or_else(|| serde::de::Error::custom("duration overflow"))?;
+            Ok(Duration::new(total_secs, nanos % 1_000_000_000))
+        }
     }
 }
 
@@ -143,7 +149,7 @@ fn protocol(msg: impl Into<String>) -> TransportError {
     TransportError::Protocol(msg.into())
 }
 
-fn valid_peer_id(s: &str) -> bool {
+pub(crate) fn valid_peer_id(s: &str) -> bool {
     !s.is_empty() && s.len() <= 128 && s.bytes().all(|b| b.is_ascii_alphanumeric())
 }
 
@@ -159,39 +165,53 @@ pub(crate) fn peer_id_of_multiaddr(addr: &str) -> Option<&str> {
     last.filter(|s| valid_peer_id(s))
 }
 
+/// Peer address in private mode: strict allowlist grammar
+/// `/(ip4|ip6)/<private-ip>/tcp/<nonzero-port>[/tls][/ws|/wss]/p2p/<allowed-id>`.
+/// No DNS, no `/p2p-circuit`, no `/ipfs/` alias, no extra/trailing components.
 fn check_peer_addr_private(
     what: &str,
     addr: &str,
     allowed: &[String],
 ) -> Result<(), TransportError> {
     let iso = |m: &str| TransportError::Isolation(format!("{what} rejected in private mode: {m}"));
-    let mut segs = addr.split('/');
-    if segs.next() != Some("") {
+    let comps: Vec<&str> = addr.split('/').collect();
+    if comps.first() != Some(&"") || addr.len() > 512 {
         return Err(protocol(format!(
             "{what} must be a multiaddr starting with '/'"
         )));
     }
-    // Exactly one dialled address: no relay hops (`/p2p-circuit`), no second
-    // `/p2p/` or IP component, no DNS component.
-    let comps: Vec<&str> = addr.split('/').collect();
-    let count = |names: &[&str]| comps.iter().filter(|c| names.contains(c)).count();
-    if count(&["p2p-circuit", "dns", "dns4", "dns6", "dnsaddr"]) > 0
-        || count(&["p2p"]) != 1
-        || count(&["ip4", "ip6"]) != 1
-    {
-        return Err(iso(
-            "must be one literal IP address and one /p2p/ peer id (no relay hops or DNS)",
-        ));
-    }
-    let ok = match (segs.next(), segs.next()) {
+    let mut it = comps.into_iter().skip(1);
+    let host_ok = match (it.next(), it.next()) {
         (Some("ip4"), Some(a)) => a.parse::<Ipv4Addr>().map(is_private_ipv4).unwrap_or(false),
         (Some("ip6"), Some(a)) => a.parse::<Ipv6Addr>().map(is_private_ipv6).unwrap_or(false),
         _ => false,
     };
-    if !ok {
+    if !host_ok {
         return Err(iso("address must be a literal private IP"));
     }
-    match peer_id_of_multiaddr(addr) {
+    match (it.next(), it.next().map(str::parse::<u16>)) {
+        (Some("tcp"), Some(Ok(p))) if p != 0 => {}
+        _ => return Err(iso("a /tcp/<port> component must follow the IP")),
+    }
+    let mut next = it.next();
+    if next == Some("tls") {
+        next = it.next();
+        if next == Some("ws") {
+            next = it.next();
+        }
+    } else if matches!(next, Some("ws" | "wss")) {
+        next = it.next();
+    }
+    if next != Some("p2p") {
+        return Err(iso(
+            "must be one literal private IP, /tcp/<port> (optional /tls, /ws|/wss) and one /p2p/ peer id",
+        ));
+    }
+    let id = it.next().filter(|i| valid_peer_id(i));
+    if id.is_none() || it.next().is_some() {
+        return Err(iso("exactly one /p2p/<peerId> must end the address"));
+    }
+    match id {
         Some(id) if allowed.iter().any(|a| a == id) => Ok(()),
         _ => Err(iso("peer id missing or not in allowed_peer_ids")),
     }
@@ -402,6 +422,12 @@ impl LogosRestConfig {
                 }
             }
             NetworkMode::Public => {
+                if !self.allowed_peer_ids.is_empty() {
+                    return Err(protocol(
+                        "allowed_peer_ids is set in public mode without enforce_peer_allowlist = true; \
+                         set enforce_peer_allowlist = true to audit peers, or clear allowed_peer_ids",
+                    ));
+                }
                 if self.static_peers.iter().any(|p| !static_peer_shape_ok(p)) {
                     return Err(protocol(
                         "static_peers must be multiaddrs ending in /p2p/<id>",
@@ -430,8 +456,10 @@ impl LogosRestConfig {
         if self.request_timeout.is_zero() {
             return Err(protocol("request_timeout must be positive"));
         }
-        if self.max_message_bytes < 1024 {
-            return Err(protocol("max_message_bytes is implausibly small"));
+        if self.max_message_bytes < 1024 || self.max_message_bytes > 16 * 1024 * 1024 {
+            return Err(protocol(
+                "max_message_bytes must be between 1024 and 16777216",
+            ));
         }
         Ok(url)
     }

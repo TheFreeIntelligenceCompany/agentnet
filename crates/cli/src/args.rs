@@ -298,11 +298,11 @@ pub enum IdentityCmd {
     },
     /// Print the revocation document (the revoked certificate) of a revoked identity.
     ShowRevocation,
-    /// Migrate a data directory written by the retired HPKE + Ed25519 format (`an2`).
+    /// Migrate a data directory written by the retired HPKE + Ed25519 format (`an1`).
     ///
     /// Explicit and never automatic (`serve` refuses an old data directory and names
     /// this command). Generates a fresh OpenPGP identity (the old key is not reused;
-    /// an `an2` address cannot become an `an2` address), moves the old identity file
+    /// an `an1` address cannot become an `an2` address), moves the old identity file
     /// aside as `identity.json.legacy-v1`, keeps the inbox history and the dedupe state,
     /// lists every pending old-format outbound message and marks it failed (re-send it
     /// after adding the recipient's new certificate), and keeps old contacts as

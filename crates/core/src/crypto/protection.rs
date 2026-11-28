@@ -351,10 +351,13 @@ impl MessageProtection for OpenPgpProtection {
         }
         let env = w.into_envelope();
         env.validate().map_err(OpenError::InvalidField)?;
+        if env.created_at < 0 {
+            return Err(OpenError::InvalidField("created_at"));
+        }
         if env.expires_at <= env.created_at {
             return Err(OpenError::ExpiresBeforeCreated);
         }
-        if env.expires_at - env.created_at > limits.max_ttl_ms {
+        if env.expires_at.saturating_sub(env.created_at) > limits.max_ttl_ms {
             return Err(OpenError::TtlTooLong);
         }
         if env.created_at > now_ms.saturating_add(limits.clock_skew_ms) {

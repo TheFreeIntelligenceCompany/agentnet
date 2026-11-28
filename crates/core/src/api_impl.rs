@@ -509,7 +509,15 @@ impl AgentApi for Node {
             }
         }
         let addr = vc.address;
-        let mut resealed = 0usize;
+        enum AddTx {
+            RevokedUnknown {
+                outbox_changed: usize,
+            },
+            Ok {
+                info: ContactInfo,
+                outbox_changed: usize,
+            },
+        }
         let res = self.store.tx(|tx| {
             let revoked_in_doc = vc.revocation(now);
             if let Some((revoked_at, reason)) = revoked_in_doc {
@@ -519,18 +527,21 @@ impl AgentApi for Node {
                     .map_err(|_| ApiError::invalid("invalid revoked certificate"))?;
                 let _ = (revoked_at, reason);
                 let known = self.load_contact(tx, &addr)?.is_some();
-                self.apply_revocation(tx, &rev, "imported", now)?;
+                let (_, failed) = self.apply_revocation(tx, &rev, "imported", now)?;
                 if !known {
-                    return Err(ApiError::new(
-                        ErrorCode::Conflict,
-                        "this certificate's primary key is revoked; it cannot be added as a contact (the revocation was recorded)",
-                    )
-                    .into());
+                    // Return Ok so the transaction commits the revocation record
+                    // and advert purge before we report Conflict to the caller.
+                    return Ok(AddTx::RevokedUnknown {
+                        outbox_changed: failed,
+                    });
                 }
                 let row = self
                     .load_contact(tx, &addr)?
                     .ok_or(StoreError::Corrupt("contact vanished"))?;
-                return Ok(Self::contact_info(&row, true));
+                return Ok(AddTx::Ok {
+                    info: Self::contact_info(&row, true),
+                    outbox_changed: failed,
+                });
             }
             if Self::is_revoked(tx, &addr)? {
                 return Err(ApiError::new(
@@ -587,16 +598,17 @@ impl AgentApi for Node {
             };
             tx.execute(
                 "INSERT INTO contacts (address, document, alias, trust, added_at, updated_at)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?5)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6)
                  ON CONFLICT(address) DO UPDATE SET document = excluded.document,
                    alias = excluded.alias, trust = excluded.trust, updated_at = excluded.updated_at",
-                params![addr.to_string(), contact.document(), alias, trust_to_db(trust), added_at],
+                params![addr.to_string(), contact.document(), alias, trust_to_db(trust), added_at, now],
             )?;
             if trust == Trust::Blocked {
                 Self::purge_adverts(tx, &addr)?;
             }
             let row = crate::node::ContactRow { contact, trust, alias, added_at, revoked: false };
-            if updated {
+            let mut resealed = 0usize;
+            if updated && trust != Trust::Blocked {
                 // Pending messages survive the recipient's key rotation.
                 resealed = self.reseal_outbox(tx, &row, now)?;
             }
@@ -619,13 +631,32 @@ impl AgentApi for Node {
                      level (`agentnet contact trust {addr} trusted`) or add the certificate again with `--expect {addr}` / expected_address"
                 ));
             }
-            Ok(info)
+            Ok(AddTx::Ok {
+                info,
+                outbox_changed: resealed,
+            })
         });
-        if resealed > 0 {
-            self.hint(ChangeHint::Outbox);
-            self.send_nudge.notify_one();
+        match res.map_err(|e| e.to_api())? {
+            AddTx::RevokedUnknown { outbox_changed } => {
+                if outbox_changed > 0 {
+                    self.hint(ChangeHint::Outbox);
+                }
+                Err(ApiError::new(
+                    ErrorCode::Conflict,
+                    "this certificate's primary key is revoked; it cannot be added as a contact (the revocation was recorded)",
+                ))
+            }
+            AddTx::Ok {
+                info,
+                outbox_changed,
+            } => {
+                if outbox_changed > 0 {
+                    self.hint(ChangeHint::Outbox);
+                    self.send_nudge.notify_one();
+                }
+                Ok(info)
+            }
         }
-        res.map_err(|e| e.to_api())
     }
 
     async fn list_contacts(&self) -> ApiResult<Vec<ContactInfo>> {

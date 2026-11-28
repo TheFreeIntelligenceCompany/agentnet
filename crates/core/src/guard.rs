@@ -114,10 +114,15 @@ pub fn write_sidecar(path: &Path, s: &Sidecar) -> std::io::Result<()> {
         .file_name()
         .map(|n| n.to_string_lossy().into_owned())
         .unwrap_or_else(|| "generation".into());
-    let tmp = dir.join(format!(".{name}.tmp"));
-    {
+    let mut nonce = [0u8; 8];
+    getrandom::fill(&mut nonce).map_err(|_| std::io::Error::other("randomness failed"))?;
+    let tmp = dir.join(format!(
+        ".{name}.tmp-{}",
+        nonce.iter().map(|b| format!("{b:02x}")).collect::<String>()
+    ));
+    let res = (|| -> std::io::Result<()> {
         let mut opts = std::fs::OpenOptions::new();
-        opts.write(true).create(true).truncate(true);
+        opts.write(true).create_new(true);
         #[cfg(unix)]
         {
             use std::os::unix::fs::OpenOptionsExt;
@@ -126,8 +131,14 @@ pub fn write_sidecar(path: &Path, s: &Sidecar) -> std::io::Result<()> {
         let mut f = opts.open(&tmp)?;
         f.write_all(&body)?;
         f.sync_all()?;
+        drop(f);
+        std::fs::rename(&tmp, path)?;
+        Ok(())
+    })();
+    if res.is_err() {
+        let _ = std::fs::remove_file(&tmp);
     }
-    std::fs::rename(&tmp, path)?;
+    res?;
     #[cfg(unix)]
     if let Ok(d) = std::fs::File::open(&dir) {
         let _ = d.sync_all();
@@ -183,9 +194,12 @@ pub(crate) fn delete_guard(conn: &Connection) -> Result<(), StoreError> {
 }
 
 pub(crate) fn db_generation(conn: &Connection) -> Result<u64, StoreError> {
-    Ok(kv_get(conn, KV_GENERATION)?
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(0))
+    match kv_get(conn, KV_GENERATION)? {
+        None => Ok(0),
+        Some(s) => s
+            .parse()
+            .map_err(|_| StoreError::Corrupt("store generation")),
+    }
 }
 
 /// Increment the stored generation inside the caller's transaction.
@@ -289,6 +303,9 @@ pub fn accept_rollback(store_path: &Path) -> Result<bool, StoreError> {
         || report.rollback_suspected
         || report.unknown_history
         || matches!(&report.sidecar, SidecarState::Present(s) if s.guard.is_some());
+    if !needed {
+        return Ok(false);
+    }
     if !report.db_exists {
         // Nothing stored yet: only drop an `imported` marker.
         let sp = sidecar_path(store_path);
@@ -330,17 +347,20 @@ pub fn accept_rollback(store_path: &Path) -> Result<bool, StoreError> {
     Ok(needed)
 }
 
-/// Create the sidecar of a new data directory in guard mode (`identity import`
-/// without `--no-replay-guard`). Does nothing if a sidecar already exists.
+/// Create or update the sidecar of a data directory in guard mode (`identity import`
+/// without `--no-replay-guard`). Preserves an existing generation counter and
+/// leaves an existing guard marker intact.
 pub fn mark_imported(store_path: &Path) -> std::io::Result<()> {
     let sp = sidecar_path(store_path);
-    if sp.exists() {
-        return Ok(());
-    }
+    let generation = match read_sidecar(&sp) {
+        SidecarState::Present(s) if s.guard.is_some() => return Ok(()),
+        SidecarState::Present(s) => s.generation,
+        SidecarState::Missing | SidecarState::Unreadable => 0,
+    };
     write_sidecar(
         &sp,
         &Sidecar {
-            generation: 0,
+            generation,
             guard: Some(REASON_IMPORTED.to_owned()),
         },
     )

@@ -57,15 +57,21 @@ for run in $(seq 1 "$RUNS"); do
   [ "${COLD:-0}" = 1 ] && [ "$run" -gt 1 ] && recreate_clients
   # is live relay between the two client nodes working right now? (independent of AgentNet)
   if [ "${NOPROBE:-0}" = 1 ]; then echo null > "$R/live-probe-before.json"; else
-    python3 "$ROOT/scripts/relay-live-probe.py" 20 > "$R/live-probe-before.json" 2>&1 || true; fi
+    python3 "$ROOT/scripts/relay-live-probe.py" 20 > "$R/live-probe-before.json" 2>"$R/live-probe-before.stderr" || echo null > "$R/live-probe-before.json"; fi
   log "live relay probe before run $run: $(cat "$R/live-probe-before.json")"
   for x in a b; do
     url=$NA; [ $x = b ] && url=$NB
     "$BIN" --json --data-dir "$WORK/$x" init --node-url "$url" --peer "$R1_MADDR" > "$WORK/$x.init.json"
     jq -r .address "$WORK/$x.init.json" > "$WORK/$x.addr"
     if [ -n "${HIST_S:-}" ]; then
-      if grep -q '^\[delivery\]' "$WORK/$x/agentnet.toml"; then
+      if grep -q '^history_sync_interval_s *=' "$WORK/$x/agentnet.toml"; then
         sed -i.bak "s/^history_sync_interval_s *=.*/history_sync_interval_s = $HIST_S/" "$WORK/$x/agentnet.toml"
+        rm -f "$WORK/$x/agentnet.toml.bak"
+      elif grep -q '^\[delivery\]' "$WORK/$x/agentnet.toml"; then
+        sed -i.bak "/^\[delivery\]/a\\
+history_sync_interval_s = $HIST_S
+" "$WORK/$x/agentnet.toml"
+        rm -f "$WORK/$x/agentnet.toml.bak"
       else printf '\n[delivery]\nhistory_sync_interval_s = %s\n' "$HIST_S" >> "$WORK/$x/agentnet.toml"; fi
     fi
     "$BIN" --json --data-dir "$WORK/$x" identity show | jq -r .contact_record > "$WORK/$x.record"
@@ -74,7 +80,7 @@ for run in $(seq 1 "$RUNS"); do
     echo $! > "$WORK/$x.pid"
   done
   for x in a b; do
-    wait_for 120 bash -c "'$BIN' --json --data-dir '$WORK/$x' network status | jq -e '.network.ready==true'" || { log "daemon $x not ready"; exit 1; }
+    wait_for 120 bash -c '"$1" --json --data-dir "$2" network status | jq -e ".network.ready==true"' _ "$BIN" "$WORK/$x" || { log "daemon $x not ready"; exit 1; }
   done
   "$BIN" --data-dir "$WORK/a" contact add "@$WORK/b.record" --expect "$(cat "$WORK/b.addr")" --alias b >/dev/null
   "$BIN" --data-dir "$WORK/b" contact add "@$WORK/a.record" --expect "$(cat "$WORK/a.addr")" --alias a >/dev/null
@@ -82,7 +88,10 @@ for run in $(seq 1 "$RUNS"); do
   "$DRV" bench --a "$WORK/a" --b "$WORK/b" --a-addr "$(cat "$WORK/a.addr")" --b-addr "$(cat "$WORK/b.addr")" \
      --n "$N" --timeout "$TIMEOUT_S" --pace-ms "$PACE_MS" --out "$R/bench.json" > "$R/bench.stdout" 2> "$R/bench.stderr" || true
   for x in a b; do python3 "$ROOT/scripts/an-metrics.py" "$WORK/$x" metrics > "$R/metrics-$x.json" 2>/dev/null || true; done
-  jq -c '{run:'"$run"', probe:'"$(cat "$R/live-probe-before.json" 2>/dev/null || echo null)"', a_to_b:.a_to_b.latency_ms_send_to_delivered|{p50,p95,p99,max,samples}, b_to_a:.b_to_a.latency_ms_send_to_delivered|{p50,p95,p99,max,samples}}' "$R/bench.json" | tee -a "$OUT/summary.jsonl" >&2
+  probe_json="$(jq -c . "$R/live-probe-before.json" 2>/dev/null || echo null)"
+  jq -c --argjson run "$run" --argjson probe "$probe_json" \
+    '{run:$run, probe:$probe, a_to_b:.a_to_b.latency_ms_send_to_delivered|{p50,p95,p99,max,samples}, b_to_a:.b_to_a.latency_ms_send_to_delivered|{p50,p95,p99,max,samples}}' \
+    "$R/bench.json" | tee -a "$OUT/summary.jsonl" >&2
   for x in a b; do kill -TERM "$(cat "$WORK/$x.pid")" 2>/dev/null || true; done
   sleep 3
   for x in a b; do kill -KILL "$(cat "$WORK/$x.pid")" 2>/dev/null || true; done

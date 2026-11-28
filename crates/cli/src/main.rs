@@ -106,12 +106,15 @@ async fn main() {
     let cli = Cli::parse();
     init_tracing();
     let json = cli.json;
+    let is_mcp = matches!(cli.command, Command::Mcp { .. });
     let dir = cli.data_dir.clone().unwrap_or_else(default_data_dir);
     let code = match run(cli).await {
         Ok(code) => code,
         Err(mut e) => {
             e.message = render::present_error(&dir, &e.message);
-            if json {
+            // MCP stdio stdout carries protocol frames only; never print CLI
+            // error JSON to stdout even if global `--json` was passed.
+            if json && !is_mcp {
                 println!(
                     "{}",
                     json!({"error": {"code": e.kind, "message": e.message}})
@@ -140,28 +143,45 @@ fn emit<T: Serialize>(json: bool, v: &T, human: impl FnOnce(&T) -> String) {
     }
 }
 
+fn read_bounded_bytes(mut r: impl Read, max: u64, what: &str) -> CliResult<Vec<u8>> {
+    let mut buf = Vec::new();
+    (&mut r)
+        .take(max + 1)
+        .read_to_end(&mut buf)
+        .map_err(|e| CliError::other(format!("reading {what}: {e}")))?;
+    if buf.len() as u64 > max {
+        return Err(CliError::new(
+            exit::INVALID,
+            "invalid_argument",
+            format!("{what} is too large (max {max} bytes)"),
+        ));
+    }
+    Ok(buf)
+}
+
 fn read_text_arg(arg: &str, what: &str) -> CliResult<String> {
     const MAX: u64 = 1024 * 1024;
     if arg == "-" {
-        let mut s = String::new();
-        std::io::stdin()
-            .take(MAX)
-            .read_to_string(&mut s)
-            .map_err(|e| CliError::other(format!("reading {what} from stdin: {e}")))?;
-        return Ok(s);
-    }
-    if let Some(path) = arg.strip_prefix('@') {
-        let md =
-            std::fs::metadata(path).map_err(|e| CliError::other(format!("reading {path}: {e}")))?;
-        if md.len() > MAX {
-            return Err(CliError::new(
+        let buf = read_bounded_bytes(std::io::stdin(), MAX, &format!("{what} from stdin"))?;
+        return String::from_utf8(buf).map_err(|_| {
+            CliError::new(
                 exit::INVALID,
                 "invalid_argument",
-                format!("{path} is too large"),
-            ));
-        }
-        return std::fs::read_to_string(path)
-            .map_err(|e| CliError::other(format!("reading {path}: {e}")));
+                format!("{what} from stdin is not valid UTF-8"),
+            )
+        });
+    }
+    if let Some(path) = arg.strip_prefix('@') {
+        let f = std::fs::File::open(path)
+            .map_err(|e| CliError::other(format!("reading {path}: {e}")))?;
+        let buf = read_bounded_bytes(f, MAX, path)?;
+        return String::from_utf8(buf).map_err(|_| {
+            CliError::new(
+                exit::INVALID,
+                "invalid_argument",
+                format!("{path} is not valid UTF-8"),
+            )
+        });
     }
     Ok(arg.to_owned())
 }
@@ -301,8 +321,9 @@ async fn run(cli: Cli) -> CliResult<i32> {
                 no_replay_guard,
             } => {
                 let pass = passphrase(passphrase_file.as_deref(), false)?;
-                let bytes = std::fs::read(&input)
+                let f = std::fs::File::open(&input)
                     .map_err(|e| CliError::other(format!("reading {}: {e}", input.display())))?;
+                let bytes = read_bounded_bytes(f, 1024 * 1024, &input.display().to_string())?;
                 let rep = offline::import_identity(
                     &dir,
                     &bytes,
@@ -402,7 +423,7 @@ async fn run(cli: Cli) -> CliResult<i32> {
                                     c.address,
                                     c.alias
                                         .as_deref()
-                                        .map(|a| format!(" ({a})"))
+                                        .map(|a| format!(" ({})", render::clean(a)))
                                         .unwrap_or_default()
                                 ));
                             }

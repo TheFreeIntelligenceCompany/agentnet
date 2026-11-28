@@ -377,7 +377,7 @@ impl Node {
         let epoch = self.cert_id();
         let n = self.store.tx(|tx| {
             let mut n = 0usize;
-            for (name, _) in &self.disc_topics {
+            for (name, topic) in &self.disc_topics {
                 let Some(mut st) = load_own(tx, name)? else {
                     continue;
                 };
@@ -388,20 +388,42 @@ impl Node {
                     .seq
                     .checked_add(1)
                     .ok_or(StoreError::Corrupt("sequence number exhausted"))?;
-                let expires_at = self.clamp_to_kem(st.expires_at);
+                let expires_at =
+                    self.clamp_to_kem(st.expires_at.min(now.saturating_add(self.advert_limits.max_ttl_ms)));
                 if expires_at <= now {
                     continue;
                 }
-                let signed = self
-                    .sign_own(
-                        name,
-                        &st.capabilities,
-                        st.display_name.as_deref(),
-                        now,
-                        expires_at,
-                        seq,
-                    )
-                    .map_err(StoreError::Api)?;
+                let signed = match self.sign_own(
+                    name,
+                    &st.capabilities,
+                    st.display_name.as_deref(),
+                    now,
+                    expires_at,
+                    seq,
+                ) {
+                    Ok(s) => s,
+                    Err(e) => {
+                        tracing::warn!(
+                            topic = %name,
+                            error = %e.message,
+                            "could not reissue own advertisement after key change; pausing republication"
+                        );
+                        self.metrics.inc("advert.reissue_failed");
+                        st.next_publish_at = None;
+                        save_own(tx, name, &st)?;
+                        continue;
+                    }
+                };
+                if signed.to_frame().len() > self.transport.max_payload_len(topic) {
+                    tracing::warn!(
+                        topic = %name,
+                        "reissued advertisement exceeds transport payload limit; pausing republication"
+                    );
+                    self.metrics.inc("advert.reissue_failed");
+                    st.next_publish_at = None;
+                    save_own(tx, name, &st)?;
+                    continue;
+                }
                 st.seq = seq;
                 st.document = signed.to_document();
                 st.issued_at = now;
@@ -527,6 +549,13 @@ impl Node {
         } else {
             let n: i64 = tx.query_row("SELECT COUNT(*) FROM adverts", [], |r| r.get(0))?;
             if u64::try_from(n).unwrap_or(u64::MAX) >= self.config.discovery.max_records {
+                // Never let a brand-new withdrawal tombstone (no existing live
+                // record for this `(topic, address)`) evict a live advertisement;
+                // otherwise 500 stranger tombstones could black out discovery
+                // for `max_advert_ttl_s`.
+                if v.is_withdrawal() {
+                    return Ok(Stored::Full);
+                }
                 // Evict the soonest-expiring LIVE record, unless the newcomer
                 // would expire even sooner (then the newcomer is the one
                 // dropped). A withdrawal tombstone is never evicted before its
