@@ -91,6 +91,7 @@ impl Node {
             kem_expires_at: row.contact.kem_expires_at,
             updated,
             revoked: row.revoked,
+            trust_changed: false,
             warning: None,
         }
     }
@@ -474,7 +475,11 @@ impl AgentApi for Node {
     /// the user verified out of band: a new contact is then `untrusted` (with a
     /// warning), and asking for `trusted` is refused. If `trust` is absent a new
     /// contact is `trusted` with `expected_address` and an existing contact keeps
-    /// its current trust.
+    /// its current trust. Re-adding an existing `untrusted` contact with a matching
+    /// certificate and `expected_address` raises it to `trusted`
+    /// (`trust_changed`); `blocked` is never overridden (a warning says why) and
+    /// a revoked address is refused earlier. Without `expected_address` trust
+    /// never changes.
     async fn add_contact(&self, req: AddContactRequest) -> ApiResult<ContactInfo> {
         let now = self.now();
         let vc = VerifiedContact::parse_and_verify(&req.contact_record, now)
@@ -556,7 +561,14 @@ impl AgentApi for Node {
                     (
                         merged,
                         changed,
-                        req.trust.unwrap_or(o.trust),
+                        // Re-adding with the address verified out of band
+                        // raises untrusted to trusted; blocked stays blocked
+                        // and without `expected_address` trust never changes.
+                        req.trust.unwrap_or(if verified && o.trust == Trust::Untrusted {
+                            Trust::Trusted
+                        } else {
+                            o.trust
+                        }),
                         req.alias.clone().or_else(|| o.alias.clone()),
                         o.added_at,
                     )
@@ -589,6 +601,17 @@ impl AgentApi for Node {
                 resealed = self.reseal_outbox(tx, &row, now)?;
             }
             let mut info = Self::contact_info(&row, updated);
+            if let Some(o) = &old {
+                if o.trust != trust && trust == Trust::Trusted && verified && req.trust.is_none() {
+                    info.trust_changed = true;
+                }
+                if verified && req.trust.is_none() && o.trust == Trust::Blocked {
+                    info.warning = Some(format!(
+                        "{addr} is blocked, so --expect / expected_address did not raise its trust; \
+                         unblock it explicitly (`agentnet contact trust {addr} trusted`) if you mean to"
+                    ));
+                }
+            }
             if old.is_none() && !verified && trust == Trust::Untrusted {
                 info.warning = Some(format!(
                     "added as untrusted: the certificate was not bound to an address verified out of band. \
@@ -685,6 +708,20 @@ impl AgentApi for Node {
             ready: ts.ready,
             connected_peers: u32::try_from(ts.peers.iter().filter(|p| p.connected).count())
                 .unwrap_or(u32::MAX),
+            foreign_connected_peers: u32::try_from(
+                ts.peers
+                    .iter()
+                    .filter(|p| p.connected && !p.allowed)
+                    .count(),
+            )
+            .unwrap_or(u32::MAX),
+            foreign_known_peers: u32::try_from(
+                ts.peers
+                    .iter()
+                    .filter(|p| !p.connected && !p.allowed)
+                    .count(),
+            )
+            .unwrap_or(u32::MAX),
             isolation_violation: ts.isolation_violation,
             isolation_audited: self.config.isolation_audited,
             queue,

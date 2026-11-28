@@ -101,13 +101,18 @@ pub fn trust(t: Trust) -> &'static str {
 
 pub fn contact_line(c: &ContactInfo) -> String {
     format!(
-        "{} {}{}{}",
+        "{} {}{}{}{}",
         c.address,
         trust(c.trust),
         c.alias
             .as_deref()
             .map(|a| format!(" alias={}", clean(a)))
             .unwrap_or_default(),
+        if c.trust_changed {
+            "\ntrust changed: untrusted -> trusted (certificate matched the address you gave with --expect)"
+        } else {
+            ""
+        },
         c.warning
             .as_deref()
             .map(|w| format!("\nwarning: {}", clean(w)))
@@ -208,7 +213,7 @@ pub fn network(st: &NetworkStatus, daemon: Option<&Value>) -> String {
     match &st.isolation_violation {
         Some(v) => s.push_str(&format!("ISOLATION VIOLATION: {}\n", clean(v))),
         None if !st.isolation_audited => s.push_str("isolation: not audited (public mode)\n"),
-        None => s.push_str("isolation: ok\n"),
+        None => s.push_str("isolation: ok (peer allowlist audited)\n"),
     }
     let q = &st.queue;
     s.push_str(&format!(
@@ -379,13 +384,26 @@ mod tests {
     #[test]
     fn network_status_isolation_line_per_mode() {
         let audited_ok = network(&st(true, None), None);
-        assert!(audited_ok.contains("isolation: ok\n"), "{audited_ok}");
+        assert!(
+            audited_ok.contains("isolation: ok (peer allowlist audited)\n"),
+            "{audited_ok}"
+        );
         let plain_public = network(&st(false, None), None);
         assert!(
             plain_public.contains("isolation: not audited (public mode)\n"),
             "{plain_public}"
         );
         assert!(!plain_public.contains("isolation: ok"));
+        // audited public mode is distinguishable from plain public without --json
+        let mut audited_public = st(true, None);
+        audited_public.mode = "public".into();
+        let line = network(&audited_public, None);
+        assert!(line.contains("mode: public"), "{line}");
+        assert!(
+            line.contains("isolation: ok (peer allowlist audited)"),
+            "{line}"
+        );
+        assert!(!line.contains("not audited"));
         let violated = network(&st(true, Some("bad peer")), None);
         assert!(violated.contains("ISOLATION VIOLATION: bad peer"));
     }
