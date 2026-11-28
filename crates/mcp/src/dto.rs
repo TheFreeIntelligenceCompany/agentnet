@@ -586,6 +586,10 @@ pub struct ContactOutput {
     pub kem_expires_at: Option<i64>,
     /// True when merging the certificate changed the stored one.
     pub updated: bool,
+    /// True when this call raised an existing untrusted contact to trusted
+    /// (the certificate matched and `expected_address` was given).
+    #[serde(default)]
+    pub trust_changed: bool,
     /// Present when the contact was added without `expected_address`: it is
     /// `untrusted` until the user verifies the address out of band.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -602,6 +606,7 @@ impl From<core::ContactInfo> for ContactOutput {
             added_at: c.added_at,
             kem_expires_at: c.kem_expires_at,
             updated: c.updated,
+            trust_changed: c.trust_changed,
             warning: c.warning,
         }
     }

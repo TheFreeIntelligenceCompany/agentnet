@@ -1235,3 +1235,40 @@ fn init_public_relay_needs_a_peer_and_private_peers_stay_private() {
     assert_eq!(cfg.network.mode, agentnet_daemon::Mode::Private);
     assert!(!cfg.network.enforce_peer_allowlist);
 }
+
+#[tokio::test]
+async fn contact_add_again_with_expect_raises_an_untrusted_contact_and_says_so() {
+    let t = tempfile::tempdir().unwrap();
+    let (a, _addr_a) = init(t.path(), "a");
+    let (b, addr_b) = init(t.path(), "b");
+    let record_b = contact_record(&b);
+    let now_ns = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos() as i64;
+    let clock = MockClock::new(now_ns);
+    let net = MockNetwork::with_clock(clock.clone());
+    let cfg = DaemonConfig::load(&a.join("agentnet.toml")).unwrap();
+    let da = Daemon::start_with_transport(&a, cfg, Arc::new(net.endpoint()), Arc::new(clock))
+        .await
+        .unwrap();
+    let (a2, addr_b2) = (a.clone(), addr_b.clone());
+    let out = tokio::task::spawn_blocking(move || {
+        let fr = write_file(&a2, "peer.json", &record_b);
+        let at = format!("@{}", fr.display());
+        let first = json_ok(&a2, &["contact", "add", &at]);
+        let plain = json_ok(&a2, &["contact", "add", &at]);
+        let human = ok(&a2, &["contact", "add", &at, "--expect", &addr_b2]);
+        let list = json_ok(&a2, &["contact", "list"]);
+        (first, plain, human, list)
+    })
+    .await
+    .unwrap();
+    let (first, plain, human, list) = out;
+    assert_eq!(first["trust"], "untrusted");
+    assert_eq!(plain["trust"], "untrusted");
+    assert_eq!(plain["trust_changed"], false);
+    assert!(human.contains("trust changed"), "{human}");
+    assert_eq!(list[0]["trust"], "trusted");
+    da.shutdown().await;
+}

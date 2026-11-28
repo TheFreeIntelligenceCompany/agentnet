@@ -9,9 +9,15 @@ not tests of the real systems:
   DERP relays, no key distribution), **not NAT traversal**, and **not separate physical hosts**.
 * Experiment N uses iptables MASQUERADE in gateway containers. It is **not** the endpoint-independent mapping of real home routers or CGNAT,
   there is **no hole punching** (clients only dial the relay, so none is needed), and it is **not separate physical hosts**.
-* The goal.md rows "Cross-machine / NAT" (two actual separate hosts) and "Tailscale" (relay reachable by tailnet address) remain **UNTESTED**.
-  What these runs add is bounded evidence for the properties those rows rely on. Instructions for the real runs are in the last section,
-  clearly marked UNTESTED.
+* The simulations are not the real systems. Real two-host, tailnet and public-address runs exist separately (blocks below). Still **UNTESTED**: NAT hole
+  punching between clients (not part of the architecture: clients dial out), hosted-Tailscale ACL/grants syntax, key expiry and MagicDNS.
+  The last two sections are instructions for those remaining runs.
+
+> **Re-run on the OpenPGP tree (ADR 0004, 2026-11-27).** The runs dated 2026-11-26 below used the retired ADR 0002 scheme. On the final OpenPGP tree:
+> WireGuard 36 PASS, 0 FAIL, with and without the relay-side watchdog (`results/network-sim/wireguard/20261127T215251Z/`, watchdog off; `20261127T223230Z/`, watchdog on),
+> two further recovery runs (`20261127T230721Z/`, `20261127T231045Z/`), and NAT 15 PASS (`results/network-sim/nat/20261127T231408Z/`). Recovery times ranged from 5.4 s to 230 s;
+> the 230 s outlier was a slow WireGuard handshake, not diagnosed. Run `20261127T194713Z` had 3 failures that were a port collision between two concurrent tests on the same Mac
+> (its `LEAD-NOTE.md`: not a leak, not a product change); it is superseded by the two runs above. Still one host, qemu node images and a loaded machine: simulations, not real networks.
 
 Reproduce: `spike/relay-wireguard/run.sh` and `spike/relay-nat/run.sh` (READMEs next to them). Both need the release binaries
 (`cargo build --release --locked -p agentnet-cli -p agentnet-acceptance`, or `BIN_DIR=`). The binaries used for every run below were built
@@ -21,7 +27,9 @@ from a pristine `git archive HEAD` export (HEAD `1b77240`), independent of the w
 
 > **Real public-internet runs (2026-11-26):** a relay on its own public IPv4 behind a cloud firewall (`results/public-ip-relay/20261126T204713Z/`) and a relay behind a provider's public wss/TLS edge (`results/public-relay/20261126T203405Z/`), each with a Mac client behind a home NAT, single runs. Summary in `docs/spike-report.md` section 7 row 2a and `docs/relay-setup.md` ("Your own relay on a public address"). They do not test NAT hole punching between clients.
 >
-> **Real Tailscale run (2026-11-26):** `results/tailscale-cross-machine/20261126T192147Z/` repeated the path-loss experiment on two real hosts over a real tailnet (one trial): with a 120 s silent drop the client noticed after 47.4 s, the relay's half-open socket ended about 48 s into the drop with `tcp_retries2=6`, the client was Connected 3.5 s after the path returned and the queued message was delivered after 33.4 s. **A second, accidental 82 s block showed a case the setting does not fix:** the relay was left with an *idle* stale socket (nothing to retransmit, so `tcp_retries2` never applies), closed every new connection from the client, and the client could not reconnect for 7 min 25 s; the stale socket disappeared 8 min after the client closed (cause UNTESTED). No fix for the idle case has been tested.
+> **Real Tailscale run (2026-11-26):** `results/tailscale-cross-machine/20261126T192147Z/` repeated the path-loss experiment on two real hosts over a real tailnet (one trial): with a 120 s silent drop the client noticed after 47.4 s, the relay's half-open socket ended about 48 s into the drop with `tcp_retries2=6`, the client was Connected 3.5 s after the path returned and the queued message was delivered after 33.4 s. **A second, accidental 82 s block showed a case the setting does not fix:** the relay was left with an *idle* stale socket (nothing to retransmit, so `tcp_retries2` never applies), closed every new connection from the client, and the client could not reconnect for 7 min 25 s; the stale socket disappeared 8 min after the client closed (cause UNTESTED). The idle case was later reproduced on real hosts and the relay-side watchdog was tested once there; see the next block.
+
+> **Idle stale socket and the watchdog on real hosts (OpenPGP tree, 2026-11-27, one trial each):** `results/tailscale-cross-machine/20261127T215730Z/` reproduced an idle stale socket on the relay (2 of 4 trials designed for it): without the watchdog the client was locked out for 5 min 54 s after the path returned; with the patched watchdog (60 s idle threshold, pass every 10 s) the socket was destroyed after 68.5 s without data and the client was Connected 2 s after the path was restored. The repository `stale-watchdog.sh` first refused to start on that host (`ss -K` prints `RTNETLINK answers: Invalid argument` on stderr with exit 0; both runs' 2 FAIL checks), and has since been fixed. The mechanism of the idle socket is inferred, not proven; the watchdog beyond one real-host trial and its side effects on lossy healthy links are UNTESTED.
 
 ## Experiment W: relay reachable only over WireGuard
 
@@ -166,9 +174,9 @@ direction per run, 2 runs per experiment; REST between host and node is cleartex
 bridges from the VM netns (snaplen unlimited) and cannot see traffic that leaves the VM another way; the "0 packets outside" claims are about
 those bridges only.
 
-## What a real Tailscale run would need: UNTESTED
+## What a hosted-Tailscale ACL/grants run would still need: UNTESTED
 
-None of this was run. It needs a tailnet account, an auth key, and at least two machines (relay host + one client host; two client hosts for
+Real-host runs on a hosted tailnet (direct path, `results/tailscale-cross-machine/20261127T215730Z/`) and a Headscale tag-policy run (`results/tailnet-acl/20261127T215142Z/`) exist; the steps below were not run for hosted ACL/grants syntax, key expiry or MagicDNS. It needs a tailnet account, an auth key, and at least two machines (relay host + one client host; two client hosts for
 the full exchange).
 
 1. Tailnet policy file: tag owners and an ACL that admits only tagged clients to the relay port, nothing else.
@@ -198,9 +206,9 @@ the full exchange).
    (`tailscale status`, `tailscale ping`); key expiry and ACL change effects on a live connection should be tried (the removal test above is
    only an analogue).
 
-## What a real two-host run would need: UNTESTED
+## What a real-NAT two-host run would still need: UNTESTED
 
-Two (better three) physical or cloud hosts on different networks, the relay on a host with a reachable address (public IP or port-forward),
+SSH-tunnel, public-address and tailnet two-host runs exist (`results/cross-machine/20261127T215209Z/`, `results/public-ip-relay/20261127T215151Z/`, `results/public-relay/20261127T215957Z/`); a run with clients behind a NAT that the operator can reset and a mapping-loss test were not done. Two (better three) physical or cloud hosts on different networks, the relay on a host with a reachable address (public IP or port-forward),
 clients behind real NAT with no inbound port. Use the compose files of `spike/relay` (relay on one host with `--nat=extip:<public IP>`,
 `docker-compose.yml` ports `60000:60000` restricted by the host firewall to the client addresses; on each client host a client node with
 `--staticnode` = the relay's address) and the steps of `docs/acceptance.md`, recording: the topology and addresses, `ss -tn`/`tcpdump` on

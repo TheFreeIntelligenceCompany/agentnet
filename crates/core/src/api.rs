@@ -262,6 +262,10 @@ pub struct ContactInfo {
     /// cannot be re-trusted.
     #[serde(default)]
     pub revoked: bool,
+    /// True when this call raised an existing untrusted contact to trusted
+    /// because the certificate matched and `expected_address` was given.
+    #[serde(default)]
+    pub trust_changed: bool,
     /// Set when the contact was added without `expected_address`: it is
     /// untrusted until the user verifies the address out of band.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -308,6 +312,14 @@ pub struct NetworkStatus {
     pub mode: String,
     pub ready: bool,
     pub connected_peers: u32,
+    /// Connected peers outside the configured allowlist (an isolation
+    /// violation when the allowlist is audited).
+    #[serde(default)]
+    pub foreign_connected_peers: u32,
+    /// Peers outside the allowlist the node merely knows about without a live
+    /// connection (not a violation; clears when the node restarts).
+    #[serde(default)]
+    pub foreign_known_peers: u32,
     pub isolation_violation: Option<String>,
     /// Whether the node's peers are audited at all (private mode, or public
     /// mode with `enforce_peer_allowlist`). `false` means `isolation_violation`

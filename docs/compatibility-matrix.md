@@ -5,22 +5,30 @@ Status: written by a contributor after the Phase A spikes; verified only as far 
 
 Cell vocabulary: **OK** = run and the cited log shows success; **FAILED** = run and failed; **PARTIAL** = some of it ran; **UNTESTED** = not run.
 
-## 0. Current tree (OpenPGP, ADR 0004; local branch `adr-0004-openpgp`, commit `9a9af9d`, NOT published)
+## 0. Current tree (OpenPGP, ADR 0004; `main`, published)
 
-Message protection is RFC 9580 OpenPGP via `sequoia-openpgp` 2.5.0 with the OpenSSL 3 backend; the build needs OpenSSL 3 development files, `pkg-config` and clang/libclang. The public repository is still at the pre-cutover commit. **Every cell in section 1 and the other sections below that cites an older commit, GitHub Actions run or test count describes the retired ADR 0002 (HPKE + Ed25519) tree**; the rows here are the current status.
+Message protection is RFC 9580 OpenPGP via `sequoia-openpgp` 2.5.0 with the OpenSSL 3 backend; the build needs OpenSSL 3 development files, `pkg-config` and clang/libclang. **Every cell in section 1 and the other sections below that cites an older commit, GitHub Actions run, test count or `results/` directory dated before 20261127 describes the retired ADR 0002 (HPKE + Ed25519) tree**; the rows here are the current status. Real-host rows are single runs; the Mac that ran the client side was under other load, so latencies are not clean.
 
 | Platform | Result on the OpenPGP tree | Evidence |
 |---|---|---|
-| macOS arm64 (rustc 1.92, Homebrew OpenSSL 3) | **OK**: fmt, clippy, 436 tests passed, 0 failed, 7 relay-gated ignored | `results/final/host-checks-adr0004.txt` |
-| Linux arm64 container (rustc 1.89.0, OpenSSL 3.0.22) | **OK**: locked build, 436 passed, 0 failed | `results/final/linux-arm64-adr0004.txt` |
-| Linux x86_64, native cloud VM (rustc 1.89.0, OpenSSL 3.5.9) | **OK**: fmt, locked build, clippy, 436 passed, 0 failed; rPGP interop crate 4 passed. An emulated attempt **FAILED** (gcc crashed under qemu) and is superseded | `results/final/linux-x86_64-adr0004.txt`, `results/final/linux-x86_64-adr0004-attempt1-gcc-segv.txt` |
-| Relay-gated tests, local relay (node amd64 under qemu on arm64) | **OK**: 7 passed | `results/final/relay-gated-adr0004.txt`, `results/final/relay-discovery-adr0004.txt` |
-| Private-relay acceptance script (one host) | 52 PASS, 0 FAIL, 1 UNTESTED | `results/acceptance/20261127T042942Z/` |
+| macOS arm64 (rustc 1.92, Homebrew OpenSSL 3) | **OK**: fmt, clippy, 471 tests passed, release build | `results/final/macos-arm64-final.txt` |
+| Linux arm64 container (rustc 1.89, OpenSSL 3.0) | **OK**: locked build, 471 passed | `results/final/linux-arm64-final.txt` |
+| Linux x86_64, native | **OK**: 471 passed, interop, 7 relay-gated tests | `results/final/review-fixes-x86_64.txt` |
+| Private-relay acceptance script (one host) | 51 PASS, 0 FAIL, 2 UNTESTED | `results/acceptance/20261127T164601Z/` |
+| GitHub Actions CI on `main` | **OK**: green (fmt, clippy, tests, MSRV, cargo-deny, rPGP interop) | GitHub Actions of the repository |
 | cargo-deny 0.22.1 | advisories, bans, licenses, sources ok, with exceptions scoped to `sequoia-openpgp` 2.5.0 and `buffered-reader` 1.4.1 (LGPL-2.0-or-later) and `openssl-sys` via its two wrappers | `results/adr0004/cargo-deny.txt` |
 | MSRV 1.89 build | **OK** | `results/adr0004/msrv-1.89-build.txt` |
-| rPGP 0.21.1 interop (outside workspace and shipped binary) | local run OK | `results/adr0004/interop-rpgp.txt` |
-| GitHub Actions CI | **UNTESTED** (branch unpublished) | - |
-| Real-host runs (SSH tunnel, tailnet, public IP, public wss, Headscale policy), network simulations, reconnect/watchdog trials, burst benchmarks | **UNTESTED** on the OpenPGP tree; the earlier results are for the ADR 0002 scheme | - |
+| rPGP 0.21.1 interop (outside workspace and shipped binary) | **OK**: 10 tests including rejection branches (text and v4 signatures, EAX/GCM, SEIPD v1, signing subkey) | `results/final/interop-rejection-branches.txt`, `results/adr0004/interop-rpgp.txt` |
+| Relay-gated tests, local relay (node amd64 under qemu on arm64) | **OK**: 7 passed (earlier tree state) | `results/final/relay-gated-adr0004.txt`, `results/final/relay-discovery-adr0004.txt` |
+| SSH-tunnel cross-machine (Mac behind NAT, cloud relay) | 10 PASS, 2 UNTESTED, single run | `results/cross-machine/20261127T215209Z/` |
+| Public wss/TLS endpoint, audited public mode | 14 PASS, 1 UNTESTED, single run; an uninvited node sees uniform 2197-byte frames; client-to-relay p50 1.2 s in that run, cause not isolated | `results/public-relay/20261127T215957Z/` |
+| Relay on its own public IP, audited mode | 19 PASS, single run; 6 of 6 sends issued right after a foreign peer joined stayed queued (connect-to-send gap 1.4 to 6.9 s; a millisecond race is **UNTESTED**); one unexplained observation in the interrupted first attempt is noted in the SUMMARY | `results/public-ip-relay/20261127T215151Z/` |
+| Hosted Tailscale tailnet, direct path | 17 PASS, 2 FAIL (both the watchdog start failure, since fixed); idle stale socket reproduced: 5 min 54 s lockout without the watchdog, reconnect 2 s after restore with the patched watchdog, one trial each | `results/tailscale-cross-machine/20261127T215730Z/` |
+| Tailnet tag policy, Headscale incl. a DERP-relayed phase | 20 PASS, 1 UNTESTED (hosted ACL syntax) | `results/tailnet-acl/20261127T215142Z/` |
+| WireGuard simulation (one host) | 36 PASS with and without the watchdog; two extra recovery runs | `results/network-sim/wireguard/20261127T215251Z/`, `20261127T223230Z/`, `20261127T230721Z/`, `20261127T231045Z/` |
+| NAT simulation (one host) | 15 PASS | `results/network-sim/nat/20261127T231408Z/` |
+
+Run `results/network-sim/wireguard/20261127T194713Z` had 3 failures caused by a port collision between two concurrent tests (its `LEAD-NOTE.md`) and is superseded. Directories carrying `PARTIAL.md` (`results/cross-machine/20261127T193836Z`, `results/public-relay/20261127T195424Z`, `results/tailnet-acl/20261127T193741Z`) are interrupted runs, not results. Still **UNTESTED**: hosted-Tailscale ACL/grants syntax, key expiry, MagicDNS; NAT hole punching between clients (not part of the architecture: clients dial out); more than three hosts and load beyond 100-message bursts; a millisecond-scale publish race; the watchdog beyond one real-host trial; why the idle stale socket arises (inferred); latency under OpenPGP without machine load.
 
 The implementation is not audited, not production-secure and not forward-secret (a later compromise of a recipient encryption subkey exposes stored ciphertext); an independent human cryptographic review is still required before sensitive production use.
 

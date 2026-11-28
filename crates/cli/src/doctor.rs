@@ -76,17 +76,6 @@ pub fn parse_http_date(s: &str) -> Option<i64> {
     Some(days * 86_400 + hms[0] * 3600 + hms[1] * 60 + hms[2])
 }
 
-fn peer_id(maddr: &str) -> Option<&str> {
-    let mut it = maddr.split('/');
-    let mut last = None;
-    while let Some(s) = it.next() {
-        if s == "p2p" {
-            last = it.next();
-        }
-    }
-    last
-}
-
 fn replay_guard_check(dir: &Path, dd: &DataDir) -> Check {
     let accept = format!("`{}`", agentnet_command(dir, "doctor --accept-rollback"));
     use agentnet_core::guard::{inspect, SidecarState};
@@ -254,6 +243,45 @@ pub fn history_sync_check(
 /// accepts this one skip: the check is not applicable there, but the line still
 /// says plainly that nothing is audited.
 const NOT_AUDITED: &str = "not audited in public mode";
+
+/// The `peers == allowlist` line for an audited allowlist. A CONNECTED foreign
+/// peer is a failure (an isolation violation); a foreign peer the node merely
+/// knows, without a connection, is a warning that clears on node restart.
+fn peers_check(foreign_connected: u32, foreign_known: u32, connected: u32) -> Check {
+    if foreign_connected > 0 {
+        check(
+            "peers == allowlist",
+            Level::Fail,
+            format!(
+                "{foreign_connected} connected peer(s) outside the allowlist (isolation violation); {foreign_known} more known but not connected"
+            ),
+            "restart the node with the verified flags so it drops the foreign peer; check its discovery flags first",
+        )
+    } else if foreign_known > 0 {
+        check(
+            "peers == allowlist",
+            Level::Warn,
+            format!(
+                "the node knows {foreign_known} peer(s) outside the allowlist; they are known, not connected (0 connected foreign peers); the entry clears when the node restarts"
+            ),
+            "the node should only know the peers in agentnet.toml; check its discovery flags, then restart the node to clear stale entries",
+        )
+    } else if connected == 0 {
+        check(
+            "peers == allowlist",
+            Level::Warn,
+            "no peer connected yet",
+            "start the relay first; the node redials with backoff",
+        )
+    } else {
+        check(
+            "peers == allowlist",
+            Level::Ok,
+            format!("{connected} connected, all in the allowlist"),
+            "",
+        )
+    }
+}
 
 /// The `isolation` line. `audited` is true in private mode and in public mode
 /// with `network.enforce_peer_allowlist`.
@@ -594,52 +622,11 @@ pub async fn run(dir: &Path) -> Vec<Check> {
                         || cfg.network.enforce_peer_allowlist;
                     out.push(isolation_check(audited, st.isolation_violation.as_deref()));
                     if audited {
-                        let allow: Vec<&str> = cfg
-                            .network
-                            .peers
-                            .iter()
-                            .filter_map(|p| peer_id(p))
-                            .collect();
-                        let peers = st.peers.clone().unwrap_or_default();
-                        let outside: Vec<&String> = peers
-                            .iter()
-                            .filter(|p| !allow.iter().any(|a| p.contains(a)))
-                            .collect();
-                        if !outside.is_empty() {
-                            // A *connected* peer outside the allowlist is an
-                            // isolation violation and already fails the check
-                            // above. Entries that are merely known to the node
-                            // (for example a mistyped static peer it could not
-                            // reach) are reported, not treated as a breach.
-                            let level = if st.isolation_violation.is_some() {
-                                Level::Fail
-                            } else {
-                                Level::Warn
-                            };
-                            out.push(check(
-                                "peers == allowlist",
-                                level,
-                                format!(
-                                    "the node knows {} peer(s) outside the allowlist; they are known, not connected (a connected one would be an isolation violation); the entry clears when the node restarts",
-                                    outside.len()
-                                ),
-                                "the node should only know the peers in agentnet.toml; check its discovery flags, then restart the node to clear stale entries",
-                            ));
-                        } else if st.connected_peers == 0 {
-                            out.push(check(
-                                "peers == allowlist",
-                                Level::Warn,
-                                "no peer connected yet",
-                                "start the relay first; the node redials with backoff",
-                            ));
-                        } else {
-                            out.push(check(
-                                "peers == allowlist",
-                                Level::Ok,
-                                format!("{} connected, all in the allowlist", st.connected_peers),
-                                "",
-                            ));
-                        }
+                        out.push(peers_check(
+                            st.foreign_connected_peers,
+                            st.foreign_known_peers,
+                            st.connected_peers,
+                        ));
                     } else {
                         out.push(check(
                             "peers == allowlist",
@@ -791,6 +778,32 @@ mod tests {
     }
 
     #[test]
+    fn peers_line_separates_connected_foreign_peers_from_merely_known_ones() {
+        let c = peers_check(2, 1, 3);
+        assert_eq!(c.level, Level::Fail);
+        assert!(
+            c.detail.contains("2 connected peer(s) outside"),
+            "{}",
+            c.detail
+        );
+        assert!(
+            !c.detail.contains("known, not connected (0"),
+            "{}",
+            c.detail
+        );
+        let k = peers_check(0, 3, 1);
+        assert_eq!(k.level, Level::Warn);
+        assert!(k.detail.contains("3 peer(s) outside"), "{}", k.detail);
+        assert!(k.detail.contains("known, not connected"), "{}", k.detail);
+        assert_eq!(peers_check(0, 0, 0).level, Level::Warn);
+        let ok = peers_check(0, 0, 2);
+        assert_eq!(
+            (ok.level, ok.detail.as_str()),
+            (Level::Ok, "2 connected, all in the allowlist")
+        );
+    }
+
+    #[test]
     fn isolation_line_in_each_mode() {
         let a = isolation_check(true, None);
         assert_eq!(
@@ -866,11 +879,5 @@ mod tests {
             kem_expiry_check(d, Some(now), now).unwrap().level,
             Level::Fail
         );
-    }
-
-    #[test]
-    fn peer_ids() {
-        assert_eq!(peer_id("/ip4/1.2.3.4/tcp/1/p2p/16Uiu2X"), Some("16Uiu2X"));
-        assert_eq!(peer_id("/ip4/1.2.3.4/tcp/1"), None);
     }
 }

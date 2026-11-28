@@ -86,7 +86,9 @@ results/           raw evidence; every claim in docs points here
 
 - A relay on a public address (public IP or wss edge) needs `mode = "public"`
   (private mode refuses it); set `enforce_peer_allowlist = true` to keep the
-  peer audit (unit tests only, UNTESTED on a real relay). The cloud firewall or
+  peer audit (run once each against a real public-IP relay and a wss edge on the
+  OpenPGP tree: `results/public-ip-relay/20261127T215151Z/`,
+  `results/public-relay/20261127T215957Z/`). The cloud firewall or
   edge is the only relay access control (cluster/shard ids are not), and a
   stateful firewall does not cut established flows
   (`results/public-ip-relay/20261126T204713Z/`, `results/public-relay/20261126T203405Z/`).
@@ -108,7 +110,7 @@ results/           raw evidence; every claim in docs points here
   (7 min 25 s outage measured on real hosts; 401 s and 496 s in the simulation): the node sets
   no SO_KEEPALIVE and never pings inbound peers. A relay-side watchdog
   (`spike/relay-wireguard/scripts/stale-watchdog.sh`, `ss -K` on sockets with no data received
-  for 60 s) fixed it 3 of 3 times in the simulation, UNTESTED on real hosts; no client-side fix
+  for 60 s) fixed it 3 of 3 times in the simulation and once on real hosts (hosted tailnet, one trial each: 5 min 54 s lockout without it, reconnect 2 s after restore with it, `results/tailscale-cross-machine/20261127T215730Z/`); beyond that one trial UNTESTED; no client-side fix
   exists (`results/reconnect/20261126T065412Z/SUMMARY.md`, `results/reconnect-idle/20261126T233013Z/SUMMARY.md`, `docs/runbook.md` 6.3).
 - Parallel cargo builds in separate worktrees filled the disk once: share one
   `CARGO_TARGET_DIR` between worktrees and delete merged worktrees promptly.
@@ -127,9 +129,10 @@ results/           raw evidence; every claim in docs points here
   `cargo test --locked`.
 - Pin upstream commits/tags and crate versions (lockfile is committed).
 - Builds link OpenSSL 3 (Sequoia backend). macOS: `export OPENSSL_DIR=$(brew --prefix openssl@3)`.
-  Linux: `libssl-dev`, `pkg-config`, `clang`, `libclang-dev`. Local OpenPGP-tree results: 436 tests
-  passed, 0 failed, 7 relay-gated ignored on macOS arm64, Linux arm64 and Linux x86_64
-  (`results/final/*-adr0004.txt`); GitHub CI has not run on this unpublished branch.
+  Linux: `libssl-dev`, `pkg-config`, `clang`, `libclang-dev`. Final-tree results: macOS arm64 471 passed
+  (`results/final/macos-arm64-final.txt`), Linux arm64 container 471 passed (`results/final/linux-arm64-final.txt`),
+  Linux x86_64 native 471 passed with interop and 7 relay-gated tests (`results/final/review-fixes-x86_64.txt`);
+  GitHub CI on `main` is green (fmt, clippy, tests, MSRV, cargo-deny, rPGP interop).
 - Shell: do not pipe command output through `head`/`tail`/`less`/`more`; use
   command-native limits (e.g. `git log -n 10`) or read files directly.
 - Local containers run under colima (`docker` context `colima`, linux/arm64;

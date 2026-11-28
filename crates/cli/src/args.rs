@@ -342,6 +342,9 @@ pub enum ContactCmd {
     /// untrusted (a warning says how to verify and raise trust) and --trust
     /// trusted is refused. An update for a known address is merged into the
     /// stored certificate (new subkeys, expiry, revocations); it never replaces it.
+    /// Adding a known untrusted contact again with a matching --expect raises it to
+    /// trusted (the output says so); a blocked contact is never raised and without
+    /// --expect trust never changes.
     Add {
         /// The certificate (base64url or ASCII armor), `@FILE` to read it from a file, or `-` for stdin.
         record: String,

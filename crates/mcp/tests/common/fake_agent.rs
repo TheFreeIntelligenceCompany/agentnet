@@ -401,6 +401,7 @@ impl AgentApi for FakeAgent {
             kem_expires_at: None,
             updated,
             revoked: false,
+            trust_changed: false,
             warning: None,
         };
         s.contacts.insert(address, info.clone());
@@ -419,6 +420,8 @@ impl AgentApi for FakeAgent {
             mode: "private".into(),
             ready: true,
             connected_peers: 2,
+            foreign_connected_peers: 0,
+            foreign_known_peers: 0,
             isolation_violation: None,
             isolation_audited: true,
             queue: QueueHealth {
