@@ -25,11 +25,36 @@ pub fn present_error(dir: &Path, msg: &str) -> String {
             "Recipient is not a known contact. Add their public certificate with {contact_add}."
         );
     }
-    msg.replace(
-        "import it with add_contact",
-        &format!("import it with {contact_add}"),
-    )
-    .replace("`agentnet serve`", &format!("`{}`", cmd(dir, "serve")))
+    let cfg_path = dir.join("agentnet.toml");
+    let mut out = msg
+        .replace(
+            "import it with add_contact",
+            &format!("import it with {contact_add}"),
+        )
+        .replace("`agentnet serve`", &format!("`{}`", cmd(dir, "serve")))
+        .replace("`agentnet init`", &format!("`{}`", cmd(dir, "init")))
+        .replace(
+            "`agentnet contact trust ",
+            &format!("`{} ", cmd(dir, "contact trust")),
+        )
+        .replace("pass `sender`", "pass `--sender`");
+    if out.contains("expected_address") && !out.contains("--expect") {
+        out = out.replace("expected_address", "--expect");
+    }
+    if out.contains("triggers are disabled by host policy") {
+        out.push_str(&format!(
+            " (set `policy.auto_trigger = true` and `triggers.allowed_sessions = [...]` in {}, then restart `{}`)",
+            cfg_path.display(),
+            cmd(dir, "serve")
+        ));
+    } else if out.contains("not an allowed trigger target_session") {
+        out.push_str(&format!(
+            " (add it to `triggers.allowed_sessions` in {}, then restart `{}`)",
+            cfg_path.display(),
+            cmd(dir, "serve")
+        ));
+    }
+    out
 }
 
 /// Replace control characters (except newline and tab) so remote text cannot
@@ -101,9 +126,10 @@ pub fn trust(t: Trust) -> &'static str {
 
 pub fn contact_line(c: &ContactInfo) -> String {
     format!(
-        "{} {}{}{}{}",
+        "{} {}{}{}{}{}",
         c.address,
         trust(c.trust),
+        if c.revoked { " (REVOKED)" } else { "" },
         c.alias
             .as_deref()
             .map(|a| format!(" alias={}", clean(a)))
@@ -120,13 +146,35 @@ pub fn contact_line(c: &ContactInfo) -> String {
     )
 }
 
+pub fn contact_line_for(dir: &Path, c: &ContactInfo) -> String {
+    let mut rendered = contact_line(c);
+    if c.warning.is_some() {
+        rendered = present_error(dir, &rendered);
+    }
+    rendered
+}
+
 pub fn inbox_record(r: &InboxRecord) -> String {
+    let mut meta = Vec::new();
+    if let Some(conv) = &r.conversation_id {
+        meta.push(format!("conv={}", clean(conv)));
+    }
+    if let Some(corr) = &r.correlation_id {
+        meta.push(format!("corr={}", clean(corr)));
+    }
+    let meta_str = if meta.is_empty() {
+        String::new()
+    } else {
+        format!(" {}", meta.join(" "))
+    };
     format!(
-        "{} from {} [{}] {}{}{}\n    {}",
+        "{} from {} [{}] {} [{}]{}{}{}\n    {}",
         clean(&r.message_id),
         clean(&r.sender),
         trust(r.sender_trust),
         clean(&r.message_type),
+        time(r.received_at),
+        meta_str,
         if r.acknowledged { " (acked)" } else { "" },
         if r.quarantined { " (QUARANTINED)" } else { "" },
         clean(&r.body).replace('\n', "\n    ")
@@ -160,6 +208,15 @@ pub fn status(s: &MessageStatus) -> String {
     out
 }
 
+pub fn trigger_state(s: TriggerState) -> &'static str {
+    match s {
+        TriggerState::Active => "active",
+        TriggerState::Consumed => "consumed",
+        TriggerState::Expired => "expired",
+        TriggerState::Deleted => "deleted",
+    }
+}
+
 pub fn trigger(t: &TriggerInfo) -> String {
     let mut filters = Vec::new();
     for (k, v) in [
@@ -172,15 +229,20 @@ pub fn trigger(t: &TriggerInfo) -> String {
             filters.push(format!("{k}={}", clean(v)));
         }
     }
+    let filter_suffix = if filters.is_empty() {
+        String::new()
+    } else {
+        format!(" {}", filters.join(" "))
+    };
     format!(
-        "{} {:?} session={} once={} matches={} expires={} {}",
+        "{} {} session={} once={} matches={} expires={}{}",
         t.trigger_id,
-        t.state,
+        trigger_state(t.state),
         clean(&t.target_session),
         t.once,
         t.match_count,
         time(t.expires_at),
-        filters.join(" ")
+        filter_suffix
     )
 }
 
@@ -366,6 +428,22 @@ mod hint_tests {
         assert_eq!(
             cmd(Path::new("/x/it's"), "serve"),
             "agentnet --data-dir '/x/it'\\''s' serve"
+        );
+    }
+
+    #[test]
+    fn present_error_rewrites_trigger_and_flag_hints() {
+        let m = present_error(Path::new("/d"), "triggers are disabled by host policy");
+        assert!(
+            m.contains("policy.auto_trigger = true") && m.contains("/d/agentnet.toml"),
+            "{m}"
+        );
+        let m = present_error(Path::new("/d"), "pass `sender` to choose one");
+        assert!(m.contains("pass `--sender`"), "{m}");
+        let m = present_error(Path::new("/d"), "trusted requires expected_address");
+        assert!(
+            m.contains("--expect") && !m.contains("expected_address"),
+            "{m}"
         );
     }
 }

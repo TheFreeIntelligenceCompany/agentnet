@@ -20,7 +20,7 @@ the amd64 image under qemu.** The flag set was later also run across real hosts 
 * The **client node** is a Logos Delivery node next to each `agentnet serve`. AgentNet is not a single static binary:
   the node is a separate process (a container here). There is no embedded node (`docs/spike-report.md`, native FFI section).
 * The **service node** is reachable by all clients, relays frames between them and stores them for later retrieval.
-  Clients dial it; clients need no inbound port (this is the design; **cross-machine/NAT outbound-only operation is UNTESTED** (simulated on one host: `docs/network-simulations.md`; verified once across two real hosts with the relay listening on loopback only and the client dialling it through an SSH port-forward, `results/cross-machine/20261126T190328Z/`: in private mode the dial address must be a private-range literal IP, and the relay sees the client as the tunnel's far end, not the client's NAT address)).
+  Clients dial it; clients need no inbound port (verified in single cross-machine runs from an outbound-only Mac behind home NAT over SSH tunnel, hosted tailnet, public IPv4, and public `wss` edge; **NAT hole punching between clients is not part of the architecture and is UNTESTED**).
 * AgentNet talks only to the **client** node's REST API (`network.node_url`), never to the service node.
 * **Hard rule: one Logos Delivery client node per agent (one `agentnet serve` per node). Sharing a node between agents is unsupported.**
   The node's REST receive path is a single in-memory cache per node and `GET` is destructive (returns *and deletes*). Two daemons
@@ -44,8 +44,7 @@ the amd64 image under qemu.** The flag set was later also run across real hosts 
 * Docker Hub lags upstream: `v0.40.0` (2026-11-13) is not published there; `latest` is a nightly build
   (`results/a1-daemon/manifest_wakuorg_nwaku_*.json`). The pin is by digest. The image is **not signature-verified**
   (UNTESTED).
-* The compose plugin (`docker compose`) is not installed on the test host; the standalone `docker-compose` v5.6.0 was used and
-  `spike/relay/scripts/up.sh` calls `docker-compose`.
+* `spike/relay/scripts/up.sh` and `scripts/demo.sh` support both the Docker Compose v2 plugin (`docker compose`) and standalone `docker-compose`.
 
 ## 3. Flags (verified set)
 
@@ -285,7 +284,7 @@ Recovery note: after a silently dropped connection the node noticed after about 
 - [ ] Store retention chosen deliberately and communicated (recommended 7 days, `time:604800;capacity:100000`; the spike test default is 1 hour). Remember the recovery window is the minimum of relay retention, message TTL and `storage.retention_hours`.
 - [ ] One client node per agent; `--rest-relay-cache-capacity=1000`.
 - [ ] You know that restarting the service node causes minutes of degraded live delivery and that recovery depends on Store.
-- [ ] You accept that all of this was only tested on a single host.
+- [ ] You know that real-host validation consists of single runs (not sustained multi-client production load).
 
 ## Your own relay on a public address
 

@@ -2,17 +2,20 @@
 
 ## Connecting a client
 
-The daemon (`agentnet serve`) must be running for the same data directory; the MCP server is a thin client of it.
-Third-party MCP hosts are **UNTESTED**; only the `rmcp` test client and raw JSON-RPC were used.
+Two ways to run stdio MCP:
 
-**stdio** (any MCP host that launches a command). Configuration, with the real binary path and data directory
-(`docs/examples/mcp-client-stdio.json` is a template):
+* **Thin client (recommended):** keep `agentnet --data-dir <DIR> serve` running in the background (so messages, receipts, and Store catch-up stay active even when the MCP host is closed), and point your MCP host at `agentnet --data-dir <DIR> mcp`.
+* **Embedded (`--embedded`):** pass `["--data-dir", "<DIR>", "mcp", "--embedded"]` to run the daemon inside the MCP process. Only one process can hold the data-directory lock, so do **not** run `agentnet serve` at the same time; when the MCP host exits, the daemon stops.
+
+Third-party MCP hosts (Claude Desktop, Claude Code, Cursor, MCP Inspector) are **UNTESTED**; only the `rmcp` test client and raw JSON-RPC were used.
+
+**stdio** (any MCP host that launches a command). Use an **absolute path** for `command` (GUI hosts often do not inherit your shell's `PATH`) and your real data directory (`docs/examples/mcp-client-stdio.json` is a template):
 
 ```json
 {
   "mcpServers": {
     "agentnet": {
-      "command": "/path/to/agentnet",
+      "command": "/absolute/path/to/agentnet",
       "args": ["--data-dir", "/path/to/data-dir", "mcp"]
     }
   }
@@ -35,15 +38,14 @@ curl -s -X POST http://127.0.0.1:8650/mcp \
 ```
 
 **A successful `get_identity` call.** The same request over stdio (`printf '%s\n' '<request>' | agentnet --data-dir <dir> mcp`)
-returns this (the signed `contact_record` is shortened here; the HTTP reply carries the same JSON-RPC message in an SSE `data:` line; run
-against a real daemon on 2026-11-26):
+returns a JSON-RPC result whose `contact_record` is the agent's base64url-encoded RFC 9580 OpenPGP public certificate (shortened below; the HTTP reply carries the same JSON-RPC message in an SSE `data:` line):
 
 ```json
 {"jsonrpc":"2.0","id":1,"result":{"resultType":"complete",
  "content":[{"type":"text","text":"{\"agent_id\":\"an2swo22...\",...}"}],
  "structuredContent":{"agent_id":"an2swo22teox3i4gcmc4od6xftmnvhzhzcvb4mdqq6bzakfyxzmxurhaxw3ga",
-                      "contact_record":"{\"record\":\"eyJ2Ijox...\",\"sig\":\"8WMS7X...\"}",
-                      "created_at":1795706642062,"inbox_topic":"/agentnet/1/inbox-02/proto","kem_expires_at":null},
+                      "contact_record":"xlgG...",
+                      "created_at":1795706642062,"inbox_topic":"/agentnet/1/inbox-02/proto","kem_expires_at":1827242642062,"revoked":false},
  "isError":false}}
 ```
 
@@ -270,8 +272,8 @@ Checks run in this order (measured):
 {
   "mcpServers": {
     "agentnet": {
-      "command": "agentnet",
-      "args": ["mcp", "--data-dir", "/home/me/.agentnet"]
+      "command": "/absolute/path/to/agentnet",
+      "args": ["--data-dir", "/home/me/.agentnet", "mcp"]
     }
   }
 }

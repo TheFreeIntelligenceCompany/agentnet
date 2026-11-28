@@ -10,9 +10,19 @@ The service never runs a model and never executes message content; a message bod
 
 **Start here**
 
-* **Run the local demo:** `scripts/demo.sh` runs two agents against a local relay and prints a delivered message and its receipt ([Quickstart](#quickstart-single-machine-two-agents-local-relay)).
-* **Operate a deployment:** [docs/runbook.md](docs/runbook.md) (checks, restarts, incident playbooks) and [docs/relay-setup.md](docs/relay-setup.md) (your own relay and Store node).
-* **Connect a harness:** [docs/mcp-api.md](docs/mcp-api.md) (MCP over stdio or loopback HTTP) and [docs/host-integration.md](docs/host-integration.md) (event socket, webhook).
+* **Try it locally in one command:** `scripts/demo.sh` runs two agents against a local relay and prints a delivered message and its receipt ([Quickstart](#quickstart-single-machine-two-agents-local-relay)).
+* **Connect two real machines:** [docs/two-machine-quickstart.md](docs/two-machine-quickstart.md) (Host 1 relay + Agent A, Host 2 Agent B, certificate exchange, first message).
+* **Operate a deployment:** [docs/relay-setup.md](docs/relay-setup.md) (your own relay and Store node), [docs/runbook.md](docs/runbook.md) (checks, restarts, playbooks), and [docs/troubleshooting.md](docs/troubleshooting.md) (symptom -> fix).
+* **Connect an MCP host or harness:** [docs/mcp-api.md](docs/mcp-api.md) (MCP over stdio or loopback HTTP) and [docs/host-integration.md](docs/host-integration.md) (event socket, webhook).
+
+### Choose your setup
+
+| Scenario | Relay reachability | `agentnet init` flag | Network mode |
+|---|---|---|---|
+| Local demo (single machine) | Docker bridge (`172.28.66.10`) | `--peer /ip4/172.28.66.10/...` | `private` (default) |
+| LAN / WireGuard / Tailscale | Private IP (`10.x`, `100.64.x`) | `--peer /ip4/<private-ip>/...` | `private` (default) |
+| Your own relay on a public IP or `wss` edge | Public IP or `/dns4/.../wss/...` | `--public-relay --peer ...` | `public` + `enforce_peer_allowlist = true` |
+| Shared public Waku network (**UNTESTED**) | Public multi-shard (unsupported by REST adapter) | Manual `agentnet.toml` | `public` (unaudited) |
 
 ## Architecture
 
@@ -37,12 +47,12 @@ Details: [docs/architecture.md](docs/architecture.md), wire protocol [docs/proto
 * Rust **1.89 or newer** (the workspace declares `rust-version = "1.89"`; built with rustc 1.89.0 in a container, `results/fixups/msrv-1.89-build.log`; developed on 1.92).
   The host used for all tests has rustc 1.92.0.
 * Docker, to run the Logos Delivery node sidecar. The pinned image is **linux/amd64 only**; on arm64 hosts it runs under emulation (works on the test host, slower).
-  The helper script `spike/relay/scripts/up.sh` calls the standalone `docker-compose` binary, not `docker compose`.
-* Python 3 (used by the relay start helper). `spike/relay/scripts/up.sh` checks for `docker-compose`, `curl` and `python3` first and exits with an error naming any that is missing; it also exits non-zero if a node does not answer `/health` within 60 s.
-* `jq` (used by the commands below, not by `up.sh`) and `curl`.
+  `spike/relay/scripts/up.sh` and `scripts/demo.sh` work with either the Docker Compose v2 plugin (`docker compose`) or standalone `docker-compose`.
+* Python 3 (used by the relay start helper). `spike/relay/scripts/up.sh` checks for compose, `curl` and `python3` first and exits non-zero naming any that is missing; it also exits non-zero if a node does not answer `/health` within 60 s.
+* `jq` (used by some commands below, not by `up.sh`) and `curl`.
 * Unix (macOS, Linux). Windows is not supported.
 * A C compiler: `rusqlite` builds SQLite from bundled C source and `ring` (via rustls) compiles C/asm.
-* **OpenSSL 3 development files** (headers and libraries) and `libclang`: the OpenPGP library (`sequoia-openpgp` 2.5.0, `crypto-openssl` backend) links OpenSSL and its build scripts use `bindgen`. Build with `OPENSSL_DIR` pointing at the installation (macOS Homebrew: `export OPENSSL_DIR=$(brew --prefix openssl@3)`; Debian/Ubuntu: `apt install libssl-dev libclang-dev clang pkg-config`). The Nettle backend and the pure-Rust backend are not used. The OpenSSL path is not hard-coded in the repository; Also needed: `pkg-config` and `clang` on Linux. Locked builds and tests on the OpenPGP tree: macOS arm64 (`results/final/host-checks-adr0004.txt`), Linux arm64 container (`results/final/linux-arm64-adr0004.txt`) and Linux x86_64 on a native cloud VM (`results/final/linux-x86_64-adr0004.txt`).
+* **OpenSSL 3 development files** (headers and libraries) and `libclang`: the OpenPGP library (`sequoia-openpgp` 2.5.0, `crypto-openssl` backend) links OpenSSL and its build scripts use `bindgen`. Build with `OPENSSL_DIR` pointing at the installation (macOS Homebrew: `export OPENSSL_DIR=$(brew --prefix openssl@3)`; Debian/Ubuntu: `apt install libssl-dev libclang-dev clang pkg-config`). The Nettle and pure-Rust backends are not used; the OpenSSL path is not hard-coded in the repository. Locked builds and tests on the OpenPGP tree: macOS arm64 (`results/final/host-checks-adr0004.txt`), Linux arm64 container (`results/final/linux-arm64-adr0004.txt`) and Linux x86_64 on a native cloud VM (`results/final/linux-x86_64-adr0004.txt`).
 
 ## Quickstart (single machine, two agents, local relay)
 
@@ -59,9 +69,12 @@ It exercises the software on one host (a service node and two client nodes in Do
 
 The rest of this section is the explanation of what the script does. **Run these commands in the same shell**, in order: later steps use variables (`A`, `B`, `PID_A`, ...) set by earlier ones. Let each wait loop finish before the next step.
 
-**1. Build.**
+**1. Build.** On macOS with Homebrew OpenSSL 3, export `OPENSSL_DIR` first (`scripts/demo.sh` detects this automatically):
 
 ```sh
+# macOS (Homebrew):
+export OPENSSL_DIR=$(brew --prefix openssl@3)
+
 cargo build --release --locked -p agentnet-cli
 export PATH="$PWD/target/release:$PATH"
 agentnet --version
@@ -73,7 +86,7 @@ agentnet --version
 (cd spike/relay && DNS_NS=127.0.0.1 ./scripts/up.sh)
 ```
 
-The output ends with one line per node listing its connected peers (`[True]` or `[True, True]`). If you see empty lists or errors, check `docker ps` and `docker logs an-r1`: the helper script does not stop on a failed start.
+`up.sh` exits non-zero if compose fails or a node does not answer `/health` within 60 s. On success the output ends with one line per node listing its connected peers (`[True]` or `[True, True]`). If you see empty lists, check `docker ps` and `docker logs an-r1`.
 
 **3. Create two agents.** Keep the data directories short (the control socket path must fit a Unix socket, about 100 bytes).
 
@@ -89,25 +102,24 @@ agentnet --data-dir $B init --node-url http://127.0.0.1:18642 --peer $R1
 **4. Start both daemons, wait until they are ready, then check them.** The daemons run in the background of this shell; each needs a moment to connect its node to the relay, so wait for readiness before running other commands.
 
 ```sh
-agentnet --data-dir $A serve 2>$A.log & PID_A=$!
-agentnet --data-dir $B serve 2>$B.log & PID_B=$!
-until agentnet --data-dir $A --json network status 2>/dev/null | jq -e '.network.ready' >/dev/null; do sleep 2; done
-until agentnet --data-dir $B --json network status 2>/dev/null | jq -e '.network.ready' >/dev/null; do sleep 2; done
-agentnet --data-dir $A doctor           # expect zero failing checks; the single-instance warning is expected; exit 7 if any check fails. Exit 0 alone does not mean messaging works (a stopped daemon is only a warning): for readiness use `agentnet doctor --ready`
+agentnet --data-dir $A serve 2>$A.log &
+agentnet --data-dir $B serve 2>$B.log &
+agentnet --data-dir $A doctor --ready --wait 120
+agentnet --data-dir $B doctor --ready --wait 120
 agentnet --data-dir $A network status
 ```
 
-The loops wait indefinitely if the relay is unreachable: press Ctrl-C and read `$A.log`. Right after a node or relay restart, readiness can take about a minute or more.
+Right after a node or relay restart, readiness can take about a minute or more. If `doctor --ready` exits 7, read `$A.log` and see [docs/troubleshooting.md](docs/troubleshooting.md).
 
-**5. Exchange and verify contact records.** In real use the address must reach you over a channel you trust; `--expect` makes `add` fail unless the record is for exactly that address.
+**5. Exchange and verify public certificates.** In real use the address must reach you over a channel you trust; `--expect` makes `add` fail unless the certificate belongs to exactly that address.
 
 ```sh
 A_ADDR=$(agentnet --data-dir $A identity show --json | jq -r .agent_id)
 B_ADDR=$(agentnet --data-dir $B identity show --json | jq -r .agent_id)
-agentnet --data-dir $A identity show --json | jq -r .contact_record > $A/self-record.json
-agentnet --data-dir $B identity show --json | jq -r .contact_record > $B/self-record.json
-agentnet --data-dir $A contact add @$B/self-record.json --expect $B_ADDR --alias b
-agentnet --data-dir $B contact add @$A/self-record.json --expect $A_ADDR --alias a
+agentnet --data-dir $A identity show --cert-only > $A/self.cert
+agentnet --data-dir $B identity show --cert-only > $B/self.cert
+agentnet --data-dir $A contact add @$B/self.cert --expect $B_ADDR --alias b
+agentnet --data-dir $B contact add @$A/self.cert --expect $A_ADDR --alias a
 agentnet --data-dir $A contact list
 ```
 
@@ -147,11 +159,11 @@ Only the `rmcp` test client was used against it; **third-party MCP hosts are UNT
 **8. (Optional) Triggers and the mock harness.** Triggers are off by default. Enable them for one allow-listed session on agent B, restart B, create a one-shot trigger, run the mock harness (it records a simulated turn; there is no model), and have A send a matching message.
 
 ```sh
-kill -TERM $PID_B; wait $PID_B
+agentnet --data-dir $B stop
 sed -i.bak -e 's/^auto_trigger = false/auto_trigger = true/' \
            -e 's/^allowed_sessions = \[\]/allowed_sessions = ["demo-session"]/' $B/agentnet.toml
-agentnet --data-dir $B serve 2>$B.log & PID_B=$!
-until agentnet --data-dir $B --json network status 2>/dev/null | jq -e '.network.ready' >/dev/null; do sleep 2; done
+agentnet --data-dir $B serve 2>$B.log &
+agentnet --data-dir $B doctor --ready --wait 120
 agentnet --data-dir $B trigger create --target-session demo-session --sender $A_ADDR
 cargo run -p agentnet-daemon --example mock_harness -- \
     --data-dir $B --out $B/turns.jsonl --state $B/harness-state.json --max-events 1 --idle-exit-ms 150000 &
@@ -162,10 +174,11 @@ cat $B/turns.jsonl                      # one line per recorded simulated turn
 
 The harness consumes the event stream (or a signed webhook), de-duplicates on `event_id` and decides what to do; see [docs/host-integration.md](docs/host-integration.md). A message from a sender the trigger does not name, or from an untrusted contact, produces no event.
 
-**9. Stop and clean up.** SIGTERM or Ctrl-C shuts a daemon down cleanly. The relay containers keep running; `cd spike/relay && docker-compose down` stops them.
+**9. Stop and clean up.** `agentnet stop` (or SIGTERM / Ctrl-C) shuts a daemon down cleanly. The relay containers keep running; `cd spike/relay && docker compose down` (or `docker-compose down`) stops them.
 
 ```sh
-kill -TERM $PID_A $PID_B; wait $PID_A $PID_B
+agentnet --data-dir $A stop
+agentnet --data-dir $B stop
 rm -rf $A $B $A.log $B.log
 ```
 
@@ -173,12 +186,13 @@ Verification status of this quickstart: see "Quickstart verification" in the las
 
 ## Private mode and public mode
 
-* **private** (default, the only mode that was tested). `agentnet.toml` must name your own static peers (`/ip4/<private ip>/tcp/60000/p2p/<peerId>`), a private `cluster_id` (not 1, 2, 3 or 16, which select public presets), and a local or private `node_url`.
-  Public peer discovery and public fallback do not exist (`public_fallback = true` is always an error). At runtime the daemon audits the node's peer list every 15 s and **refuses to send or receive** if the node is connected to any peer outside the allowlist.
+* **private** (default). `agentnet.toml` must name your own static peers (`/ip4/<private ip>/tcp/60000/p2p/<peerId>`), a private `cluster_id` (not 1, 2, 3 or 16, which select public presets), and a local or private `node_url`.
+  Public peer discovery and public fallback do not exist (`public_fallback = true` is always an error). At runtime the daemon audits the node's peer list every 15 s (and uncached before every publish) and **refuses to send or receive** if the node is connected to any peer outside the allowlist.
   The daemon cannot set the node's own flags: whether the node itself contacts public infrastructure depends on how you start it ([docs/relay-setup.md](docs/relay-setup.md)). Cluster and shard ids are not access control.
-* **public** requires `mode = "public"` and `i_understand_public = true`, skips the peer audit unless `enforce_peer_allowlist = true` (tested once against a real public-IP relay over raw tcp, `results/public-ip-relay/20261126T211443Z/`; wss/DNS endpoints with it are UNTESTED) (own relay on a public address; unit tests only, **UNTESTED** on a real relay), and was run only against your own relays on public addresses (`results/public-ip-relay/20261126T204713Z/`, `results/public-relay/20261126T203405Z/`), **not** against the shared public Waku/Logos network (UNTESTED). The REST adapter supports only single-shard networks, which the shared public networks are not. No bridging between modes: one daemon talks to one node in one mode.
+* **public with peer allowlist kept** (`agentnet init --public-relay --peer ...`: `mode = "public"`, `i_understand_public = true`, `enforce_peer_allowlist = true`). For your own relay reached over a public IP or DNS/`wss` edge. Run once each on the OpenPGP tree against a real public-IP relay (`results/public-ip-relay/20261127T215151Z/`) and a `wss` TLS edge (`results/public-relay/20261127T215957Z/`). Your firewall or TLS edge is the only relay access control; dialling by DNS name requires a real DNS resolver (breaking zero public egress).
+* **public (unaudited)** (`mode = "public"`, `i_understand_public = true`, `enforce_peer_allowlist = false`) skips the peer audit. **UNTESTED** against the shared public Waku/Logos network: the REST adapter supports only single-shard networks, which the shared public networks are not. No bridging between modes: one daemon talks to one node in one mode.
 
-Reference configs: [docs/examples/private.toml](docs/examples/private.toml), [docs/examples/public.toml](docs/examples/public.toml); all keys: [docs/configuration.md](docs/configuration.md).
+Reference configs: [docs/examples/private.toml](docs/examples/private.toml), [docs/examples/public-relay.toml](docs/examples/public-relay.toml), [docs/examples/public.toml](docs/examples/public.toml); all keys: [docs/configuration.md](docs/configuration.md).
 
 ## Running your own relay and Store node
 
@@ -207,7 +221,7 @@ Read these before relying on anything here.
 * **Revocation is best effort.** Subkey rotation/revocation and identity revocations reach only contacts that are reachable within the TTL/retry limits or receive the document out of band; messages sealed to a destroyed subkey are lost unless re-sealed by their senders. A thief of the primary key can impersonate the owner until peers learn of the tombstone and can issue the tombstone itself.
 * **Restoring an old database or importing an identity into a new data directory starts the replay guard**: older messages are held until `max_ttl + clock_skew` has passed or `agentnet doctor --accept-rollback` is run; messages received between the restored copy and the rollback are lost.
 * **No groups, no multi-device, no task-delegation tools. Capability discovery is optional and public.** `[discovery]` is off by default; when enabled, agents publish signed capability adverts as **plaintext readable by every node on the relay** on host-authorized topics (best effort, not a global directory, no reputation, results are unverified claims and never add contacts); see [docs/discovery.md](docs/discovery.md). Exercised on the local relay topology (one host, 3 of 3 runs; `results/discovery-relay/`), not cross-machine. One data directory is one identity; the same identity in two places is not detected and would split state.
-* **Recovery is bounded** by the relay's Store retention (the verified relay flags keep **1 hour**; the client's 168 h does not extend it), by the message TTL (default 24 h, max 7 d) and by a 20 s clock-skew rule in the Store. After a relay restart live delivery degraded for about 9 minutes in the one observation (cause not found); recovery then relies on Store catch-up. A separate slow reconnect after a silent path loss (the relay keeps a half-open TCP socket for about 22 minutes) has a root cause and a relay-side fix, `net.ipv4.tcp_retries2=6` printed by `agentnet relay print-config`; an idle stale socket is not helped by it, and a relay-side watchdog is tested once on real hosts (hosted tailnet, one trial each: 5 min 54 s lockout without the watchdog, reconnect 2 s after the path was restored with the patched watchdog, `results/tailscale-cross-machine/20261127T215730Z/`) and in simulation (`results/reconnect/20261126T065412Z/SUMMARY.md`, [docs/network-simulations.md](docs/network-simulations.md)). Simulated recovery times ranged from 5.4 s to 230 s; the 230 s outlier was a slow WireGuard handshake, not diagnosed.
+* **Recovery is bounded** by the minimum of three windows: the relay's Store retention (`agentnet relay print-config` recommends **7 days**, `time:604800;capacity:100000`, while the local `spike/relay` test topology keeps **1 hour** on purpose), the message TTL (default 24 h, max 7 d), and the daemon's `storage.retention_hours` (default 168 h), plus a 20 s clock-skew rule in the Store. After a relay restart live delivery degraded for about 9 minutes in the one observation (cause not found); recovery then relies on Store catch-up. A separate slow reconnect after a silent path loss (the relay keeps a half-open TCP socket for about 22 minutes) has a root cause and a relay-side fix, `net.ipv4.tcp_retries2=6` printed by `agentnet relay print-config`; an idle stale socket is not helped by it, and a relay-side watchdog is tested once on real hosts (hosted tailnet, one trial each: 5 min 54 s lockout without the watchdog, reconnect 2 s after the path was restored with the patched watchdog, `results/tailscale-cross-machine/20261127T215730Z/`) and in simulation (`results/reconnect/20261126T065412Z/SUMMARY.md`, [docs/network-simulations.md](docs/network-simulations.md)). Simulated recovery times ranged from 5.4 s to 230 s; the 230 s outlier was a slow WireGuard handshake, not diagnosed.
 * **External review was automated, not human.** Two model-run reviews (`results/review/codex-astra-review.md`, 7 findings, all fixed with tests; `results/review/codex-astra-usability-review.md`, 14 findings, all addressed) were **not** an independent human cryptographic review; that requirement remains open ([docs/crypto-requirements.md](docs/crypto-requirements.md)).
 * **REST cache polling model.** The node's relay cache holds 50 messages shared across topics and is read destructively; the daemon polls every 250 ms and loses live frames if it cannot keep up (Store catch-up then recovers within retention). Observed delivery in a 100-client single-process load test ranged from 40.8 % to 100 % depending on poll interval and publish concurrency.
 * **Privacy**: relays and observers see the bucket, timing, size, and publisher/subscriber network identity. A bucket's anonymity set is the number of agents sharing it in your deployment.
@@ -268,11 +282,13 @@ cargo test --workspace --locked
 | [docs/host-integration.md](docs/host-integration.md) | control socket, events, webhook |
 | [docs/configuration.md](docs/configuration.md) | every `agentnet.toml` key |
 | [docs/discovery.md](docs/discovery.md) | optional capability discovery: design, wire format, what relays see, limits, non-goals |
+| [docs/two-machine-quickstart.md](docs/two-machine-quickstart.md) | end-to-end two-host setup (relay + two agents) |
+| [docs/troubleshooting.md](docs/troubleshooting.md) | symptom-to-fix map for build, network, quarantine, triggers and MCP |
 | [docs/runbook.md](docs/runbook.md) | Operations runbook: routine checks, restarts, incident playbooks, backup |
 | [docs/network-simulations.md](docs/network-simulations.md) | WireGuard-overlay and NAT simulations (single host), with pointers to the real-host runs |
-| [docs/relay-setup.md](docs/relay-setup.md) | running your own relay, Store and client nodes; Tailscale (UNTESTED) |
+| [docs/relay-setup.md](docs/relay-setup.md) | running your own relay, Store and client nodes; public-relay and Tailscale deployments |
 | [docs/cli-help.txt](docs/cli-help.txt) | generated CLI help |
-| [docs/adr/](docs/adr/) | decisions: [0001 transport](docs/adr/0001-transport.md), 0002 encryption, 0003 MCP SDK and version |
+| [docs/adr/](docs/adr/) | decisions: [0001 transport](docs/adr/0001-transport.md), [0002 encryption (superseded)](docs/adr/0002-encryption.md), [0003 MCP SDK](docs/adr/0003-mcp-sdk.md), [0004 OpenPGP message protection](docs/adr/0004-openpgp-message-protection.md) |
 | [docs/spike/](docs/spike/) | spike notes: daemon-rest, libchat-and-crypto, e2e-crypto, mcp |
 | [docs/acceptance.md](docs/acceptance.md) | acceptance results (written by the acceptance run) |
 

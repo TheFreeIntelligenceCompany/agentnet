@@ -271,6 +271,7 @@ fn every_command_has_help_and_the_top_level_documents_exit_codes() {
     let cmds: &[&[&str]] = &[
         &["init"],
         &["serve"],
+        &["stop"],
         &["mcp"],
         &["identity"],
         &["identity", "show"],
@@ -1271,4 +1272,198 @@ async fn contact_add_again_with_expect_raises_an_untrusted_contact_and_says_so()
     assert!(human.contains("trust changed"), "{human}");
     assert_eq!(list[0]["trust"], "trusted");
     da.shutdown().await;
+}
+
+#[test]
+fn identity_show_cert_only_and_import_public_relay() {
+    let t = tempfile::tempdir().unwrap();
+    let (a, addr) = init(t.path(), "a");
+    let cert = ok(&a, &["identity", "show", "--cert-only"]);
+    assert_eq!(cert.trim(), contact_record(&a));
+
+    let pw = write_file(t.path(), "pw", "correct horse battery staple\n");
+    let export = t.path().join("export.age");
+    ok(
+        &a,
+        &[
+            "identity",
+            "export",
+            "--out",
+            export.to_str().unwrap(),
+            "--passphrase-file",
+            pw.to_str().unwrap(),
+        ],
+    );
+    let b = t.path().join("b-pub");
+    let imp = agentnet(
+        &b,
+        &[
+            "identity",
+            "import",
+            "--in",
+            export.to_str().unwrap(),
+            "--passphrase-file",
+            pw.to_str().unwrap(),
+            "--public-relay",
+            "--peer",
+            WSS_PEER,
+        ],
+    );
+    assert!(imp.status.success(), "{}", stderr(&imp));
+    let cfg = agentnet_daemon::DaemonConfig::load(&b.join("agentnet.toml")).unwrap();
+    assert_eq!(cfg.network.mode, agentnet_daemon::Mode::Public);
+    assert!(cfg.network.i_understand_public);
+    assert!(cfg.network.enforce_peer_allowlist);
+    assert_eq!(json_ok(&b, &["identity", "show"])["agent_id"], addr);
+}
+
+#[test]
+fn stop_command_shuts_down_a_running_daemon() {
+    let t = tempfile::tempdir().unwrap();
+    let (a, _) = init(t.path(), "a");
+    let mut child = Command::new(BIN)
+        .arg("--data-dir")
+        .arg(&a)
+        .arg("serve")
+        .stdout(Stdio::null())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    let sock = a.join("agentnet.sock");
+    let start = std::time::Instant::now();
+    while !sock.exists() && start.elapsed() < Duration::from_secs(20) {
+        std::thread::sleep(Duration::from_millis(50));
+    }
+    assert!(sock.exists(), "daemon did not start");
+
+    let stop = agentnet(&a, &["stop"]);
+    assert!(stop.status.success(), "{}", stderr(&stop));
+    assert!(
+        stdout(&stop).contains("stopped daemon"),
+        "{}",
+        stdout(&stop)
+    );
+    let status = child.wait().unwrap();
+    assert!(
+        status.success(),
+        "serve must exit 0 after `stop`: {status:?}"
+    );
+    assert!(!sock.exists(), "socket must be removed after `stop`");
+}
+
+#[tokio::test]
+async fn send_correlation_and_expect_mismatch_and_doctor_wait() {
+    let t = tempfile::tempdir().unwrap();
+    let a = t.path().join("a");
+    let b = t.path().join("b");
+    let node = fake_node();
+    ok(&a, &["init", "--peer", PEER, "--node-url", &node]);
+    ok(&b, &["init", "--peer", PEER, "--node-url", &node]);
+    let addr_a = json_ok(&a, &["identity", "show"])["agent_id"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    let addr_b = json_ok(&b, &["identity", "show"])["agent_id"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    let rec_a = contact_record(&a);
+    let rec_b = contact_record(&b);
+
+    let clock = MockClock::new(wall_ns());
+    let net = MockNetwork::with_clock(clock.clone());
+    let mut cfg = DaemonConfig::load(&a.join("agentnet.toml")).unwrap();
+    cfg.delivery.poll_interval_ms = 20;
+    let da = Daemon::start_with_transport(
+        &a,
+        cfg.clone(),
+        Arc::new(net.endpoint()),
+        Arc::new(clock.clone()),
+    )
+    .await
+    .unwrap();
+    let db = Daemon::start_with_transport(&b, cfg, Arc::new(net.endpoint()), Arc::new(clock))
+        .await
+        .unwrap();
+
+    let (a2, b2, addr_a2, addr_b2) = (a.clone(), b.clone(), addr_a.clone(), addr_b.clone());
+    tokio::task::spawn_blocking(move || {
+        // doctor --ready --wait succeeds immediately when ready
+        let doc = agentnet(&a2, &["doctor", "--ready", "--wait", "5"]);
+        assert_eq!(
+            doc.status.code(),
+            Some(0),
+            "{}{}",
+            stdout(&doc),
+            stderr(&doc)
+        );
+
+        // --expect mismatch shows both actual and expected addresses
+        let fa = write_file(&a2, "b.cert", &rec_b);
+        let mismatch = agentnet(
+            &a2,
+            &[
+                "contact",
+                "add",
+                &format!("@{}", fa.display()),
+                "--expect",
+                &addr_a2,
+            ],
+        );
+        assert_eq!(mismatch.status.code(), Some(4));
+        assert!(
+            stderr(&mismatch).contains(&addr_b2) && stderr(&mismatch).contains(&addr_a2),
+            "{}",
+            stderr(&mismatch)
+        );
+
+        // add valid contacts and send with --correlation
+        ok(
+            &a2,
+            &[
+                "contact",
+                "add",
+                &format!("@{}", fa.display()),
+                "--expect",
+                &addr_b2,
+            ],
+        );
+        let fb = write_file(&b2, "a.cert", &rec_a);
+        ok(
+            &b2,
+            &[
+                "contact",
+                "add",
+                &format!("@{}", fb.display()),
+                "--expect",
+                &addr_a2,
+            ],
+        );
+        let sent = json_ok(
+            &a2,
+            &["send", &addr_b2, "correlated", "--correlation", "req-42"],
+        );
+        let mid = sent["message_id"].as_str().unwrap().to_owned();
+        let start = std::time::Instant::now();
+        loop {
+            let inbox = json_ok(&b2, &["inbox"]);
+            if inbox["records"]
+                .as_array()
+                .is_some_and(|r| r.iter().any(|x| x["message_id"] == mid.as_str()))
+            {
+                assert_eq!(inbox["records"][0]["correlation_id"], "req-42");
+                let human_inbox = ok(&b2, &["inbox"]);
+                assert!(human_inbox.contains("corr=req-42"), "{human_inbox}");
+                assert!(human_inbox.contains("conv="), "{human_inbox}");
+                break;
+            }
+            assert!(start.elapsed() < Duration::from_secs(10), "not delivered");
+            std::thread::sleep(Duration::from_millis(50));
+        }
+    })
+    .await
+    .unwrap();
+
+    da.shutdown().await;
+    db.shutdown().await;
 }

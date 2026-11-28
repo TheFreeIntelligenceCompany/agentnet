@@ -254,9 +254,16 @@ async fn run(cli: Cli) -> CliResult<i32> {
                     rep.identity.contact_record
                 );
                 if rep.peers_missing {
-                    s.push_str(&format!("\nWARNING: no peers configured. Private mode needs at least one static peer:\nadd `peers = [\"/ip4/<ip>/tcp/60000/p2p/<peerId>\"]` to {} (see `agentnet relay print-config`).\n", dir.join("agentnet.toml").display()));
+                    s.push_str(&format!(
+                        "\nWARNING: no peers configured. Private mode needs at least one static peer:\n\
+                         1. Add `peers = [\"/ip4/<ip>/tcp/60000/p2p/<peerId>\"]` to {} (see `agentnet relay print-config`).\n\
+                         2. Next: {}",
+                        dir.join("agentnet.toml").display(),
+                        render::cmd(&dir, "serve")
+                    ));
+                } else {
+                    s.push_str(&format!("\nNext: {}", render::cmd(&dir, "serve")));
                 }
-                s.push_str(&format!("\nNext: {}", render::cmd(&dir, "serve")));
                 s
             });
         }
@@ -275,6 +282,13 @@ async fn run(cli: Cli) -> CliResult<i32> {
             }
             d.run_until_signal().await?;
         }
+        Command::Stop => {
+            remote().shutdown().await?;
+            let out = json!({"stopped": true, "data_dir": dir});
+            emit(json, &out, |_| {
+                format!("stopped daemon for {}", dir.display())
+            });
+        }
         Command::Mcp { embedded } => {
             if embedded {
                 let d = Daemon::start(&dir).await?;
@@ -289,18 +303,22 @@ async fn run(cli: Cli) -> CliResult<i32> {
             }
         }
         Command::Identity { action } => match action {
-            IdentityCmd::Show => {
+            IdentityCmd::Show { cert_only } => {
                 let i = offline::show_identity(&dir)?;
-                emit(json, &i, |i| {
-                    format!(
-                        "Address: {}\nInbox topic: {}\nCreated: {}\nEncryption subkey expires: {}\nPublic certificate:\n{}",
-                        i.agent_id,
-                        i.inbox_topic,
-                        render::time(i.created_at),
-                        i.kem_expires_at.map(render::time).unwrap_or_else(|| "never".into()),
-                        i.contact_record
-                    )
-                });
+                if cert_only {
+                    println!("{}", i.contact_record);
+                } else {
+                    emit(json, &i, |i| {
+                        format!(
+                            "Address: {}\nInbox topic: {}\nCreated: {}\nEncryption subkey expires: {}\nPublic certificate:\n{}",
+                            i.agent_id,
+                            i.inbox_topic,
+                            render::time(i.created_at),
+                            i.kem_expires_at.map(render::time).unwrap_or_else(|| "never".into()),
+                            i.contact_record
+                        )
+                    });
+                }
             }
             IdentityCmd::Export {
                 out,
@@ -318,18 +336,20 @@ async fn run(cli: Cli) -> CliResult<i32> {
                 passphrase_file,
                 node_url,
                 peer,
+                public_relay,
                 no_replay_guard,
             } => {
                 let pass = passphrase(passphrase_file.as_deref(), false)?;
                 let f = std::fs::File::open(&input)
                     .map_err(|e| CliError::other(format!("reading {}: {e}", input.display())))?;
                 let bytes = read_bounded_bytes(f, 1024 * 1024, &input.display().to_string())?;
-                let rep = offline::import_identity(
+                let rep = offline::import_identity_with_mode(
                     &dir,
                     &bytes,
                     &pass,
                     &node_url,
                     &peer,
+                    public_relay,
                     !no_replay_guard,
                 )?;
                 let v = json!({"address": rep.identity.agent_id, "data_dir": dir, "peers_configured": !rep.peers_missing, "replay_guard": !no_replay_guard});
@@ -475,7 +495,7 @@ async fn run(cli: Cli) -> CliResult<i32> {
                             trust: trust.map(Into::into),
                         })
                         .await?;
-                    emit(json, &c, render::contact_line);
+                    emit(json, &c, |c| render::contact_line_for(&dir, c));
                 }
                 ContactCmd::Revoke { document } => {
                     let doc = read_text_arg(&document, "revocation document")?;
@@ -500,7 +520,7 @@ async fn run(cli: Cli) -> CliResult<i32> {
                             "no contacts".to_owned()
                         } else {
                             l.iter()
-                                .map(render::contact_line)
+                                .map(|c| render::contact_line_for(&dir, c))
                                 .collect::<Vec<_>>()
                                 .join("\n")
                         }
@@ -508,7 +528,7 @@ async fn run(cli: Cli) -> CliResult<i32> {
                 }
                 ContactCmd::Trust { address, level } => {
                     let c = r.set_contact_trust(&address, level.into()).await?;
-                    emit(json, &c, render::contact_line);
+                    emit(json, &c, |c| render::contact_line_for(&dir, c));
                 }
                 ContactCmd::Remove { address } => {
                     let removed = r.remove_contact(&address).await?;
@@ -561,6 +581,7 @@ async fn run(cli: Cli) -> CliResult<i32> {
             recipient,
             body,
             conversation,
+            correlation,
             ttl,
             idempotency_key,
         } => {
@@ -574,6 +595,7 @@ async fn run(cli: Cli) -> CliResult<i32> {
                     recipient,
                     body,
                     conversation_id: conversation,
+                    correlation_id: correlation,
                     ttl_seconds: ttl,
                     idempotency_key,
                     ..Default::default()
@@ -874,6 +896,7 @@ async fn run(cli: Cli) -> CliResult<i32> {
         },
         Command::Doctor {
             ready,
+            wait,
             accept_rollback,
         } => {
             if accept_rollback {
@@ -887,7 +910,24 @@ async fn run(cli: Cli) -> CliResult<i32> {
                     }
                 );
             }
-            let checks = doctor::run(&dir).await;
+            let deadline = wait
+                .filter(|&s| ready && s > 0)
+                .map(|s| tokio::time::Instant::now() + std::time::Duration::from_secs(s));
+            let checks = loop {
+                let checks = doctor::run(&dir).await;
+                let failed = checks.iter().any(|c| c.level == doctor::Level::Fail);
+                let not_ready = if ready {
+                    doctor::readiness_failures(&dir, &checks)
+                } else {
+                    Vec::new()
+                };
+                if (!failed && not_ready.is_empty())
+                    || deadline.is_none_or(|d| tokio::time::Instant::now() >= d)
+                {
+                    break checks;
+                }
+                tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+            };
             let failed = checks.iter().any(|c| c.level == doctor::Level::Fail);
             emit(json, &checks, |cs| render::doctor(cs));
             if ready {

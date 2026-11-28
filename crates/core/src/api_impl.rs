@@ -251,12 +251,23 @@ impl Node {
                 }
                 let mut n = 0usize;
                 let mut convs = Vec::new();
+                let mut blocked_reason: Option<String> = None;
                 for (seq, sender, ty, conv, corr, body, created, expires) in rows {
                     let Ok(addr) = sender.parse::<Address>() else { continue };
-                    let trusted = self
-                        .load_contact(tx, &addr)?
-                        .is_some_and(|r| r.trust == Trust::Trusted);
+                    let contact = self.load_contact(tx, &addr)?;
+                    let trusted = contact.as_ref().is_some_and(|r| r.trust == Trust::Trusted);
                     if !trusted {
+                        if blocked_reason.is_none() {
+                            blocked_reason = Some(match contact {
+                                None => format!(
+                                    "sender {addr} is not a contact; add their verified certificate first"
+                                ),
+                                Some(c) => format!(
+                                    "sender {addr} is {} (not trusted); raise their trust level first",
+                                    trust_to_db(c.trust)
+                                ),
+                            });
+                        }
                         continue;
                     }
                     let live = count(tx, "SELECT COUNT(*) FROM inbox WHERE quarantined = 0", [])?;
@@ -290,7 +301,10 @@ impl Node {
                     n += 1;
                 }
                 if n == 0 {
-                    return Err(ApiError::policy("the sender is not a trusted contact; trust them first").into());
+                    let reason = blocked_reason.unwrap_or_else(|| {
+                        "the sender is not a trusted contact; trust them first".to_owned()
+                    });
+                    return Err(ApiError::policy(reason).into());
                 }
                 Ok((n, convs))
             })
@@ -486,9 +500,10 @@ impl AgentApi for Node {
             .map_err(|e| ApiError::invalid(format!("invalid contact certificate: {e}")))?;
         if let Some(exp) = &req.expected_address {
             if *exp != vc.address.to_string() {
-                return Err(ApiError::invalid(
-                    "contact certificate is not for the expected address",
-                ));
+                return Err(ApiError::invalid(format!(
+                    "contact certificate is for {}, not expected {exp}",
+                    vc.address
+                )));
             }
         }
         if vc.address == self.own {

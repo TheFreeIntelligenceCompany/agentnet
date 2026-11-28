@@ -16,8 +16,8 @@ else takes the default shown in the tables below. `agentnet init --node-url <url
 
 Every section is optional; an omitted key takes the default shown. The daemon validates the file at start and refuses to run
 on any error (fail closed). `agentnet doctor` checks it too. Examples: `docs/examples/private.toml`,
-`docs/examples/public.toml` (generated from `agentnet_daemon::sample_private_config()` /
-`sample_public_config()` and checked by a test).
+`docs/examples/public-relay.toml`, and `docs/examples/public.toml` (generated from `agentnet_daemon::sample_private_config()` /
+`sample_public_relay_config()` / `sample_public_config()` and checked by a test).
 
 Code: `crates/daemon/src/config.rs`. The `[storage]`, `[policy]`, `[triggers]` and `[delivery]` sections
 are the engine's own configuration (`agentnet_core::config`), validated by the engine; the network
@@ -55,7 +55,7 @@ this data directory". The socket path must fit a Unix socket (about 100 bytes): 
 | `public_discovery` | `false` | `true` is a config error in private mode. The daemon cannot switch discovery on the node; this key only records intent in public mode. |
 | `public_fallback` | `false` | `true` is **always** a config error: there is no public fallback and no code path that adds peers. |
 | `i_understand_public` | `false` | Must be `true` for `mode = "public"` |
-| `enforce_peer_allowlist` | `false` | Only valid with `mode = "public"` (a config error in private mode, which always audits). Keeps the peer-id allowlist audit for **your own relay on a public address**; needs `peers`. See "Public mode with the allowlist audit kept" below. **UNTESTED against a real public relay.** |
+| `enforce_peer_allowlist` | `false` | Only valid with `mode = "public"` (a config error in private mode, which always audits). Keeps the peer-id allowlist audit for **your own relay on a public address**; needs `peers`. See "Public mode with the allowlist audit kept" below. |
 | `store_peer` | unset | Optional explicit Store peer multiaddr (private mode: private IP + allowlisted peer id; with `enforce_peer_allowlist`: the same address forms as `peers`) |
 
 ### Private mode (default)
@@ -118,7 +118,7 @@ What this does **not** give you: the node itself may resolve names through a pub
 egress" no longer holds; the relay endpoint is reachable by anyone, and cluster/shard ids are not access
 control (`docs/threat-model.md` T13), so strangers can join your relay and read ciphertext and metadata.
 It only guarantees that this agent's node is not meshed with peers outside `peers`; like the private-mode
-audit it is detective, not preventive. Validated once against a relay on its own public IPv4 (raw tcp, one Mac client behind NAT, `results/public-ip-relay/20261126T211443Z/`): a foreign peer meshed into the node was reported as an isolation violation, the transport went not-ready, sends stayed queued and recovered when the peer left. **Detective only:** the race found there (a send right after the peer connected was published, because publish trusted a cached audit) is fixed by auditing before every publish; a peer that connects between that audit response and the publish request can still get one message, so the window is one REST round trip (the fix passed 3 of 3 runs of a real-node test on the local relay, `results/audit-window/SUMMARY.md`; not re-run against a public relay). **UNTESTED:** `wss`/`tls` endpoints and DNS-name peers end to end, more than one client, long runs.
+audit it is detective, not preventive. Validated on the OpenPGP tree in single runs against a real public-IPv4 relay (`results/public-ip-relay/20261127T215151Z/`, 19 PASS: 6 of 6 sends issued right after a foreign peer joined stayed queued) and a `wss` TLS edge (`results/public-relay/20261127T215957Z/`, 14 PASS). **Detective only:** a peer that connects between the uncached pre-publish audit response and the publish request can still get one message, so the window is one REST round trip. **UNTESTED:** more than one client, long runs, millisecond-scale publish races.
 
 ## `[storage]`
 
