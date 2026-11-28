@@ -321,6 +321,10 @@ fn documented_sample_configs_match_the_code() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../docs/examples");
     let want = [
         ("private.toml", agentnet_daemon::sample_private_config()),
+        (
+            "public-relay.toml",
+            agentnet_daemon::sample_public_relay_config(),
+        ),
         ("public.toml", agentnet_daemon::sample_public_config()),
     ];
     for (name, text) in want {

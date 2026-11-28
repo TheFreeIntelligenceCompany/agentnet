@@ -29,8 +29,9 @@ command output (and, for `agentnet mcp`, MCP protocol frames).";
 ///
 /// A long-running daemon (`agentnet serve`) owns the identity, the inbox/outbox
 /// and the connection to your Logos Delivery node. Every other command talks to
-/// that daemon over its control socket, except the few that manage the data
-/// directory while no daemon runs (`init`, `identity export|import|rotate-kem|revoke`).
+/// that daemon over its control socket, except the commands that work directly
+/// on the data directory or print configuration (`init`, `identity`, `doctor`,
+/// `relay print-config`).
 #[derive(Parser)]
 #[command(name = "agentnet", version, after_help = EXIT_CODES)]
 pub struct Cli {
@@ -72,6 +73,8 @@ pub enum Command {
     /// control/event socket and, if enabled in agentnet.toml, the signed webhook
     /// and the loopback HTTP MCP endpoint.
     Serve,
+    /// Ask the running daemon for this data directory to shut down cleanly.
+    Stop,
     /// Serve MCP over stdio as a thin client of the running daemon.
     ///
     /// stdout carries only MCP protocol frames. If the daemon is not running the
@@ -107,6 +110,9 @@ pub enum Command {
         /// Conversation id (default: a fresh one).
         #[arg(long, value_name = "ID")]
         conversation: Option<String>,
+        /// Correlation id linking this message to a prior message or request.
+        #[arg(long, value_name = "ID")]
+        correlation: Option<String>,
         /// Time to live in seconds (default and maximum come from agentnet.toml).
         #[arg(long, value_name = "SECONDS")]
         ttl: Option<u64>,
@@ -202,6 +208,10 @@ pub enum Command {
         /// isolation audit fails or a required check was skipped. Output is unchanged.
         #[arg(long)]
         ready: bool,
+        /// With `--ready`, poll every second for up to SECONDS until the instance is
+        /// ready (or the deadline expires).
+        #[arg(long, value_name = "SECONDS", requires = "ready")]
+        wait: Option<u64>,
         /// Accept a detected store rollback / unknown history / import so the next
         /// start does not hold older messages, and release the held ones. Requires
         /// the daemon to be stopped. Messages that were received and acknowledged
@@ -220,7 +230,11 @@ pub enum Command {
 #[derive(Subcommand)]
 pub enum IdentityCmd {
     /// Print the public identity (address, contact record). Never prints secrets.
-    Show,
+    Show {
+        /// Print only the raw public OpenPGP certificate (useful for redirecting to a .cert file).
+        #[arg(long, conflicts_with = "json")]
+        cert_only: bool,
+    },
     /// Write a passphrase-encrypted (age) export of the identity.
     Export {
         /// Output file (created with mode 0600; never overwritten).
@@ -244,6 +258,9 @@ pub enum IdentityCmd {
         /// Static peer multiaddr for the new config (repeatable).
         #[arg(long, value_name = "MULTIADDR")]
         peer: Vec<String>,
+        /// Your own relay is reached over a public IP or DNS name (writes audited public mode).
+        #[arg(long)]
+        public_relay: bool,
         /// Do NOT start the new store in replay-guard mode. A new data directory has no
         /// dedupe history, so by default messages created before the first start are held
         /// (not delivered) until max_ttl + clock_skew has passed or `doctor --accept-rollback`

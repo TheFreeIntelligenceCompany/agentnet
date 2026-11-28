@@ -6,7 +6,7 @@
 # Single host, loopback and a Docker bridge network. This is NOT a cross-machine test.
 #
 # What it does:
-#   1. checks prerequisites (docker with a reachable daemon, docker-compose, curl, jq, python3, cargo)
+#   1. checks prerequisites (docker with a reachable daemon, docker compose or docker-compose, curl, jq, python3, cargo)
 #   2. builds target/release/agentnet if it is missing
 #   3. starts the relay topology ONLY if it is not already up (reuses a running one),
 #      and tears down only what it started itself
@@ -43,6 +43,17 @@ OK=0
 
 log() { printf '[demo %s] %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 
+COMPOSE_CMD=()
+detect_compose() {
+  if command -v docker-compose >/dev/null 2>&1; then
+    COMPOSE_CMD=(docker-compose)
+  elif docker compose version >/dev/null 2>&1; then
+    COMPOSE_CMD=(docker compose)
+  else
+    die "missing prerequisite: install 'docker compose' (v2 plugin) or standalone 'docker-compose'"
+  fi
+}
+
 cleanup() {
   local rc=$?
   trap - EXIT INT TERM
@@ -66,11 +77,11 @@ cleanup() {
   if [ -n "$STARTED_SERVICES" ]; then
     log "stopping the relay containers this script started:$STARTED_SERVICES"
     if [ "$STARTED_ALL" -eq 1 ]; then
-      (cd "$RELAY_DIR" && docker-compose -f docker-compose.yml down >/dev/null 2>&1)
+      (cd "$RELAY_DIR" && "${COMPOSE_CMD[@]}" -f docker-compose.yml down >/dev/null 2>&1)
     else
       # shellcheck disable=SC2086
-      (cd "$RELAY_DIR" && docker-compose -f docker-compose.yml stop $STARTED_SERVICES >/dev/null 2>&1 \
-        && docker-compose -f docker-compose.yml rm -f $STARTED_SERVICES >/dev/null 2>&1)
+      (cd "$RELAY_DIR" && "${COMPOSE_CMD[@]}" -f docker-compose.yml stop $STARTED_SERVICES >/dev/null 2>&1 \
+        && "${COMPOSE_CMD[@]}" -f docker-compose.yml rm -f $STARTED_SERVICES >/dev/null 2>&1)
     fi
   elif [ "$RELAY_STEP_REACHED" -eq 1 ]; then
     log "relay containers were already running before this script: left untouched"
@@ -133,7 +144,7 @@ is_delivered() { ag "$1" --json status "$2" 2>/dev/null | jq -e '.state == "deli
 STAGE="prerequisite checks"
 log "checking prerequisites"
 need docker "install Docker (or colima) and make sure 'docker' is on PATH"
-need docker-compose "install the standalone docker-compose binary (the relay helper uses 'docker-compose', not 'docker compose')"
+detect_compose
 need curl "install curl"
 need jq "install jq (for example 'brew install jq' or 'apt install jq')"
 need python3 "install Python 3 (the relay start helper uses it to print peer lists)"
@@ -145,8 +156,15 @@ case "$(uname -s)" in Darwin | Linux) ;; *) die "unsupported OS $(uname -s): mac
 STAGE="building the agentnet binary"
 if [ ! -x "$BIN" ]; then
   need cargo "install Rust 1.89 or newer (https://rustup.rs) and a C compiler"
+  if [ "$(uname -s)" = "Darwin" ] && [ -z "${OPENSSL_DIR:-}" ] && command -v brew >/dev/null 2>&1; then
+    BREW_OSSL="$(brew --prefix openssl@3 2>/dev/null || true)"
+    if [ -n "$BREW_OSSL" ] && [ -d "$BREW_OSSL" ]; then
+      export OPENSSL_DIR="$BREW_OSSL"
+      log "detected Homebrew OpenSSL 3 at $OPENSSL_DIR"
+    fi
+  fi
   log "building the release binary (first build takes several minutes): cargo build --release --locked -p agentnet-cli"
-  (cd "$ROOT" && cargo build --release --locked -p agentnet-cli) || die "cargo build failed: see the compiler output above"
+  (cd "$ROOT" && cargo build --release --locked -p agentnet-cli) || die "cargo build failed (on macOS, install OpenSSL 3 with 'brew install openssl@3' and set OPENSSL_DIR=\$(brew --prefix openssl@3); on Linux install libssl-dev libclang-dev clang pkg-config)"
   [ -x "$BIN" ] || die "the build finished but $BIN does not exist"
 fi
 log "using $("$BIN" --version) at $BIN"
@@ -210,10 +228,10 @@ wait_for "daemon B ready" "$READY_TIMEOUT" ready "$B" ||
 STAGE="exchanging signed contact records"
 # In real use the address must reach you over a channel you trust; --expect makes 'contact add'
 # fail unless the signed record belongs to exactly that address.
-ag "$A" identity show --json | jq -r .contact_record >"$WORK/a-record.json"
-ag "$B" identity show --json | jq -r .contact_record >"$WORK/b-record.json"
-ag "$A" contact add "@$WORK/b-record.json" --expect "$B_ADDR" --alias b >/dev/null || die "A could not add B's contact record"
-ag "$B" contact add "@$WORK/a-record.json" --expect "$A_ADDR" --alias a >/dev/null || die "B could not add A's contact record"
+ag "$A" identity show --cert-only >"$WORK/a.cert"
+ag "$B" identity show --cert-only >"$WORK/b.cert"
+ag "$A" contact add "@$WORK/b.cert" --expect "$B_ADDR" --alias b >/dev/null || die "A could not add B's contact record"
+ag "$B" contact add "@$WORK/a.cert" --expect "$A_ADDR" --alias a >/dev/null || die "B could not add A's contact record"
 log "contacts exchanged and verified"
 
 # ---------------------------------------------------------------- 6. A -> B

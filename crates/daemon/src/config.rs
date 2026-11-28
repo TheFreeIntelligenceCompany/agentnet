@@ -383,9 +383,19 @@ fn render_config_body(node_url: &str, peers: &[String], public_relay: bool) -> S
     let header = if public_relay {
         "# agentnet.toml -- PUBLIC mode with the peer allowlist audit kept (own relay on a\n\
          # public address or wss edge). See docs/configuration.md and docs/relay-setup.md.\n\
-         # The audit is detective, not preventive; the relay's firewall or edge is the access control."
+         #\n\
+         # The peer allowlist audit is detective, not preventive; the relay's firewall or\n\
+         # TLS edge is the access control. Public peer discovery and public fallback stay\n\
+         # off. (The optional [discovery] section below is something else: it lists\n\
+         # capability adverts on YOUR relay, off by default.)"
     } else {
-        "# agentnet.toml -- PRIVATE mode (the default). See docs/configuration.md."
+        "# agentnet.toml -- PRIVATE mode (the default). See docs/configuration.md.\n\
+         #\n\
+         # Private mode fails closed: the Logos Delivery node must be on a loopback or\n\
+         # private address, connected only to the peers listed here, and on a private\n\
+         # cluster id. Public peer discovery and public fallback do not exist. (The\n\
+         # optional [discovery] section below is something else: it lists capability\n\
+         # adverts on YOUR relay, off by default.)"
     };
     let mode = if public_relay { "public" } else { "private" };
     let public_flags = if public_relay {
@@ -403,12 +413,6 @@ fn render_config_body(node_url: &str, peers: &[String], public_relay: bool) -> S
     };
     format!(
         r#"{header}
-#
-# Private mode fails closed: the Logos Delivery node must be on a loopback or
-# private address, connected only to the peers listed here, and on a private
-# cluster id. Public peer discovery and public fallback do not exist. (The
-# optional [discovery] section below is something else: it lists capability
-# adverts on YOUR relay, off by default.)
 
 [network]
 mode = "{mode}"
@@ -462,6 +466,18 @@ timeout_ms = 5000
 max_attempts = 5
 events = ["trigger.matched"]
 "#
+    )
+}
+
+/// The audited public-relay sample (`docs/examples/public-relay.toml`, matching
+/// `agentnet init --public-relay`).
+pub fn sample_public_relay_config() -> String {
+    render_public_relay_config(
+        "http://127.0.0.1:8645",
+        &[
+            "/dns4/relay.example.org/tcp/443/wss/p2p/16Uiu2HAm8fsfg223p9wnEDbuYEKrs2dMK4zSPzghoyfpJoCYesLV"
+                .to_owned(),
+        ],
     )
 }
 
@@ -710,6 +726,7 @@ mod tests {
     #[test]
     fn samples_parse_and_validate() {
         DaemonConfig::parse_validated(&sample_private_config()).unwrap();
+        DaemonConfig::parse_validated(&sample_public_relay_config()).unwrap();
         DaemonConfig::parse_validated(&sample_public_config()).unwrap();
         let empty = render_private_config("http://127.0.0.1:8645", &[]);
         let c = DaemonConfig::parse(&empty).unwrap();

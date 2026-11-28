@@ -11,8 +11,9 @@ information.
 
 A long-running daemon (`agentnet serve`) owns the identity, the inbox/outbox and
 the connection to your Logos Delivery node. Every other command talks to that
-daemon over its control socket, except the few that manage the data directory
-while no daemon runs (`init`, `identity export|import|rotate-kem|revoke`).
+daemon over its control socket, except the commands that work directly on the
+data directory or print configuration (`init`, `identity`, `doctor`, `relay
+print-config`).
 
 Usage: agentnet [OPTIONS] <COMMAND>
 
@@ -21,6 +22,8 @@ Commands:
               (or, with --public-relay, the audited public mode) and access
               tokens
   serve       Run the daemon in the foreground until Ctrl-C or SIGTERM
+  stop        Ask the running daemon for this data directory to shut down
+              cleanly
   mcp         Serve MCP over stdio as a thin client of the running daemon
   identity    Show, export, import and rotate the identity (daemon must be
               stopped for all but `show`)
@@ -245,6 +248,8 @@ Options:
       --conversation <ID>      Conversation id (default: a fresh one)
       --data-dir <DIR>         Data directory (identity, config, database,
                                socket, tokens) [env: AGENTNET_HOME=]
+      --correlation <ID>       Correlation id linking this message to a prior
+                               message or request
       --json                   Print machine-readable JSON instead of human text
       --ttl <SECONDS>          Time to live in seconds (default and maximum come
                                from agentnet.toml)
@@ -432,15 +437,19 @@ Options:
           ready, the isolation audit fails or a required check was skipped.
           Output is unchanged
 
+      --json
+          Print machine-readable JSON instead of human text
+
+      --wait <SECONDS>
+          With `--ready`, poll every second for up to SECONDS until the instance
+          is ready (or the deadline expires)
+
       --accept-rollback
           Accept a detected store rollback / unknown history / import so the
           next start does not hold older messages, and release the held ones.
           Requires the daemon to be stopped. Messages that were received and
           acknowledged before the rollback cannot be recovered, and frames
           replayed from before the rollback are accepted again within their TTL
-
-      --json
-          Print machine-readable JSON instead of human text
 
   -h, --help
           Print help (see a summary with '-h')
@@ -469,6 +478,8 @@ Print the public identity (address, contact record). Never prints secrets
 Usage: agentnet identity show [OPTIONS]
 
 Options:
+      --cert-only       Print only the raw public OpenPGP certificate (useful
+                        for redirecting to a .cert file)
       --data-dir <DIR>  Data directory (identity, config, database, socket,
                         tokens) [env: AGENTNET_HOME=]
       --json            Print machine-readable JSON instead of human text
@@ -509,6 +520,8 @@ Options:
                                 the new config [default: http://127.0.0.1:8645]
       --peer <MULTIADDR>        Static peer multiaddr for the new config
                                 (repeatable)
+      --public-relay            Your own relay is reached over a public IP or
+                                DNS name (writes audited public mode)
       --no-replay-guard         Do NOT start the new store in replay-guard mode.
                                 A new data directory has no dedupe history, so
                                 by default messages created before the first
