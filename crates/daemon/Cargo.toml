@@ -10,7 +10,7 @@ publish.workspace = true
 [dependencies]
 agentnet-core.workspace = true
 agentnet-mcp.workspace = true
-agentnet-transport = { workspace = true, features = ["logos-rest"] }
+agentnet-transport = { workspace = true, features = ["logos-rest", "waku-native"] }
 async-trait.workspace = true
 fs4 = { version = "0.13", features = ["sync"] }
 getrandom = "0.4"

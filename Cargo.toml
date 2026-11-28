@@ -28,6 +28,10 @@ sha2 = "=0.10.9"
 url = "2.5"
 rusqlite = { version = "0.42", features = ["bundled"] }
 tokio-util = "0.7"
+futures = "0.3"
+prost = "0.14"
+libp2p = { version = "0.57.1", default-features = false, features = ["tokio", "tcp", "dns", "noise", "yamux", "identify", "ping", "gossipsub", "request-response", "macros", "ed25519", "secp256k1"] }
+libp2p-allow-block-list = "0.7.0"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

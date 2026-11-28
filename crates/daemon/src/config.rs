@@ -17,6 +17,7 @@ use agentnet_core::config::{
     DeliveryConfig, DiscoveryConfig, NodeConfig, PolicyConfig, StorageConfig, TriggerConfig,
 };
 use agentnet_transport::logos_rest::{LogosRestConfig, NetworkMode};
+use agentnet_transport::waku_native::NativeWakuConfig;
 use serde::{Deserialize, Serialize};
 
 use crate::error::DaemonError;
@@ -46,13 +47,38 @@ impl Mode {
     }
 }
 
+/// `network.backend`
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum TransportBackend {
+    /// Talk to an external Logos Delivery (`nwaku`) sidecar node over REST (default).
+    #[default]
+    LogosRest,
+    /// Embedded pure-Rust `libp2p` Waku v2 transport (zero Docker sidecar required).
+    Native,
+}
+
+impl TransportBackend {
+    /// Human-readable backend identifier.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            TransportBackend::LogosRest => "logos_rest",
+            TransportBackend::Native => "native",
+        }
+    }
+}
+
 /// `[network]`
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields, default)]
 pub struct NetworkSection {
+    /// Transport backend: `logos_rest` (external sidecar, default) or `native`
+    /// (embedded pure-Rust libp2p Waku v2).
+    pub backend: TransportBackend,
     /// `private` (default) or `public` (needs `i_understand_public = true`).
     pub mode: Mode,
-    /// REST endpoint of the local Logos Delivery node (loopback / private only in private mode).
+    /// REST endpoint of the local Logos Delivery node (used only with
+    /// `backend = "logos_rest"`; loopback / private only in private mode).
     pub node_url: String,
     /// Static peers (multiaddrs ending in `/p2p/<peerId>`). Required in private
     /// mode; the node must be connected to nothing else.
@@ -72,13 +98,19 @@ pub struct NetworkSection {
     /// Only with `mode = "public"`: keep the peer-id allowlist audit for your
     /// own relay on a public address (peers may be public IPs or dns4/dns6
     /// names). Needs `peers`. Private mode always audits and rejects this key.
-    /// UNTESTED against a real public relay.
     pub enforce_peer_allowlist: bool,
+    /// Optional libp2p listen multiaddrs when `backend = "native"` (default:
+    /// outbound-only client).
+    pub listen_addrs: Vec<String>,
+    /// Optional path to a mode-0600 file holding a 64-hex secp256k1 node key
+    /// when `backend = "native"` (relative paths are relative to the data dir).
+    pub node_key_file: Option<String>,
 }
 
 impl Default for NetworkSection {
     fn default() -> Self {
         Self {
+            backend: TransportBackend::LogosRest,
             mode: Mode::Private,
             node_url: "http://127.0.0.1:8645".to_owned(),
             peers: Vec::new(),
@@ -88,6 +120,8 @@ impl Default for NetworkSection {
             i_understand_public: false,
             store_peer: None,
             enforce_peer_allowlist: false,
+            listen_addrs: Vec::new(),
+            node_key_file: None,
         }
     }
 }
@@ -249,6 +283,23 @@ impl DaemonConfig {
         }
     }
 
+    /// Native libp2p Waku v2 transport configuration derived from this file.
+    pub fn to_native_config(&self, node_key_hex: Option<String>) -> NativeWakuConfig {
+        NativeWakuConfig {
+            mode: match self.network.mode {
+                Mode::Private => NetworkMode::Private,
+                Mode::Public => NetworkMode::Public,
+            },
+            cluster_id: self.network.cluster_id,
+            static_peers: self.network.peers.clone(),
+            store_peer: self.network.store_peer.clone(),
+            enforce_peer_allowlist: self.network.enforce_peer_allowlist,
+            listen_addrs: self.network.listen_addrs.clone(),
+            node_key_hex,
+            ..NativeWakuConfig::default()
+        }
+    }
+
     /// Fail-closed validation of every section.
     pub fn validate(&self) -> Result<(), DaemonError> {
         let n = &self.network;
@@ -305,9 +356,24 @@ impl DaemonConfig {
         self.to_node_config()
             .validate()
             .map_err(|e| cfg_err(format!("engine: {e}")))?;
-        self.to_logos_config()
-            .validate()
-            .map_err(|e| cfg_err(format!("network: {e}")))?;
+        match n.backend {
+            TransportBackend::LogosRest => {
+                if !n.listen_addrs.is_empty() || n.node_key_file.is_some() {
+                    return Err(cfg_err(
+                        "network.listen_addrs and network.node_key_file are only valid with \
+                         network.backend = \"native\"",
+                    ));
+                }
+                self.to_logos_config()
+                    .validate()
+                    .map_err(|e| cfg_err(format!("network: {e}")))?;
+            }
+            TransportBackend::Native => {
+                self.to_native_config(None)
+                    .validate()
+                    .map_err(|e| cfg_err(format!("network: {e}")))?;
+            }
+        }
         Ok(())
     }
 
@@ -493,6 +559,118 @@ pub fn render_private_config(node_url: &str, peers: &[String]) -> String {
 /// `i_understand_public = true`, `enforce_peer_allowlist = true`.
 pub fn render_public_relay_config(node_url: &str, peers: &[String]) -> String {
     render_config_body(node_url, peers, true)
+}
+
+/// Render the native pure-Rust libp2p Waku v2 config (`agentnet init --native`).
+pub fn render_native_config(peers: &[String], public_relay: bool) -> String {
+    let header = if public_relay {
+        "# agentnet.toml -- NATIVE Rust libp2p Waku v2 transport (PUBLIC audited mode).\n\
+         # Zero Docker sidecar required. See docs/adr/0005-native-waku-transport.md."
+    } else {
+        "# agentnet.toml -- NATIVE Rust libp2p Waku v2 transport (PRIVATE mode).\n\
+         # Zero Docker sidecar required: embedded libp2p with preventive peer allowlist\n\
+         # and zero DNS egress. See docs/adr/0005-native-waku-transport.md."
+    };
+    let mode = if public_relay { "public" } else { "private" };
+    let public_flags = if public_relay {
+        "i_understand_public = true     # you chose public mode (init --public-relay)\n\
+         enforce_peer_allowlist = true  # preventively enforce the peer allowlist from `peers`"
+    } else {
+        "i_understand_public = false"
+    };
+    let peers_line = if peers.is_empty() {
+        "peers = []   # REQUIRED in private mode: add your relay's multiaddr (e.g. from `agentnet relay serve`)".to_owned()
+    } else {
+        let items: Vec<String> = peers.iter().map(|p| toml_str(p)).collect();
+        format!("peers = [{}]", items.join(", "))
+    };
+    format!(
+        r#"{header}
+
+[network]
+backend = "native"
+mode = "{mode}"
+# Static peers: multiaddrs of your own relay/store node(s), ending in /p2p/<peerId>.
+{peers_line}
+# Cluster ids 1, 2, 3 and 16 select public presets and are rejected.
+cluster_id = 66
+public_discovery = false
+public_fallback = false
+{public_flags}
+
+[storage]
+retention_hours = 168
+
+[policy]
+unknown_senders = "quarantine"
+auto_trigger = false
+
+[triggers]
+allowed_sessions = []
+max_active = 32
+max_matches_per_minute = 60
+default_lifetime_s = 3600
+max_lifetime_hours = 24
+
+[discovery]
+enabled = false
+topics = []
+max_records = 500
+max_advert_ttl_s = 86400
+default_advert_ttl_s = 3600
+republish_interval_s = 900
+max_capabilities = 16
+
+[mcp_http]
+enabled = false
+bind = "127.0.0.1:8650"
+
+[webhook]
+enabled = false
+url = ""
+secret_file = ""
+allow_remote = false
+timeout_ms = 5000
+max_attempts = 5
+events = ["trigger.matched"]
+"#
+    )
+}
+
+/// Render and validate the config `agentnet init` is about to write, supporting
+/// both `logos_rest` (default) and `native` backends.
+pub fn render_init_config_with_backend(
+    node_url: &str,
+    peers: &[String],
+    public_relay: bool,
+    native: bool,
+) -> Result<String, DaemonError> {
+    if !native {
+        return render_init_config(node_url, peers, public_relay);
+    }
+    if public_relay {
+        if peers.is_empty() {
+            return Err(cfg_err(
+                "--public-relay needs at least one --peer (the relay's multiaddr ending in \
+                 /p2p/<peerId>): the allowlist is the peer ids of the listed peers",
+            ));
+        }
+        let text = render_native_config(peers, true);
+        DaemonConfig::parse_validated(&text)?;
+        return Ok(text);
+    }
+    let text = render_native_config(peers, false);
+    if !peers.is_empty() {
+        if let Err(DaemonError::Config(why)) = DaemonConfig::parse_validated(&text) {
+            return Err(cfg_err(format!(
+                "this configuration is not acceptable in private mode ({why}). Choose one: \
+                 (1) use a relay on a private address (loopback, RFC 1918, 100.64.0.0/10, e.g. \
+                 --peer /ip4/127.0.0.1/tcp/60000/p2p/<peerId>), or (2) re-run with --public-relay \
+                 for your own relay on a public address"
+            )));
+        }
+    }
+    Ok(text)
 }
 
 /// Render and validate the config `agentnet init` is about to write. With no

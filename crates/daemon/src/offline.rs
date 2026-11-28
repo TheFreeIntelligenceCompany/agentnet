@@ -9,7 +9,7 @@ use agentnet_core::crypto::VerifiedRevocation;
 use agentnet_core::identity::Identity;
 use agentnet_core::{guard, Clock, SystemClock};
 
-use crate::config::{render_init_config, DaemonConfig};
+use crate::config::{render_init_config_with_backend, DaemonConfig};
 use crate::datadir::{create_secret_file, ensure_token, DataDir, MAX_SOCKET_PATH};
 use crate::error::DaemonError;
 
@@ -89,10 +89,22 @@ pub fn init_data_dir(
     peers: &[String],
     public_relay: bool,
 ) -> Result<InitReport, DaemonError> {
+    init_data_dir_with_backend(root, node_url, peers, public_relay, false)
+}
+
+/// Like [`init_data_dir`], also supporting `native = true` (embedded pure-Rust
+/// libp2p Waku v2 transport, zero Docker sidecar).
+pub fn init_data_dir_with_backend(
+    root: &Path,
+    node_url: &str,
+    peers: &[String],
+    public_relay: bool,
+    native: bool,
+) -> Result<InitReport, DaemonError> {
     // Validate before anything is created: a rejected peer or overlong path writes nothing.
     let dir = DataDir::new(root);
     check_socket_path_len(&dir)?;
-    let config_text = render_init_config(node_url, peers, public_relay)?;
+    let config_text = render_init_config_with_backend(node_url, peers, public_relay, native)?;
     dir.create_private()?;
     let _lock = dir.acquire_lock()?;
     refuse_existing(&dir)?;
@@ -168,10 +180,34 @@ pub fn import_identity_with_mode(
     public_relay: bool,
     replay_guard: bool,
 ) -> Result<InitReport, DaemonError> {
+    import_identity_with_options(
+        root,
+        encrypted,
+        passphrase,
+        node_url,
+        peers,
+        public_relay,
+        false,
+        replay_guard,
+    )
+}
+
+/// Like [`import_identity_with_mode`], also supporting `native = true`.
+#[allow(clippy::too_many_arguments)]
+pub fn import_identity_with_options(
+    root: &Path,
+    encrypted: &[u8],
+    passphrase: &str,
+    node_url: &str,
+    peers: &[String],
+    public_relay: bool,
+    native: bool,
+    replay_guard: bool,
+) -> Result<InitReport, DaemonError> {
     // Decrypt and validate everything before creating the directory or writing files.
     let dir = DataDir::new(root);
     check_socket_path_len(&dir)?;
-    let config_text = render_init_config(node_url, peers, public_relay)?;
+    let config_text = render_init_config_with_backend(node_url, peers, public_relay, native)?;
     let id = Identity::import_encrypted(encrypted, passphrase).map_err(ident_err)?;
     dir.create_private()?;
     let _lock = dir.acquire_lock()?;

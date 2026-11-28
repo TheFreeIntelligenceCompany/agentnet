@@ -66,6 +66,9 @@ pub enum Command {
         /// private mode rejects makes init fail.
         #[arg(long)]
         public_relay: bool,
+        /// Use the embedded pure-Rust libp2p Waku v2 transport (`backend = "native"`, no Docker sidecar).
+        #[arg(long)]
+        native: bool,
     },
     /// Run the daemon in the foreground until Ctrl-C or SIGTERM.
     ///
@@ -261,6 +264,9 @@ pub enum IdentityCmd {
         /// Your own relay is reached over a public IP or DNS name (writes audited public mode).
         #[arg(long)]
         public_relay: bool,
+        /// Use the embedded pure-Rust libp2p Waku v2 transport (`backend = "native"`, no Docker sidecar).
+        #[arg(long)]
+        native: bool,
         /// Do NOT start the new store in replay-guard mode. A new data directory has no
         /// dedupe history, so by default messages created before the first start are held
         /// (not delivered) until max_ttl + clock_skew has passed or `doctor --accept-rollback`
@@ -555,4 +561,36 @@ pub enum RelayCmd {
         #[arg(long, value_name = "IP")]
         client_ip: Option<String>,
     },
+    /// Run a standalone pure-Rust Waku v2 Relay + Store v3 server in the foreground (zero Docker).
+    ///
+    /// Prints the relay's peer ID and full dialable multiaddr(s) on stdout once listening.
+    /// Stop with Ctrl-C or SIGTERM.
+    Serve {
+        /// Listen multiaddr (repeatable, default: /ip4/127.0.0.1/tcp/60000). Use port 0 for an ephemeral port.
+        #[arg(long, value_name = "MULTIADDR")]
+        listen: Vec<String>,
+        /// Directory for persistent relay key (`relay.key`) and SQLite Store (`store.sqlite3`).
+        #[arg(long, value_name = "DIR", conflicts_with = "memory_only")]
+        relay_dir: Option<PathBuf>,
+        /// Run entirely in memory (ephemeral node key and in-memory SQLite Store; ideal for sandboxes/tests).
+        #[arg(long)]
+        memory_only: bool,
+        /// Waku cluster id (default 66).
+        #[arg(long, default_value_t = 66, value_name = "ID")]
+        cluster_id: u16,
+        /// Optional path to a mode-0600 file containing a 64-hex secp256k1 node key.
+        #[arg(long, value_name = "FILE")]
+        node_key_file: Option<PathBuf>,
+        /// Optional preventive peer-ID allowlist (repeatable; empty admits any peer matching cluster/shard).
+        #[arg(long, value_name = "PEER_ID")]
+        allow_peer: Vec<String>,
+        /// Store retention horizon in seconds (default 604800 = 7 days).
+        #[arg(long, default_value_t = 604_800, value_name = "SECONDS")]
+        retention_seconds: u64,
+        /// Maximum stored frames (default 100000).
+        #[arg(long, default_value_t = 100_000, value_name = "N")]
+        retention_capacity: usize,
+    },
+    /// Generate a fresh 32-byte secp256k1 node key and print its deterministic libp2p peer ID.
+    Keygen,
 }

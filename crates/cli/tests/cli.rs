@@ -302,6 +302,8 @@ fn every_command_has_help_and_the_top_level_documents_exit_codes() {
         &["doctor"],
         &["relay"],
         &["relay", "print-config"],
+        &["relay", "serve"],
+        &["relay", "keygen"],
     ];
     for c in cmds {
         let mut a: Vec<&str> = c.to_vec();

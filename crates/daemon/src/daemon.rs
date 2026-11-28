@@ -11,14 +11,15 @@ use agentnet_core::identity::Identity;
 use agentnet_core::{Clock, Node, NodeOptions, SystemClock};
 use agentnet_mcp::{bind_http, serve_http, HttpOptions};
 use agentnet_transport::logos_rest::LogosRestTransport;
+use agentnet_transport::waku_native::NativeWakuTransport;
 use agentnet_transport::Transport;
 use serde_json::{json, Value};
 use tokio::net::UnixListener;
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
 
-use crate::config::DaemonConfig;
-use crate::datadir::{ensure_token, DataDir, DataDirLock, MAX_SOCKET_PATH};
+use crate::config::{DaemonConfig, TransportBackend};
+use crate::datadir::{ensure_token, read_secret_file, DataDir, DataDirLock, MAX_SOCKET_PATH};
 use crate::error::DaemonError;
 use crate::server::{self, ServerCtx, StatusFn, HELLO_TIMEOUT};
 use crate::webhook::{Webhook, WebhookStats};
@@ -31,22 +32,42 @@ pub struct Daemon;
 
 impl Daemon {
     /// Start the daemon of `data_dir`: lock, load `agentnet.toml` and the
-    /// identity, build the REST transport, open the engine and the sockets.
+    /// identity, build the configured transport (`logos_rest` or `native`),
+    /// open the engine and the sockets.
     pub async fn start(data_dir: impl AsRef<Path>) -> Result<RunningDaemon, DaemonError> {
         let dir = DataDir::new(data_dir.as_ref());
         dir.check_dir_perms()?;
         let lock = dir.acquire_lock()?;
         let config = DaemonConfig::load(&dir.config())?;
-        let transport = LogosRestTransport::new(config.to_logos_config())
-            .map_err(|e| DaemonError::Transport(e.to_string()))?;
-        start_locked(
-            dir,
-            lock,
-            config,
-            Arc::new(transport),
-            Arc::new(SystemClock),
-        )
-        .await
+        let transport: Arc<dyn Transport> = match config.network.backend {
+            TransportBackend::LogosRest => Arc::new(
+                LogosRestTransport::new(config.to_logos_config())
+                    .map_err(|e| DaemonError::Transport(e.to_string()))?,
+            ),
+            TransportBackend::Native => {
+                let node_key_hex = match &config.network.node_key_file {
+                    Some(rel) => {
+                        let p = Path::new(rel);
+                        let resolved = if p.is_absolute() {
+                            p.to_path_buf()
+                        } else {
+                            dir.root().join(p)
+                        };
+                        let bytes = read_secret_file(&resolved)?;
+                        let s = String::from_utf8(bytes).map_err(|_| {
+                            DaemonError::Config("network.node_key_file is not valid UTF-8".into())
+                        })?;
+                        Some(s.trim().to_owned())
+                    }
+                    None => None,
+                };
+                Arc::new(
+                    NativeWakuTransport::start(config.to_native_config(node_key_hex))
+                        .map_err(|e| DaemonError::Transport(e.to_string()))?,
+                )
+            }
+        };
+        start_locked(dir, lock, config, transport, Arc::new(SystemClock)).await
     }
 
     /// Start with an injected transport and clock (tests, embedding). The
@@ -224,6 +245,7 @@ async fn start_locked(
         let node = node.clone();
         let webhook = webhook.clone();
         let mode = config.network.mode.as_str();
+        let backend = config.network.backend.as_str();
         Arc::new(move || -> Value {
             let wh: WebhookStats = webhook.as_ref().map(|w| w.stats()).unwrap_or_default();
             json!({
@@ -231,6 +253,7 @@ async fn start_locked(
                 "protocol": crate::proto::PROTOCOL_VERSION,
                 "agent_id": node.address(),
                 "mode": mode,
+                "backend": backend,
                 "uptime_s": started.elapsed().as_secs(),
                 "mcp_http": {"enabled": http_addr.is_some(), "addr": http_addr.map(|a| a.to_string())},
                 "webhook": wh,

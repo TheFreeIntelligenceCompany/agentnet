@@ -15,7 +15,7 @@ path = "src/main.rs"
 agentnet-core.workspace = true
 agentnet-daemon.workspace = true
 agentnet-mcp.workspace = true
-agentnet-transport = { workspace = true, features = ["logos-rest"] }
+agentnet-transport = { workspace = true, features = ["logos-rest", "waku-native"] }
 clap = { version = "4", features = ["derive", "wrap_help", "env"] }
 reqwest.workspace = true
 rpassword = "7"

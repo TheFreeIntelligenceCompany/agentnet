@@ -238,13 +238,16 @@ async fn run(cli: Cli) -> CliResult<i32> {
             node_url,
             peer,
             public_relay,
+            native,
         } => {
-            let rep = offline::init_data_dir(&dir, &node_url, &peer, public_relay)?;
+            let rep =
+                offline::init_data_dir_with_backend(&dir, &node_url, &peer, public_relay, native)?;
             let out = json!({
                 "data_dir": dir,
                 "address": rep.identity.agent_id,
                 "contact_record": rep.identity.contact_record,
                 "peers_configured": !rep.peers_missing,
+                "backend": if native { "native" } else { "logos_rest" },
             });
             emit(json, &out, |_| {
                 let mut s = format!(
@@ -337,19 +340,21 @@ async fn run(cli: Cli) -> CliResult<i32> {
                 node_url,
                 peer,
                 public_relay,
+                native,
                 no_replay_guard,
             } => {
                 let pass = passphrase(passphrase_file.as_deref(), false)?;
                 let f = std::fs::File::open(&input)
                     .map_err(|e| CliError::other(format!("reading {}: {e}", input.display())))?;
                 let bytes = read_bounded_bytes(f, 1024 * 1024, &input.display().to_string())?;
-                let rep = offline::import_identity_with_mode(
+                let rep = offline::import_identity_with_options(
                     &dir,
                     &bytes,
                     &pass,
                     &node_url,
                     &peer,
                     public_relay,
+                    native,
                     !no_replay_guard,
                 )?;
                 let v = json!({"address": rep.identity.agent_id, "data_dir": dir, "peers_configured": !rep.peers_missing, "replay_guard": !no_replay_guard});
@@ -956,6 +961,125 @@ async fn run(cli: Cli) -> CliResult<i32> {
                 let client_ip = client_ip.unwrap_or_else(|| "<CLIENT_IP>".into());
                 let cfg = relay::build(&ip, &peer_id, &client_ip);
                 emit(json, &cfg, relay::render_text);
+            }
+            RelayCmd::Keygen => {
+                let (hex_key, peer_id) = agentnet_transport::waku_native::generate_node_key();
+                let v = json!({"node_key_hex": hex_key, "peer_id": peer_id.to_string()});
+                emit(json, &v, |_| {
+                    format!("Peer ID: {peer_id}\nNode key (keep secret, mode 0600):\n{hex_key}")
+                });
+            }
+            RelayCmd::Serve {
+                listen,
+                relay_dir,
+                memory_only,
+                cluster_id,
+                node_key_file,
+                allow_peer,
+                retention_seconds,
+                retention_capacity,
+            } => {
+                let listen_addrs = if listen.is_empty() {
+                    vec!["/ip4/127.0.0.1/tcp/60000".to_owned()]
+                } else {
+                    listen
+                };
+                let (node_key_hex, store_db_path) = if memory_only {
+                    let key = match node_key_file {
+                        Some(p) => {
+                            let b = read_secret_file(&p)?;
+                            Some(
+                                String::from_utf8(b)
+                                    .map_err(|_| {
+                                        CliError::new(
+                                            exit::INVALID,
+                                            "invalid_argument",
+                                            "node key file is not UTF-8",
+                                        )
+                                    })?
+                                    .trim()
+                                    .to_owned(),
+                            )
+                        }
+                        None => None,
+                    };
+                    (key, None)
+                } else {
+                    let rdir = relay_dir.unwrap_or_else(|| dir.join("relay"));
+                    let dd = agentnet_daemon::DataDir::new(&rdir);
+                    dd.create_private()?;
+                    let key_path = node_key_file.unwrap_or_else(|| rdir.join("relay.key"));
+                    let key_hex = if key_path.exists() {
+                        let b = read_secret_file(&key_path)?;
+                        String::from_utf8(b)
+                            .map_err(|_| {
+                                CliError::new(
+                                    exit::INVALID,
+                                    "invalid_argument",
+                                    "relay key file is not UTF-8",
+                                )
+                            })?
+                            .trim()
+                            .to_owned()
+                    } else {
+                        let (k, _) = agentnet_transport::waku_native::generate_node_key();
+                        agentnet_daemon::datadir::create_secret_file(
+                            &key_path,
+                            format!("{k}\n").as_bytes(),
+                        )?;
+                        k
+                    };
+                    (Some(key_hex), Some(rdir.join("store.sqlite3")))
+                };
+
+                let cfg = agentnet_transport::waku_native::NativeRelayConfig {
+                    listen_addrs,
+                    cluster_id,
+                    shard: 0,
+                    node_key_hex,
+                    allowed_peer_ids: allow_peer,
+                    store_db_path,
+                    retention_seconds,
+                    retention_capacity,
+                    ..Default::default()
+                };
+                let relay = agentnet_transport::waku_native::NativeWakuRelay::start(cfg)
+                    .await
+                    .map_err(|e| CliError::new(exit::UNAVAILABLE, "unavailable", e.to_string()))?;
+                let addrs = relay.multiaddrs();
+                let out = json!({
+                    "peer_id": relay.peer_id().to_string(),
+                    "cluster_id": cluster_id,
+                    "multiaddrs": addrs,
+                    "memory_only": memory_only,
+                });
+                emit(json, &out, |_| {
+                    let mut s = format!(
+                        "Native Waku v2 relay listening (cluster_id={cluster_id}, peer_id={})\n",
+                        relay.peer_id()
+                    );
+                    for a in &addrs {
+                        s.push_str(&format!("  {a}\n"));
+                    }
+                    s.push_str("Stop with Ctrl-C or SIGTERM.");
+                    s
+                });
+                let _ = std::io::Write::flush(&mut std::io::stdout());
+                #[cfg(unix)]
+                {
+                    let mut sigterm =
+                        tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+                            .map_err(|e| CliError::other(e.to_string()))?;
+                    tokio::select! {
+                        _ = tokio::signal::ctrl_c() => {}
+                        _ = sigterm.recv() => {}
+                    }
+                }
+                #[cfg(not(unix))]
+                {
+                    let _ = tokio::signal::ctrl_c().await;
+                }
+                relay.shutdown().await;
             }
         },
     }

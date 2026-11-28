@@ -25,8 +25,8 @@ pub mod webhook;
 
 pub use client::{EventStream, RemoteAgent};
 pub use config::{
-    render_private_config, sample_private_config, sample_public_config, sample_public_relay_config,
-    DaemonConfig, Mode,
+    render_native_config, render_private_config, sample_private_config, sample_public_config,
+    sample_public_relay_config, DaemonConfig, Mode, TransportBackend,
 };
 pub use daemon::{Daemon, RunningDaemon, ShutdownHandle};
 pub use datadir::DataDir;

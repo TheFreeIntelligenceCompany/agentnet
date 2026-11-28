@@ -576,52 +576,77 @@ pub async fn run(dir: &Path) -> Vec<Check> {
 
     // 5. node reachable + clock
     if let Some(cfg) = &cfg {
-        let url = format!("{}/health", cfg.network.node_url.trim_end_matches('/'));
-        let client = reqwest::Client::builder()
-            .no_proxy()
-            .timeout(Duration::from_secs(5))
-            .redirect(reqwest::redirect::Policy::none())
-            .build();
         let mut node_date = None;
-        match client {
-            Ok(c) => match c.get(&url).send().await {
-                Ok(r) => {
-                    node_date = r
-                        .headers()
-                        .get("date")
-                        .and_then(|v| v.to_str().ok())
-                        .and_then(parse_http_date);
-                    if r.status().is_success() {
-                        out.push(check(
-                            "node reachable",
-                            Level::Ok,
-                            format!("{} answered {}", cfg.network.node_url, r.status().as_u16()),
-                            "",
-                        ));
-                    } else {
-                        out.push(check(
-                            "node reachable",
-                            Level::Warn,
-                            format!(
-                                "{} answered http {}",
-                                cfg.network.node_url,
-                                r.status().as_u16()
-                            ),
-                            "check the node's health: its relay may have no peers yet",
-                        ));
-                    }
+        match cfg.network.backend {
+            agentnet_daemon::TransportBackend::Native => {
+                if daemon_up {
+                    out.push(check(
+                        "node reachable",
+                        Level::Ok,
+                        "embedded native libp2p Waku v2 transport (no external sidecar)",
+                        "",
+                    ));
+                } else {
+                    out.push(check(
+                        "node reachable",
+                        Level::Skip,
+                        "embedded native libp2p transport starts inside `agentnet serve`",
+                        format!("run `{}`", agentnet_command(dir, "serve")),
+                    ));
                 }
-                Err(_) => out.push(check(
-                    "node reachable",
-                    Level::Fail,
-                    format!(
-                        "cannot reach the Logos Delivery node at {}",
-                        cfg.network.node_url
-                    ),
-                    "start the node (see `agentnet relay print-config`) or fix network.node_url",
-                )),
-            },
-            Err(e) => out.push(check("node reachable", Level::Fail, e.to_string(), "")),
+            }
+            agentnet_daemon::TransportBackend::LogosRest => {
+                let url = format!("{}/health", cfg.network.node_url.trim_end_matches('/'));
+                let client = reqwest::Client::builder()
+                    .no_proxy()
+                    .timeout(Duration::from_secs(5))
+                    .redirect(reqwest::redirect::Policy::none())
+                    .build();
+                match client {
+                    Ok(c) => match c.get(&url).send().await {
+                        Ok(r) => {
+                            node_date = r
+                                .headers()
+                                .get("date")
+                                .and_then(|v| v.to_str().ok())
+                                .and_then(parse_http_date);
+                            if r.status().is_success() {
+                                out.push(check(
+                                    "node reachable",
+                                    Level::Ok,
+                                    format!(
+                                        "{} answered {}",
+                                        cfg.network.node_url,
+                                        r.status().as_u16()
+                                    ),
+                                    "",
+                                ));
+                            } else {
+                                out.push(check(
+                                    "node reachable",
+                                    Level::Warn,
+                                    format!(
+                                        "{} answered http {}",
+                                        cfg.network.node_url,
+                                        r.status().as_u16()
+                                    ),
+                                    "check the node's health: its relay may have no peers yet",
+                                ));
+                            }
+                        }
+                        Err(_) => out.push(check(
+                            "node reachable",
+                            Level::Fail,
+                            format!(
+                                "cannot reach the Logos Delivery node at {}",
+                                cfg.network.node_url
+                            ),
+                            "start the node (see `agentnet relay print-config`) or fix network.node_url",
+                        )),
+                    },
+                    Err(e) => out.push(check("node reachable", Level::Fail, e.to_string(), "")),
+                }
+            }
         }
         // clock
         let now = std::time::SystemTime::now()

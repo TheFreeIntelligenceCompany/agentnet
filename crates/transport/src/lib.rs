@@ -24,8 +24,14 @@ use serde::{Deserialize, Serialize};
 
 pub mod mock;
 
+#[cfg(any(feature = "logos-rest", feature = "waku-native"))]
+pub mod waku_common;
+
 #[cfg(feature = "logos-rest")]
 pub mod logos_rest;
+
+#[cfg(feature = "waku-native")]
+pub mod waku_native;
 
 /// Maximum accepted length of a content topic string (bytes).
 pub const MAX_CONTENT_TOPIC_LEN: usize = 256;
